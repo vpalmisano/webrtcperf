@@ -1,4 +1,5 @@
-# WebRTC test client
+# WebRTC stress test
+A tool for running concurrent webrtc session using chromium web browser in headless mode.
 
 Dev test:
 
