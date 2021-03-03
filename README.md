@@ -1,9 +1,18 @@
 # WebRTC stress test
 A tool for running concurrent webrtc session using chromium web browser in headless mode.
 
-Dev test:
+Components used:
+- NodeJS application.
+- Puppeteer library for controlling chromium instances.
+- A patched version of chromium (see `./chromium` directory): setting the 
+`USE_NULL_VIDEO_DECODER` environment variable the video decoding 
+is disabled, lowering the CPU requirements when running multiple instances.
+
+## Running from source code
 
 ```sh
+git clone https://github.com/vpalmisano/webrtc-stress-test.git
+
 URL=https://127.0.0.1:3443/test \
 SCRIPT_PATH=./scripts/edumeet.js \
 WORKERS=1 \
