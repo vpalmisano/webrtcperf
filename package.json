@@ -1,0 +1,42 @@
+{
+  "name": "webrtc-stress-test",
+  "version": "1.0.0",
+  "author": {
+    "name": "Vittorio Palmisano",
+    "url": "https://github.com/vpalmisano"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.min.js",
+    "start:dev": "nodemon app.js",
+    "test": "mocha",
+    "build": "yarn --ignore-engines && webpack --config webpack.config.js -p && docker build -t vpalmisano/webrtc-stress-test .",
+    "push": "docker push vpalmisano/webrtc-stress-test:latest",
+    "clean": "rm -f app.min.js*"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "debug": "^4.3.1",
+    "debug-level": "^1.1.0",
+    "fast-stats": "^0.0.6",
+    "moment": "^2.29.1",
+    "pidusage": "^2.0.21",
+    "ps-tree": "^1.2.0",
+    "puppeteer": "^8.0.0",
+    "requestretry": "^5.0.0",
+    "sprintf-js": "^1.1.2"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-datetime": "^1.5.0",
+    "mocha": "^8.3.0",
+    "nodemon": "^2.0.7",
+    "terser-webpack-plugin": "^2.3.0",
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-merge": "^4.2.2",
+    "webpack-node-externals": "^1.7.2",
+    "xml2js": "^0.4.22"
+  }
+}
