@@ -16,12 +16,12 @@ USE_NULL_VIDEO_DECODER=1 \
 ## Usage with Docker
 
 ```sh
-docker run -it --rm --name=webrtc-test-client --net=host \
+docker run -it --rm --name=webrtc-stress-test --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=https://EDUMEET_HOSTNAME:3443/test \
     -e SCRIPT_PATH=/app/scripts/edumeet.js \
     -e SESSIONS_PER_WORKER=4 \
     -e TABS_PER_SESSION=1 \
     -e DEBUG='DEBUG:*' \
-    vpalmisano/webrtc-test-client:latest
+    vpalmisano/webrtc-stress-test:latest
 ```
