@@ -45,16 +45,16 @@ docker run -it --rm --name=webrtc-stress-test --net=host \
 | VIDEO_WIDTH          | 1280          | The fake video resize width |
 | VIDEO_HEIGHT         | 720           | The fake video resize height |
 | VIDEO_FRAMERATE      | 25            | The fake video framerate |
-| WINDOW_WIDTH         | 1920          | The window width |
-| WINDOW_HEIGHT        | 1080          | The window height |
+| WINDOW_WIDTH         | 1920          | The browser window width |
+| WINDOW_HEIGHT        | 1080          | The browser window height |
+| DISPLAY              |               | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled |
 | SESSIONS             | 1             | The number of browser sessions to start |
 | TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session |
 | SPAWN_PERIOD         | 1000          | The sessions spawn period in ms |
 | SHOW_STATS           | true          | If statistics should be displayed on console output |
 | LOG_PATH             |               | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created |
 | LOG_INTERVAL         | 1             | The log interval in seconds |
-| SCRIPT_PATH          |               | The js script path; is set, the .js file content will be injected inside in the dom of each opened tab page |
-| DISPLAY              |                | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled |
+| SCRIPT_PATH          |               | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page |
 
 ## Edumeet examples
 
