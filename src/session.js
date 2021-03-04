@@ -16,7 +16,13 @@ module.exports = class Session extends EventEmitter {
     log.debug('constructor', { id });
     this.id = id;
     //
-    this.stats = null;
+    this.stats = {
+      cpu: 0,
+      memory: 0,
+      googActualEncBitrates: {},
+      bytesReceived: {},
+      bytesSent: {},
+    };
     this.updateStatsTimeout = null;
     this.browser = null;
     this.pages = new Map();
@@ -113,12 +119,58 @@ module.exports = class Session extends EventEmitter {
     }
     log.info(`${this.id} opening page: ${url}`);
     const page = await this.browser.newPage();
+    //
+    await page.exposeFunction('traceRtcStats', (method, name, data) => {
+      if (method === 'getstats') {
+        //log.debug('traceRtcStats', method, name, data);
+        /* example data:
+         {
+          "Conn-0-1-0":{"timestamp":0,"requestsSent":"9","bytesReceived":"1043993","responsesReceived":"9","bytesSent":"16501","packetsSent":"348"},
+          "ssrc_587646961_recv":{"timestamp":0,"packetsReceived":"963","googFrameRateReceived":"25","bytesReceived":"954996"},
+          "ssrc_1234_recv":{"timestamp":0,"googPlisSent":"34"},
+          "ssrc_183419048_recv":{"timestamp":0,"googDecodingCTN":"1386","googSpeechExpandRate":"0","totalSamplesDuration":"13.86","googDecodingPLCCNG":"303",
+              "googCurrentDelayMs":"80","googExpandRate":"1","googPreemptiveExpandRate":"0","googDecodingMuted":"302"},
+          "timestamp":1614877831891}
+         */
+        //
+        if (data.bweforvideo && data.bweforvideo.googActualEncBitrate) {
+          this.stats.googActualEncBitrates[name] = data.bweforvideo.googActualEncBitrate;
+        }
+        // transport stats
+        if (data['Conn-0-1-0']) {
+          const { bytesReceived, bytesSent } = data['Conn-0-1-0'];
+          if (bytesReceived !== undefined) {
+            this.stats.bytesReceived[name] = bytesReceived;
+          } else {
+            this.stats.bytesReceived[name] = 0;
+          }
+          if (bytesSent !== undefined) {
+            this.stats.bytesSent[name] = bytesSent;
+          } else {
+            this.stats.bytesSent[name] = 0;
+          }
+        }
+      }
+    });
+    //
     page.once('domcontentloaded', async () => {
       log.debug(`${this.id} page domcontentloaded`);
+      
+      // load rtcstats
+      await page.addScriptTag({
+        content: String(await fs.promises.readFile('./node_modules/rtcstats/rtcstats.js')).replace('module.exports = function', 'function rtcstats'),
+        type: 'text/javascript'
+      });
+      await page.addScriptTag({
+        content: `rtcstats(window.traceRtcStats, ${config.STATS_INTERVAL * 1000}, ['', 'webkit', 'moz']);`,
+        type: 'text/javascript'
+      });
+
+      // add external script
       if (config.SCRIPT_PATH) {
         await page.addScriptTag({
           content: `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
-                  +`window.WEBRTC_STRESS_TEST_TAB =${index + 1};`,
+                  +`window.WEBRTC_STRESS_TEST_TAB = ${index + 1};`,
           type: 'text/javascript'
         });
         await page.addScriptTag({
@@ -126,10 +178,13 @@ module.exports = class Session extends EventEmitter {
           type: 'text/javascript'
         });
       }
-      //
-      const client = await page.target().createCDPSession();
-      await client.send('Performance.enable', { timeDomain: 'timeTicks' });
-      this.pages.set(index, { page, client });
+
+      // enable perf
+      //const client = await page.target().createCDPSession();
+      //await client.send('Performance.enable', { timeDomain: 'timeTicks' });
+
+      // add to pages map
+      this.pages.set(index, { page/* , client */ });
     });
     page.on('close', () => {
       log.info(`${this.id} page closed: ${url}`);
@@ -139,7 +194,7 @@ module.exports = class Session extends EventEmitter {
       }, config.SPAWN_PERIOD);
     });
     if (config.ENABLE_PAGE_LOG) {
-      page.on('console', (msg) => console.log(chalk`{yellow {bold [${this.id}-${index}]} ${msg.text()}}`));
+      page.on('console', (msg) => console.log(chalk`{yellow {bold [page ${this.id}-${index}]} ${msg.text()}}`));
     }
     await page.goto(url);
     // select the first blank page
@@ -153,7 +208,7 @@ module.exports = class Session extends EventEmitter {
     }
     const pid = this.browser.process().pid;
     //log.debug('updateStats', pid);
-    this.stats = await getProcessStats(pid, true);
+    Object.assign(this.stats, await getProcessStats(pid, true));
     //
     /* for(const [index, { page, client }] of this.pages.entries()) {
       const metrics = await client.send('Performance.getMetrics');

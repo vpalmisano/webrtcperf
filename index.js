@@ -51,6 +51,29 @@ async function main() {
             { name: 'mem_25p' },
             { name: 'mem_min' },
             { name: 'mem_max' },
+            //
+            { name: 'googActualEncBitrates_sum' },
+            { name: 'googActualEncBitrates_mean' },
+            { name: 'googActualEncBitrates_stdev' },
+            { name: 'googActualEncBitrates_25p' },
+            { name: 'googActualEncBitrates_min' },
+            { name: 'googActualEncBitrates_max' },
+            //
+            { name: 'bytesReceived_length' },
+            { name: 'bytesReceived_sum' },
+            { name: 'bytesReceived_mean' },
+            { name: 'bytesReceived_stdev' },
+            { name: 'bytesReceived_25p' },
+            { name: 'bytesReceived_min' },
+            { name: 'bytesReceived_max' },
+            //
+            { name: 'bytesSent_length' },
+            { name: 'bytesSent_sum' },
+            { name: 'bytesSent_mean' },
+            { name: 'bytesSent_stdev' },
+            { name: 'bytesSent_25p' },
+            { name: 'bytesSent_min' },
+            { name: 'bytesSent_max' },
         ]);
     }
 
@@ -58,15 +81,27 @@ async function main() {
         if (!sessions.length) {
             return;
         }
+
         // collect stats
         const cpus = new Stats();
         const mems = new Stats();
+        const googActualEncBitrates = new Stats();
+        const bytesReceived = new Stats();
+        const bytesSent = new Stats();
+
         sessions.forEach(session => {
             if (session.stats) {
                 cpus.push(session.stats.cpu);
                 mems.push(session.stats.memory);
+                Object.values(session.stats.googActualEncBitrates)
+                    .forEach(v => googActualEncBitrates.push(v / 1000));
+                Object.values(session.stats.bytesReceived)
+                    .forEach(v => bytesReceived.push(v / 1e6));
+                Object.values(session.stats.bytesSent)
+                    .forEach(v => bytesSent.push(v / 1e6));
             }
         });
+
         // display stats on console
         if (config.SHOW_STATS) {
             let out = '';
@@ -91,6 +126,39 @@ async function main() {
                     mems.max
                 );
             }
+            if (googActualEncBitrates.length) {
+                out += sprintf(chalk`{bold %-03d} googActualEncBitrate: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [Kbps]\n`,
+                    googActualEncBitrates.length,
+                    googActualEncBitrates.sum,
+                    googActualEncBitrates.amean(),
+                    googActualEncBitrates.stddev(),
+                    googActualEncBitrates.percentile(25),
+                    googActualEncBitrates.min,
+                    googActualEncBitrates.max
+                );
+            }
+            if (bytesReceived.length) {
+                out += sprintf(chalk`{bold %-03d}        bytesReceived: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n`,
+                    bytesReceived.length,
+                    bytesReceived.sum,
+                    bytesReceived.amean(),
+                    bytesReceived.stddev(),
+                    bytesReceived.percentile(25),
+                    bytesReceived.min,
+                    bytesReceived.max
+                );
+            }
+            if (bytesSent.length) {
+                out += sprintf(chalk`{bold %-03d}            bytesSent: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n`,
+                    bytesSent.length,
+                    bytesSent.sum,
+                    bytesSent.amean(),
+                    bytesSent.stddev(),
+                    bytesSent.percentile(25),
+                    bytesSent.min,
+                    bytesSent.max
+                );
+            }
             console.log(out);
         }
         // write stats to file
@@ -111,6 +179,29 @@ async function main() {
                 mems.percentile(25).toFixed(3),
                 mems.min.toFixed(3),
                 mems.max.toFixed(3),
+                //
+                googActualEncBitrates.sum.toFixed(3),
+                googActualEncBitrates.amean().toFixed(3),
+                googActualEncBitrates.stddev().toFixed(3),
+                googActualEncBitrates.percentile(25).toFixed(3),
+                googActualEncBitrates.min.toFixed(3),
+                googActualEncBitrates.max.toFixed(3),
+                //
+                bytesReceived.length,
+                bytesReceived.sum.toFixed(3),
+                bytesReceived.amean().toFixed(3),
+                bytesReceived.stddev().toFixed(3),
+                bytesReceived.percentile(25).toFixed(3),
+                bytesReceived.min.toFixed(3),
+                bytesReceived.max.toFixed(3),
+                //
+                bytesSent.length,
+                bytesSent.sum.toFixed(3),
+                bytesSent.amean().toFixed(3),
+                bytesSent.stddev().toFixed(3),
+                bytesSent.percentile(25).toFixed(3),
+                bytesSent.min.toFixed(3),
+                bytesSent.max.toFixed(3),
             ]);
         }
     }, config.STATS_INTERVAL * 1000);
