@@ -5,8 +5,8 @@ Components used:
 - NodeJS application.
 - Puppeteer library for controlling chromium instances.
 - A patched version of chromium (see `./chromium` directory): setting the 
-`USE_NULL_VIDEO_DECODER` environment variable the video decoding 
-is disabled, lowering the CPU requirements when running multiple instances.
+`USE_NULL_VIDEO_DECODER` environment variable disables the video decoding, 
+lowering the CPU requirements when running multiple browser sessions.
 
 ## Running from source code
 
