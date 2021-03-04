@@ -11,7 +11,7 @@ const moment = require('moment');
 const chalk = require('chalk');
 //
 const Session = require('./src/session');
-const { StatsWriter } = require('./src/stats');
+const { StatsWriter, sprintfStats } = require('./src/stats');
 const config = require('./config');
 
 function ExecAsync(cmd) {
@@ -100,70 +100,22 @@ async function main() {
                 Object.values(session.stats.bytesSent)
                     .forEach(v => bytesSent.push(v / 1e6));
                 /*
-                googActualEncBitrates.push(Object.values(session.stats.googActualEncBitrates).reduce((o, v) => o += v / 1000, 0));
-                bytesReceived.push(Object.values(session.stats.bytesReceived).reduce((o, v) => o += v / 1e6, 0));
-                bytesSent.push(Object.values(session.stats.bytesSent).reduce((o, v) => o += v / 1e6, 0));
+                googActualEncBitrates.push(Object.values(session.stats.googActualEncBitrates).reduce((o, v) => o += v, 0) / 1000);
+                bytesReceived.push(Object.values(session.stats.bytesReceived).reduce((o, v) => o += v, 0) / 1e6);
+                bytesSent.push(Object.values(session.stats.bytesSent).reduce((o, v) => o += v, 0) / 1e6);
                 */
             }
         });
 
         // display stats on console
         if (config.SHOW_STATS) {
-            let out = '';
-            if (cpus.length) {
-                out += sprintf(chalk`{bold %-03d} cpu: {bold %-3.2f%%} mean: %-3.2f%% (stdev: %-3.2f, 25p: %-3.2f%%, min: %-3.2f%%, max: %-3.2f%%)\n`,
-                    cpus.length,
-                    cpus.sum,
-                    cpus.amean(),
-                    cpus.stddev(),
-                    cpus.percentile(25),
-                    cpus.min,
-                    cpus.max
-                );
-            }
-            if (mems.length) {
-                out += sprintf(chalk`    mem: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n`,
-                    mems.sum,
-                    mems.amean(),
-                    mems.stddev(),
-                    mems.percentile(25),
-                    mems.min,
-                    mems.max
-                );
-            }
-            if (googActualEncBitrates.length) {
-                out += sprintf(chalk`{bold %-03d} googActualEncBitrate: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [Kbps]\n`,
-                    googActualEncBitrates.length,
-                    googActualEncBitrates.sum,
-                    googActualEncBitrates.amean(),
-                    googActualEncBitrates.stddev(),
-                    googActualEncBitrates.percentile(25),
-                    googActualEncBitrates.min,
-                    googActualEncBitrates.max
-                );
-            }
-            if (bytesReceived.length) {
-                out += sprintf(chalk`{bold %-03d}        bytesReceived: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n`,
-                    bytesReceived.length,
-                    bytesReceived.sum,
-                    bytesReceived.amean(),
-                    bytesReceived.stddev(),
-                    bytesReceived.percentile(25),
-                    bytesReceived.min,
-                    bytesReceived.max
-                );
-            }
-            if (bytesSent.length) {
-                out += sprintf(chalk`{bold %-03d}            bytesSent: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n`,
-                    bytesSent.length,
-                    bytesSent.sum,
-                    bytesSent.amean(),
-                    bytesSent.stddev(),
-                    bytesSent.percentile(25),
-                    bytesSent.min,
-                    bytesSent.max
-                );
-            }
+            let out = ''
+                + sprintfStats(`                  cpu`, cpus, { format: '.2f', unit: '%', scale: 1 })
+                + sprintfStats(`               memory`, mems, { format: '.2f', unit: 'MB', scale: 1 })
+                + sprintfStats(`googActualEncBitrates`, googActualEncBitrates, { format: '.2f', unit: 'Kbps', scale: 1 })
+                + sprintfStats(`        bytesReceived`, bytesReceived, { format: '.2f', unit: 'MB', scale: 1 })
+                + sprintfStats(`            bytesSent`, bytesSent, { format: '.2f', unit: 'MB', scale: 1 })
+                +              '---------------------';
             console.log(out);
         }
         // write stats to file

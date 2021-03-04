@@ -3,6 +3,8 @@ const path = require('path');
 const pidusage = require('pidusage');
 const psTree = require('ps-tree');
 const moment = require('moment');
+const sprintf = require('sprintf-js').sprintf;
+const chalk = require('chalk');
 
 const getProcessChildren = module.exports.getProcessChildren = function(pid) {
   return new Promise((resolve, reject) => {
@@ -38,7 +40,6 @@ const getProcessStats = module.exports.getProcessStats = async function(pid = nu
   return stat;
 }
 
-
 module.exports.StatsWriter = class StatsWriter {
     constructor(fname='stats.log', columns){
         this.fname = fname;
@@ -63,4 +64,38 @@ module.exports.StatsWriter = class StatsWriter {
         });
         return await fs.promises.appendFile(this.fname, data+'\n');
     } 
+}
+
+const formatStats = module.exports.formatStats = function(s) {
+  return {
+    length: s.length || 0,
+    sum:    s.sum || 0,
+    mean:   s.amean() || 0,
+    stddev: s.stddev() || 0,
+    p25:    s.percentile(25) || 0,
+    min:    s.min || 0,
+    max:    s.max || 0,
+  };
+}
+
+module.exports.sprintfStats = function(name, stats, { format, unit, leftPadSize, scale } = { format: '.2f', unit: '', leftPadSize: 0, scale: 1 }) {
+  if (!stats || !stats.length) {
+      return '';
+  }
+  if (!scale) {
+      scale = 1;
+  }
+  stats = formatStats(stats);
+  return sprintf(chalk`{red {bold %s%s}} [{bold %d}] sum: {bold %${format}} mean: {bold %${format}} stdev: {bold %${format}} 25p: {bold %${format}} min: {bold %${format}} max: {bold %${format}}%s\n`, 
+      ' '.repeat(leftPadSize || 0),
+      name,
+      stats.length,
+      stats.sum * scale,
+      stats.mean * scale,
+      stats.stddev * scale,
+      stats.p25 * scale,
+      stats.min * scale,
+      stats.max * scale,
+      unit ? chalk` [{red {bold ${unit}}}]` : ''
+  );
 }
