@@ -8,8 +8,6 @@ function join() {
     choosePermissionButton.click();
     // join the room
     joinButton.click();
-    // toggle audio on-off
-    scheduleToggleAudio();
 }
 
 join();
