@@ -23,25 +23,12 @@ USE_NULL_VIDEO_DECODER=1 \
     yarn start:dev index.js
 ```
 
-## Usage with Docker
-
-```sh
-docker run -it --rm --name=webrtc-stress-test --net=host \
-    -v /dev/shm:/dev/shm \
-    -e URL=https://EDUMEET_HOSTNAME:3443/test \
-    -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
-    -e SESSIONS=4 \
-    -e TABS_PER_SESSION=1 \
-    -e DEBUG='DEBUG:*' \
-    vpalmisano/webrtc-stress-test:latest
-```
-
 ## Configuration options
 
 | Environment variable | Default value | Description |
 | :------------------- | :------------ | :---------- |
 | URL                  | ''            | The page url to load (mandatory) |
-| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source |
+| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source; the docker image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from https://www.youtube.com/watch?v=o8NPllzkFhE  |
 | VIDEO_WIDTH          | 1280          | The fake video resize width |
 | VIDEO_HEIGHT         | 720           | The fake video resize height |
 | VIDEO_FRAMERATE      | 25            | The fake video framerate |
@@ -64,6 +51,7 @@ Starts one send-receive participant, with a random audio activation pattern:
 ```sh
 docker run -it --rm --name=webrtc-stress-test --net=host \
     -v /dev/shm:/dev/shm \
+    -e VIDEO_PATH=/app/video.mp4 \
     -e URL=https://EDUMEET_HOSTNAME:3443/test \
     -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
     -e SESSIONS=1 \
