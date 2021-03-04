@@ -45,6 +45,7 @@ USE_NULL_VIDEO_DECODER=1 \
 | SHOW_STATS           | `true`        | If statistics should be displayed on console output. |
 | LOG_PATH             | ''            | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created. |
 | LOG_INTERVAL         | 1             | The log interval in seconds. |
+| DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
 
 ## Edumeet examples
 
@@ -60,7 +61,6 @@ docker run -it --rm --name=webrtc-stress-test-publisher --net=host \
     -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=1 \
-    -e DEBUG='DEBUG:*' \
     vpalmisano/webrtc-stress-test:latest
 ```
 
@@ -75,6 +75,6 @@ docker run -it --rm --name=webrtc-stress-test-viewer --net=host \
     -e SCRIPT_PATH=/app/scripts/edumeet-recv.js \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=10 \
-    -e DEBUG='DEBUG:*' \
     vpalmisano/webrtc-stress-test:latest
 ```
+
