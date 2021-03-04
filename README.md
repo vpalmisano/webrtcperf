@@ -49,6 +49,7 @@ USE_NULL_VIDEO_DECODER=1 \
 Starts one send-receive participant, with a random audio activation pattern:
 
 ```sh
+docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
@@ -63,6 +64,7 @@ docker run -it --rm --name=webrtc-stress-test --net=host \
 Starts 10 receive-only participants:
 
 ```sh
+docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=https://EDUMEET_HOSTNAME:3443/test \
