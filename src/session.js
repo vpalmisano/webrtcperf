@@ -108,6 +108,7 @@ module.exports = class Session extends EventEmitter {
 
   async openPage(index) {
     let url = config.URL;
+    
     if (config.URL_QUERY) {
       url += '?' + config.URL_QUERY
         .replace(/\$s/g, this.id + 1)
@@ -117,11 +118,15 @@ module.exports = class Session extends EventEmitter {
         .replace(/\$p/g, process.pid)
         ;
     }
+
     log.info(`${this.id} opening page: ${url}`);
     const page = await this.browser.newPage();
+    
     //
     await page.exposeFunction('traceRtcStats', (method, name, data) => {
+
       if (method === 'getstats') {
+        const pcName = `${index}_${name}`;
         //log.debug('traceRtcStats', method, name, data);
         /* example data:
          {
@@ -133,25 +138,35 @@ module.exports = class Session extends EventEmitter {
           "timestamp":1614877831891}
          */
         //
-        if (data.bweforvideo && data.bweforvideo.googActualEncBitrate) {
-          this.stats.googActualEncBitrates[name] = data.bweforvideo.googActualEncBitrate;
+        
+        if (data.bweforvideo && data.bweforvideo.googActualEncBitrate !== undefined) {
+          //log.debug('traceRtcStats', method, name, data);
+          this.stats.googActualEncBitrates[pcName] = data.bweforvideo.googActualEncBitrate;
+        } else {
+          delete(this.stats.googActualEncBitrates[pcName]);
         }
+        
         // transport stats
         if (data['Conn-0-1-0']) {
           const { bytesReceived, bytesSent } = data['Conn-0-1-0'];
+          //log.debug('traceRtcStats', pcName, { bytesReceived, bytesSent });
+          
           if (bytesReceived !== undefined) {
-            this.stats.bytesReceived[name] = bytesReceived;
-          } else {
-            this.stats.bytesReceived[name] = 0;
-          }
+            this.stats.bytesReceived[pcName] = bytesReceived;
+          }/*  else {
+            delete(this.stats.bytesReceived[pcName]);
+          } */
+
           if (bytesSent !== undefined) {
-            this.stats.bytesSent[name] = bytesSent;
-          } else {
-            this.stats.bytesSent[name] = 0;
-          }
+            this.stats.bytesSent[pcName] = bytesSent;
+          }/*  else {
+            delete(this.stats.bytesSent[pcName]);
+          } */
+
         }
       }
     });
+
     //
     page.once('domcontentloaded', async () => {
       log.debug(`${this.id} page domcontentloaded`);
@@ -161,6 +176,7 @@ module.exports = class Session extends EventEmitter {
         content: String(await fs.promises.readFile('./node_modules/rtcstats/rtcstats.js')).replace('module.exports = function', 'function rtcstats'),
         type: 'text/javascript'
       });
+
       await page.addScriptTag({
         content: `rtcstats(window.traceRtcStats, ${config.STATS_INTERVAL * 1000}, ['', 'webkit', 'moz']);`,
         type: 'text/javascript'
@@ -168,15 +184,18 @@ module.exports = class Session extends EventEmitter {
 
       // add external script
       if (config.SCRIPT_PATH) {
+        
         await page.addScriptTag({
           content: `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
                   +`window.WEBRTC_STRESS_TEST_TAB = ${index + 1};`,
           type: 'text/javascript'
         });
+
         await page.addScriptTag({
           content: String(await fs.promises.readFile(config.SCRIPT_PATH)),
           type: 'text/javascript'
         });
+
       }
 
       // enable perf
@@ -186,17 +205,22 @@ module.exports = class Session extends EventEmitter {
       // add to pages map
       this.pages.set(index, { page/* , client */ });
     });
+
     page.on('close', () => {
       log.info(`${this.id} page closed: ${url}`);
       this.pages.delete(index);
+
       setTimeout(async () => {
         await this.openPage(index);
       }, config.SPAWN_PERIOD);
     });
+
     if (config.ENABLE_PAGE_LOG) {
       page.on('console', (msg) => console.log(chalk`{yellow {bold [page ${this.id}-${index}]} ${msg.text()}}`));
     }
+
     await page.goto(url);
+    
     // select the first blank page
     const pages = await this.browser.pages();
     await pages[0].bringToFront();
@@ -206,9 +230,12 @@ module.exports = class Session extends EventEmitter {
     if (!this.browser) {
       return;
     }
+
     const pid = this.browser.process().pid;
     //log.debug('updateStats', pid);
+
     Object.assign(this.stats, await getProcessStats(pid, true));
+
     //
     /* for(const [index, { page, client }] of this.pages.entries()) {
       const metrics = await client.send('Performance.getMetrics');
@@ -221,17 +248,19 @@ module.exports = class Session extends EventEmitter {
       }
       log.info(`page-${index}:`, pageMetrics);
     } */
+
     //
     this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.STATS_INTERVAL * 1000);
   }
 
   async stop(){
     log.debug(`${this.id} stop`);
-    //
+    
     if (this.updateStatsTimeout) {
       clearTimeout(this.updateStatsTimeout);
       this.updateStatsTimeout = null;
     }
+
     if (this.browser) {
       try {
         await this.browser.close();
@@ -241,7 +270,7 @@ module.exports = class Session extends EventEmitter {
       this.browser = null;
       this.pages = new Map();
     }
-    //
+
     this.emit('stop');
   }
 

@@ -99,6 +99,11 @@ async function main() {
                     .forEach(v => bytesReceived.push(v / 1e6));
                 Object.values(session.stats.bytesSent)
                     .forEach(v => bytesSent.push(v / 1e6));
+                /*
+                googActualEncBitrates.push(Object.values(session.stats.googActualEncBitrates).reduce((o, v) => o += v / 1000, 0));
+                bytesReceived.push(Object.values(session.stats.bytesReceived).reduce((o, v) => o += v / 1e6, 0));
+                bytesSent.push(Object.values(session.stats.bytesSent).reduce((o, v) => o += v / 1e6, 0));
+                */
             }
         });
 
