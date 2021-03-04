@@ -1,7 +1,7 @@
 /* eslint no-cond-assign:0, no-console:0 */
 'use strict';
 
-const log = require('debug-level')('app:client');
+const log = require('debug-level')('app:session');
 const EventEmitter = require('events');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
@@ -9,21 +9,23 @@ const puppeteer = require('puppeteer');
 const { getProcessStats } = require('./stats');
 const config = require('../config');
 
-module.exports = class RtcClient extends EventEmitter {
+module.exports = class Session extends EventEmitter {
   constructor ({ id }) {
     super();
     log.debug('constructor', { id });
     this.id = id;
     //
+    this.stats = null;
+    this.updateStatsTimeout = null;
     this.browser = null;
     this.pages = new Map();
   }
 
   async start(){
-    log.debug('start');
+    log.debug(`${this.id} start`);
 
     try {
-      log.debug('defaultArgs:', puppeteer.defaultArgs());
+      // log.debug('defaultArgs:', puppeteer.defaultArgs());
       this.browser = await puppeteer.launch({ 
         headless: !process.env.DISPLAY,
         executablePath: '/usr/bin/chromium-browser-unstable',
@@ -61,18 +63,19 @@ module.exports = class RtcClient extends EventEmitter {
           '--no-user-gesture-required',
           '--autoplay-policy=no-user-gesture-required',
           '--disable-infobars',
-          '--use-fake-ui-for-media-stream',
-          '--use-fake-device-for-media-stream',
           '--enable-precise-memory-info',
           '--ignore-gpu-blacklist',
           '--force-fieldtrials=AutomaticTabDiscarding/Disabled' //'/WebRTC-Vp9DependencyDescriptor/Enabled/WebRTC-DependencyDescriptorAdvertised/Enabled',
-        ]/* .concat(
-          !process.env.DISPLAY ? ['--headless'] : []
-        ) */.concat(
-          config.VIDEO_PATH && config.PUBLISH_VIDEO ? ['--use-file-for-fake-video-capture=/tmp/video.y4m'] : []
-        ).concat(
-          config.VIDEO_PATH && config.PUBLISH_AUDIO ? ['--use-file-for-fake-audio-capture=/tmp/audio.wav'] : []
-        )/* .concat(['about:blank']) */
+        ].concat(
+          config.VIDEO_PATH ? [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            '--use-file-for-fake-video-capture=/tmp/video.y4m',
+            '--use-file-for-fake-audio-capture=/tmp/audio.wav'
+          ] : []
+        )
+        /* .concat(!process.env.DISPLAY ? ['--headless'] : []) */
+        /* .concat(['about:blank']) */
       });
 
       this.browser.once('disconnected', () => {
@@ -80,24 +83,28 @@ module.exports = class RtcClient extends EventEmitter {
         this.stop();
       });
 
+      // open pages
       for (let i=0; i<config.TABS_PER_SESSION; i++) {
         setTimeout(async () => {
           await this.openPage(i);
-        }, i*config.SPAWN_PERIOD);
+        }, i * config.SPAWN_PERIOD);
       }
 
+      // collect stats
+      this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.LOG_INTERVAL * 1000);
+
     } catch(err) {
-      log.error('start error:', err);
+      log.error(`${this.id} start error:`, err);
       this.stop();
     }
   }
 
   async openPage(index) {
     const url = `${config.URL}?displayName=User-${this.id}.${index}`;
-    log.info(`opening page: ${url}`);
+    log.info(`${this.id} opening page: ${url}`);
     const page = await this.browser.newPage();
     page.once('domcontentloaded', async () => {
-      log.debug('page domcontentloaded');
+      log.debug(`${this.id} page domcontentloaded`);
       if (config.SCRIPT_PATH) {
         await page.addScriptTag({
           content: String(await fs.promises.readFile(config.SCRIPT_PATH)),
@@ -110,7 +117,7 @@ module.exports = class RtcClient extends EventEmitter {
       this.pages.set(index, { page, client });
     });
     page.on('close', () => {
-      log.info(`page closed: ${url}`);
+      log.info(`${this.id} page closed: ${url}`);
       this.pages.delete(index);
       setTimeout(async () => {
         await this.openPage(index);
@@ -123,13 +130,13 @@ module.exports = class RtcClient extends EventEmitter {
     await pages[0].bringToFront();
   }
 
-  async getStats() {
+  async updateStats() {
     if (!this.browser) {
-      return {};
+      return;
     }
     const pid = this.browser.process().pid;
-    //log.debug('getStats', pid);
-    const stats = await getProcessStats(pid, true);
+    //log.debug('updateStats', pid);
+    this.stats = await getProcessStats(pid, true);
     //
     /* for(const [index, { page, client }] of this.pages.entries()) {
       const metrics = await client.send('Performance.getMetrics');
@@ -143,12 +150,16 @@ module.exports = class RtcClient extends EventEmitter {
       log.info(`page-${index}:`, pageMetrics);
     } */
     //
-    return stats;
+    this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.LOG_INTERVAL * 1000);
   }
 
   async stop(){
-    log.debug('stop');
+    log.debug(`${this.id} stop`);
     //
+    if (this.updateStatsTimeout) {
+      clearTimeout(this.updateStatsTimeout);
+      this.updateStatsTimeout = null;
+    }
     if (this.browser) {
       try {
         await this.browser.close();
@@ -160,7 +171,6 @@ module.exports = class RtcClient extends EventEmitter {
     }
     //
     this.emit('stop');
-    process.exit(0);
   }
 
 }

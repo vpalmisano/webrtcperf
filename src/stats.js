@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const pidusage = require('pidusage');
 const psTree = require('ps-tree');
 const moment = require('moment');
@@ -38,7 +39,7 @@ const getProcessStats = module.exports.getProcessStats = async function(pid = nu
 }
 
 
-module.exports.StatsWriter = class StatsWriter{
+module.exports.StatsWriter = class StatsWriter {
     constructor(fname='stats.log', columns){
         this.fname = fname;
         this.columns = columns;

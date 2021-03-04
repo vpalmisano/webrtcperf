@@ -14,9 +14,9 @@ is disabled, lowering the CPU requirements when running multiple instances.
 git clone https://github.com/vpalmisano/webrtc-stress-test.git
 
 URL=https://127.0.0.1:3443/test \
-SCRIPT_PATH=./scripts/edumeet.js \
-WORKERS=1 \
-SESSIONS_PER_WORKER=4 \
+VIDEO_PATH=./video.mp4 \
+SCRIPT_PATH=./scripts/edumeet-sendrecv.js \
+SESSIONS=1 \
 TABS_PER_SESSION=1 \
 DEBUG=DEBUG:* \
 USE_NULL_VIDEO_DECODER=1 \
@@ -29,9 +29,57 @@ USE_NULL_VIDEO_DECODER=1 \
 docker run -it --rm --name=webrtc-stress-test --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=https://EDUMEET_HOSTNAME:3443/test \
-    -e SCRIPT_PATH=/app/scripts/edumeet.js \
-    -e SESSIONS_PER_WORKER=4 \
+    -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
+    -e SESSIONS=4 \
     -e TABS_PER_SESSION=1 \
+    -e DEBUG='DEBUG:*' \
+    vpalmisano/webrtc-stress-test:latest
+```
+
+## Configuration options
+
+| Environment variable | Default value | Description |
+| :------------------- | :------------ | :---------- |
+| URL                  |               | The page url to load |
+| VIDEO_PATH           |               | The fake video path; if set, the video will be used as fake media source |
+| VIDEO_WIDTH          | 1280          | The fake video resize width |
+| VIDEO_HEIGHT         | 720           | The fake video resize height |
+| VIDEO_FRAMERATE      | 25            | The fake video framerate |
+| WINDOW_WIDTH         | 1920          | The window width |
+| WINDOW_HEIGHT        | 1080          | The window height |
+| SESSIONS             | 1             | The number of browser sessions to start |
+| TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session |
+| SPAWN_PERIOD         | 1000          | The sessions spawn period in ms |
+| SHOW_STATS           | true          | If statistics should be displayed on console output |
+| LOG_PATH             |               | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created |
+| LOG_INTERVAL         | 1             | The log interval in seconds |
+| SCRIPT_PATH          |               | The js script path; is set, the .js file content will be injected inside in the dom of each opened tab page |
+| DISPLAY              |                | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled |
+
+## Edumeet examples
+
+Starts one send-receive participant, with a random audio activation pattern:
+
+```sh
+docker run -it --rm --name=webrtc-stress-test --net=host \
+    -v /dev/shm:/dev/shm \
+    -e URL=https://EDUMEET_HOSTNAME:3443/test \
+    -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
+    -e SESSIONS=1 \
+    -e TABS_PER_SESSION=1 \
+    -e DEBUG='DEBUG:*' \
+    vpalmisano/webrtc-stress-test:latest
+```
+
+Starts 10 receive-only participants:
+
+```sh
+docker run -it --rm --name=webrtc-stress-test --net=host \
+    -v /dev/shm:/dev/shm \
+    -e URL=https://EDUMEET_HOSTNAME:3443/test \
+    -e SCRIPT_PATH=/app/scripts/edumeet-recv.js \
+    -e SESSIONS=1 \
+    -e TABS_PER_SESSION=10 \
     -e DEBUG='DEBUG:*' \
     vpalmisano/webrtc-stress-test:latest
 ```
