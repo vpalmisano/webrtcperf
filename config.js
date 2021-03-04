@@ -14,8 +14,8 @@ module.exports = {
     SPAWN_PERIOD: parseInt(process.env.SPAWN_PERIOD || 1000),
     ENABLE_PAGE_LOG: process.env.ENABLE_PAGE_LOG === 'true',
     SHOW_STATS: process.env.SHOW_STATS !== 'false',
-    LOG_PATH: process.env.LOG_PATH,
-    LOG_INTERVAL: parseInt(process.env.LOG_INTERVAL || 1),
+    STATS_PATH: process.env.STATS_PATH,
+    STATS_INTERVAL: parseInt(process.env.STATS_INTERVAL || 2),
     //
     SCRIPT_PATH: process.env.SCRIPT_PATH,
 }

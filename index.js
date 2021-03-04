@@ -8,6 +8,7 @@ const sprintf = require('sprintf-js').sprintf;
 const Stats = require('fast-stats').Stats;
 const Exec = require('child_process').exec;
 const moment = require('moment');
+const chalk = require('chalk');
 //
 const Session = require('./src/session');
 const { StatsWriter } = require('./src/stats');
@@ -31,8 +32,8 @@ async function main() {
     let sessions = [];
 
     let statsWriter = null;
-    if (config.LOG_PATH) {
-        let logPath = path.join(config.LOG_PATH, `${moment().format('YYYY-MM-DD_HH.mm.ss')}.csv`);
+    if (config.STATS_PATH) {
+        let logPath = path.join(config.STATS_PATH, `${moment().format('YYYY-MM-DD_HH.mm.ss')}.csv`);
         console.log(`Logging into ${logPath}`);
         statsWriter = new StatsWriter(logPath, [
             { name: 'instances' },
@@ -70,7 +71,7 @@ async function main() {
         if (config.SHOW_STATS) {
             let out = '';
             if (cpus.length) {
-                out += sprintf('%-03d cpu: %-3.2f mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [%%]\n',
+                out += sprintf(chalk`{bold %-03d} cpu: {bold %-3.2f%%} mean: %-3.2f%% (stdev: %-3.2f, 25p: %-3.2f%%, min: %-3.2f%%, max: %-3.2f%%)\n`,
                     cpus.length,
                     cpus.sum,
                     cpus.amean(),
@@ -81,7 +82,7 @@ async function main() {
                 );
             }
             if (mems.length) {
-                out += sprintf('    mem: %-3.2f mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n',
+                out += sprintf(chalk`    mem: {bold %-3.2f} mean: %-3.2f (stdev: %-3.2f, 25p: %-3.2f, min: %-3.2f, max: %-3.2f) [MB]\n`,
                     mems.sum,
                     mems.amean(),
                     mems.stddev(),
@@ -112,7 +113,7 @@ async function main() {
                 mems.max.toFixed(3),
             ]);
         }
-    }, config.LOG_INTERVAL * 1000);
+    }, config.STATS_INTERVAL * 1000);
 
     // prepare fake video and audio
     if (config.VIDEO_PATH) {
@@ -145,8 +146,7 @@ async function main() {
             sessions = [];
             process.exit(0);
         });
-    });
-   
+    });  
 }
 
 main().catch(err => {

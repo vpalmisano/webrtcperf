@@ -5,6 +5,7 @@ const log = require('debug-level')('app:session');
 const EventEmitter = require('events');
 const fs = require('fs');
 const puppeteer = require('puppeteer');
+const chalk = require('chalk');
 //
 const { getProcessStats } = require('./stats');
 const config = require('../config');
@@ -91,7 +92,7 @@ module.exports = class Session extends EventEmitter {
       }
 
       // collect stats
-      this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.LOG_INTERVAL * 1000);
+      this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.STATS_INTERVAL * 1000);
 
     } catch(err) {
       log.error(`${this.id} start error:`, err);
@@ -138,7 +139,7 @@ module.exports = class Session extends EventEmitter {
       }, config.SPAWN_PERIOD);
     });
     if (config.ENABLE_PAGE_LOG) {
-      page.on('console', (msg) => console.log(`[${this.id} PAGE]`, msg.text()));
+      page.on('console', (msg) => console.log(chalk`{yellow {bold [${this.id}-${index}]} ${msg.text()}}`));
     }
     await page.goto(url);
     // select the first blank page
@@ -166,7 +167,7 @@ module.exports = class Session extends EventEmitter {
       log.info(`page-${index}:`, pageMetrics);
     } */
     //
-    this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.LOG_INTERVAL * 1000);
+    this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.STATS_INTERVAL * 1000);
   }
 
   async stop(){
