@@ -14,6 +14,7 @@ lowering the CPU requirements when running multiple browser sessions.
 git clone https://github.com/vpalmisano/webrtc-stress-test.git
 
 URL=https://127.0.0.1:3443/test \
+URL_QUERY='displayName=Test $s/$S-$t/$T' \
 VIDEO_PATH=./video.mp4 \
 SCRIPT_PATH=./scripts/edumeet-sendrecv.js \
 SESSIONS=1 \
@@ -27,22 +28,23 @@ USE_NULL_VIDEO_DECODER=1 \
 
 | Environment variable | Default value | Description |
 | :------------------- | :------------ | :---------- |
-| URL                  | ''            | The page url to load (mandatory) |
-| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source; the docker image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from https://www.youtube.com/watch?v=o8NPllzkFhE  |
-| VIDEO_WIDTH          | 1280          | The fake video resize width |
-| VIDEO_HEIGHT         | 720           | The fake video resize height |
-| VIDEO_FRAMERATE      | 25            | The fake video framerate |
-| WINDOW_WIDTH         | 1920          | The browser window width |
-| WINDOW_HEIGHT        | 1080          | The browser window height |
-| DISPLAY              | ''            | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled |
-| SESSIONS             | 1             | The number of browser sessions to start |
-| TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session |
-| SPAWN_PERIOD         | 1000          | The sessions spawn period in ms |
-| ENABLE_PAGE_LOG      | `false`       | If `true`, the pages logs will be printed on console |
-| SHOW_STATS           | `true`        | If statistics should be displayed on console output |
-| LOG_PATH             | ''            | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created |
-| LOG_INTERVAL         | 1             | The log interval in seconds |
-| SCRIPT_PATH          | ''            | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page |
+| URL                  | ''            | The page url to load (mandatory). |
+| URL_QUERY            | ''            | The query string to append to the page url; the following template variables are avaialable: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session. |
+| SCRIPT_PATH          | ''            | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number. |
+| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source; the docker image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE).  |
+| VIDEO_WIDTH          | 1280          | The fake video resize width. |
+| VIDEO_HEIGHT         | 720           | The fake video resize height. |
+| VIDEO_FRAMERATE      | 25            | The fake video framerate. |
+| WINDOW_WIDTH         | 1920          | The browser window width. |
+| WINDOW_HEIGHT        | 1080          | The browser window height. |
+| DISPLAY              | ''            | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled. |
+| SESSIONS             | 1             | The number of browser sessions to start. |
+| TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session. |
+| SPAWN_PERIOD         | 1000          | The sessions spawn period in ms. |
+| ENABLE_PAGE_LOG      | `false`       | If `true`, the pages logs will be printed on console. |
+| SHOW_STATS           | `true`        | If statistics should be displayed on console output. |
+| LOG_PATH             | ''            | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created. |
+| LOG_INTERVAL         | 1             | The log interval in seconds. |
 
 ## Edumeet examples
 
@@ -50,10 +52,11 @@ Starts one send-receive participant, with a random audio activation pattern:
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test --net=host \
+docker run -it --rm --name=webrtc-stress-test-publisher --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
-    -e URL=https://EDUMEET_HOSTNAME:3443/test \
+    -e URL=$EDUMEET_URL \
+    -e URL_QUERY='displayName=Publisher $s-$t' \
     -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=1 \
@@ -65,9 +68,10 @@ Starts 10 receive-only participants:
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test --net=host \
+docker run -it --rm --name=webrtc-stress-test-viewer --net=host \
     -v /dev/shm:/dev/shm \
-    -e URL=https://EDUMEET_HOSTNAME:3443/test \
+    -e URL=$EDUMEET_URL \
+    -e URL_QUERY='displayName=Viewer $s-$t' \
     -e SCRIPT_PATH=/app/scripts/edumeet-recv.js \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=10 \

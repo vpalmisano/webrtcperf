@@ -100,12 +100,26 @@ module.exports = class Session extends EventEmitter {
   }
 
   async openPage(index) {
-    const url = `${config.URL}?displayName=User-${this.id}.${index}`;
+    let url = config.URL;
+    if (config.URL_QUERY) {
+      url += '?' + config.URL_QUERY
+        .replace(/\$s/g, this.id + 1)
+        .replace(/\$S/g, config.SESSIONS)
+        .replace(/\$t/g, index + 1)
+        .replace(/\$T/g, config.TABS_PER_SESSION)
+        .replace(/\$p/g, process.pid)
+        ;
+    }
     log.info(`${this.id} opening page: ${url}`);
     const page = await this.browser.newPage();
     page.once('domcontentloaded', async () => {
       log.debug(`${this.id} page domcontentloaded`);
       if (config.SCRIPT_PATH) {
+        await page.addScriptTag({
+          content: `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
+                  +`window.WEBRTC_STRESS_TEST_TAB =${index + 1};`,
+          type: 'text/javascript'
+        });
         await page.addScriptTag({
           content: String(await fs.promises.readFile(config.SCRIPT_PATH)),
           type: 'text/javascript'

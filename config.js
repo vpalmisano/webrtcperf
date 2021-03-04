@@ -1,5 +1,6 @@
 module.exports = {
     URL: process.env.URL,
+    URL_QUERY: process.env.URL_QUERY,
     VIDEO_PATH: process.env.VIDEO_PATH,
     VIDEO_WIDTH: parseInt(process.env.VIDEO_WIDTH || 1280),
     VIDEO_HEIGHT: parseInt(process.env.VIDEO_HEIGHT || 720),

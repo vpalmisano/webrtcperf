@@ -132,7 +132,7 @@ async function main() {
             let session = new Session({ id });
             await session.start();
             sessions.push(session);
-        }, i * config.SPAWN_PERIOD, `${process.pid}-${i}`);
+        }, i * config.SPAWN_PERIOD, i);
     }
 
     // catch signals
