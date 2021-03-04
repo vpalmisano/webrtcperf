@@ -123,7 +123,9 @@ module.exports = class Session extends EventEmitter {
         await this.openPage(index);
       }, config.SPAWN_PERIOD);
     });
-    //page.on('console', (msg) => log.debug('[PAGE] ', msg.text()));
+    if (config.ENABLE_PAGE_LOG) {
+      page.on('console', (msg) => console.log(`[${this.id} PAGE]`, msg.text()));
+    }
     await page.goto(url);
     // select the first blank page
     const pages = await this.browser.pages();

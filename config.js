@@ -11,9 +11,10 @@ module.exports = {
     SESSIONS: parseInt(process.env.SESSIONS || 1),
     TABS_PER_SESSION: parseInt(process.env.TABS_PER_SESSION || 1),
     SPAWN_PERIOD: parseInt(process.env.SPAWN_PERIOD || 1000),
+    ENABLE_PAGE_LOG: process.env.ENABLE_PAGE_LOG === 'true',
     SHOW_STATS: process.env.SHOW_STATS !== 'false',
     LOG_PATH: process.env.LOG_PATH,
     LOG_INTERVAL: parseInt(process.env.LOG_INTERVAL || 1),
     //
-    SCRIPT_PATH: process.env.SCRIPT_PATH || null,
+    SCRIPT_PATH: process.env.SCRIPT_PATH,
 }
