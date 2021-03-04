@@ -66,7 +66,7 @@ Statistics values:
 | :-------------------- | :------------ |
 | cpu                   | The browser process cpu usage. |
 | memory                | The browser process memory usage. |
-| googActualEncBitrates | The `googActualEncBitrates` for each established peer connection. |
+| googActualEncBitrates | The video `googActualEncBitrate` for each established peer connection. |
 | bytesReceived         | The `bytesReceived` value for each established peer connection. |
 | bytesSent             | The `bytesSent` value for each established peer connection. |
 
