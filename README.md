@@ -47,6 +47,29 @@ USE_NULL_VIDEO_DECODER=1 \
 | STATS_INTERVAL       | 1             | The log interval in seconds. |
 | DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
 
+## Statistics
+
+Example output:
+
+```
+                  cpu [1] sum: 140.80 mean: 140.80 stdev: 0.00 25p: 140.80 min: 140.80 max: 140.80 [%]
+               memory [1] sum: 1238.89 mean: 1238.89 stdev: 0.00 25p: 1238.89 min: 1238.89 max: 1238.89 [MB]
+googActualEncBitrates [2] sum: 1148.74 mean: 574.37 stdev: 2.67 25p: 574.37 min: 571.70 max: 577.04 [Kbps]
+        bytesReceived [4] sum: 11.05 mean: 2.76 stdev: 2.72 25p: 0.04 min: 0.04 max: 5.57 [MB]
+            bytesSent [4] sum: 13.25 mean: 3.31 stdev: 3.25 25p: 0.07 min: 0.07 max: 6.61 [MB]
+```
+
+Statistics values:
+
+| Name                  | Desscription  |
+| :-------------------- | :------------ |
+| cpu                   | The browser process cpu usage. |
+| memory                | The browser process memory usage. |
+| googActualEncBitrates | The `googActualEncBitrates` for each established peer connection. |
+| bytesReceived         | The `bytesReceived` value for each established peer connection. |
+| bytesSent             | The `bytesSent` value for each established peer connection. |
+
+
 ## Edumeet examples
 
 Starts one send-receive participant, with a random audio activation pattern:
