@@ -133,7 +133,6 @@ async function main() {
             await session.start();
             sessions.push(session);
         }, i * config.SPAWN_PERIOD, `${process.pid}-${i}`);
-        i += 1;
     }
 
     // catch signals
