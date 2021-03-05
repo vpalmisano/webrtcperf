@@ -361,10 +361,9 @@ module.exports = class Session extends EventEmitter {
           }
           for (const key of Object.keys(oldRTCPeerConnection)) {
             window.RTCPeerConnection[key] = oldRTCPeerConnection[key];
-          }
+          }         
           window.RTCPeerConnection.prototype = oldRTCPeerConnection.prototype;
         }
-         
         `,
         type: 'text/javascript'
       });

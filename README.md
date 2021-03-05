@@ -14,10 +14,31 @@ lowering the CPU requirements when running multiple browser sessions.
 ```sh
 git clone https://github.com/vpalmisano/webrtc-stress-test.git
 
+cd webrtc-stress-test
+
+# build the chromium customized version
+# cd chromium
+# ./build setup
+# ./build setup
+# ./build apply_patch
+# ./build build
+# cd ..
+
+# sendrecv test
 URL=https://127.0.0.1:3443/test \
-URL_QUERY='displayName=Test $s/$S-$t/$T' \
+URL_QUERY='displayName=SendRecv $s/$S-$t/$T' \
 VIDEO_PATH=./video.mp4 \
 SCRIPT_PATH=./scripts/edumeet-sendrecv.js \
+SESSIONS=1 \
+TABS_PER_SESSION=1 \
+DEBUG=DEBUG:* \
+USE_NULL_VIDEO_DECODER=true \
+    yarn start:dev index.js
+
+# recv only
+URL=https://127.0.0.1:3443/test \
+URL_QUERY='displayName=Recv $s/$S-$t/$T' \
+SCRIPT_PATH=./scripts/edumeet-recv.js \
 SESSIONS=1 \
 TABS_PER_SESSION=1 \
 DEBUG=DEBUG:* \
