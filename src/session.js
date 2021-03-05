@@ -279,7 +279,7 @@ module.exports = class Session extends EventEmitter {
       
       // load observertc
       await page.addScriptTag({
-        url: 'https://observertc.github.io/observer-js/dist/v0.6.0/observer.min.js',
+        url: 'https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js',
         type: 'text/javascript'
       });
 

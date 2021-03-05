@@ -7,7 +7,7 @@ Components used:
 - A patched version of chromium (see `./chromium` directory): setting the 
 `USE_NULL_VIDEO_DECODER` environment variable disables the video decoding, 
 lowering the CPU requirements when running multiple browser sessions.
-- RTC stats logging with [rtcstats](https://github.com/fippo/rtcstats).
+- RTC stats logging with [ObserveRTC](https://github.com/ObserveRTC/observer-js).
 
 ## Running from source code
 
