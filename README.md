@@ -69,6 +69,7 @@ Starts one send-receive participant, with a random audio activation pattern:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
+    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$EDUMEET_URL \
@@ -85,6 +86,7 @@ Starts 10 receive-only participants:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
+    --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=$EDUMEET_URL \
     -e URL_QUERY='displayName=Viewer $s-$t' \
@@ -99,7 +101,8 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher --net=host \
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$QUAVSTREAMS_ROOM_URL \
@@ -111,7 +114,8 @@ docker run -it --rm --name=webrtc-stress-test-publisher --net=host \
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher --net=host \
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=$QUAVSTREAMS_ROOM_URL \
     -e URL_QUERY='displayName=Viewer-$s-$t' \
