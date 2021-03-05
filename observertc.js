@@ -11,18 +11,21 @@ window.observer = new ObserverRTC
 
 console.log('Override RTCPeerConnection');
 const nativeRTCPeerConnection = window.RTCPeerConnection;
+
 window.RTCPeerConnection = function(config, constraints) {
     const pc = new nativeRTCPeerConnection(config, constraints);
     console.log('RTCPeerConnection add (state: ' + pc.signalingState + ')');
     window.observer.addPC(pc);
+
     let interval = setInterval(async () => {
-    if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
-        console.warn('RTCPeerConnection remove (state: ' + pc.signalingState + ')');
-        window.observer.removePC(pc);
-        window.clearInterval(interval);
-        return;
-    }
+        if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
+            console.warn('RTCPeerConnection remove (state: ' + pc.signalingState + ')');
+            window.observer.removePC(pc);
+            window.clearInterval(interval);
+            return;
+        }
     }, 2000);
+
     return pc;
 }
 
