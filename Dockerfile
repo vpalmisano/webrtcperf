@@ -16,8 +16,6 @@ RUN dpkg -i /$CHROMIUM_DEB || true \
 COPY chromium/$CHROMEDRIVER /usr/bin/
 RUN unxz /usr/bin/$CHROMEDRIVER
 
-ENV USE_NULL_VIDEO_DECODER=1
-
 RUN mkdir -p /app/
 COPY video.mp4 /app/
 

@@ -38,6 +38,7 @@ USE_NULL_VIDEO_DECODER=1 \
 | VIDEO_FRAMERATE      | 25            | The fake video framerate. |
 | WINDOW_WIDTH         | 1920          | The browser window width. |
 | WINDOW_HEIGHT        | 1080          | The browser window height. |
+| USE_NULL_VIDEO_DECODER | 'true'      | Disables the video decoding. This affects the RTC video jitter buffer stats. |
 | DISPLAY              | ''            | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled. |
 | SESSIONS             | 1             | The number of browser sessions to start. |
 | TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session. |
@@ -53,24 +54,28 @@ USE_NULL_VIDEO_DECODER=1 \
 Example output:
 
 ```
-                  cpu [1] sum: 53.23 mean: 53.23 stdev: 0.00 25p: 53.23 min: 53.23 max: 53.23 [%]
-               memory [1] sum: 781.04 mean: 781.04 stdev: 0.00 25p: 781.04 min: 781.04 max: 781.04 [MB]
-        bytesReceived [1] sum: 0.07 mean: 0.07 stdev: 0.00 25p: 0.07 min: 0.07 max: 0.07 [MB]
-         recvBitrates [1] sum: 0.01 mean: 0.01 stdev: 0.00 25p: 0.01 min: 0.01 max: 0.01 [Kbps]
-            bytesSent [4] sum: 34.61 mean: 8.65 stdev: 7.11 25p: 2.03 min: 0.41 max: 18.55 [MB]
-         sendBitrates [4] sum: 1.39 mean: 0.35 stdev: 0.29 25p: 0.08 min: 0.00 max: 0.74 [Kbps]
+                      cpu [1] sum: 53.23 mean: 53.23 stdev: 0.00 25p: 53.23 min: 53.23 max: 53.23 [%]
+                   memory [1] sum: 781.04 mean: 781.04 stdev: 0.00 25p: 781.04 min: 781.04 max: 781.04 [MB]
+            bytesReceived [1] sum: 0.07 mean: 0.07 stdev: 0.00 25p: 0.07 min: 0.07 max: 0.07 [MB]
+             recvBitrates [1] sum: 0.01 mean: 0.01 stdev: 0.00 25p: 0.01 min: 0.01 max: 0.01 [Kbps]
+                bytesSent [4] sum: 34.61 mean: 8.65 stdev: 7.11 25p: 2.03 min: 0.41 max: 18.55 [MB]
+             sendBitrates [4] sum: 1.39 mean: 0.35 stdev: 0.29 25p: 0.08 min: 0.00 max: 0.74 [Kbps]
+avgAudioJitterBufferDelay [1] sum: 0.02 mean: 0.02 stdev: 0.00 25p: 0.02 min: 0.02 max: 0.02 [ms]
+avgVideoJitterBufferDelay [1] sum: 0.08 mean: 0.08 stdev: 0.00 25p: 0.08 min: 0.08 max: 0.08 [ms]
 ```
 
 Statistics values:
 
-| Name                  | Desscription  |
-| :-------------------- | :------------ |
-| cpu                   | The browser process cpu usage. |
-| memory                | The browser process memory usage. |
-| bytesReceived         | The `bytesReceived` value for each established peer connection. |
-| recvBitrates          | The `bytesReceived` evaluated bitrates |
-| bytesSent             | The `bytesSent` value for each established peer connection. |
-| sendBitrates          | The `bytesSent` evaluated bitrates |
+| Name                      | Desscription |
+| :------------------------ | :----------- |
+| cpu                       | The browser process cpu usage. |
+| memory                    | The browser process memory usage. |
+| bytesReceived             | The `bytesReceived` value for each established peer connection. |
+| recvBitrates              | The `bytesReceived` evaluated bitrates |
+| bytesSent                 | The `bytesSent` value for each established peer connection. |
+| sendBitrates              | The `bytesSent` evaluated bitrates |
+| avgAudioJitterBufferDelay | The audio average jitter buffer delay. |
+| avgVideoJitterBufferDelay | The video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
 
 
 ## Edumeet examples

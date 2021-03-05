@@ -25,6 +25,8 @@ module.exports = class Session extends EventEmitter {
       recvBitrates: {},
       bytesSent: {},
       sendBitrates: {},
+      avgAudioJitterBufferDelay: {},
+      avgVideoJitterBufferDelay: {},
     };
     this.updateStatsTimeout = null;
     this.browser = null;
@@ -33,6 +35,13 @@ module.exports = class Session extends EventEmitter {
 
   async start(){
     log.debug(`${this.id} start`);
+
+    const env = {
+      DISPLAY: process.env.DISPLAY,
+    };
+    if (config.USE_NULL_VIDEO_DECODER) {
+      env.USE_NULL_VIDEO_DECODER = '1';
+    }
 
     try {
       // log.debug('defaultArgs:', puppeteer.defaultArgs());
@@ -49,6 +58,7 @@ module.exports = class Session extends EventEmitter {
           hasTouch: false,
           isLandscape: false
         },
+        env,
         //ignoreDefaultArgs: true,
         args: [ 
           //'--disable-gpu',
@@ -130,13 +140,14 @@ module.exports = class Session extends EventEmitter {
       //log.debug('traceRtcStats', util.inspect(sampleList, { depth: null }));
       const now = Date.now();
 
-      for(const sample of sampleList) {
+      for (const sample of sampleList) {
         const { peerConnectionId, receiverStats, senderStats } = sample;
         //log.debug('traceRtcStats', util.inspect(sample, { depth: null }));
 
         // receiver
-        let { inboundRTPStats } = receiverStats;
+        let { inboundRTPStats, tracks } = receiverStats;
         for (const stat of inboundRTPStats) {
+          //log.debug('traceRtcStats', util.inspect(stat, { depth: null }));
           /*
            {                                                                                                                                                                                                      
              bytesReceived: 923,                                                                                                                                                                                  
@@ -192,6 +203,38 @@ module.exports = class Session extends EventEmitter {
           // update values
           this.stats.timestamps[key] = now;
           this.stats.bytesReceived[key] = stat.bytesReceived;
+        }
+
+        for (const stat of tracks) {
+          //log.debug('traceRtcStats', util.inspect(stat, { depth: null }));
+          /*
+            {
+              concealedSamples: 0,
+              concealmentEvents: 0,
+              detached: false,
+              ended: false,
+              id: 'RTCMediaStreamTrack_receiver_5',
+              insertedSamplesForDeceleration: 120,
+              jitterBufferDelay: 2659.2,
+              jitterBufferEmittedCount: 29760,
+              mediaType: 'audio',
+              remoteSource: true,
+              removedSamplesForAcceleration: 0,
+              silentConcealedSamples: 0,
+              totalSamplesReceived: 228000
+            }
+          */
+
+          const key = `${index}_${peerConnectionId}_${stat.id}`;
+          if (stat.jitterBufferEmittedCount) {
+            let avgjitterBufferDelay = stat.jitterBufferDelay / stat.jitterBufferEmittedCount;
+            if (stat.mediaType === 'audio') {
+              this.stats.avgAudioJitterBufferDelay[key] = avgjitterBufferDelay;
+            } else if (stat.mediaType === 'video') {
+              this.stats.avgVideoJitterBufferDelay[key] = avgjitterBufferDelay;
+            }
+          }
+
         }
 
         // sender
@@ -268,6 +311,8 @@ module.exports = class Session extends EventEmitter {
           delete(this.stats.recvBitrates[key]);
           delete(this.stats.bytesSent[key]);
           delete(this.stats.sendBitrates[key]);
+          delete(this.stats.avgAudioJitterBufferDelay[key]);
+          delete(this.stats.avgVideoJitterBufferDelay[key]);
         }
       }
 
@@ -287,7 +332,7 @@ module.exports = class Session extends EventEmitter {
         content: `
         if (window.RTCPeerConnection) {
           window.observer = new ObserverRTC
-            .Builder({ wsAddress: '', poolingIntervalInMs: 2000 })
+            .Builder({ wsAddress: '', poolingIntervalInMs: ${1000 * config.STATS_INTERVAL} })
             .withIntegration('General')
             .withLocalTransport({
               onObserverRTCSample: (sampleList) => {
@@ -302,12 +347,12 @@ module.exports = class Session extends EventEmitter {
               if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
                 return;
               }
-              console.log('RTCPeerConnection add, state:', pc.signalingState);
+              console.log('RTCPeerConnection add (state: ' + pc.signalingState + ')');
               observer.addPC(pc);
 
               let interval = setInterval(async () => {
                 if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
-                  console.warn('RTCPeerConnection state:',  pc.signalingState);
+                  console.warn('RTCPeerConnection remove (state: ' + pc.signalingState + ')');
                   observer.removePC(pc);
                   window.clearInterval(interval);
                   return;
