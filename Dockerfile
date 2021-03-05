@@ -20,7 +20,7 @@ RUN mkdir -p /app/
 COPY video.mp4 /app/
 
 WORKDIR /app
-COPY package.json yarn.lock /app/
+COPY package.json yarn.lock observertc.js /app/
 COPY scripts /app/scripts/
 RUN yarn --production=true
 

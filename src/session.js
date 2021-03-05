@@ -57,7 +57,9 @@ module.exports = class Session extends EventEmitter {
           hasTouch: false,
           isLandscape: false
         },
-        //ignoreDefaultArgs: true,
+        ignoreDefaultArgs: [
+          '--disable-dev-shm-usage'
+        ],
         args: [ 
           //'--disable-gpu',
           /* '--disable-background-networking',
@@ -76,18 +78,17 @@ module.exports = class Session extends EventEmitter {
           '--mute-audio', */
           '--no-sandbox',
           //`--window-size=${config.WINDOW_WIDTH},${config.WINDOW_HEIGHT}`,
-          //'--disable-dev-shm-usage',
           '--ignore-certificate-errors',
           '--no-user-gesture-required',
           '--autoplay-policy=no-user-gesture-required',
           '--disable-infobars',
           '--enable-precise-memory-info',
           '--ignore-gpu-blacklist',
+          '--use-fake-ui-for-media-stream',
+          '--use-fake-device-for-media-stream',
           '--force-fieldtrials=AutomaticTabDiscarding/Disabled' //'/WebRTC-Vp9DependencyDescriptor/Enabled/WebRTC-DependencyDescriptorAdvertised/Enabled',
         ].concat(
           config.VIDEO_PATH ? [
-            '--use-fake-ui-for-media-stream',
-            '--use-fake-device-for-media-stream',
             '--use-file-for-fake-video-capture=/tmp/video.y4m',
             '--use-file-for-fake-audio-capture=/tmp/audio.wav'
           ] : []
@@ -316,10 +317,25 @@ module.exports = class Session extends EventEmitter {
 
     });
 
+    await page.evaluateOnNewDocument(
+       `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
+      +`window.WEBRTC_STRESS_TEST_TAB = ${index + 1};`
+      +`window.STATS_INTERVAL = ${config.STATS_INTERVAL};`
+    );
+
+    // load observertc
+    /* await page.evaluateOnNewDocument(await fs.promises.readFile('./node_modules/@ObserveRTC/observer-lib/dist/v0.6.1/observer.min.js', 'utf8'));
+    await page.evaluateOnNewDocument(await fs.promises.readFile('./observertc.js', 'utf8'));
+
+    // run external script
+    if (config.SCRIPT_PATH) {
+      await page.evaluateOnNewDocument(await fs.promises.readFile(config.SCRIPT_PATH, 'utf8'));
+    } */
+   
     //
     page.once('domcontentloaded', async () => {
       log.debug(`${this.id} page domcontentloaded`);
-      
+
       // load observertc
       await page.addScriptTag({
         url: 'https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js',
@@ -327,68 +343,22 @@ module.exports = class Session extends EventEmitter {
       });
 
       await page.addScriptTag({
-        content: `
-        if (window.RTCPeerConnection) {
-          window.observer = new ObserverRTC
-            .Builder({ wsAddress: '', poolingIntervalInMs: ${1000 * config.STATS_INTERVAL} })
-            .withIntegration('General')
-            .withLocalTransport({
-              onObserverRTCSample: (sampleList) => {
-                window.traceRtcStats(sampleList);
-              }
-            })
-            .build();
-
-          const oldRTCPeerConnection = window.RTCPeerConnection;
-          window.RTCPeerConnection = function() {
-              const pc = new oldRTCPeerConnection(arguments);
-              if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
-                return;
-              }
-              console.log('RTCPeerConnection add (state: ' + pc.signalingState + ')');
-              observer.addPC(pc);
-
-              let interval = setInterval(async () => {
-                if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
-                  console.warn('RTCPeerConnection remove (state: ' + pc.signalingState + ')');
-                  observer.removePC(pc);
-                  window.clearInterval(interval);
-                  return;
-                }
-              }, 2000);
-
-              return pc;
-          }
-          for (const key of Object.keys(oldRTCPeerConnection)) {
-            window.RTCPeerConnection[key] = oldRTCPeerConnection[key];
-          }         
-          window.RTCPeerConnection.prototype = oldRTCPeerConnection.prototype;
-        }
-        `,
+        path: './observertc.js',
         type: 'text/javascript'
       });
-
+      
       // add external script
       if (config.SCRIPT_PATH) {
-        
         await page.addScriptTag({
-          content: `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
-                  +`window.WEBRTC_STRESS_TEST_TAB = ${index + 1};`,
+          path: config.SCRIPT_PATH,
           type: 'text/javascript'
         });
-
-        await page.addScriptTag({
-          content: String(await fs.promises.readFile(config.SCRIPT_PATH)),
-          type: 'text/javascript'
-        });
-
       }
 
       // enable perf
       // https://chromedevtools.github.io/devtools-protocol/tot/Cast/
       //const client = await page.target().createCDPSession();
       //await client.send('Performance.enable', { timeDomain: 'timeTicks' });
-
       // add to pages map
       this.pages.set(index, { page/* , client */ });
     });
@@ -406,8 +376,9 @@ module.exports = class Session extends EventEmitter {
       page.on('console', (msg) => console.log(chalk`{yellow {bold [page ${this.id}-${index}]} ${msg.text()}}`));
     }
 
+    // open the page url
     await page.goto(url);
-    
+
     // select the first blank page
     const pages = await this.browser.pages();
     await pages[0].bringToFront();
