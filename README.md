@@ -53,11 +53,12 @@ USE_NULL_VIDEO_DECODER=1 \
 Example output:
 
 ```
-                  cpu [1] sum: 140.80 mean: 140.80 stdev: 0.00 25p: 140.80 min: 140.80 max: 140.80 [%]
-               memory [1] sum: 1238.89 mean: 1238.89 stdev: 0.00 25p: 1238.89 min: 1238.89 max: 1238.89 [MB]
-googActualEncBitrates [2] sum: 1148.74 mean: 574.37 stdev: 2.67 25p: 574.37 min: 571.70 max: 577.04 [Kbps]
-        bytesReceived [4] sum: 11.05 mean: 2.76 stdev: 2.72 25p: 0.04 min: 0.04 max: 5.57 [MB]
-            bytesSent [4] sum: 13.25 mean: 3.31 stdev: 3.25 25p: 0.07 min: 0.07 max: 6.61 [MB]
+                  cpu [1] sum: 53.23 mean: 53.23 stdev: 0.00 25p: 53.23 min: 53.23 max: 53.23 [%]
+               memory [1] sum: 781.04 mean: 781.04 stdev: 0.00 25p: 781.04 min: 781.04 max: 781.04 [MB]
+        bytesReceived [1] sum: 0.07 mean: 0.07 stdev: 0.00 25p: 0.07 min: 0.07 max: 0.07 [MB]
+         recvBitrates [1] sum: 0.01 mean: 0.01 stdev: 0.00 25p: 0.01 min: 0.01 max: 0.01 [Kbps]
+            bytesSent [4] sum: 34.61 mean: 8.65 stdev: 7.11 25p: 2.03 min: 0.41 max: 18.55 [MB]
+         sendBitrates [4] sum: 1.39 mean: 0.35 stdev: 0.29 25p: 0.08 min: 0.00 max: 0.74 [Kbps]
 ```
 
 Statistics values:
@@ -66,9 +67,10 @@ Statistics values:
 | :-------------------- | :------------ |
 | cpu                   | The browser process cpu usage. |
 | memory                | The browser process memory usage. |
-| googActualEncBitrates | The video `googActualEncBitrate` for each established peer connection. |
 | bytesReceived         | The `bytesReceived` value for each established peer connection. |
+| recvBitrates          | The `bytesReceived` evaluated bitrates |
 | bytesSent             | The `bytesSent` value for each established peer connection. |
+| sendBitrates          | The `bytesSent` evaluated bitrates |
 
 
 ## Edumeet examples
