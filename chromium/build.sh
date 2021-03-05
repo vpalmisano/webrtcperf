@@ -44,7 +44,7 @@ function build() {
     autoninja -C out/Default "chromedriver"
     cd -
     cp ${BUILDDIR}/chromium/src/out/Default/*.deb .
-    xz ${BUILDDIR}/chromium/src/out/Default/chromedriver -c chromedriver.xz
+    xz ${BUILDDIR}/chromium/src/out/Default/chromedriver -c > chromedriver.xz
 }
 
 function clean() {

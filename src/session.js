@@ -36,18 +36,17 @@ module.exports = class Session extends EventEmitter {
   async start(){
     log.debug(`${this.id} start`);
 
-    const env = {
-      DISPLAY: process.env.DISPLAY,
-    };
-    if (config.USE_NULL_VIDEO_DECODER) {
-      env.USE_NULL_VIDEO_DECODER = '1';
+    const env = {...process.env};
+    if (!config.USE_NULL_VIDEO_DECODER) {
+      delete(env.USE_NULL_VIDEO_DECODER);
     }
 
     try {
       // log.debug('defaultArgs:', puppeteer.defaultArgs());
       this.browser = await puppeteer.launch({ 
-        headless: !process.env.DISPLAY,
+        headless: !env.DISPLAY,
         executablePath: '/usr/bin/chromium-browser-unstable',
+        env,
         //devtools: true,
         ignoreHTTPSErrors: true,
         defaultViewport: {
@@ -58,7 +57,6 @@ module.exports = class Session extends EventEmitter {
           hasTouch: false,
           isLandscape: false
         },
-        env,
         //ignoreDefaultArgs: true,
         args: [ 
           //'--disable-gpu',
@@ -114,7 +112,7 @@ module.exports = class Session extends EventEmitter {
       this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.STATS_INTERVAL * 1000);
 
     } catch(err) {
-      log.error(`${this.id} start error:`, err);
+      console.error(`${this.id} start error:`, err);
       this.stop();
     }
   }
@@ -455,7 +453,7 @@ module.exports = class Session extends EventEmitter {
       try {
         await this.browser.close();
       } catch(err) {
-        log.error('browser close error:', err);
+        console.error('browser close error:', err);
       }
       this.browser = null;
       this.pages = new Map();

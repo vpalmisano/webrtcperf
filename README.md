@@ -38,7 +38,7 @@ USE_NULL_VIDEO_DECODER=1 \
 | VIDEO_FRAMERATE      | 25            | The fake video framerate. |
 | WINDOW_WIDTH         | 1920          | The browser window width. |
 | WINDOW_HEIGHT        | 1080          | The browser window height. |
-| USE_NULL_VIDEO_DECODER | 'true'      | Disables the video decoding. This affects the RTC video jitter buffer stats. |
+| USE_NULL_VIDEO_DECODER | 'false'     | Disables the video decoding. This affects the RTC video jitter buffer stats. |
 | DISPLAY              | ''            | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled. |
 | SESSIONS             | 1             | The number of browser sessions to start. |
 | TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session. |
@@ -84,7 +84,7 @@ Starts one send-receive participant, with a random audio activation pattern:
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher --net=host \
+docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$EDUMEET_URL \
@@ -99,7 +99,7 @@ Starts 10 receive-only participants:
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-viewer --net=host \
+docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
     -e URL=$EDUMEET_URL \
     -e URL_QUERY='displayName=Viewer $s-$t' \

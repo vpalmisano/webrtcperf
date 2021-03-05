@@ -8,7 +8,7 @@ module.exports = {
     //
     WINDOW_WIDTH: parseInt(process.env.WINDOW_WIDTH || 1920),
     WINDOW_HEIGHT: parseInt(process.env.WINDOW_HEIGHT || 1080),
-    USE_NULL_VIDEO_DECODER: process.env.USE_NULL_VIDEO_DECODER !== 'false',
+    USE_NULL_VIDEO_DECODER: process.env.USE_NULL_VIDEO_DECODER === 'true',
     //
     SESSIONS: parseInt(process.env.SESSIONS || 1),
     TABS_PER_SESSION: parseInt(process.env.TABS_PER_SESSION || 1),
