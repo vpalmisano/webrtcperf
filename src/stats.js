@@ -7,37 +7,37 @@ const sprintf = require('sprintf-js').sprintf;
 const chalk = require('chalk');
 
 const getProcessChildren = module.exports.getProcessChildren = function(pid) {
-  return new Promise((resolve, reject) => {
-    psTree(pid, (err, children) => { 
-      if (err) {
-        return reject(err);
-      }
-      resolve(children.map(c => c.PID));
+    return new Promise((resolve, reject) => {
+        psTree(pid, (err, children) => { 
+            if (err) {
+                return reject(err);
+            }
+            resolve(children.map(c => c.PID));
+        });
     });
-  });
 }
 
 const getProcessStats = module.exports.getProcessStats = async function(pid = null, children = false) {
-  const pidStats = await pidusage(pid || process.pid);
-  const stat = {
-    cpu: pidStats.cpu,
-    memory: pidStats.memory / 1e6,
-  };
-  if (pid && children) {
-    try {
-      const childrenPids = await getProcessChildren(pid || process.pid);
-      if (childrenPids && childrenPids.length) {
-        const pidStats = await pidusage(childrenPids);
-        for (const p of childrenPids) {
-          stat.cpu += pidStats[p].cpu;
-          stat.memory += pidStats[p].memory / 1e6;
+    const pidStats = await pidusage(pid || process.pid);
+    const stat = {
+        cpu: pidStats.cpu,
+        memory: pidStats.memory / 1e6,
+    };
+    if (pid && children) {
+        try {
+            const childrenPids = await getProcessChildren(pid || process.pid);
+            if (childrenPids && childrenPids.length) {
+                const pidStats = await pidusage(childrenPids);
+                for (const p of childrenPids) {
+                    stat.cpu += pidStats[p].cpu;
+                    stat.memory += pidStats[p].memory / 1e6;
+                }
+            }
+        } catch(err) {
+            console.error('getProcessStats error:', err);
         }
-      }
-    } catch(err) {
-      console.error('getProcessStats error:', err);
     }
-  }
-  return stat;
+    return stat;
 }
 
 module.exports.StatsWriter = class StatsWriter {
@@ -51,7 +51,7 @@ module.exports.StatsWriter = class StatsWriter {
         if (!this._header_written) {
             let data = 'datetime';
             this.columns.forEach((column) => {
-            data += `,${column.name}`;
+                data += `,${column.name}`;
             });
             await fs.promises.mkdir(path.dirname(this.fname), { recursive: true });
             await fs.promises.writeFile(this.fname, data+'\n');
@@ -66,16 +66,40 @@ module.exports.StatsWriter = class StatsWriter {
     } 
 }
 
-const formatStats = module.exports.formatStats = function(s) {
-  return {
-    length: s.length || 0,
-    sum:    s.sum || 0,
-    mean:   s.amean() || 0,
-    stddev: s.stddev() || 0,
-    p25:    s.percentile(25) || 0,
-    min:    s.min || 0,
-    max:    s.max || 0,
-  };
+const formatStatsColumns = module.exports.formatStatsColumns = function(column) {
+    return [
+        { name: column + '_length' },
+        { name: column + '_sum' },
+        { name: column + '_mean' },
+        { name: column + '_stdev' },
+        { name: column + '_25p' },
+        { name: column + '_min' },
+        { name: column + '_max' }
+    ];
+}
+
+const formatStats = module.exports.formatStats = function(s, forWriter = false) {
+    if (forWriter) {
+        return [
+            (s.length || 0),
+            (s.sum || 0).toFixed(3),
+            (s.amean() || 0).toFixed(3),
+            (s.stddev() || 0).toFixed(3),
+            (s.percentile(25) || 0).toFixed(3),
+            (s.min || 0).toFixed(3),
+            (s.max || 0).toFixed(3),
+        ];
+    }
+
+    return {
+        length: s.length || 0,
+        sum:    s.sum || 0,
+        mean:   s.amean() || 0,
+        stddev: s.stddev() || 0,
+        p25:    s.percentile(25) || 0,
+        min:    s.min || 0,
+        max:    s.max || 0,
+    };
 }
 
 module.exports.sprintfStats = function(name, stats, { format, unit, leftPadSize, scale } = { format: '.2f', unit: '', leftPadSize: 0, scale: 1 }) {

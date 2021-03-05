@@ -11,7 +11,7 @@ const moment = require('moment');
 const chalk = require('chalk');
 //
 const Session = require('./src/session');
-const { StatsWriter, sprintfStats } = require('./src/stats');
+const { StatsWriter, formatStatsColumns, formatStats, sprintfStats } = require('./src/stats');
 const config = require('./config');
 
 function ExecAsync(cmd) {
@@ -36,44 +36,12 @@ async function main() {
         let logPath = path.join(config.STATS_PATH, `${moment().format('YYYY-MM-DD_HH.mm.ss')}.csv`);
         console.log(`Logging into ${logPath}`);
         statsWriter = new StatsWriter(logPath, [
-            { name: 'instances' },
-            //
-            { name: 'cpu_sum' },
-            { name: 'cpu_mean' },
-            { name: 'cpu_stdev' },
-            { name: 'cpu_25p' },
-            { name: 'cpu_min' },
-            { name: 'cpu_max' },
-            //
-            { name: 'mem_sum' },
-            { name: 'mem_mean' },
-            { name: 'mem_stdev' },
-            { name: 'mem_25p' },
-            { name: 'mem_min' },
-            { name: 'mem_max' },
-            //
-            { name: 'googActualEncBitrates_sum' },
-            { name: 'googActualEncBitrates_mean' },
-            { name: 'googActualEncBitrates_stdev' },
-            { name: 'googActualEncBitrates_25p' },
-            { name: 'googActualEncBitrates_min' },
-            { name: 'googActualEncBitrates_max' },
-            //
-            { name: 'bytesReceived_length' },
-            { name: 'bytesReceived_sum' },
-            { name: 'bytesReceived_mean' },
-            { name: 'bytesReceived_stdev' },
-            { name: 'bytesReceived_25p' },
-            { name: 'bytesReceived_min' },
-            { name: 'bytesReceived_max' },
-            //
-            { name: 'bytesSent_length' },
-            { name: 'bytesSent_sum' },
-            { name: 'bytesSent_mean' },
-            { name: 'bytesSent_stdev' },
-            { name: 'bytesSent_25p' },
-            { name: 'bytesSent_min' },
-            { name: 'bytesSent_max' },
+            ...formatStatsColumns('cpu'),
+            ...formatStatsColumns('mem'),
+            ...formatStatsColumns('bytesReceived'),
+            ...formatStatsColumns('recvBitrates'),
+            ...formatStatsColumns('bytesSent'),
+            ...formatStatsColumns('sendBitrate'),
         ]);
     }
 
@@ -85,80 +53,48 @@ async function main() {
         // collect stats
         const cpus = new Stats();
         const mems = new Stats();
-        const googActualEncBitrates = new Stats();
         const bytesReceived = new Stats();
+        const recvBitrates = new Stats();
         const bytesSent = new Stats();
+        const sendBitrates = new Stats();
 
         sessions.forEach(session => {
-            if (session.stats) {
-                cpus.push(session.stats.cpu);
-                mems.push(session.stats.memory);
-                Object.values(session.stats.googActualEncBitrates)
-                    .forEach(v => googActualEncBitrates.push(v / 1000));
-                Object.values(session.stats.bytesReceived)
-                    .forEach(v => bytesReceived.push(v / 1e6));
-                Object.values(session.stats.bytesSent)
-                    .forEach(v => bytesSent.push(v / 1e6));
-                /*
-                googActualEncBitrates.push(Object.values(session.stats.googActualEncBitrates).reduce((o, v) => o += v, 0) / 1000);
-                bytesReceived.push(Object.values(session.stats.bytesReceived).reduce((o, v) => o += v, 0) / 1e6);
-                bytesSent.push(Object.values(session.stats.bytesSent).reduce((o, v) => o += v, 0) / 1e6);
-                */
+            if (!session.stats) {
+                return;
             }
+            cpus.push(session.stats.cpu);
+            mems.push(session.stats.memory);
+            Object.values(session.stats.bytesReceived)
+                .forEach(v => bytesReceived.push(v));
+            Object.values(session.stats.recvBitrates)
+                .forEach(v => recvBitrates.push(v));
+            Object.values(session.stats.bytesSent)
+                .forEach(v => bytesSent.push(v));
+            Object.values(session.stats.sendBitrates)
+                .forEach(v => sendBitrates.push(v));
         });
 
         // display stats on console
         if (config.SHOW_STATS) {
             let out = ''
-                + sprintfStats(`                  cpu`, cpus, { format: '.2f', unit: '%', scale: 1 })
+                + sprintfStats(`                  cpu`, cpus, { format: '.2f', unit: '%' })
                 + sprintfStats(`               memory`, mems, { format: '.2f', unit: 'MB', scale: 1 })
-                + sprintfStats(`googActualEncBitrates`, googActualEncBitrates, { format: '.2f', unit: 'Kbps', scale: 1 })
-                + sprintfStats(`        bytesReceived`, bytesReceived, { format: '.2f', unit: 'MB', scale: 1 })
-                + sprintfStats(`            bytesSent`, bytesSent, { format: '.2f', unit: 'MB', scale: 1 })
+                + sprintfStats(`        bytesReceived`, bytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`         recvBitrates`, recvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                + sprintfStats(`            bytesSent`, bytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`         sendBitrates`, sendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
                 +              '---------------------';
             console.log(out);
         }
         // write stats to file
         if (statsWriter && cpus.length) {
             await statsWriter.push([
-                cpus.length,
-                //
-                cpus.sum.toFixed(3),
-                cpus.amean().toFixed(3),
-                cpus.stddev().toFixed(3),
-                cpus.percentile(25).toFixed(3),
-                cpus.min.toFixed(3),
-                cpus.max.toFixed(3),
-                //
-                mems.sum.toFixed(3),
-                mems.amean().toFixed(3),
-                mems.stddev().toFixed(3),
-                mems.percentile(25).toFixed(3),
-                mems.min.toFixed(3),
-                mems.max.toFixed(3),
-                //
-                googActualEncBitrates.sum.toFixed(3),
-                googActualEncBitrates.amean().toFixed(3),
-                googActualEncBitrates.stddev().toFixed(3),
-                googActualEncBitrates.percentile(25).toFixed(3),
-                googActualEncBitrates.min.toFixed(3),
-                googActualEncBitrates.max.toFixed(3),
-                //
-                bytesReceived.length,
-                bytesReceived.sum.toFixed(3),
-                bytesReceived.amean().toFixed(3),
-                bytesReceived.stddev().toFixed(3),
-                bytesReceived.percentile(25).toFixed(3),
-                bytesReceived.min.toFixed(3),
-                bytesReceived.max.toFixed(3),
-                //
-                bytesSent.length,
-                bytesSent.sum.toFixed(3),
-                bytesSent.amean().toFixed(3),
-                bytesSent.stddev().toFixed(3),
-                bytesSent.percentile(25).toFixed(3),
-                bytesSent.min.toFixed(3),
-                bytesSent.max.toFixed(3),
+                ...formatStats(cpus, true),
+                ...formatStats(mems, true),
+                ...formatStats(bytesReceived, true),
+                ...formatStats(recvBitrates, true),
+                ...formatStats(bytesSent, true),
+                ...formatStats(sendBitrates, true),
             ]);
         }
     }, config.STATS_INTERVAL * 1000);

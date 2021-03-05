@@ -16,6 +16,7 @@ module.exports = {
     SHOW_STATS: process.env.SHOW_STATS !== 'false',
     STATS_PATH: process.env.STATS_PATH,
     STATS_INTERVAL: parseInt(process.env.STATS_INTERVAL || 2),
+    RTC_STATS_TIMEOUT: parseInt(process.env.RTC_STATS_TIMEOUT || 30),
     //
     SCRIPT_PATH: process.env.SCRIPT_PATH,
 }
