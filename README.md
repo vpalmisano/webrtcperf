@@ -66,16 +66,16 @@ avgVideoJitterBufferDelay [1] sum: 0.08 mean: 0.08 stdev: 0.00 25p: 0.08 min: 0.
 
 Statistics values:
 
-| Name                      | Desscription |
-| :------------------------ | :----------- |
-| cpu                       | The browser process cpu usage. |
-| memory                    | The browser process memory usage. |
-| bytesReceived             | The `bytesReceived` value for each established peer connection. |
-| recvBitrates              | The `bytesReceived` evaluated bitrates |
-| bytesSent                 | The `bytesSent` value for each established peer connection. |
-| sendBitrates              | The `bytesSent` evaluated bitrates |
-| avgAudioJitterBufferDelay | The audio average jitter buffer delay. |
-| avgVideoJitterBufferDelay | The video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
+| Name                      | Counter [N]  | Desscription |
+| :------------------------ | :----------- | :----------- |
+| cpu                       | Total sessions | The browser process cpu usage. |
+| memory                    | Total Sessions | The browser process memory usage. |
+| bytesReceived             | Total inbound streams | The `bytesReceived` value for each established peer connection. |
+| recvBitrates              | Total inbound streams | The `bytesReceived` evaluated bitrates |
+| bytesSent                 | Total outbound streams | The `bytesSent` value for each established peer connection. |
+| sendBitrates              | Total outbound streams | The `bytesSent` evaluated bitrates |
+| avgAudioJitterBufferDelay | Total audio tracks | The audio average jitter buffer delay. |
+| avgVideoJitterBufferDelay | Total video tracks | The video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
 
 
 ## Edumeet examples
