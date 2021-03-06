@@ -7,6 +7,7 @@ const fs = require('fs');
 const util = require('util');
 const puppeteer = require('puppeteer');
 const chalk = require('chalk');
+const requestretry = require('requestretry');
 //
 const { getProcessStats } = require('./stats');
 const config = require('../config');
@@ -84,11 +85,11 @@ module.exports = class Session extends EventEmitter {
           '--disable-infobars',
           '--enable-precise-memory-info',
           '--ignore-gpu-blacklist',
-          '--use-fake-ui-for-media-stream',
-          '--use-fake-device-for-media-stream',
           '--force-fieldtrials=AutomaticTabDiscarding/Disabled' //'/WebRTC-Vp9DependencyDescriptor/Enabled/WebRTC-DependencyDescriptorAdvertised/Enabled',
         ].concat(
           config.VIDEO_PATH ? [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
             '--use-file-for-fake-video-capture=/tmp/video.y4m',
             '--use-file-for-fake-audio-capture=/tmp/audio.wav'
           ] : []
@@ -324,11 +325,13 @@ module.exports = class Session extends EventEmitter {
     );
 
     // load observertc
-    /* await page.evaluateOnNewDocument(await fs.promises.readFile('./node_modules/@ObserveRTC/observer-lib/dist/v0.6.1/observer.min.js', 'utf8'));
-    await page.evaluateOnNewDocument(await fs.promises.readFile('./observertc.js', 'utf8'));
+    if (config.ENABLE_RTC_STATS) {
+      await page.evaluateOnNewDocument((await requestretry('https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js')).body);
+      await page.evaluateOnNewDocument(await fs.promises.readFile('./observertc.js', 'utf8'));
+    }
 
     // run external script
-    if (config.SCRIPT_PATH) {
+    /* if (config.SCRIPT_PATH) {
       await page.evaluateOnNewDocument(await fs.promises.readFile(config.SCRIPT_PATH, 'utf8'));
     } */
    
@@ -337,7 +340,7 @@ module.exports = class Session extends EventEmitter {
       log.debug(`${this.id} page domcontentloaded`);
 
       // load observertc
-      if (config.ENABLE_RTC_STATS) {
+      /* if (config.ENABLE_RTC_STATS) {
         await page.addScriptTag({
           url: 'https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js',
           type: 'text/javascript'
@@ -347,7 +350,7 @@ module.exports = class Session extends EventEmitter {
           path: './observertc.js',
           type: 'text/javascript'
         });
-      }
+      } */
       
       // add external script
       if (config.SCRIPT_PATH) {

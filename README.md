@@ -78,7 +78,6 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=1 \
-    -e USE_NULL_VIDEO_DECODER=true \
     vpalmisano/webrtc-stress-test:latest
 ```
 
@@ -94,7 +93,37 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
     -e SCRIPT_PATH=/app/scripts/edumeet-recv.js \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=10 \
-    -e USE_NULL_VIDEO_DECODER=true \
+    vpalmisano/webrtc-stress-test:latest
+```
+
+## Jitsi examples
+
+Starts one send-receive participant:
+
+```sh
+docker pull vpalmisano/webrtc-stress-test:latest
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    --net=host \
+    -v /dev/shm:/dev/shm \
+    -e VIDEO_PATH=/app/video.mp4 \
+    -e URL=$JITSI_ROOM_URL \
+    -e URL_QUERY='#config.prejoinPageEnabled=false&userInfo.displayName=Participant-$s-$t' \
+    -e SESSIONS=1 \
+    -e TABS_PER_SESSION=1 \
+    vpalmisano/webrtc-stress-test:latest
+```
+
+Starts 10 receive-only participants:
+
+```sh
+docker pull vpalmisano/webrtc-stress-test:latest
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    --net=host \
+    -v /dev/shm:/dev/shm \
+    -e URL=$JITSI_ROOM_URL \
+    -e URL_QUERY='#config.prejoinPageEnabled=false&userInfo.displayName=Participant-$s-$t' \
+    -e SESSIONS=1 \
+    -e TABS_PER_SESSION=10 \
     vpalmisano/webrtc-stress-test:latest
 ```
 
@@ -107,7 +136,7 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$QUAVSTREAMS_ROOM_URL \
-    -e URL_QUERY='displayName=Publisher-$s-$t&publish={"video":true,"audio":true}' \
+    -e URL_QUERY='displayName=Participant-$s-$t&publish={"video":true,"audio":true}' \
     -e SESSIONS=1 \
     -e TABS_PER_SESSION=1 \
     vpalmisano/webrtc-stress-test:latest
