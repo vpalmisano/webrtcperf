@@ -337,15 +337,17 @@ module.exports = class Session extends EventEmitter {
       log.debug(`${this.id} page domcontentloaded`);
 
       // load observertc
-      await page.addScriptTag({
-        url: 'https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js',
-        type: 'text/javascript'
-      });
+      if (config.ENABLE_RTC_STATS) {
+        await page.addScriptTag({
+          url: 'https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js',
+          type: 'text/javascript'
+        });
 
-      await page.addScriptTag({
-        path: './observertc.js',
-        type: 'text/javascript'
-      });
+        await page.addScriptTag({
+          path: './observertc.js',
+          type: 'text/javascript'
+        });
+      }
       
       // add external script
       if (config.SCRIPT_PATH) {

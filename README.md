@@ -31,6 +31,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | SHOW_STATS           | `true`        | If statistics should be displayed on console output. |
 | STATS_PATH           | ''            | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created. |
 | STATS_INTERVAL       | 1             | The log interval in seconds. |
+| ENABLE_RTC_STATS     | `true`        | Enables the collection if RTC stats using ObserveRTC |
 | DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
 
 ## Statistics
@@ -148,6 +149,7 @@ SCRIPT_PATH=./scripts/edumeet-sendrecv.js \
 SESSIONS=1 \
 TABS_PER_SESSION=1 \
 DEBUG=DEBUG:* \
+ENABLE_PAGE_LOG=true \
 USE_NULL_VIDEO_DECODER=true \
     yarn start:dev index.js
 
@@ -158,6 +160,7 @@ SCRIPT_PATH=./scripts/edumeet-recv.js \
 SESSIONS=1 \
 TABS_PER_SESSION=1 \
 DEBUG=DEBUG:* \
+ENABLE_PAGE_LOG=true \
 USE_NULL_VIDEO_DECODER=true \
     yarn start:dev index.js
 ```
