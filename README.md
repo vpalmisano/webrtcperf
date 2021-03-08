@@ -40,16 +40,17 @@ lowering the CPU requirements when running multiple browser sessions.
 Example output:
 
 ```
-                      cpu [1] sum: 53.23 mean: 53.23 stdev: 0.00 25p: 53.23 min: 53.23 max: 53.23 [%]
-                   memory [1] sum: 781.04 mean: 781.04 stdev: 0.00 25p: 781.04 min: 781.04 max: 781.04 [MB]
-            bytesReceived [1] sum: 0.07 mean: 0.07 stdev: 0.00 25p: 0.07 min: 0.07 max: 0.07 [MB]
-             recvBitrates [1] sum: 0.01 mean: 0.01 stdev: 0.00 25p: 0.01 min: 0.01 max: 0.01 [Kbps]
-                bytesSent [4] sum: 34.61 mean: 8.65 stdev: 7.11 25p: 2.03 min: 0.41 max: 18.55 [MB]
-   retransmittedBytesSent [4] sum: 0.00 mean: 0.00 stdev: 0.00 25p: 0.00 min: 0.00 max: 0.00 [MB]
-  qLimitResolutionChanges [3] sum: 0 mean: 0 stdev: 0 25p: 0 min: 0 max: 0
-             sendBitrates [4] sum: 1.39 mean: 0.35 stdev: 0.29 25p: 0.08 min: 0.00 max: 0.74 [Kbps]
-avgAudioJitterBufferDelay [1] sum: 0.02 mean: 0.02 stdev: 0.00 25p: 0.02 min: 0.02 max: 0.02 [ms]
-avgVideoJitterBufferDelay [1] sum: 0.08 mean: 0.08 stdev: 0.00 25p: 0.08 min: 0.08 max: 0.08 [ms]
+                          name    total      sum     mean   stddev      25p      min      max                                                                                                                                      
+                           cpu        1    69.33    69.33     0.00    69.33    69.33    69.33 %                                                                                                                                    
+                        memory        1   773.52   773.52     0.00   773.52   773.52   773.52 MB                                                                                                                                   
+                 bytesReceived        3     0.25     0.08     0.11     0.01     0.00     0.23 MB                                                                                                                                   
+                  recvBitrates        3   634.62   211.54   298.69     0.33     0.00   633.96 Kbps                                                                                                                                 
+     avgAudioJitterBufferDelay        1     0.10     0.10     0.00     0.10     0.10     0.10 ms                                                                                                                                   
+     avgVideoJitterBufferDelay        1     0.04     0.04     0.00     0.04     0.04     0.04 ms                                                                                                                                   
+                     bytesSent        4     2.20     0.55     0.44     0.14     0.05     1.15 MB                                                                                                                                   
+        retransmittedBytesSent        4     0.00     0.00     0.00     0.00     0.00     0.00 MB
+       qLimitResolutionChanges        3        0        0        0        0        0        0
+                  sendBitrates        4  1396.25   349.06   276.29    89.75    30.96   729.73 Kbps
 ```
 
 Statistics values:
