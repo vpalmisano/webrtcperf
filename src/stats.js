@@ -82,12 +82,12 @@ const formatStats = module.exports.formatStats = function(s, forWriter = false) 
     if (forWriter) {
         return [
             (s.length || 0),
-            (s.sum || 0).toFixed(3),
-            (s.amean() || 0).toFixed(3),
-            (s.stddev() || 0).toFixed(3),
-            (s.percentile(25) || 0).toFixed(3),
-            (s.min || 0).toFixed(3),
-            (s.max || 0).toFixed(3),
+            (s.sum || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3}),
+            (s.amean() || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3}),
+            (s.stddev() || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3}),
+            (s.percentile(25) || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3}),
+            (s.min || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3}),
+            (s.max || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3}),
         ];
     }
 
@@ -102,8 +102,15 @@ const formatStats = module.exports.formatStats = function(s, forWriter = false) 
     };
 }
 
+const sprintfStatsTitle = module.exports.sprintfStatsTitle = function(name) {
+    return sprintf(chalk`-- {bold %(name)s} %(fill)s\n`, { 
+        name,
+        fill: '-'.repeat(100 - name.length - 4)
+    });
+}
+
 module.exports.sprintfStatsHeader = function() {
-    return '-'.repeat(100) + '\n' +
+    return sprintfStatsTitle((new Date()).toUTCString()) +
         sprintf(chalk`{bold %(name)\' 30s} {bold %(length)\' 8s} {bold %(sum)\' 8s} {bold %(mean)\' 8s} {bold %(stddev)\' 8s} {bold %(p25)\' 8s} {bold %(min)\' 8s} {bold %(max)\' 8s}\n`, {
         name: 'name',
         length: 'count',
