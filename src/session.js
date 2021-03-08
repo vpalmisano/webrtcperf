@@ -22,14 +22,21 @@ module.exports = class Session extends EventEmitter {
       cpu: 0,
       memory: 0,
       timestamps: {},
-      bytesReceived: {},
-      recvBitrates: {},
-      bytesSent: {},
-      retransmittedBytesSent: {},
+      // inbound
+      audioBytesReceived: {},
+      audioRecvBitrates: {},
+      audioAvgJitterBufferDelay: {},
+      videoBytesReceived: {},
+      videoRecvBitrates: {},
+      videoAvgJitterBufferDelay: {},
+      // outbound
+      audioBytesSent: {},
+      audioRetransmittedBytesSent: {},
+      audioSendBitrates: {},
+      videoBytesSent: {},
+      videoRetransmittedBytesSent: {},
+      videoSendBitrates: {},
       qualityLimitationResolutionChanges: {},
-      sendBitrates: {},
-      avgAudioJitterBufferDelay: {},
-      avgVideoJitterBufferDelay: {},
     };
     this.updateStatsTimeout = null;
     this.browser = null;
@@ -193,16 +200,27 @@ module.exports = class Session extends EventEmitter {
           */
           const key = `${index}_${peerConnectionId}_${stat.id}`;
           
-          // calculate rate
-          if (this.stats.timestamps[key]) {
-            this.stats.recvBitrates[key] = 8000 * 
-              (stat.bytesReceived - this.stats.bytesReceived[key]) 
-              / (now - this.stats.timestamps[key]);
+          if (stat.mediaType === 'audio') {
+            // calculate rate
+            if (this.stats.timestamps[key]) {
+              this.stats.audioRecvBitrates[key] = 8000 * 
+                (stat.bytesReceived - this.stats.audioBytesReceived[key]) 
+                / (now - this.stats.timestamps[key]);
+            }
+            // update values
+            this.stats.timestamps[key] = now;
+            this.stats.audioBytesReceived[key] = stat.bytesReceived;
+          } else if (stat.mediaType === 'video') {
+            // calculate rate
+            if (this.stats.timestamps[key]) {
+              this.stats.videoRecvBitrates[key] = 8000 * 
+                (stat.bytesReceived - this.stats.videoBytesReceived[key]) 
+                / (now - this.stats.timestamps[key]);
+            }
+            // update values
+            this.stats.timestamps[key] = now;
+            this.stats.videoBytesReceived[key] = stat.bytesReceived;
           }
-
-          // update values
-          this.stats.timestamps[key] = now;
-          this.stats.bytesReceived[key] = stat.bytesReceived;
         }
 
         for (const stat of tracks) {
@@ -230,9 +248,9 @@ module.exports = class Session extends EventEmitter {
             // https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay
             let avgjitterBufferDelay = stat.jitterBufferDelay / stat.jitterBufferEmittedCount;
             if (stat.mediaType === 'audio') {
-              this.stats.avgAudioJitterBufferDelay[key] = avgjitterBufferDelay;
+              this.stats.audioAvgJitterBufferDelay[key] = avgjitterBufferDelay;
             } else if (stat.mediaType === 'video') {
-              this.stats.avgVideoJitterBufferDelay[key] = avgjitterBufferDelay;
+              this.stats.videoAvgJitterBufferDelay[key] = avgjitterBufferDelay;
             }
           }
 
@@ -289,22 +307,35 @@ module.exports = class Session extends EventEmitter {
           */
           const key = `${index}_${peerConnectionId}_${stat.id}`;
           
-          // calculate rate
-          if (this.stats.timestamps[key]) {
-            this.stats.sendBitrates[key] = 8000 * 
-              (
-                (stat.bytesSent - stat.retransmittedBytesSent) 
-                - (this.stats.bytesSent[key] - this.stats.retransmittedBytesSent[key])
-              )
-              / (now - this.stats.timestamps[key]);
-          }
-
-          // update values
-          this.stats.timestamps[key] = now;
-          this.stats.bytesSent[key] = stat.bytesSent;
-          this.stats.retransmittedBytesSent[key] = stat.retransmittedBytesSent;
-          
-          if (stat.mediaType === 'video') {
+          if (stat.mediaType === 'audio') {
+            // calculate rate
+            if (this.stats.timestamps[key]) {
+              this.stats.audioSendBitrates[key] = 8000 * 
+                (
+                  (stat.bytesSent - stat.audioRetransmittedBytesSent) 
+                  - (this.stats.audioBytesSent[key] - this.stats.audioRetransmittedBytesSent[key])
+                )
+                / (now - this.stats.timestamps[key]);
+            }
+            // update values
+            this.stats.timestamps[key] = now;
+            this.stats.audioBytesSent[key] = stat.bytesSent;
+            this.stats.audioRetransmittedBytesSent[key] = stat.retransmittedBytesSent;
+          } else if (stat.mediaType === 'video') {
+            // calculate rate
+            if (this.stats.timestamps[key]) {
+              this.stats.videoSendBitrates[key] = 8000 * 
+                (
+                  (stat.bytesSent - stat.videoRetransmittedBytesSent) 
+                  - (this.stats.videoBytesSent[key] - this.stats.videoRetransmittedBytesSent[key])
+                )
+                / (now - this.stats.timestamps[key]);
+            }
+            // update values
+            this.stats.timestamps[key] = now;
+            this.stats.videoBytesSent[key] = stat.bytesSent;
+            this.stats.videoRetransmittedBytesSent[key] = stat.retransmittedBytesSent;
+            // https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges
             this.stats.qualityLimitationResolutionChanges[key] = stat.qualityLimitationResolutionChanges;
           }
 
@@ -323,8 +354,8 @@ module.exports = class Session extends EventEmitter {
           delete(this.stats.sendBitrates[key]);
           delete(this.stats.retransmittedBytesSent[key]);
           delete(this.stats.qualityLimitationResolutionChanges[key]);
-          delete(this.stats.avgAudioJitterBufferDelay[key]);
-          delete(this.stats.avgVideoJitterBufferDelay[key]);
+          delete(this.stats.audioAvgJitterBufferDelay[key]);
+          delete(this.stats.videoAvgJitterBufferDelay[key]);
         }
       }
 

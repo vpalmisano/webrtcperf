@@ -35,13 +35,20 @@ async function main() {
     const STATS = [
         'cpu',
         'memory',
-        'bytesReceived',
-        'recvBitrates',
-        'avgAudioJitterBufferDelay',
-        'avgVideoJitterBufferDelay',
-        'bytesSent',
-        'retransmittedBytesSent',
-        'sendBitrates',
+        // inbound
+        'audioBytesReceived',
+        'audioRecvBitrates',
+        'audioAvgJitterBufferDelay',
+        'videoBytesReceived',
+        'videoRecvBitrates',
+        'videoAvgJitterBufferDelay',
+        // outbound
+        'audioBytesSent',
+        'audioRetransmittedBytesSent',
+        'audioSendBitrates',
+        'videoBytesSent',
+        'videoRetransmittedBytesSent',
+        'videoSendBitrates',
         'qualityLimitationResolutionChanges',
     ]
 
@@ -84,16 +91,23 @@ async function main() {
             let out = sprintfStatsHeader()
                 + sprintfStats('cpu', stats.cpu, { format: '.2f', unit: '%' })
                 + sprintfStats('memory', stats.memory, { format: '.2f', unit: 'MB', scale: 1 })
-                + sprintfStatsTitle('Inbound')
-                + sprintfStats('bytesReceived', stats.bytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
-                + sprintfStats('recvBitrates', stats.recvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
-                + sprintfStats('avgAudioJitterBufferDelay', stats.avgAudioJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
-                + sprintfStats('avgVideoJitterBufferDelay', stats.avgVideoJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
-                + sprintfStatsTitle('Outbound')
-                + sprintfStats('bytesSent', stats.bytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
-                + sprintfStats('retransmittedBytesSent', stats.retransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
-                + sprintfStats('sendBitrates', stats.sendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
-                + sprintfStats('qLimitResolutionChanges', stats.qualityLimitationResolutionChanges, { format: 'd', unit: '' })
+                + sprintfStatsTitle('Inbound audio')
+                + sprintfStats('received', stats.audioBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats('rate', stats.audioRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                + sprintfStats('avgJitterBufferDelay', stats.audioAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
+                + sprintfStatsTitle('Inbound video')
+                + sprintfStats('received', stats.videoBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats('rate', stats.videoRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                + sprintfStats('avgJitterBufferDelay', stats.videoAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
+                + sprintfStatsTitle('Outbound audio')
+                + sprintfStats('sent', stats.audioBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats('retransmitted', stats.audioRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats('rate', stats.audioSendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                + sprintfStatsTitle('Outbound video')
+                + sprintfStats('sent', stats.videoBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats('retransmitted', stats.videoRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats('rate', stats.videoSendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                + sprintfStats('qualityLimitResolutionChanges', stats.qualityLimitationResolutionChanges, { format: 'd', unit: '' })
                 ;
             console.log(out);
         }

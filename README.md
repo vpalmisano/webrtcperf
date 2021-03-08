@@ -40,20 +40,27 @@ lowering the CPU requirements when running multiple browser sessions.
 Example output:
 
 ```
--- Mon, 08 Mar 2021 11:06:14 GMT -------------------------------------------------------------------
+-- Mon, 08 Mar 2021 11:41:48 GMT -------------------------------------------------------------------
                           name    count      sum     mean   stddev      25p      min      max
-                           cpu        1    63.38    63.38     0.00    63.38    63.38    63.38 %
-                        memory        1   780.25   780.25     0.00   780.25   780.25   780.25 MB
--- Inbound -----------------------------------------------------------------------------------------
-                 bytesReceived        3     1.03     0.34     0.47     0.01     0.00     1.01 MB
-                  recvBitrates        2   293.28   146.64   146.64   146.64     0.00   293.28 Kbps
-     avgAudioJitterBufferDelay        1     0.03     0.03     0.00     0.03     0.03     0.03 ms
-     avgVideoJitterBufferDelay        1     0.11     0.11     0.00     0.11     0.11     0.11 ms
--- Outbound ----------------------------------------------------------------------------------------
-                     bytesSent        4     2.93     0.73     0.59     0.18     0.05     1.56 MB
-        retransmittedBytesSent        4     0.00     0.00     0.00     0.00     0.00     0.00 MB
-                  sendBitrates        4  1468.95   367.24   301.56    84.19     0.72   771.45 Kbps
-       qLimitResolutionChanges        3        0        0        0        0        0        0
+                           cpu        1    67.66    67.66     0.00    67.66    67.66    67.66 %
+                        memory        1   801.13   801.13     0.00   801.13   801.13   801.13 MB
+-- Inbound audio -----------------------------------------------------------------------------------
+                      received        1     0.02     0.02     0.00     0.02     0.02     0.02 MB
+                          rate        1     0.53     0.53     0.00     0.53     0.53     0.53 Kbps
+          avgJitterBufferDelay        1    85.27    85.27     0.00    85.27    85.27    85.27 ms
+-- Inbound video -----------------------------------------------------------------------------------
+                      received        2    26.62    13.31    13.22    13.31     0.09    26.53 MB
+                          rate        2   838.72   419.36   411.30   419.36     8.06   830.66 Kbps
+          avgJitterBufferDelay        1    90.86    90.86     0.00    90.86    90.86    90.86 ms
+-- Outbound audio ----------------------------------------------------------------------------------
+                          sent        1     0.50     0.50     0.00     0.50     0.50     0.50 MB
+                 retransmitted        1     0.00     0.00     0.00     0.00     0.00     0.00 MB
+                          rate        1     0.00     0.00     0.00     0.00     0.00     0.00 Kbps
+-- Outbound video ----------------------------------------------------------------------------------
+                          sent        3    43.62    14.54     7.70    10.06     4.68    23.49 MB
+                 retransmitted        3     0.00     0.00     0.00     0.00     0.00     0.00 MB
+                          rate        3     0.00     0.00     0.00     0.00     0.00     0.00 Kbps
+ qualityLimitResolutionChanges        3        0        0        0        0        0        0
 ```
 
 Statistics values:
@@ -62,14 +69,12 @@ Statistics values:
 | :------------------------ | :----------- | :----------- |
 | cpu                       | Total sessions | The browser process cpu usage. |
 | memory                    | Total Sessions | The browser process memory usage. |
-| bytesReceived             | Total inbound streams | The `bytesReceived` value for each inbound stream. |
-| recvBitrates              | Total inbound streams | The `bytesReceived` inbound streams bitrates |
-| avgAudioJitterBufferDelay | Total inbound audio tracks | The inbound audio average jitter buffer delay. |
-| avgVideoJitterBufferDelay | Total inbound video tracks | The inbound video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
-| bytesSent                 | Total outbound streams | The `bytesSent` value for each outbound stream. |
-| retransmittedBytesSent    | Total outbound streams | The `retransmittedBytesSent` value for each outbound stream. |
-| qLimitResolutionChanges   | Total outbound streams | The `qualityLimitationResolutionChanges` value for each outbound stream. |
-| sendBitrates              | Total outbound streams | The `bytesSent - retransmittedBytesSent` outbound streams rates. |
+| received                  | Total inbound streams | The `bytesReceived` value for each stream. |
+| sent                      | Total outbound streams | The `bytesSent` value for each stream. |
+| retransmitted             | Total outbound streams | The `retransmittedBytesSent` value for each stream. |
+| rate                      | Total streams | The streams bitrates |
+| avgJitterBufferDelay      | Total decoded tracks | The inbound average jitter buffer delay. |
+| qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` value for each outbound video stream. |
 
 
 ## Edumeet examples
