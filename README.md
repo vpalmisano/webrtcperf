@@ -34,7 +34,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | STATS_INTERVAL       | 1             | The log interval in seconds. |
 | ENABLE_RTC_STATS     | `true`        | Enables the collection of RTC stats using ObserveRTC |
 | DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
-| GET_USER_MEDIA_OVERRIDES | ''        | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second started tab in the first session. |
+| GET_USER_MEDIA_OVERRIDES | ''        | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second tab in the first session. |
 
 ## Statistics
 
