@@ -102,24 +102,37 @@ const formatStats = module.exports.formatStats = function(s, forWriter = false) 
     };
 }
 
-module.exports.sprintfStats = function(name, stats, { format, unit, leftPadSize, scale } = { format: '.2f', unit: '', leftPadSize: 0, scale: 1 }) {
-  if (!stats || !stats.length) {
-      return '';
-  }
-  if (!scale) {
-      scale = 1;
-  }
-  stats = formatStats(stats);
-  return sprintf(chalk`{red {bold %s%s}} [{bold %d}] sum: {bold %${format}} mean: {bold %${format}} stdev: {bold %${format}} 25p: {bold %${format}} min: {bold %${format}} max: {bold %${format}}%s\n`, 
-      ' '.repeat(leftPadSize || 0),
-      name,
-      stats.length,
-      stats.sum * scale,
-      stats.mean * scale,
-      stats.stddev * scale,
-      stats.p25 * scale,
-      stats.min * scale,
-      stats.max * scale,
-      unit ? chalk` [{red {bold ${unit}}}]` : ''
-  );
+module.exports.sprintfStatsHeader = function() {
+    return '-'.repeat(100) + '\n' +
+        sprintf(chalk`{bold %(name)\' 30s} {bold %(length)\' 8s} {bold %(sum)\' 8s} {bold %(mean)\' 8s} {bold %(stddev)\' 8s} {bold %(p25)\' 8s} {bold %(min)\' 8s} {bold %(max)\' 8s}\n`, {
+        name: 'name',
+        length: 'total',
+        sum: 'sum',
+        mean: 'mean',
+        stddev: 'stddev',
+        p25: '25p',
+        min: 'min',
+        max: 'max'
+    });
+}
+
+module.exports.sprintfStats = function(name, stats, { format, unit, scale } = { format: '.2f', unit: '', scale: 1 }) {
+    if (!stats || !stats.length) {
+        return '';
+    }
+    if (!scale) {
+        scale = 1;
+    }
+    stats = formatStats(stats);
+    return sprintf(chalk`{red {bold %(name)\' 30s}} {bold %(length)\' 8d} {bold %(sum)\' 8${format}} {bold %(mean)\' 8${format}} {bold %(stddev)\' 8${format}} {bold %(p25)\' 8${format}} {bold %(min)\' 8${format}} {bold %(max)\' 8${format}}%(unit)s\n`, {
+        name,
+        length: stats.length,
+        sum: stats.sum * scale,
+        mean: stats.mean * scale,
+        stddev: stats.stddev * scale,
+        p25: stats.p25 * scale,
+        min: stats.min * scale,
+        max: stats.max * scale,
+        unit: unit ? chalk` {red {bold ${unit}}}` : ''
+    });
 }

@@ -11,7 +11,7 @@ const moment = require('moment');
 const chalk = require('chalk');
 //
 const Session = require('./src/session');
-const { StatsWriter, formatStatsColumns, formatStats, sprintfStats } = require('./src/stats');
+const { StatsWriter, formatStatsColumns, formatStats, sprintfStats, sprintfStatsHeader } = require('./src/stats');
 const config = require('./config');
 
 function ExecAsync(cmd) {
@@ -40,6 +40,8 @@ async function main() {
             ...formatStatsColumns('mem'),
             ...formatStatsColumns('bytesReceived'),
             ...formatStatsColumns('recvBitrates'),
+            ...formatStatsColumns('avgAudioJitterBufferDelay'),
+            ...formatStatsColumns('avgVideoJitterBufferDelay'),
             ...formatStatsColumns('bytesSent'),
             ...formatStatsColumns('retransmittedBytesSent'),
             ...formatStatsColumns('qualityLimitationResolutionChanges'),
@@ -76,28 +78,28 @@ async function main() {
             mems.push(session.stats.memory);
             aggregateStats(session.stats.bytesReceived, bytesReceived);
             aggregateStats(session.stats.recvBitrates, recvBitrates);
+            aggregateStats(session.stats.avgAudioJitterBufferDelay, avgAudioJitterBufferDelay);
+            aggregateStats(session.stats.avgVideoJitterBufferDelay, avgVideoJitterBufferDelay);
             aggregateStats(session.stats.bytesSent, bytesSent);
             aggregateStats(session.stats.retransmittedBytesSent, retransmittedBytesSent);
             aggregateStats(session.stats.qualityLimitationResolutionChanges, qualityLimitationResolutionChanges);
             aggregateStats(session.stats.sendBitrates, sendBitrates);
-            aggregateStats(session.stats.avgAudioJitterBufferDelay, avgAudioJitterBufferDelay);
-            aggregateStats(session.stats.avgVideoJitterBufferDelay, avgVideoJitterBufferDelay);
         });
 
         // display stats on console
         if (config.SHOW_STATS) {
-            let out = ''
-                + sprintfStats(`                      cpu`, cpus, { format: '.2f', unit: '%' })
-                + sprintfStats(`                   memory`, mems, { format: '.2f', unit: 'MB', scale: 1 })
-                + sprintfStats(`            bytesReceived`, bytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
-                + sprintfStats(`             recvBitrates`, recvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
-                + sprintfStats(`                bytesSent`, bytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
-                + sprintfStats(`   retransmittedBytesSent`, retransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
-                + sprintfStats(`  qLimitResolutionChanges`, qualityLimitationResolutionChanges, { format: 'd', unit: '' })
-                + sprintfStats(`             sendBitrates`, sendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+            let out = sprintfStatsHeader()
+                + sprintfStats(`cpu`, cpus, { format: '.2f', unit: '%' })
+                + sprintfStats(`memory`, mems, { format: '.2f', unit: 'MB', scale: 1 })
+                + sprintfStats(`bytesReceived`, bytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`recvBitrates`, recvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
                 + sprintfStats(`avgAudioJitterBufferDelay`, avgAudioJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1 })
                 + sprintfStats(`avgVideoJitterBufferDelay`, avgVideoJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1 })
-                +              '-------------------------';
+                + sprintfStats(`bytesSent`, bytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`retransmittedBytesSent`, retransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`qLimitResolutionChanges`, qualityLimitationResolutionChanges, { format: 'd', unit: '' })
+                + sprintfStats(`sendBitrates`, sendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                ;
             console.log(out);
         }
         // write stats to file
@@ -107,12 +109,12 @@ async function main() {
                 ...formatStats(mems, true),
                 ...formatStats(bytesReceived, true),
                 ...formatStats(recvBitrates, true),
+                ...formatStats(avgAudioJitterBufferDelay, true),
+                ...formatStats(avgVideoJitterBufferDelay, true),
                 ...formatStats(bytesSent, true),
                 ...formatStats(retransmittedBytesSent, true),
                 ...formatStats(qualityLimitationResolutionChanges, true),
                 ...formatStats(sendBitrates, true),
-                ...formatStats(avgAudioJitterBufferDelay, true),
-                ...formatStats(avgVideoJitterBufferDelay, true),
             ]);
         }
     }, config.STATS_INTERVAL * 1000);
