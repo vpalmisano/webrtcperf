@@ -22,4 +22,5 @@ module.exports = {
     RTC_STATS_TIMEOUT: parseInt(process.env.RTC_STATS_TIMEOUT || 30),
     //
     SCRIPT_PATH: process.env.SCRIPT_PATH,
+    GET_USER_MEDIA_OVERRIDES: JSON.parse(process.env.GET_USER_MEDIA_OVERRIDES || '[]'),
 }

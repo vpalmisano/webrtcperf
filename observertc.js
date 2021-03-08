@@ -36,21 +36,28 @@ window.RTCPeerConnection.prototype = nativeRTCPeerConnection.prototype;
 
 console.log('Override getUserMedia');
 
-function onGetUserMedia(options) {
-    console.log('getUserMedia', JSON.stringify(options, null, 2));
+function overrideGetUserMedia(constraints) {
+    if (window.GET_USER_MEDIA_OVERRIDE) {
+        if (constraints.video && window.GET_USER_MEDIA_OVERRIDE.video) {
+            Object.assign(constraints.video, window.GET_USER_MEDIA_OVERRIDE.video);
+        }
+        if (constraints.audio && window.GET_USER_MEDIA_OVERRIDE.audio) {
+            Object.assign(constraints.audio, window.GET_USER_MEDIA_OVERRIDE.audio);
+        }
+        console.log('getUserMedia override result:', JSON.stringify(constraints, null, 2));
+    }
 }
 
-
 const nativeGetUserMedia = navigator.getUserMedia;
-navigator.getUserMedia = function() {
-    onGetUserMedia(arguments[0]);
-    return nativeGetUserMedia.apply(navigator, arguments);
+navigator.getUserMedia = function(constraints) {
+    overrideGetUserMedia(constraints, ...args);
+    return nativeGetUserMedia.apply(navigator, [constraints, ...args]);
 }
 
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const nativeGetUserMedia = navigator.mediaDevices.getUserMedia;
-    navigator.mediaDevices.getUserMedia = function() {
-        onGetUserMedia(arguments[0]);
-        return nativeGetUserMedia.apply(navigator.mediaDevices, arguments);
+    navigator.mediaDevices.getUserMedia = function(constraints, ...args) {
+        overrideGetUserMedia(constraints);
+        return nativeGetUserMedia.apply(navigator.mediaDevices, [constraints, ...args]);
     }
 }

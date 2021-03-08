@@ -14,7 +14,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | Environment variable | Default value | Description |
 | :------------------- | :------------ | :---------- |
 | URL                  | ''            | The page url to load (mandatory). |
-| URL_QUERY            | ''            | The query string to append to the page url; the following template variables are avaialable: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session. |
+| URL_QUERY            | ''            | The query string to append to the page url; the following template variables are avaialable: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session, `$i` the tab absolute index. |
 | SCRIPT_PATH          | ''            | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number. |
 | VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source; the docker image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE).  |
 | CHROMIUM_PATH        | `/usr/bin/chromium-browser-unstable` | The Chromium executable path. |
@@ -34,6 +34,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | STATS_INTERVAL       | 1             | The log interval in seconds. |
 | ENABLE_RTC_STATS     | `true`        | Enables the collection of RTC stats using ObserveRTC |
 | DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
+| GET_USER_MEDIA_OVERRIDES | ''        | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second started tab in the first session. |
 
 ## Statistics
 

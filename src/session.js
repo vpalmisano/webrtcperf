@@ -126,15 +126,18 @@ module.exports = class Session extends EventEmitter {
     }
   }
 
-  async openPage(index) {
+  async openPage(tabIndex) {
+    const index = (this.id * config.TABS_PER_SESSION) + tabIndex;
+
     let url = config.URL;
     
     if (config.URL_QUERY) {
       url += '?' + config.URL_QUERY
         .replace(/\$s/g, this.id + 1)
         .replace(/\$S/g, config.SESSIONS)
-        .replace(/\$t/g, index + 1)
+        .replace(/\$t/g, tabIndex + 1)
         .replace(/\$T/g, config.TABS_PER_SESSION)
+        .replace(/\$i/g, index + 1)
         .replace(/\$p/g, process.pid)
         ;
     }
@@ -395,9 +398,20 @@ module.exports = class Session extends EventEmitter {
 
     await page.evaluateOnNewDocument(
        `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
-      +`window.WEBRTC_STRESS_TEST_TAB = ${index + 1};`
+      +`window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1};`
+      +`window.WEBRTC_STRESS_TEST_INDEX = ${index + 1};`
       +`window.STATS_INTERVAL = ${config.STATS_INTERVAL};`
     );
+
+    //
+    
+    if (index < config.GET_USER_MEDIA_OVERRIDES.length) {
+      const override = config.GET_USER_MEDIA_OVERRIDES[index];
+      log.debug('Using getUserMedia override:', override);
+      await page.evaluateOnNewDocument(`
+        window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
+      `);
+    }
 
     // load observertc
     if (config.ENABLE_RTC_STATS) {
