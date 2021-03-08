@@ -106,7 +106,7 @@ module.exports.sprintfStatsHeader = function() {
     return '-'.repeat(100) + '\n' +
         sprintf(chalk`{bold %(name)\' 30s} {bold %(length)\' 8s} {bold %(sum)\' 8s} {bold %(mean)\' 8s} {bold %(stddev)\' 8s} {bold %(p25)\' 8s} {bold %(min)\' 8s} {bold %(max)\' 8s}\n`, {
         name: 'name',
-        length: 'total',
+        length: 'count',
         sum: 'sum',
         mean: 'mean',
         stddev: 'stddev',

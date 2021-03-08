@@ -55,7 +55,7 @@ Example output:
 
 Statistics values:
 
-| Name                      | Total        | Desscription |
+| Name                      | Count        | Desscription |
 | :------------------------ | :----------- | :----------- |
 | cpu                       | Total sessions | The browser process cpu usage. |
 | memory                    | Total Sessions | The browser process memory usage. |
