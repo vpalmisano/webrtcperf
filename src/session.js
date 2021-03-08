@@ -312,7 +312,7 @@ module.exports = class Session extends EventEmitter {
             if (this.stats.timestamps[key]) {
               this.stats.audioSendBitrates[key] = 8000 * 
                 (
-                  (stat.bytesSent - stat.audioRetransmittedBytesSent) 
+                  (stat.bytesSent - stat.retransmittedBytesSent) 
                   - (this.stats.audioBytesSent[key] - this.stats.audioRetransmittedBytesSent[key])
                 )
                 / (now - this.stats.timestamps[key]);
@@ -326,7 +326,7 @@ module.exports = class Session extends EventEmitter {
             if (this.stats.timestamps[key]) {
               this.stats.videoSendBitrates[key] = 8000 * 
                 (
-                  (stat.bytesSent - stat.videoRetransmittedBytesSent) 
+                  (stat.bytesSent - stat.retransmittedBytesSent) 
                   - (this.stats.videoBytesSent[key] - this.stats.videoRetransmittedBytesSent[key])
                 )
                 / (now - this.stats.timestamps[key]);
@@ -347,15 +347,22 @@ module.exports = class Session extends EventEmitter {
       for (const [key, timestamp] of Object.entries(this.stats.timestamps)) {
         if (now - timestamp > 1000 * config.RTC_STATS_TIMEOUT) {
           log.debug(`expired stat ${key}`);
+          //
           delete(this.stats.timestamps[key]);
-          delete(this.stats.bytesReceived[key]);
-          delete(this.stats.recvBitrates[key]);
-          delete(this.stats.bytesSent[key]);
-          delete(this.stats.sendBitrates[key]);
-          delete(this.stats.retransmittedBytesSent[key]);
-          delete(this.stats.qualityLimitationResolutionChanges[key]);
+          delete(this.stats.audioBytesReceived[key]);
+          delete(this.stats.audioRecvBitrates[key]);
           delete(this.stats.audioAvgJitterBufferDelay[key]);
+          delete(this.stats.videoBytesReceived[key]);
+          delete(this.stats.videoRecvBitrates[key]);
           delete(this.stats.videoAvgJitterBufferDelay[key]);
+          //
+          delete(this.stats.audioBytesSent[key]);
+          delete(this.stats.audioSendBitrates[key]);
+          delete(this.stats.audioRetransmittedBytesSent[key]);
+          delete(this.stats.videoBytesSent[key]);
+          delete(this.stats.videoSendBitrates[key]);
+          delete(this.stats.videoRetransmittedBytesSent[key]);
+          delete(this.stats.qualityLimitationResolutionChanges[key]);
         }
       }
 
