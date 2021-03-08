@@ -40,17 +40,20 @@ lowering the CPU requirements when running multiple browser sessions.
 Example output:
 
 ```
-                          name    total      sum     mean   stddev      25p      min      max                                                                                                                                      
-                           cpu        1    69.33    69.33     0.00    69.33    69.33    69.33 %                                                                                                                                    
-                        memory        1   773.52   773.52     0.00   773.52   773.52   773.52 MB                                                                                                                                   
-                 bytesReceived        3     0.25     0.08     0.11     0.01     0.00     0.23 MB                                                                                                                                   
-                  recvBitrates        3   634.62   211.54   298.69     0.33     0.00   633.96 Kbps                                                                                                                                 
-     avgAudioJitterBufferDelay        1     0.10     0.10     0.00     0.10     0.10     0.10 ms                                                                                                                                   
-     avgVideoJitterBufferDelay        1     0.04     0.04     0.00     0.04     0.04     0.04 ms                                                                                                                                   
-                     bytesSent        4     2.20     0.55     0.44     0.14     0.05     1.15 MB                                                                                                                                   
+-- Mon, 08 Mar 2021 11:06:14 GMT -------------------------------------------------------------------
+                          name    count      sum     mean   stddev      25p      min      max
+                           cpu        1    63.38    63.38     0.00    63.38    63.38    63.38 %
+                        memory        1   780.25   780.25     0.00   780.25   780.25   780.25 MB
+-- Inbound -----------------------------------------------------------------------------------------
+                 bytesReceived        3     1.03     0.34     0.47     0.01     0.00     1.01 MB
+                  recvBitrates        2   293.28   146.64   146.64   146.64     0.00   293.28 Kbps
+     avgAudioJitterBufferDelay        1     0.03     0.03     0.00     0.03     0.03     0.03 ms
+     avgVideoJitterBufferDelay        1     0.11     0.11     0.00     0.11     0.11     0.11 ms
+-- Outbound ----------------------------------------------------------------------------------------
+                     bytesSent        4     2.93     0.73     0.59     0.18     0.05     1.56 MB
         retransmittedBytesSent        4     0.00     0.00     0.00     0.00     0.00     0.00 MB
+                  sendBitrates        4  1468.95   367.24   301.56    84.19     0.72   771.45 Kbps
        qLimitResolutionChanges        3        0        0        0        0        0        0
-                  sendBitrates        4  1396.25   349.06   276.29    89.75    30.96   729.73 Kbps
 ```
 
 Statistics values:
