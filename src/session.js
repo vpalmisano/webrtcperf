@@ -48,7 +48,7 @@ module.exports = class Session extends EventEmitter {
       // log.debug('defaultArgs:', puppeteer.defaultArgs());
       this.browser = await puppeteer.launch({ 
         headless: !env.DISPLAY,
-        executablePath: '/usr/bin/chromium-browser-unstable',
+        executablePath: config.CHROMIUM_PATH,
         env,
         //devtools: true,
         ignoreHTTPSErrors: true,

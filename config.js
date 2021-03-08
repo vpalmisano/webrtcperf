@@ -6,6 +6,7 @@ module.exports = {
     VIDEO_HEIGHT: parseInt(process.env.VIDEO_HEIGHT || 720),
     VIDEO_FRAMERATE: parseInt(process.env.VIDEO_FRAMERATE || 25),
     //
+    CHROMIUM_PATH: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser-unstable',
     WINDOW_WIDTH: parseInt(process.env.WINDOW_WIDTH || 1920),
     WINDOW_HEIGHT: parseInt(process.env.WINDOW_HEIGHT || 1080),
     USE_NULL_VIDEO_DECODER: process.env.USE_NULL_VIDEO_DECODER === 'true',
