@@ -33,3 +33,24 @@ for (const key of Object.keys(nativeRTCPeerConnection)) {
     window.RTCPeerConnection[key] = nativeRTCPeerConnection[key];
 }
 window.RTCPeerConnection.prototype = nativeRTCPeerConnection.prototype;
+
+console.log('Override getUserMedia');
+
+function onGetUserMedia(options) {
+    console.log('getUserMedia', JSON.stringify(options, null, 2));
+}
+
+
+const nativeGetUserMedia = navigator.getUserMedia;
+navigator.getUserMedia = function() {
+    onGetUserMedia(arguments[0]);
+    return nativeGetUserMedia.apply(navigator, arguments);
+}
+
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const nativeGetUserMedia = navigator.mediaDevices.getUserMedia;
+    navigator.mediaDevices.getUserMedia = function() {
+        onGetUserMedia(arguments[0]);
+        return nativeGetUserMedia.apply(navigator.mediaDevices, arguments);
+    }
+}

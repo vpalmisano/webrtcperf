@@ -1,12 +1,16 @@
+const log = require('debug-level')('app:stats');
 const fs = require('fs');
 const path = require('path');
 const pidusage = require('pidusage');
 const psTree = require('ps-tree');
 const moment = require('moment');
 const sprintf = require('sprintf-js').sprintf;
+const { Stats } = require('fast-stats');
 const chalk = require('chalk');
+//
+const config = require('../config');
 
-const getProcessChildren = module.exports.getProcessChildren = function(pid) {
+function getProcessChildren(pid) {
     return new Promise((resolve, reject) => {
         psTree(pid, (err, children) => { 
             if (err) {
@@ -17,7 +21,7 @@ const getProcessChildren = module.exports.getProcessChildren = function(pid) {
     });
 }
 
-const getProcessStats = module.exports.getProcessStats = async function(pid = null, children = false) {
+const getProcessStats = module.exports.getProcessStats = async function (pid = null, children = false) {
     const pidStats = await pidusage(pid || process.pid);
     const stat = {
         cpu: pidStats.cpu,
@@ -40,7 +44,7 @@ const getProcessStats = module.exports.getProcessStats = async function(pid = nu
     return stat;
 }
 
-module.exports.StatsWriter = class StatsWriter {
+class StatsWriter {
     constructor(fname='stats.log', columns){
         this.fname = fname;
         this.columns = columns;
@@ -66,7 +70,7 @@ module.exports.StatsWriter = class StatsWriter {
     } 
 }
 
-const formatStatsColumns = module.exports.formatStatsColumns = function(column) {
+function formatStatsColumns(column) {
     return [
         { name: column + '_length' },
         { name: column + '_sum' },
@@ -78,7 +82,7 @@ const formatStatsColumns = module.exports.formatStatsColumns = function(column) 
     ];
 }
 
-const formatStats = module.exports.formatStats = function(s, forWriter = false) {
+function formatStats(s, forWriter = false) {
     if (forWriter) {
         return [
             (s.length || 0),
@@ -102,14 +106,14 @@ const formatStats = module.exports.formatStats = function(s, forWriter = false) 
     };
 }
 
-const sprintfStatsTitle = module.exports.sprintfStatsTitle = function(name) {
+function sprintfStatsTitle(name) {
     return sprintf(chalk`-- {bold %(name)s} %(fill)s\n`, { 
         name,
         fill: '-'.repeat(100 - name.length - 4)
     });
 }
 
-module.exports.sprintfStatsHeader = function() {
+function sprintfStatsHeader() {
     return sprintfStatsTitle((new Date()).toUTCString()) +
         sprintf(chalk`{bold %(name)\' 30s} {bold %(length)\' 8s} {bold %(sum)\' 8s} {bold %(mean)\' 8s} {bold %(stddev)\' 8s} {bold %(p25)\' 8s} {bold %(min)\' 8s} {bold %(max)\' 8s}\n`, {
         name: 'name',
@@ -123,7 +127,7 @@ module.exports.sprintfStatsHeader = function() {
     });
 }
 
-module.exports.sprintfStats = function(name, stats, { format, unit, scale } = { format: '.2f', unit: '', scale: 1 }) {
+function sprintfStats(name, stats, { format, unit, scale } = { format: '.2f', unit: '', scale: 1 }) {
     if (!stats || !stats.length) {
         return '';
     }
@@ -142,4 +146,114 @@ module.exports.sprintfStats = function(name, stats, { format, unit, scale } = { 
         max: stats.max * scale,
         unit: unit ? chalk` {red {bold ${unit}}}` : ''
     });
+}
+
+const STATS = [
+    'cpu',
+    'memory',
+    // inbound
+    'audioBytesReceived',
+    'audioRecvBitrates',
+    'audioAvgJitterBufferDelay',
+    'videoBytesReceived',
+    'videoRecvBitrates',
+    'videoAvgJitterBufferDelay',
+    // outbound
+    'audioBytesSent',
+    'audioRetransmittedBytesSent',
+    'audioSendBitrates',
+    'videoBytesSent',
+    'videoRetransmittedBytesSent',
+    'videoSendBitrates',
+    'qualityLimitationResolutionChanges',
+];
+
+module.exports.Stats = class {
+    constructor(sessions) {
+        this.sessions = sessions;
+        this.statsWriter = null;
+        this.statsInterval = null;
+    }
+
+    async start() {
+        log.debug('stop');
+
+        if (config.STATS_PATH) {
+            let logPath = path.join(config.STATS_PATH, `${moment().format('YYYY-MM-DD_HH.mm.ss')}.csv`);
+            log.info(`Logging into ${logPath}`);
+            const headers = STATS.reduce((v, name) => v.concat(formatStatsColumns(name)), []);
+            this.statsWriter = new StatsWriter(logPath, headers);
+        }
+    
+        function aggregateStats(obj, stat) {
+            if (typeof obj === 'number') {
+                stat.push(obj)
+            } else {
+                Object.values(obj).forEach(v => stat.push(v));
+            }
+        }
+    
+        this.statsInterval = setInterval(async () => {
+            // log.debug('statsInterval');
+
+            if (!this.sessions.length) {
+                return;
+            }
+    
+            // collect stats
+            const stats = STATS.reduce((obj, name) => { 
+                obj[name] = new Stats(); 
+                return obj; 
+            }, {});
+            
+            this.sessions.forEach(session => {
+                if (!session.stats) {
+                    return;
+                }
+                STATS.forEach(name => aggregateStats(session.stats[name], stats[name]));
+            });
+    
+            // display stats on console
+            if (config.SHOW_STATS) {
+                let out = sprintfStatsHeader()
+                    + sprintfStats('cpu', stats.cpu, { format: '.2f', unit: '%' })
+                    + sprintfStats('memory', stats.memory, { format: '.2f', unit: 'MB', scale: 1 })
+                    + sprintfStatsTitle('Inbound audio')
+                    + sprintfStats('received', stats.audioBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                    + sprintfStats('rate', stats.audioRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                    + sprintfStats('avgJitterBufferDelay', stats.audioAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
+                    + sprintfStatsTitle('Inbound video')
+                    + sprintfStats('received', stats.videoBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                    + sprintfStats('rate', stats.videoRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                    + sprintfStats('avgJitterBufferDelay', stats.videoAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
+                    + sprintfStatsTitle('Outbound audio')
+                    + sprintfStats('sent', stats.audioBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                    + sprintfStats('retransmitted', stats.audioRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                    + sprintfStats('rate', stats.audioSendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                    + sprintfStatsTitle('Outbound video')
+                    + sprintfStats('sent', stats.videoBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                    + sprintfStats('retransmitted', stats.videoRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                    + sprintfStats('rate', stats.videoSendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                    + sprintfStats('qualityLimitResolutionChanges', stats.qualityLimitationResolutionChanges, { format: 'd', unit: '' })
+                    ;
+                console.log(out);
+            }
+            // write stats to file
+            if (this.statsWriter) {
+                const values = STATS.reduce((v, name) => v.concat(formatStats(stats[name], true)), []);
+                await this.statsWriter.push(values);
+            }
+        }, config.STATS_INTERVAL * 1000);
+    }
+
+    stop() {
+        log.debug('stop');
+        if (this.statsInterval) {
+            clearInterval(this.statsInterval);
+            this.statsInterval = null;
+        }
+        this.sessions = [];
+        this.statsWriter = null;
+    }
+
 }
