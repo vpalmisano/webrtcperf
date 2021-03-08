@@ -76,10 +76,7 @@ async function main() {
             if (!session.stats) {
                 return;
             }
-            STATS.forEach(name => {
-                console.log(name, session.stats[name])
-                aggregateStats(session.stats[name], stats[name]);
-            });
+            STATS.forEach(name => aggregateStats(session.stats[name], stats[name]));
         });
 
         // display stats on console
