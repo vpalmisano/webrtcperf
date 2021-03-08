@@ -55,14 +55,14 @@ Example output:
 
 Statistics values:
 
-| Name                      | Counter [N]  | Desscription |
+| Name                      | Total        | Desscription |
 | :------------------------ | :----------- | :----------- |
 | cpu                       | Total sessions | The browser process cpu usage. |
 | memory                    | Total Sessions | The browser process memory usage. |
 | bytesReceived             | Total inbound streams | The `bytesReceived` value for each inbound stream. |
 | recvBitrates              | Total inbound streams | The `bytesReceived` inbound streams bitrates |
-| avgAudioJitterBufferDelay | Total inbound audio tracks | The audio average jitter buffer delay. |
-| avgVideoJitterBufferDelay | Total inbound video tracks | The video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
+| avgAudioJitterBufferDelay | Total inbound audio tracks | The inbound audio average jitter buffer delay. |
+| avgVideoJitterBufferDelay | Total inbound video tracks | The inbound video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
 | bytesSent                 | Total outbound streams | The `bytesSent` value for each outbound stream. |
 | retransmittedBytesSent    | Total outbound streams | The `retransmittedBytesSent` value for each outbound stream. |
 | qLimitResolutionChanges   | Total outbound streams | The `qualityLimitationResolutionChanges` value for each outbound stream. |
