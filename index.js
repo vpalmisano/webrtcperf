@@ -41,6 +41,8 @@ async function main() {
             ...formatStatsColumns('bytesReceived'),
             ...formatStatsColumns('recvBitrates'),
             ...formatStatsColumns('bytesSent'),
+            ...formatStatsColumns('retransmittedBytesSent'),
+            ...formatStatsColumns('qualityLimitationResolutionChanges'),
             ...formatStatsColumns('sendBitrate'),
         ]);
     }
@@ -56,22 +58,30 @@ async function main() {
         const bytesReceived = new Stats();
         const recvBitrates = new Stats();
         const bytesSent = new Stats();
+        const retransmittedBytesSent = new Stats();
+        const qualityLimitationResolutionChanges = new Stats();
         const sendBitrates = new Stats();
         const avgAudioJitterBufferDelay = new Stats();
         const avgVideoJitterBufferDelay = new Stats();
         
+        function aggregateStats(obj, stat) {
+            Object.values(obj).forEach(v => stat.push(v));
+        }
+
         sessions.forEach(session => {
             if (!session.stats) {
                 return;
             }
             cpus.push(session.stats.cpu);
             mems.push(session.stats.memory);
-            Object.values(session.stats.bytesReceived).forEach(v => bytesReceived.push(v));
-            Object.values(session.stats.recvBitrates).forEach(v => recvBitrates.push(v));
-            Object.values(session.stats.bytesSent).forEach(v => bytesSent.push(v));
-            Object.values(session.stats.sendBitrates).forEach(v => sendBitrates.push(v));
-            Object.values(session.stats.avgAudioJitterBufferDelay).forEach(v => avgAudioJitterBufferDelay.push(v));
-            Object.values(session.stats.avgVideoJitterBufferDelay).forEach(v => avgVideoJitterBufferDelay.push(v));
+            aggregateStats(session.stats.bytesReceived, bytesReceived);
+            aggregateStats(session.stats.recvBitrates, recvBitrates);
+            aggregateStats(session.stats.bytesSent, bytesSent);
+            aggregateStats(session.stats.retransmittedBytesSent, retransmittedBytesSent);
+            aggregateStats(session.stats.qualityLimitationResolutionChanges, qualityLimitationResolutionChanges);
+            aggregateStats(session.stats.sendBitrates, sendBitrates);
+            aggregateStats(session.stats.avgAudioJitterBufferDelay, avgAudioJitterBufferDelay);
+            aggregateStats(session.stats.avgVideoJitterBufferDelay, avgVideoJitterBufferDelay);
         });
 
         // display stats on console
@@ -82,6 +92,8 @@ async function main() {
                 + sprintfStats(`            bytesReceived`, bytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
                 + sprintfStats(`             recvBitrates`, recvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
                 + sprintfStats(`                bytesSent`, bytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`   retransmittedBytesSent`, retransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
+                + sprintfStats(`  qLimitResolutionChanges`, qualityLimitationResolutionChanges, { format: 'd', unit: '' })
                 + sprintfStats(`             sendBitrates`, sendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
                 + sprintfStats(`avgAudioJitterBufferDelay`, avgAudioJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1 })
                 + sprintfStats(`avgVideoJitterBufferDelay`, avgVideoJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1 })
@@ -96,6 +108,8 @@ async function main() {
                 ...formatStats(bytesReceived, true),
                 ...formatStats(recvBitrates, true),
                 ...formatStats(bytesSent, true),
+                ...formatStats(retransmittedBytesSent, true),
+                ...formatStats(qualityLimitationResolutionChanges, true),
                 ...formatStats(sendBitrates, true),
                 ...formatStats(avgAudioJitterBufferDelay, true),
                 ...formatStats(avgVideoJitterBufferDelay, true),

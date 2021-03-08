@@ -25,6 +25,8 @@ module.exports = class Session extends EventEmitter {
       bytesReceived: {},
       recvBitrates: {},
       bytesSent: {},
+      retransmittedBytesSent: {},
+      qualityLimitationResolutionChanges: {},
       sendBitrates: {},
       avgAudioJitterBufferDelay: {},
       avgVideoJitterBufferDelay: {},
@@ -85,7 +87,7 @@ module.exports = class Session extends EventEmitter {
           '--disable-infobars',
           '--enable-precise-memory-info',
           '--ignore-gpu-blacklist',
-          '--force-fieldtrials=AutomaticTabDiscarding/Disabled' //'/WebRTC-Vp9DependencyDescriptor/Enabled/WebRTC-DependencyDescriptorAdvertised/Enabled',
+          '--force-fieldtrials=AutomaticTabDiscarding/Disabled/WebRTC-Vp9DependencyDescriptor/Enabled/WebRTC-DependencyDescriptorAdvertised/Enabled',
         ].concat(
           config.VIDEO_PATH ? [
             '--use-fake-ui-for-media-stream',
@@ -105,9 +107,7 @@ module.exports = class Session extends EventEmitter {
 
       // open pages
       for (let i=0; i<config.TABS_PER_SESSION; i++) {
-        setTimeout(async () => {
-          await this.openPage(i);
-        }, i * config.SPAWN_PERIOD);
+        setTimeout(() => this.openPage(i), i * config.SPAWN_PERIOD);
       }
 
       // collect stats
@@ -195,7 +195,7 @@ module.exports = class Session extends EventEmitter {
           
           // calculate rate
           if (this.stats.timestamps[key]) {
-            this.stats.recvBitrates[key] = 8 * 
+            this.stats.recvBitrates[key] = 8000 * 
               (stat.bytesReceived - this.stats.bytesReceived[key]) 
               / (now - this.stats.timestamps[key]);
           }
@@ -290,14 +290,23 @@ module.exports = class Session extends EventEmitter {
           
           // calculate rate
           if (this.stats.timestamps[key]) {
-            this.stats.sendBitrates[key] = 8 * 
-              (stat.bytesSent - this.stats.bytesSent[key]) 
+            this.stats.sendBitrates[key] = 8000 * 
+              (
+                (stat.bytesSent - stat.retransmittedBytesSent) 
+                - (this.stats.bytesSent[key] - this.stats.retransmittedBytesSent[key])
+              )
               / (now - this.stats.timestamps[key]);
           }
 
           // update values
           this.stats.timestamps[key] = now;
-          this.stats.bytesSent[key] = stat.bytesSent;          
+          this.stats.bytesSent[key] = stat.bytesSent;
+          this.stats.retransmittedBytesSent[key] = stat.retransmittedBytesSent;
+          
+          if (stat.mediaType === 'video') {
+            this.stats.qualityLimitationResolutionChanges[key] = stat.qualityLimitationResolutionChanges;
+          }
+
         }
 
       }
@@ -311,6 +320,8 @@ module.exports = class Session extends EventEmitter {
           delete(this.stats.recvBitrates[key]);
           delete(this.stats.bytesSent[key]);
           delete(this.stats.sendBitrates[key]);
+          delete(this.stats.retransmittedBytesSent[key]);
+          delete(this.stats.qualityLimitationResolutionChanges[key]);
           delete(this.stats.avgAudioJitterBufferDelay[key]);
           delete(this.stats.avgVideoJitterBufferDelay[key]);
         }
@@ -329,29 +340,11 @@ module.exports = class Session extends EventEmitter {
       await page.evaluateOnNewDocument((await requestretry('https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js')).body);
       await page.evaluateOnNewDocument(await fs.promises.readFile('./observertc.js', 'utf8'));
     }
-
-    // run external script
-    /* if (config.SCRIPT_PATH) {
-      await page.evaluateOnNewDocument(await fs.promises.readFile(config.SCRIPT_PATH, 'utf8'));
-    } */
    
     //
     page.once('domcontentloaded', async () => {
       log.debug(`${this.id} page domcontentloaded`);
-
-      // load observertc
-      /* if (config.ENABLE_RTC_STATS) {
-        await page.addScriptTag({
-          url: 'https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js',
-          type: 'text/javascript'
-        });
-
-        await page.addScriptTag({
-          path: './observertc.js',
-          type: 'text/javascript'
-        });
-      } */
-      
+     
       // add external script
       if (config.SCRIPT_PATH) {
         await page.addScriptTag({
@@ -364,6 +357,7 @@ module.exports = class Session extends EventEmitter {
       // https://chromedevtools.github.io/devtools-protocol/tot/Cast/
       //const client = await page.target().createCDPSession();
       //await client.send('Performance.enable', { timeDomain: 'timeTicks' });
+
       // add to pages map
       this.pages.set(index, { page/* , client */ });
     });

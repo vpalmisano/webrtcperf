@@ -44,6 +44,8 @@ Example output:
             bytesReceived [1] sum: 0.07 mean: 0.07 stdev: 0.00 25p: 0.07 min: 0.07 max: 0.07 [MB]
              recvBitrates [1] sum: 0.01 mean: 0.01 stdev: 0.00 25p: 0.01 min: 0.01 max: 0.01 [Kbps]
                 bytesSent [4] sum: 34.61 mean: 8.65 stdev: 7.11 25p: 2.03 min: 0.41 max: 18.55 [MB]
+   retransmittedBytesSent [4] sum: 0.00 mean: 0.00 stdev: 0.00 25p: 0.00 min: 0.00 max: 0.00 [MB]
+  qLimitResolutionChanges [3] sum: 0 mean: 0 stdev: 0 25p: 0 min: 0 max: 0
              sendBitrates [4] sum: 1.39 mean: 0.35 stdev: 0.29 25p: 0.08 min: 0.00 max: 0.74 [Kbps]
 avgAudioJitterBufferDelay [1] sum: 0.02 mean: 0.02 stdev: 0.00 25p: 0.02 min: 0.02 max: 0.02 [ms]
 avgVideoJitterBufferDelay [1] sum: 0.08 mean: 0.08 stdev: 0.00 25p: 0.08 min: 0.08 max: 0.08 [ms]
@@ -55,10 +57,12 @@ Statistics values:
 | :------------------------ | :----------- | :----------- |
 | cpu                       | Total sessions | The browser process cpu usage. |
 | memory                    | Total Sessions | The browser process memory usage. |
-| bytesReceived             | Total inbound streams | The `bytesReceived` value for each established peer connection. |
-| recvBitrates              | Total inbound streams | The `bytesReceived` evaluated bitrates |
-| bytesSent                 | Total outbound streams | The `bytesSent` value for each established peer connection. |
-| sendBitrates              | Total outbound streams | The `bytesSent` evaluated bitrates |
+| bytesReceived             | Total inbound streams | The `bytesReceived` value for each inbound stream. |
+| recvBitrates              | Total inbound streams | The `bytesReceived` inbound streams bitrates |
+| bytesSent                 | Total outbound streams | The `bytesSent` value for each outbound stream. |
+| retransmittedBytesSent    | Total outbound streams | The `retransmittedBytesSent` value for each outbound stream. |
+| qLimitResolutionChanges   | Total outbound streams | The `qualityLimitationResolutionChanges` value for each outbound stream. |
+| sendBitrates              | Total outbound streams | The `bytesSent - retransmittedBytesSent` outbound streams rates. |
 | avgAudioJitterBufferDelay | Total audio tracks | The audio average jitter buffer delay. |
 | avgVideoJitterBufferDelay | Total video tracks | The video average jitter buffer delay; calculated only if `USE_NULL_VIDEO_DECODER=false`. |
 
