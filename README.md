@@ -1,5 +1,5 @@
 # WebRTC stress test
-A tool for running concurrent webrtc sessions using chromium web browser in headless mode.
+A tool for running concurrent WebRTC sessions using chromium web browser in headless mode.
 
 Components used:
 - NodeJS application.
