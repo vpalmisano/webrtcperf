@@ -227,6 +227,7 @@ module.exports = class Session extends EventEmitter {
 
           const key = `${index}_${peerConnectionId}_${stat.id}`;
           if (stat.jitterBufferEmittedCount) {
+            // https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay
             let avgjitterBufferDelay = stat.jitterBufferDelay / stat.jitterBufferEmittedCount;
             if (stat.mediaType === 'audio') {
               this.stats.avgAudioJitterBufferDelay[key] = avgjitterBufferDelay;
