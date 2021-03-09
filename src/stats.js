@@ -127,7 +127,7 @@ function sprintfStatsHeader() {
     });
 }
 
-function sprintfStats(name, stats, { format, unit, scale } = { format: '.2f', unit: '', scale: 1 }) {
+function sprintfStats(name, stats, { format, unit, scale, hideSum } = { format: '.2f', unit: '', scale: 1, hideSum: false }) {
     if (!stats || !stats.length) {
         return '';
     }
@@ -135,7 +135,15 @@ function sprintfStats(name, stats, { format, unit, scale } = { format: '.2f', un
         scale = 1;
     }
     stats = formatStats(stats);
-    return sprintf(chalk`{red {bold %(name)\' 30s}} {bold %(length)\' 8d} {bold %(sum)\' 8${format}} {bold %(mean)\' 8${format}} {bold %(stddev)\' 8${format}} {bold %(p25)\' 8${format}} {bold %(min)\' 8${format}} {bold %(max)\' 8${format}}%(unit)s\n`, {
+    return sprintf(
+            chalk`{red {bold %(name)\' 30s}}`
+            + chalk` {bold %(length)\' 8d}`
+            + (hideSum ? '         ' : chalk` {bold %(sum)\' 8${format}}`)
+            + chalk` {bold %(mean)\' 8${format}}`
+            + chalk` {bold %(stddev)\' 8${format}}`
+            + chalk` {bold %(p25)\' 8${format}}`
+            + chalk` {bold %(min)\' 8${format}}`
+            + chalk` {bold %(max)\' 8${format}}%(unit)s\n`, {
         name,
         length: stats.length,
         sum: stats.sum * scale,
@@ -221,11 +229,11 @@ module.exports.Stats = class {
                     + sprintfStatsTitle('Inbound audio')
                     + sprintfStats('received', stats.audioBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('rate', stats.audioRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
-                    + sprintfStats('avgJitterBufferDelay', stats.audioAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
+                    + sprintfStats('avgJitterBufferDelay', stats.audioAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3, hideSum: true })
                     + sprintfStatsTitle('Inbound video')
                     + sprintfStats('received', stats.videoBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('rate', stats.videoRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
-                    + sprintfStats('avgJitterBufferDelay', stats.videoAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3 })
+                    + sprintfStats('avgJitterBufferDelay', stats.videoAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3, hideSum: true })
                     + sprintfStatsTitle('Outbound audio')
                     + sprintfStats('sent', stats.audioBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('retransmitted', stats.audioRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
