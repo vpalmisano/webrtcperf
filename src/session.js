@@ -65,7 +65,8 @@ module.exports = class Session extends EventEmitter {
           isLandscape: false
         },
         ignoreDefaultArgs: [
-          '--disable-dev-shm-usage'
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
         ],
         args: [ 
           //'--disable-gpu',
