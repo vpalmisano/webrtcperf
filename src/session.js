@@ -1,6 +1,3 @@
-/* eslint no-cond-assign:0, no-console:0 */
-'use strict';
-
 const log = require('debug-level')('app:session');
 const EventEmitter = require('events');
 const fs = require('fs');
@@ -455,7 +452,7 @@ module.exports = class Session extends EventEmitter {
     });
 
     if (config.ENABLE_PAGE_LOG) {
-      page.on('console', (msg) => console.log(chalk`{yellow {bold [page ${this.id}-${index}]} ${msg.text()}}`));
+      page.on('console', (msg) => console.log(chalk`{yellow {bold [page ${this.id + 1}-${tabIndex + 1}]} ${msg.text()}}`));
     }
 
     // open the page url

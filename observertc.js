@@ -12,8 +12,8 @@ window.observer = new ObserverRTC
 console.log('Override RTCPeerConnection');
 const nativeRTCPeerConnection = window.RTCPeerConnection;
 
-window.RTCPeerConnection = function(config, constraints) {
-    const pc = new nativeRTCPeerConnection(config, constraints);
+window.RTCPeerConnection = function() {
+    const pc = new nativeRTCPeerConnection(...arguments);
     console.log('RTCPeerConnection add (state: ' + pc.signalingState + ')');
     window.observer.addPC(pc);
 
