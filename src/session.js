@@ -413,6 +413,11 @@ module.exports = class Session extends EventEmitter {
       `);
     }
 
+    // load a preload script
+    if (config.PRELOAD_SCRIPT_PATH) {
+      await page.evaluateOnNewDocument(await fs.promises.readFile(config.PRELOAD_SCRIPT_PATH, 'utf8'));
+    }
+
     // load observertc
     if (config.ENABLE_RTC_STATS) {
       await page.evaluateOnNewDocument((await requestretry('https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js')).body);
