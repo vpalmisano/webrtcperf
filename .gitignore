@@ -6,3 +6,4 @@ logs
 *.zip
 *.xz
 yarn.lock*
+yarn-error.log
