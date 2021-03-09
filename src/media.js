@@ -1,3 +1,4 @@
+const log = require('debug-level')('app:media');
 const fs = require('fs');
 const Exec = require('child_process').exec;
 //
