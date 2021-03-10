@@ -125,6 +125,10 @@ module.exports = class Session extends EventEmitter {
   }
 
   async openPage(tabIndex) {
+    if (!this.browser) {
+      return;
+    }
+
     const index = (this.id * config.TABS_PER_SESSION) + tabIndex;
 
     let url = config.URL;
@@ -447,9 +451,9 @@ module.exports = class Session extends EventEmitter {
       log.info(`${this.id} page closed: ${url}`);
       this.pages.delete(index);
 
-      setTimeout(async () => {
-        await this.openPage(index);
-      }, config.SPAWN_PERIOD);
+      if (this.browser) {
+        setTimeout(() => this.openPage(index), config.SPAWN_PERIOD);
+      }
     });
 
     if (config.ENABLE_PAGE_LOG) {
@@ -506,7 +510,7 @@ module.exports = class Session extends EventEmitter {
         console.error('browser close error:', err);
       }
       this.browser = null;
-      this.pages = new Map();
+      this.pages.clear();
     }
 
     this.emit('stop');
