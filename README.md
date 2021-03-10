@@ -46,6 +46,7 @@ Example output:
                           name    count      sum     mean   stddev      25p      min      max
                            cpu        1    67.66    67.66     0.00    67.66    67.66    67.66 %
                         memory        1   801.13   801.13     0.00   801.13   801.13   801.13 MB
+                          tabs        1        1        1        0        1        1        1
 -- Inbound audio -----------------------------------------------------------------------------------
                       received        1     0.02     0.02     0.00     0.02     0.02     0.02 MB
                           rate        1     0.53     0.53     0.00     0.53     0.53     0.53 Kbps
@@ -70,13 +71,14 @@ Statistics values:
 | Name                      | Count        | Desscription |
 | :------------------------ | :----------- | :----------- |
 | cpu                       | Total sessions | The browser process cpu usage. |
-| memory                    | Total Sessions | The browser process memory usage. |
+| memory                    | Total sessions | The browser process memory usage. |
+| tabs                      | Total sessions | The browser current opened tabs. |
 | received                  | Total inbound streams | The `bytesReceived` value for each stream. |
 | sent                      | Total outbound streams | The `bytesSent` value for each stream. |
 | retransmitted             | Total outbound streams | The `retransmittedBytesSent` value for each stream. |
 | rate                      | Total streams | The streams bitrates |
-| avgJitterBufferDelay      | Total decoded tracks | The inbound average jitter buffer delay. |
-| qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` value for each outbound video stream. |
+| avgJitterBufferDelay      | Total decoded tracks | The inbound average [jitter buffer delay](https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay). |
+| qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` [value](https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges) for each outbound video stream. |
 
 
 ## Edumeet examples

@@ -159,6 +159,7 @@ function sprintfStats(name, stats, { format, unit, scale, hideSum } = { format: 
 const STATS = [
     'cpu',
     'memory',
+    'tabs',
     // inbound
     'audioBytesReceived',
     'audioRecvBitrates',
@@ -226,6 +227,7 @@ module.exports.Stats = class {
                 let out = sprintfStatsHeader()
                     + sprintfStats('cpu', stats.cpu, { format: '.2f', unit: '%' })
                     + sprintfStats('memory', stats.memory, { format: '.2f', unit: 'MB', scale: 1 })
+                    + sprintfStats('tabs', stats.tabs, { format: 'd', unit: '' })
                     + sprintfStatsTitle('Inbound audio')
                     + sprintfStats('received', stats.audioBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('rate', stats.audioRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })

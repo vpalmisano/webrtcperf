@@ -19,7 +19,7 @@ module.exports = {
     STATS_PATH: process.env.STATS_PATH,
     STATS_INTERVAL: parseInt(process.env.STATS_INTERVAL || 2),
     ENABLE_RTC_STATS: process.env.ENABLE_RTC_STATS !== 'false',
-    RTC_STATS_TIMEOUT: parseInt(process.env.RTC_STATS_TIMEOUT || 30),
+    RTC_STATS_TIMEOUT: parseInt(process.env.RTC_STATS_TIMEOUT || 60),
     //
     SCRIPT_PATH: process.env.SCRIPT_PATH,
     PRELOAD_SCRIPT_PATH: process.env.PRELOAD_SCRIPT_PATH,
