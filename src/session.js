@@ -105,7 +105,7 @@ module.exports = class Session extends EventEmitter {
             '--use-file-for-fake-video-capture=/tmp/video.y4m',
             '--use-file-for-fake-audio-capture=/tmp/audio.wav',
           ] : [
-            '--use-fake-codec-for-peer-connection'
+            //'--use-fake-codec-for-peer-connection'
           ]
         )
         /* .concat(!process.env.DISPLAY ? ['--headless'] : []) */
