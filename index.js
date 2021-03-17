@@ -28,16 +28,26 @@ async function main() {
         }, i * config.SPAWN_PERIOD, i);
     }
 
+    // stop function
+    const stop = async () => {
+        stats.stop();
+        try {
+            await Promise.allSettled(sessions.map(session => session.stop()));
+        } catch(err) {}
+        sessions = [];
+        process.exit(0);
+    };
+
+    // stop after a configured duration
+    if (config.RUN_DURATION > 0) {
+        setTimeout(stop, config.RUN_DURATION * 1000);
+    }
+
     // catch signals
     [`exit`, `SIGINT`, `SIGUSR1`, `SIGUSR2`, `uncaughtException`, `SIGTERM`].forEach((eventType) => {
-        process.on(eventType, async () => {
+        process.on(eventType, () => {
             log.info(`Caught event ${eventType}`);
-            stats.stop();
-            try {
-                await Promise.allSettled(sessions.map(session => session.stop()));
-            } catch(err) {}
-            sessions = [];
-            process.exit(0);
+            stop();
         });
     });  
 }
