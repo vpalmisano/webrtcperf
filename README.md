@@ -219,9 +219,10 @@ cd webrtc-stress-test
 # build the chromium customized version
 # cd chromium
 # ./build setup
-# ./build setup
 # ./build apply_patch
 # ./build build
+# install the package (on Ubuntu/Debian)
+# dpkg -i ./chromium-browser-unstable_<version>-1_amd64.deb
 # cd ..
 
 # sendrecv test
