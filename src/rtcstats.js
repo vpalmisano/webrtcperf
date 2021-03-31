@@ -81,6 +81,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
 
       if (stat.mediaType === 'audio') {
         stats.audioPacketsLost[key] = 100 * stat.packetsLost / stat.packetsReceived;
+        stats.audioJitter[key] = stat.jitter;
         // calculate rate
         if (stats.timestamps[key]) {
             stats.audioRecvBitrates[key] = 8000 * 
@@ -91,6 +92,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         stats.audioBytesReceived[key] = stat.bytesReceived;
       } else if (stat.mediaType === 'video' && stat.decoderImplementation !== 'unknown') {
         stats.videoPacketsLost[key] = 100 * stat.packetsLost / stat.packetsReceived;
+        stats.videoJitter[key] = stat.jitter;
         // calculate rate
         if (stats.timestamps[key]) {
             stats.videoRecvBitrates[key] = 8000 * 
@@ -240,10 +242,12 @@ module.exports.purgeRtcStats = function(stats) {
       //
       delete(stats.timestamps[key]);
       delete(stats.audioPacketsLost[key]);
+      delete(stats.audioJitter[key]);
       delete(stats.audioBytesReceived[key]);
       delete(stats.audioRecvBitrates[key]);
       delete(stats.audioAvgJitterBufferDelay[key]);
       delete(stats.videoPacketsLost[key]);
+      delete(stats.videoJitter[key]);
       delete(stats.videoBytesReceived[key]);
       delete(stats.videoRecvBitrates[key]);
       delete(stats.videoAvgJitterBufferDelay[key]);

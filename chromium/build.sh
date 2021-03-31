@@ -41,10 +41,10 @@ function apply_patch() {
 function build() {
     cd ${BUILDDIR}/chromium/src
     autoninja -C out/Default "chrome/installer/linux:unstable_deb"
-    autoninja -C out/Default "chromedriver"
+    #autoninja -C out/Default "chromedriver"
     cd -
     cp ${BUILDDIR}/chromium/src/out/Default/*.deb .
-    xz ${BUILDDIR}/chromium/src/out/Default/chromedriver -c > chromedriver.xz
+    #xz ${BUILDDIR}/chromium/src/out/Default/chromedriver -c > chromedriver.xz
 }
 
 function clean() {

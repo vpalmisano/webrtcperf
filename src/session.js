@@ -24,10 +24,12 @@ module.exports = class Session extends EventEmitter {
       timestamps: {},
       // inbound
       audioPacketsLost: {},
+      audioJitter: {},
       audioBytesReceived: {},
       audioRecvBitrates: {},
       audioAvgJitterBufferDelay: {},
       videoPacketsLost: {},
+      videoJitter: {},
       videoBytesReceived: {},
       videoRecvBitrates: {},
       videoAvgJitterBufferDelay: {},

@@ -52,10 +52,14 @@ Example output:
 -- Inbound audio -----------------------------------------------------------------------------------
                       received        1     0.02     0.02     0.00     0.02     0.02     0.02 MB
                           rate        1     0.53     0.53     0.00     0.53     0.53     0.53 Kbps
+                          lost        1     0.00     0.00     0.00     0.00     0.00     0.00 %
+                        jitter        1              0.00     0.00     0.00     0.00     0.00 s
           avgJitterBufferDelay        1             85.27     0.00    85.27    85.27    85.27 ms
 -- Inbound video -----------------------------------------------------------------------------------
                       received        2    26.62    13.31    13.22    13.31     0.09    26.53 MB
                           rate        2   838.72   419.36   411.30   419.36     8.06   830.66 Kbps
+                          lost        1     0.00     0.00     0.00     0.00     0.00     0.00 %
+                        jitter        1              1.88     0.37     1.77     0.98     2.65 s
           avgJitterBufferDelay        1             90.86     0.00    90.86    90.86    90.86 ms
 -- Outbound audio ----------------------------------------------------------------------------------
                           sent        1     0.50     0.50     0.00     0.50     0.50     0.50 MB
@@ -78,7 +82,9 @@ Statistics values:
 | received                  | Total inbound streams | The `bytesReceived` value for each stream. |
 | sent                      | Total outbound streams | The `bytesSent` value for each stream. |
 | retransmitted             | Total outbound streams | The `retransmittedBytesSent` value for each stream. |
-| rate                      | Total streams | The streams bitrates |
+| rate                      | Total streams | The stream bitrate. |
+| lost                      | Total streams | The stream [lost packets](https://www.w3.org/TR/webrtc-stats/#dom-rtcreceivedrtpstreamstats-packetslost) %. |
+| jitter                    | Total streams | The stream [jitter](https://www.w3.org/TR/webrtc-stats/#dom-rtcreceivedrtpstreamstats-jitter) in seconds. |
 | avgJitterBufferDelay      | Total decoded tracks | The inbound average [jitter buffer delay](https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay). |
 | qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` [value](https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges) for each outbound video stream. |
 
