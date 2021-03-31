@@ -101,7 +101,7 @@ module.exports = class Session extends EventEmitter {
           '--force-fieldtrials='
             + 'AutomaticTabDiscarding/Disabled/WebRTC-Vp9DependencyDescriptor/Enabled'
             + '/WebRTC-DependencyDescriptorAdvertised/Enabled'
-            + config.AUDIO_RED_FOR_OPUS ? '/WebRTC-Audio-Red-For-Opus/Enabled' : ''
+            + (config.AUDIO_RED_FOR_OPUS ? '/WebRTC-Audio-Red-For-Opus/Enabled' : '')
             ,
           //'--renderer-process-limit=1',
           '--single-process',
