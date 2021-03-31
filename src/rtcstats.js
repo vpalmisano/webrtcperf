@@ -77,8 +77,9 @@ module.exports.rtcStats = function(stats, now, index, sample) {
     }
     */
     const key = `${index}_${peerConnectionId}_${stat.id}`;
-    
+
     if (stat.mediaType === 'audio') {
+      stats.audioPacketsLost[key] = 100 * stat.packetsLost / stat.packetsReceived;
       // calculate rate
       if (stats.timestamps[key]) {
           stats.audioRecvBitrates[key] = 8000 * 
@@ -86,9 +87,9 @@ module.exports.rtcStats = function(stats, now, index, sample) {
           / (now - stats.timestamps[key]);
       }
       // update values
-      stats.timestamps[key] = now;
       stats.audioBytesReceived[key] = stat.bytesReceived;
     } else if (stat.mediaType === 'video' && stat.decoderImplementation !== 'unknown') {
+      stats.videoPacketsLost[key] = 100 * stat.packetsLost / stat.packetsReceived;
       // calculate rate
       if (stats.timestamps[key]) {
           stats.videoRecvBitrates[key] = 8000 * 
@@ -96,9 +97,9 @@ module.exports.rtcStats = function(stats, now, index, sample) {
           / (now - stats.timestamps[key]);
       }
       // update values
-      stats.timestamps[key] = now;
       stats.videoBytesReceived[key] = stat.bytesReceived;
     }
+    stats.timestamps[key] = now;
   }
 
   for (const stat of tracks) {
@@ -235,9 +236,11 @@ module.exports.purgeRtcStats = function(stats) {
       log.debug(`expired stat ${key}`);
       //
       delete(stats.timestamps[key]);
+      delete(stats.audioPacketsLost[key]);
       delete(stats.audioBytesReceived[key]);
       delete(stats.audioRecvBitrates[key]);
       delete(stats.audioAvgJitterBufferDelay[key]);
+      delete(stats.videoPacketsLost[key]);
       delete(stats.videoBytesReceived[key]);
       delete(stats.videoRecvBitrates[key]);
       delete(stats.videoAvgJitterBufferDelay[key]);

@@ -161,9 +161,11 @@ const STATS = [
     'memory',
     'tabs',
     // inbound
+    'audioPacketsLost',
     'audioBytesReceived',
     'audioRecvBitrates',
     'audioAvgJitterBufferDelay',
+    'videoPacketsLost',
     'videoBytesReceived',
     'videoRecvBitrates',
     'videoAvgJitterBufferDelay',
@@ -231,10 +233,12 @@ module.exports.Stats = class {
                     + sprintfStatsTitle('Inbound audio')
                     + sprintfStats('received', stats.audioBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('rate', stats.audioRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                    + sprintfStats('lost', stats.audioPacketsLost, { format: '.2f', unit: '%' })
                     + sprintfStats('avgJitterBufferDelay', stats.audioAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3, hideSum: true })
                     + sprintfStatsTitle('Inbound video')
                     + sprintfStats('received', stats.videoBytesReceived, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('rate', stats.videoRecvBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
+                    + sprintfStats('lost', stats.videoPacketsLost, { format: '.2f', unit: '%' })
                     + sprintfStats('avgJitterBufferDelay', stats.videoAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3, hideSum: true })
                     + sprintfStatsTitle('Outbound audio')
                     + sprintfStats('sent', stats.audioBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })

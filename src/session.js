@@ -23,9 +23,11 @@ module.exports = class Session extends EventEmitter {
       tabs: 0,
       timestamps: {},
       // inbound
+      audioPacketsLost: {},
       audioBytesReceived: {},
       audioRecvBitrates: {},
       audioAvgJitterBufferDelay: {},
+      videoPacketsLost: {},
       videoBytesReceived: {},
       videoRecvBitrates: {},
       videoAvgJitterBufferDelay: {},
@@ -72,6 +74,7 @@ module.exports = class Session extends EventEmitter {
           '--disable-gpu',
         ],
         args: [ 
+          // https://peter.sh/experiments/chromium-command-line-switches/
           /* puppeteer settings:
           '--disable-background-networking',
           '--disable-client-side-phishing-detection',
@@ -95,7 +98,11 @@ module.exports = class Session extends EventEmitter {
           '--autoplay-policy=no-user-gesture-required',
           '--disable-infobars',
           //'--ignore-gpu-blacklist',
-          '--force-fieldtrials=AutomaticTabDiscarding/Disabled/WebRTC-Vp9DependencyDescriptor/Enabled/WebRTC-DependencyDescriptorAdvertised/Enabled',
+          '--force-fieldtrials='
+            + 'AutomaticTabDiscarding/Disabled/WebRTC-Vp9DependencyDescriptor/Enabled'
+            + '/WebRTC-DependencyDescriptorAdvertised/Enabled'
+            + config.AUDIO_RED_FOR_OPUS ? '/WebRTC-Audio-Red-For-Opus/Enabled' : ''
+            ,
           //'--renderer-process-limit=1',
           '--single-process',
         ].concat(

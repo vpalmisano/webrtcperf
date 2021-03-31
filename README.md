@@ -25,6 +25,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | WINDOW_WIDTH         | 1920          | The browser window width. |
 | WINDOW_HEIGHT        | 1080          | The browser window height. |
 | USE_NULL_VIDEO_DECODER | `false`     | Disables the video decoding. This affects the RTC video jitter buffer stats. |
+| AUDIO_RED_FOR_OPUS   | `false`       | Enables RED for OPUS codec. |
 | DISPLAY              | ''            | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled. |
 | SESSIONS             | 1             | The number of browser sessions to start. |
 | TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session. |
