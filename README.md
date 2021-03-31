@@ -88,7 +88,7 @@ Statistics values:
 ### Mediasoup demo
 
 
-Starts one send-receive participant, with a random audio activation pattern:
+Starts one send-receive participant:
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
