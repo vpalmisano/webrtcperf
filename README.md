@@ -83,7 +83,41 @@ Statistics values:
 | qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` [value](https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges) for each outbound video stream. |
 
 
-## Edumeet examples
+## Examples
+
+### Mediasoup demo
+
+
+Starts one send-receive participant, with a random audio activation pattern:
+
+```sh
+docker pull vpalmisano/webrtc-stress-test:latest
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    --net=host \
+    -v /dev/shm:/dev/shm \
+    -e VIDEO_PATH=/app/video.mp4 \
+    -e URL=$MEDIASOUP_DEMO_URL \
+    -e URL_QUERY='roomId=test&displayName=Publisher-$s-$t' \
+    -e SESSIONS=1 \
+    -e TABS_PER_SESSION=1 \
+    vpalmisano/webrtc-stress-test:latest
+```
+
+Starts 10 receive-only participants:
+
+```sh
+docker pull vpalmisano/webrtc-stress-test:latest
+docker run -it --rm --name=webrtc-stress-test-viewer \
+    --net=host \
+    -v /dev/shm:/dev/shm \
+    -e VIDEO_PATH=/app/video.mp4 \
+    -e URL=$MEDIASOUP_DEMO_URL \
+    -e URL_QUERY='roomId=test&displayName=Viewer-$s-$t&produce=false' \
+    -e SESSIONS=1 \
+    -e TABS_PER_SESSION=10 \
+    vpalmisano/webrtc-stress-test:latest
+```
+### Edumeet
 
 Starts one send-receive participant, with a random audio activation pattern:
 
@@ -116,7 +150,7 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
     vpalmisano/webrtc-stress-test:latest
 ```
 
-## Jitsi examples
+### Jitsi
 
 Starts one send-receive participant:
 
@@ -147,7 +181,7 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     vpalmisano/webrtc-stress-test:latest
 ```
 
-## QuavStreams examples
+### QuavStreams
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
