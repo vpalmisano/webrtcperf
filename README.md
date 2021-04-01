@@ -38,7 +38,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
 | GET_USER_MEDIA_OVERRIDES | ''        | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second tab in the first session. |
 | RUN_DURATION         | 0             | If greater than 0, the test will stop after the provided number of seconds. |
-| THROTTLE_CONFIG      | ''            | A JSON string with a valid [sitespeedio/throttle](https://github.com/sitespeedio/throttle#use-directly-in-nodejs) configuration (e.g. `{"up": 1000, "down": 1000, "rtt": 200}`). The `--cap-add=NET_ADMIN` docker option is required. |
+| THROTTLE_CONFIG      | ''            | A JSON string with a valid [sitespeedio/throttle](https://github.com/sitespeedio/throttle#use-directly-in-nodejs) configuration (e.g. `{"up": 1000, "down": 1000, "rtt": 200}`). When used with docker, run `sudo modprobe ifb numifbs=1` first and add the `--cap-add=NET_ADMIN` docker option. |
 
 ## Statistics
 
