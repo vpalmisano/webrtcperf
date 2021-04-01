@@ -37,6 +37,8 @@ async function main() {
 
     // stop function
     const stop = async () => {
+        console.log(`Exiting...`);
+
         stats.stop();
 
         try {
