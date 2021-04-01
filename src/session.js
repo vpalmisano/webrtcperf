@@ -185,7 +185,7 @@ module.exports = class Session extends EventEmitter {
 
     //
     
-    if (index < config.GET_USER_MEDIA_OVERRIDES.length) {
+    if (config.GET_USER_MEDIA_OVERRIDES && index < config.GET_USER_MEDIA_OVERRIDES.length) {
       const override = config.GET_USER_MEDIA_OVERRIDES[index];
       log.debug('Using getUserMedia override:', override);
       await page.evaluateOnNewDocument(`

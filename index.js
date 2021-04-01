@@ -1,6 +1,7 @@
 'use strict';
 
 const log = require('debug-level')('app');
+const throttle = require('@sitespeed.io/throttle');
 //
 const Session = require('./src/session');
 const { Stats } = require('./src/stats');
@@ -19,6 +20,12 @@ async function main() {
         await prepareFakeMedia();
     }
 
+    // throttle configuration
+    if (config.THROTTLE_CONFIG) {
+        console.log(`Using the throttle config:`, config.THROTTLE_CONFIG);
+        await throttle.start(config.THROTTLE_CONFIG);
+    }
+
     // starts the sessions
     for (let i=0; i < config.SESSIONS; i++) {
         setTimeout(async id => {
@@ -31,10 +38,18 @@ async function main() {
     // stop function
     const stop = async () => {
         stats.stop();
+
         try {
             await Promise.allSettled(sessions.map(session => session.stop()));
         } catch(err) {}
         sessions = [];
+
+        if (config.THROTTLE_CONFIG) {
+            try {
+                await throttle.stop();
+            } catch(err) {}
+        }
+
         process.exit(0);
     };
 

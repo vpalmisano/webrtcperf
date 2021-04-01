@@ -38,6 +38,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
 | GET_USER_MEDIA_OVERRIDES | ''        | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second tab in the first session. |
 | RUN_DURATION         | 0             | If greater than 0, the test will stop after the provided number of seconds. |
+| THROTTLE_CONFIG      | ''            | A JSON string with a valid [sitespeedio/throttle](https://github.com/sitespeedio/throttle#use-directly-in-nodejs) configuration (e.g. `{"up": 1000, "down": 1000, "rtt": 200}`). The `--cap-add=NET_ADMIN` docker option is required. |
 
 ## Statistics
 
@@ -99,7 +100,6 @@ Starts one send-receive participant:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$MEDIASOUP_DEMO_URL \
@@ -114,7 +114,6 @@ Starts 10 receive-only participants:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$MEDIASOUP_DEMO_URL \
@@ -130,7 +129,6 @@ Starts one send-receive participant, with a random audio activation pattern:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$EDUMEET_URL \
@@ -146,7 +144,6 @@ Starts 10 receive-only participants:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=$EDUMEET_URL \
     -e URL_QUERY='displayName=Viewer $s-$t' \
@@ -163,7 +160,6 @@ Starts one send-receive participant:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$JITSI_ROOM_URL \
@@ -178,7 +174,6 @@ Starts 10 receive-only participants:
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=$JITSI_ROOM_URL \
     -e URL_QUERY='#config.prejoinPageEnabled=false&userInfo.displayName=Participant-$s-$t' \
@@ -192,7 +187,6 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$QUAVSTREAMS_ROOM_URL \
@@ -205,7 +199,6 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
-    --net=host \
     -v /dev/shm:/dev/shm \
     -e URL=$QUAVSTREAMS_ROOM_URL \
     -e URL_QUERY='displayName=Viewer-$s-$t' \

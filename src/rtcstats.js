@@ -80,7 +80,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
       const key = `${index}_${peerConnectionId}_${stat.id}`;
 
       if (stat.mediaType === 'audio') {
-        stats.audioPacketsLost[key] = 100 * stat.packetsLost / stat.packetsReceived;
+        stats.audioPacketsLost[key] = 100 * stat.packetsLost / (stat.packetsLost + stat.packetsReceived);
         stats.audioJitter[key] = stat.jitter;
         // calculate rate
         if (stats.timestamps[key]) {
@@ -91,7 +91,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         // update values
         stats.audioBytesReceived[key] = stat.bytesReceived;
       } else if (stat.mediaType === 'video' && stat.decoderImplementation !== 'unknown') {
-        stats.videoPacketsLost[key] = 100 * stat.packetsLost / stat.packetsReceived;
+        stats.videoPacketsLost[key] = 100 * stat.packetsLost / (stat.packetsLost + stat.packetsReceived);
         stats.videoJitter[key] = stat.jitter;
         // calculate rate
         if (stats.timestamps[key]) {

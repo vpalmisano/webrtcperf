@@ -26,4 +26,5 @@ module.exports = {
     PRELOAD_SCRIPT_PATH: process.env.PRELOAD_SCRIPT_PATH,
     GET_USER_MEDIA_OVERRIDES: JSON.parse(process.env.GET_USER_MEDIA_OVERRIDES || '[]'),
     RUN_DURATION: parseInt(process.env.RUN_DURATION || 0),
+    THROTTLE_CONFIG: JSON.parse(process.env.THROTTLE_CONFIG || 'null'),
 }
