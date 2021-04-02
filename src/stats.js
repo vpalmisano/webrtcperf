@@ -171,6 +171,8 @@ const STATS = [
     'videoBytesReceived',
     'videoRecvBitrates',
     'videoAvgJitterBufferDelay',
+    'videoFrameWidth',
+    'videoFrameHeight',
     // outbound
     'audioBytesSent',
     'audioRetransmittedBytesSent',
@@ -247,6 +249,8 @@ module.exports.Stats = class {
                     + sprintfStats('lost', stats.videoPacketsLost, { format: '.2f', unit: '%', hideSum: true })
                     + sprintfStats('jitter', stats.videoJitter, { format: '.2f', unit: 's', hideSum: true })
                     + sprintfStats('avgJitterBufferDelay', stats.videoAvgJitterBufferDelay, { format: '.2f', unit: 'ms', scale: 1e3, hideSum: true })
+                    + sprintfStats('width', stats.videoFrameWidth, { format: 'd', unit: 'px', hideSum: true })
+                    + sprintfStats('height', stats.videoFrameHeight, { format: 'd', unit: 'px', hideSum: true })
                     + sprintfStatsTitle('Outbound audio')
                     + sprintfStats('sent', stats.audioBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('retransmitted', stats.audioRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })

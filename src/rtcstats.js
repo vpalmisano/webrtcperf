@@ -8,6 +8,8 @@ module.exports.rtcStats = function(stats, now, index, sample) {
 
   // receiver
   if (receiverStats) {
+    //log.debug('rtcStats', util.inspect(receiverStats, { depth: null }));
+
     let { inboundRTPStats, tracks } = receiverStats;
     for (const stat of inboundRTPStats) {
       // log.debug('rtcStats', util.inspect(stat, { depth: null }));
@@ -123,6 +125,20 @@ module.exports.rtcStats = function(stats, now, index, sample) {
           removedSamplesForAcceleration: 0,
           silentConcealedSamples: 0,
           totalSamplesReceived: 228000
+        },
+        {                                                                                                                                                                        
+          detached: false,                                                                                                                                                                
+          ended: false,                                                                                                                                                                   
+          framesDecoded: 10985,                                                                                                                                                           
+          framesDropped: 73,                                                                                                                                                              
+          framesReceived: 11062,                                                                                                                                                          
+          frameWidth: 640,                                                                                                                                                                
+          frameHeight: 360,                                                                                                                                                               
+          id: 'RTCMediaStreamTrack_receiver_4',                                                                                                                                           
+          jitterBufferDelay: 1450.231,                                                                                                                                                    
+          jitterBufferEmittedCount: 10984,                                                                                                                                                
+          mediaType: 'video',
+          remoteSource: true
         }
       */
   
@@ -134,6 +150,8 @@ module.exports.rtcStats = function(stats, now, index, sample) {
           stats.audioAvgJitterBufferDelay[key] = avgjitterBufferDelay;
         } else if (stat.mediaType === 'video') {
           stats.videoAvgJitterBufferDelay[key] = avgjitterBufferDelay;
+          stats.videoFrameWidth[key] = stat.frameWidth;
+          stats.videoFrameHeight[key] = stat.frameHeight;
         }
         stats.timestamps[key] = now;
       }
@@ -284,6 +302,8 @@ module.exports.purgeRtcStats = function(stats) {
       delete(stats.videoBytesReceived[key]);
       delete(stats.videoRecvBitrates[key]);
       delete(stats.videoAvgJitterBufferDelay[key]);
+      delete(stats.videoFrameWidth[key]);
+      delete(stats.videoFrameHeight[key]);
       //
       delete(stats.videoSourceWidth[key]);
       delete(stats.videoSourceHeight[key]);

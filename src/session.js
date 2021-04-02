@@ -33,6 +33,8 @@ module.exports = class Session extends EventEmitter {
       videoBytesReceived: {},
       videoRecvBitrates: {},
       videoAvgJitterBufferDelay: {},
+      videoFrameWidth: {},
+      videoFrameHeight: {},
       // outbound
       videoSourceWidth: {},
       videoSourceHeight: {},
@@ -203,7 +205,7 @@ module.exports = class Session extends EventEmitter {
 
     // load observertc
     if (config.ENABLE_RTC_STATS) {
-      await page.evaluateOnNewDocument((await requestretry('https://observertc.github.io/observer-js/dist/v0.6.1/observer.min.js')).body);
+      await page.evaluateOnNewDocument((await requestretry('https://cdn.jsdelivr.net/gh/vpalmisano/observer-js@custom-stats/dist/v0.6.2/observer.min.js')).body);
       await page.evaluateOnNewDocument(await fs.promises.readFile('./observertc.js', 'utf8'));
     }
    
