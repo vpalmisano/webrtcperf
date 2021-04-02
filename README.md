@@ -95,7 +95,7 @@ Statistics values:
 | qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` [value](https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges) for each outbound video stream. |
 | width                     | Total sent or received videos | The sent or received video width. |
 | height                    | Total sent or received videos | The sent or received video height. |
-| fps                       | Total sent | The sent video frame per seconds. |
+| fps                       | Total sent | The sent video frames per second. |
 
 ## Examples
 
