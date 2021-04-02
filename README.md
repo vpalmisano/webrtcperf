@@ -91,9 +91,9 @@ Statistics values:
 | jitter                    | Total streams | The stream [jitter](https://www.w3.org/TR/webrtc-stats/#dom-rtcreceivedrtpstreamstats-jitter) in seconds. |
 | avgJitterBufferDelay      | Total decoded tracks | The inbound average [jitter buffer delay](https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay). |
 | qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` [value](https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges) for each outbound video stream. |
-| width                     | Total media sources | The sent video width. |
-| height                    | Total media sources | The sent video height. |
-| fps                       | Total media sources | The sent video frame per seconds. |
+| width                     | Total media sources | The media source video width. |
+| height                    | Total media sources | The media source video height. |
+| fps                       | Total media sources | The media source video frame per seconds. |
 
 ## Examples
 
