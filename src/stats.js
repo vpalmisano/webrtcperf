@@ -8,6 +8,7 @@ const sprintf = require('sprintf-js').sprintf;
 const { Stats } = require('fast-stats');
 const chalk = require('chalk');
 //
+const { RTC_STATS_NAMES } = require('./rtcstats');
 const config = require('../config');
 
 function getProcessChildren(pid) {
@@ -160,31 +161,7 @@ const STATS = [
     'cpu',
     'memory',
     'tabs',
-    // inbound
-    'audioPacketsLost',
-    'audioJitter',
-    'audioBytesReceived',
-    'audioRecvBitrates',
-    'audioAvgJitterBufferDelay',
-    'videoPacketsLost',
-    'videoJitter',
-    'videoBytesReceived',
-    'videoRecvBitrates',
-    'videoAvgJitterBufferDelay',
-    'videoFrameWidth',
-    'videoFrameHeight',
-    // outbound
-    'audioBytesSent',
-    'audioRetransmittedBytesSent',
-    'audioSendBitrates',
-    'videoSourceWidth',
-    'videoSourceHeight',
-    'videoSourceFps',
-    'videoBytesSent',
-    'videoRetransmittedBytesSent',
-    'videoSendBitrates',
-    'qualityLimitationResolutionChanges',
-];
+].concat(RTC_STATS_NAMES);
 
 module.exports.Stats = class {
     constructor(sessions) {

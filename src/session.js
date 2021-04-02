@@ -7,7 +7,7 @@ const chalk = require('chalk');
 const requestretry = require('requestretry');
 //
 const { getProcessStats } = require('./stats');
-const { rtcStats, purgeRtcStats } = require('./rtcstats');
+const { RTC_STATS_NAMES, rtcStats, purgeRtcStats } = require('./rtcstats');
 
 const config = require('../config');
 
@@ -21,32 +21,10 @@ module.exports = class Session extends EventEmitter {
       cpu: 0,
       memory: 0,
       tabs: 0,
-      timestamps: {},
-      // inbound
-      audioPacketsLost: {},
-      audioJitter: {},
-      audioBytesReceived: {},
-      audioRecvBitrates: {},
-      audioAvgJitterBufferDelay: {},
-      videoPacketsLost: {},
-      videoJitter: {},
-      videoBytesReceived: {},
-      videoRecvBitrates: {},
-      videoAvgJitterBufferDelay: {},
-      videoFrameWidth: {},
-      videoFrameHeight: {},
-      // outbound
-      videoSourceWidth: {},
-      videoSourceHeight: {},
-      videoSourceFps: {},
-      audioBytesSent: {},
-      audioRetransmittedBytesSent: {},
-      audioSendBitrates: {},
-      videoBytesSent: {},
-      videoRetransmittedBytesSent: {},
-      videoSendBitrates: {},
-      qualityLimitationResolutionChanges: {},
-    };
+    }
+    RTC_STATS_NAMES.forEach(name => {
+      this.stats[name] = {};
+    });
     this.updateStatsTimeout = null;
     this.browser = null;
     this.pages = new Map();

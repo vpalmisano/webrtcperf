@@ -2,9 +2,40 @@ const log = require('debug-level')('app:rtcstats');
 const util = require('util');
 const config = require('../config');
 
+const RTC_STATS_NAMES = module.exports.RTC_STATS_NAMES = [
+  // inbound
+  'audioPacketsLost',
+  'audioJitter',
+  'audioBytesReceived',
+  'audioRecvBitrates',
+  'audioAvgJitterBufferDelay',
+  'videoPacketsLost',
+  'videoJitter',
+  'videoBytesReceived',
+  'videoRecvBitrates',
+  'videoAvgJitterBufferDelay',
+  'videoFrameWidth',
+  'videoFrameHeight',
+  // outbound
+  'videoSourceWidth',
+  'videoSourceHeight',
+  'videoSourceFps',
+  'audioBytesSent',
+  'audioRetransmittedBytesSent',
+  'audioSendBitrates',
+  'videoBytesSent',
+  'videoRetransmittedBytesSent',
+  'videoSendBitrates',
+  'qualityLimitationResolutionChanges',
+];
+
 module.exports.rtcStats = function(stats, now, index, sample) {
   const { peerConnectionId, receiverStats, senderStats } = sample;    
   //log.debug('rtcStats', util.inspect(sample, { depth: null }));
+
+  if (!stats._timestamps) {
+    stats._timestamps = {};
+  }
 
   // receiver
   if (receiverStats) {
@@ -86,10 +117,10 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         stats.audioPacketsLost[key] = 100 * stat.packetsLost / (stat.packetsLost + stat.packetsReceived);
         stats.audioJitter[key] = stat.jitter;
         // calculate rate
-        if (stats.timestamps[key]) {
+        if (stats._timestamps[key]) {
             stats.audioRecvBitrates[key] = 8000 * 
             (stat.bytesReceived - stats.audioBytesReceived[key]) 
-            / (now - stats.timestamps[key]);
+            / (now - stats._timestamps[key]);
         }
         // update values
         stats.audioBytesReceived[key] = stat.bytesReceived;
@@ -97,15 +128,15 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         stats.videoPacketsLost[key] = 100 * stat.packetsLost / (stat.packetsLost + stat.packetsReceived);
         stats.videoJitter[key] = stat.jitter;
         // calculate rate
-        if (stats.timestamps[key]) {
+        if (stats._timestamps[key]) {
             stats.videoRecvBitrates[key] = 8000 * 
             (stat.bytesReceived - stats.videoBytesReceived[key]) 
-            / (now - stats.timestamps[key]);
+            / (now - stats._timestamps[key]);
         }
         // update values
         stats.videoBytesReceived[key] = stat.bytesReceived;
       }
-      stats.timestamps[key] = now;
+      stats._timestamps[key] = now;
     }
 
     for (const stat of tracks) {
@@ -153,7 +184,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
           stats.videoFrameWidth[key] = stat.frameWidth;
           stats.videoFrameHeight[key] = stat.frameHeight;
         }
-        stats.timestamps[key] = now;
+        stats._timestamps[key] = now;
       }
   
     }
@@ -190,7 +221,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         stats.videoSourceWidth[key] = stat.width;
         stats.videoSourceHeight[key] = stat.height;
         stats.videoSourceFps[key] = stat.framesPerSecond;
-        stats.timestamps[key] = now;
+        stats._timestamps[key] = now;
       }
     }
 
@@ -246,26 +277,26 @@ module.exports.rtcStats = function(stats, now, index, sample) {
       
       if (stat.mediaType === 'audio') {
         // calculate rate
-        if (stats.timestamps[key]) {
+        if (stats._timestamps[key]) {
             stats.audioSendBitrates[key] = 8000 * 
             (
                 (stat.bytesSent - stat.retransmittedBytesSent) 
                 - (stats.audioBytesSent[key] - stats.audioRetransmittedBytesSent[key])
             )
-            / (now - stats.timestamps[key]);
+            / (now - stats._timestamps[key]);
         }
         // update values
         stats.audioBytesSent[key] = stat.bytesSent;
         stats.audioRetransmittedBytesSent[key] = stat.retransmittedBytesSent;
       } else if (stat.mediaType === 'video') {
         // calculate rate
-        if (stats.timestamps[key]) {
+        if (stats._timestamps[key]) {
             stats.videoSendBitrates[key] = 8000 * 
             (
                 (stat.bytesSent - stat.retransmittedBytesSent) 
                 - (stats.videoBytesSent[key] - stats.videoRetransmittedBytesSent[key])
             )
-            / (now - stats.timestamps[key]);
+            / (now - stats._timestamps[key]);
         }
         // update values
         stats.videoBytesSent[key] = stat.bytesSent;
@@ -273,7 +304,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         // https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges
         stats.qualityLimitationResolutionChanges[key] = stat.qualityLimitationResolutionChanges;
       }
-      stats.timestamps[key] = now;
+      stats._timestamps[key] = now;
     }
   }
 
@@ -281,40 +312,23 @@ module.exports.rtcStats = function(stats, now, index, sample) {
 
 module.exports.purgeRtcStats = function(stats) {
   // purge stats with expired timeout
-  const now = Date.now();
-  
-  if (!stats || !Object.keys(stats.timestamps).length) {
+
+  if (!stats || !stats._timestamps || !Object.keys(stats._timestamps).length) {
     return;
   }
 
-  for (const [key, timestamp] of Object.entries(stats.timestamps)) {
+  const now = Date.now();
+
+  for (const [key, timestamp] of Object.entries(stats._timestamps)) {
     if (now - timestamp > 1000 * config.RTC_STATS_TIMEOUT) {
       log.debug(`expired stat ${key}`);
       //
-      delete(stats.timestamps[key]);
-      delete(stats.audioPacketsLost[key]);
-      delete(stats.audioJitter[key]);
-      delete(stats.audioBytesReceived[key]);
-      delete(stats.audioRecvBitrates[key]);
-      delete(stats.audioAvgJitterBufferDelay[key]);
-      delete(stats.videoPacketsLost[key]);
-      delete(stats.videoJitter[key]);
-      delete(stats.videoBytesReceived[key]);
-      delete(stats.videoRecvBitrates[key]);
-      delete(stats.videoAvgJitterBufferDelay[key]);
-      delete(stats.videoFrameWidth[key]);
-      delete(stats.videoFrameHeight[key]);
-      //
-      delete(stats.videoSourceWidth[key]);
-      delete(stats.videoSourceHeight[key]);
-      delete(stats.videoSourceFps[key]);
-      delete(stats.audioBytesSent[key]);
-      delete(stats.audioSendBitrates[key]);
-      delete(stats.audioRetransmittedBytesSent[key]);
-      delete(stats.videoBytesSent[key]);
-      delete(stats.videoSendBitrates[key]);
-      delete(stats.videoRetransmittedBytesSent[key]);
-      delete(stats.qualityLimitationResolutionChanges[key]);
+      delete(stats._timestamps[key]);
+      for (const name of RTC_STATS_NAMES) {
+        if (stats[name]) {
+          delete(stats[name][key]);
+        }
+      }
     }
   }
 }
