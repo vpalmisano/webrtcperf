@@ -190,6 +190,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         stats.videoSourceWidth[key] = stat.width;
         stats.videoSourceHeight[key] = stat.height;
         stats.videoSourceFps[key] = stat.framesPerSecond;
+        stats.timestamps[key] = now;
       }
     }
 
@@ -254,7 +255,6 @@ module.exports.rtcStats = function(stats, now, index, sample) {
             / (now - stats.timestamps[key]);
         }
         // update values
-        stats.timestamps[key] = now;
         stats.audioBytesSent[key] = stat.bytesSent;
         stats.audioRetransmittedBytesSent[key] = stat.retransmittedBytesSent;
       } else if (stat.mediaType === 'video') {
@@ -268,12 +268,12 @@ module.exports.rtcStats = function(stats, now, index, sample) {
             / (now - stats.timestamps[key]);
         }
         // update values
-        stats.timestamps[key] = now;
         stats.videoBytesSent[key] = stat.bytesSent;
         stats.videoRetransmittedBytesSent[key] = stat.retransmittedBytesSent;
         // https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges
         stats.qualityLimitationResolutionChanges[key] = stat.qualityLimitationResolutionChanges;
       }
+      stats.timestamps[key] = now;
     }
   }
 
@@ -283,7 +283,7 @@ module.exports.purgeRtcStats = function(stats) {
   // purge stats with expired timeout
   const now = Date.now();
   
-  if (!stats || Object.keys(stats.timestamps).length) {
+  if (!stats || !Object.keys(stats.timestamps).length) {
     return;
   }
 
