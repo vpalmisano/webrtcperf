@@ -34,6 +34,9 @@ module.exports = class Session extends EventEmitter {
       videoRecvBitrates: {},
       videoAvgJitterBufferDelay: {},
       // outbound
+      videoSourceWidth: {},
+      videoSourceHeight: {},
+      videoSourceFps: {},
       audioBytesSent: {},
       audioRetransmittedBytesSent: {},
       audioSendBitrates: {},

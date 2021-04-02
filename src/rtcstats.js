@@ -1,9 +1,10 @@
 const log = require('debug-level')('app:rtcstats');
+const util = require('util');
 const config = require('../config');
 
 module.exports.rtcStats = function(stats, now, index, sample) {
   const { peerConnectionId, receiverStats, senderStats } = sample;    
-  // log.debug('rtcStats', util.inspect(sample, { depth: null }));
+  //log.debug('rtcStats', util.inspect(sample, { depth: null }));
 
   // receiver
   if (receiverStats) {
@@ -142,8 +143,40 @@ module.exports.rtcStats = function(stats, now, index, sample) {
 
   // sender
   if (senderStats) {
-    let { outboundRTPStats } = senderStats;
+    let { mediaSources, outboundRTPStats } = senderStats;
+    //log.debug('rtcStats', util.inspect(senderStats, { depth: null }));
+
+    for (const stat of mediaSources) {
+      //log.debug('rtcStats', util.inspect(stat, { depth: null }));
+      /*
+        rtcStats {
+          audioLevel: 0.6041444135868405,
+          id: 'RTCAudioSource_1',
+          mediaType: 'audio',
+          totalAudioEnergy: 2.7124163212008945,
+          totalSamplesDuration: 9.499999999999842,
+          trackId: '...',
+        }
+        rtcStats {
+          framesPerSecond: 25,
+          height: 720,
+          id: 'RTCVideoSource_2',
+          mediaType: 'video',
+          trackId: '...',
+          width: 1280
+        }
+      */
+      const key = `${index}_${peerConnectionId}_${stat.id}`;
+      
+      if (stat.mediaType === 'video') {
+        stats.videoSourceWidth[key] = stat.width;
+        stats.videoSourceHeight[key] = stat.height;
+        stats.videoSourceFps[key] = stat.framesPerSecond;
+      }
+    }
+
     for (const stat of outboundRTPStats) {
+      // log.debug('rtcStats', util.inspect(stat, { depth: null }));
       /*
         {                                                                                                                                                                                                      
           bytesSent: 245987,                                                                                                                                                                                   
@@ -252,6 +285,9 @@ module.exports.purgeRtcStats = function(stats) {
       delete(stats.videoRecvBitrates[key]);
       delete(stats.videoAvgJitterBufferDelay[key]);
       //
+      delete(stats.videoSourceWidth[key]);
+      delete(stats.videoSourceHeight[key]);
+      delete(stats.videoSourceFps[key]);
       delete(stats.audioBytesSent[key]);
       delete(stats.audioSendBitrates[key]);
       delete(stats.audioRetransmittedBytesSent[key]);

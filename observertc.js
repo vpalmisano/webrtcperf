@@ -18,6 +18,10 @@ window.RTCPeerConnection = function() {
     window.observer.addPC(pc);
 
     let interval = setInterval(async () => {
+        /* const stats = await pc.getStats();
+        for (const s of stats) {
+            console.log('RTCPeerConnection ', JSON.stringify(s, null, 2));
+        } */
         if (pc.signalingState === 'closed' || pc.signalingState === 'failed') {
             console.warn('RTCPeerConnection remove (state: ' + pc.signalingState + ')');
             window.observer.removePC(pc);

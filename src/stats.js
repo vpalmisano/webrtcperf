@@ -175,6 +175,9 @@ const STATS = [
     'audioBytesSent',
     'audioRetransmittedBytesSent',
     'audioSendBitrates',
+    'videoSourceWidth',
+    'videoSourceHeight',
+    'videoSourceFps',
     'videoBytesSent',
     'videoRetransmittedBytesSent',
     'videoSendBitrates',
@@ -253,6 +256,9 @@ module.exports.Stats = class {
                     + sprintfStats('retransmitted', stats.videoRetransmittedBytesSent, { format: '.2f', unit: 'MB', scale: 1e-6 })
                     + sprintfStats('rate', stats.videoSendBitrates, { format: '.2f', unit: 'Kbps', scale: 1e-3 })
                     + sprintfStats('qualityLimitResolutionChanges', stats.qualityLimitationResolutionChanges, { format: 'd', unit: '' })
+                    + sprintfStats('width', stats.videoSourceWidth, { format: 'd', unit: 'px', hideSum: true })
+                    + sprintfStats('height', stats.videoSourceHeight, { format: 'd', unit: 'px', hideSum: true })
+                    + sprintfStats('fps', stats.videoSourceFps, { format: 'd', unit: 'fps', hideSum: true })
                     ;
                 console.log(out);
             }

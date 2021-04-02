@@ -71,6 +71,9 @@ Example output:
                  retransmitted        3     0.00     0.00     0.00     0.00     0.00     0.00 MB
                           rate        3     0.00     0.00     0.00     0.00     0.00     0.00 Kbps
  qualityLimitResolutionChanges        3        0        0        0        0        0        0
+                         width        1              1280        0     1280     1280     1280 px
+                        height        1               720        0      720      720      720 px
+                           fps        1                25        0       25       25       25 fps
 ```
 
 Statistics values:
@@ -88,7 +91,9 @@ Statistics values:
 | jitter                    | Total streams | The stream [jitter](https://www.w3.org/TR/webrtc-stats/#dom-rtcreceivedrtpstreamstats-jitter) in seconds. |
 | avgJitterBufferDelay      | Total decoded tracks | The inbound average [jitter buffer delay](https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay). |
 | qualityLimitResolutionChanges   | Total outbound video streams | The `qualityLimitationResolutionChanges` [value](https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges) for each outbound video stream. |
-
+| width                     | Total outbound video streams | The sent video width. |
+| height                    | Total outbound video streams | The sent video height. |
+| fps                       | Total outbound video streams | The sent video frame per seconds. |
 
 ## Examples
 
