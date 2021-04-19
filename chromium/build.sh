@@ -19,7 +19,7 @@ function setup() {
 is_debug = false
 is_component_build = false
 symbol_level = 0
-enable_nacl = true
+enable_nacl = false
 blink_symbol_level=0
 enable_linux_installer = true
 
