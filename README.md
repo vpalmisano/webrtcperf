@@ -18,10 +18,11 @@ lowering the CPU requirements when running multiple browser sessions.
 | SCRIPT_PATH          | ''            | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. |
 | PRELOAD_SCRIPT_PATH  | ''            | A javascript file path to be preloaded to each  opened tab page. |
 | VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). The temporary files containing the raw video and audio are stored at `/tmp/video.y4m` and `/tmp/audio/.wav`. |
-| CHROMIUM_PATH        | `/usr/bin/chromium-browser-unstable` | The Chromium executable path. |
 | VIDEO_WIDTH          | 1280          | The fake video resize width. |
 | VIDEO_HEIGHT         | 720           | The fake video resize height. |
 | VIDEO_FRAMERATE      | 25            | The fake video framerate. |
+| VIDEO_DURATION       | 120           | The fake video duration in seconds. |
+| CHROMIUM_PATH        | `/usr/bin/chromium-browser-unstable` | The Chromium executable path. |
 | WINDOW_WIDTH         | 1920          | The browser window width. |
 | WINDOW_HEIGHT        | 1080          | The browser window height. |
 | USE_NULL_VIDEO_DECODER | `false`     | Disables the video decoding. This affects the RTC video jitter buffer stats. |

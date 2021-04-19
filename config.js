@@ -5,6 +5,7 @@ module.exports = {
     VIDEO_WIDTH: parseInt(process.env.VIDEO_WIDTH || 1280),
     VIDEO_HEIGHT: parseInt(process.env.VIDEO_HEIGHT || 720),
     VIDEO_FRAMERATE: parseInt(process.env.VIDEO_FRAMERATE || 25),
+    VIDEO_DURATION: parseInt(process.env.VIDEO_DURATION || 120),
     //
     CHROMIUM_PATH: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser-unstable',
     WINDOW_WIDTH: parseInt(process.env.WINDOW_WIDTH || 1920),

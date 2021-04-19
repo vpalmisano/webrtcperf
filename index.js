@@ -17,7 +17,13 @@ async function main() {
 
     // prepare fake video and audio
     if (config.VIDEO_PATH) {
-        await prepareFakeMedia();
+        await prepareFakeMedia({ 
+            path: config.VIDEO_PATH,
+            width: config.VIDEO_WIDTH,
+            height: config.VIDEO_HEIGHT,
+            framerate: config.VIDEO_FRAMERATE,
+            duration: config.VIDEO_DURATION
+        });
     }
 
     // throttle configuration

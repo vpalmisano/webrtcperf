@@ -17,16 +17,17 @@ function ExecAsync(cmd) {
     });
 }
 
-module.exports.prepareFakeMedia = async function() {
-    // prepare fake video and audio
-    if (config.VIDEO_PATH) {
-        if (!fs.existsSync('/tmp/video.y4m')) {
-            console.log(`Converting ${config.VIDEO_PATH} to y4m...`);
-            await ExecAsync(`ffmpeg -y -i "${config.VIDEO_PATH}" -s ${config.VIDEO_WIDTH}:${config.VIDEO_HEIGHT} -r ${config.VIDEO_FRAMERATE} -an /tmp/video.y4m`);
-        }
-        if (!fs.existsSync('/tmp/audio.wav')) {
-            console.log(`Converting ${config.VIDEO_PATH} to wav...`);
-            await ExecAsync(`ffmpeg -y -i "${config.VIDEO_PATH}" -vn /tmp/audio.wav`);
-        }
+module.exports.prepareFakeMedia = async function({ path, width, height, framerate, duration }) {
+    log.info('prepareFakeMedia', { path, width, height, framerate, duration });
+    if (!path) {
+        return;
+    }
+    if (!fs.existsSync('/tmp/video.y4m')) {
+        console.log(`Converting ${path} to y4m...`);
+        await ExecAsync(`ffmpeg -y -i "${path}" -s ${width}:${height} -r ${framerate} -t ${duration} -an /tmp/video.y4m`);
+    }
+    if (!fs.existsSync('/tmp/audio.wav')) {
+        console.log(`Converting ${path} to wav...`);
+        await ExecAsync(`ffmpeg -y -i "${path}" -t ${duration} -vn /tmp/audio.wav`);
     }
 }
