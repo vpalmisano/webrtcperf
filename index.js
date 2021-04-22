@@ -22,7 +22,10 @@ async function main() {
             width: config.VIDEO_WIDTH,
             height: config.VIDEO_HEIGHT,
             framerate: config.VIDEO_FRAMERATE,
-            duration: config.VIDEO_DURATION
+            seek: config.VIDEO_SEEK,
+            duration: config.VIDEO_DURATION,
+            cacheRaw: config.VIDEO_CACHE_RAW,
+            cachePath: config.VIDEO_CACHE_PATH
         });
     }
 

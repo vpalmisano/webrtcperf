@@ -1,11 +1,15 @@
 module.exports = {
     URL: process.env.URL,
     URL_QUERY: process.env.URL_QUERY,
+    //
     VIDEO_PATH: process.env.VIDEO_PATH,
     VIDEO_WIDTH: parseInt(process.env.VIDEO_WIDTH || 1280),
     VIDEO_HEIGHT: parseInt(process.env.VIDEO_HEIGHT || 720),
     VIDEO_FRAMERATE: parseInt(process.env.VIDEO_FRAMERATE || 25),
+    VIDEO_SEEK: parseInt(process.env.VIDEO_SEEK || 0),
     VIDEO_DURATION: parseInt(process.env.VIDEO_DURATION || 120),
+    VIDEO_CACHE_RAW: process.env.VIDEO_CACHE_RAW !== 'false',
+    VIDEO_CACHE_PATH : process.env.VIDEO_CACHE_PATH || '/tmp/webrtc-stress-test',
     //
     CHROMIUM_PATH: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser-unstable',
     WINDOW_WIDTH: parseInt(process.env.WINDOW_WIDTH || 1920),

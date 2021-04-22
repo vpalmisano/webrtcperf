@@ -1,8 +1,6 @@
 const log = require('debug-level')('app:media');
 const fs = require('fs');
 const Exec = require('child_process').exec;
-//
-const config = require('../config');
 
 function ExecAsync(cmd) {
     return new Promise((resolve, reject) => {
@@ -17,17 +15,26 @@ function ExecAsync(cmd) {
     });
 }
 
-module.exports.prepareFakeMedia = async function({ path, width, height, framerate, duration }) {
-    log.info('prepareFakeMedia', { path, width, height, framerate, duration });
+module.exports.prepareFakeMedia = async function({ path, width, height, framerate, seek, duration, cacheRaw, cachePath }) {
+    log.info('prepareFakeMedia', { path, width, height, framerate, seek, duration, cacheRaw, cachePath });
     if (!path) {
-        return;
+        throw new Error(`empty video path`);
     }
-    if (!fs.existsSync('/tmp/video.y4m')) {
-        console.log(`Converting ${path} to y4m...`);
-        await ExecAsync(`ffmpeg -y -i "${path}" -s ${width}:${height} -r ${framerate} -t ${duration} -an /tmp/video.y4m`);
+    if (!fs.existsSync(path)) {
+        throw new Error(`video not found: ${path}`);
     }
-    if (!fs.existsSync('/tmp/audio.wav')) {
-        console.log(`Converting ${path} to wav...`);
-        await ExecAsync(`ffmpeg -y -i "${path}" -t ${duration} -vn /tmp/audio.wav`);
+
+    await fs.promises.mkdir(cachePath, { recursive: true });
+    
+    const videoPath = `${cachePath}/video.mjpeg`;
+    if (!fs.existsSync(videoPath) || !cacheRaw) {
+        console.log(`Converting ${path} to ${videoPath}`);
+        await ExecAsync(`ffmpeg -y -i "${path}" -s ${width}:${height} -r ${framerate} -ss ${seek} -t ${duration} -an ${videoPath}`);
+    }
+
+    const audioPath = `${cachePath}/audio.wav`;
+    if (!fs.existsSync(audioPath) || !cacheRaw) {
+        console.log(`Converting ${path} to ${audioPath}`);
+        await ExecAsync(`ffmpeg -y -i "${path}" -ss ${seek} -t ${duration} -vn ${audioPath}`);
     }
 }

@@ -94,8 +94,8 @@ module.exports = class Session extends EventEmitter {
           config.VIDEO_PATH ? [
             '--use-fake-ui-for-media-stream',
             '--use-fake-device-for-media-stream',
-            '--use-file-for-fake-video-capture=/tmp/video.y4m',
-            '--use-file-for-fake-audio-capture=/tmp/audio.wav',
+            `--use-file-for-fake-video-capture=${config.VIDEO_CACHE_PATH}/video.mjpeg`,
+            `--use-file-for-fake-audio-capture=${config.VIDEO_CACHE_PATH}/audio.wav`,
           ] : [
             //'--use-fake-codec-for-peer-connection'
           ]
