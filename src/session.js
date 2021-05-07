@@ -90,10 +90,10 @@ module.exports = class Session extends EventEmitter {
             ,
           //'--renderer-process-limit=1',
           '--single-process',
+          '--use-fake-ui-for-media-stream',
+          '--use-fake-device-for-media-stream',
         ].concat(
           config.VIDEO_PATH ? [
-            '--use-fake-ui-for-media-stream',
-            '--use-fake-device-for-media-stream',
             `--use-file-for-fake-video-capture=${config.VIDEO_CACHE_PATH}/video.mjpeg`,
             `--use-file-for-fake-audio-capture=${config.VIDEO_CACHE_PATH}/audio.wav`,
           ] : [
