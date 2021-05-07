@@ -10,7 +10,7 @@ const config = require('./config');
 
 //
 async function main() {
-    let sessions = [];
+    let sessions = new Map();
 
     const stats = new Stats(sessions);
     await stats.start();
@@ -36,12 +36,19 @@ async function main() {
     }
 
     // starts the sessions
+    const startSession = async (id) => {
+        let session = new Session({ id });
+        session.once('stop', () => {
+            console.warn(`Session ${id} stopped, reloading...`);
+            sessions.delete(id);
+            setTimeout(startSession, config.SPAWN_PERIOD, id);
+        })
+        await session.start();
+        sessions.set(id, session);
+    }
+
     for (let i=0; i < config.SESSIONS; i++) {
-        setTimeout(async id => {
-            let session = new Session({ id });
-            await session.start();
-            sessions.push(session);
-        }, i * config.SPAWN_PERIOD, i);
+        setTimeout(startSession, i * config.SPAWN_PERIOD, i);
     }
 
     // stop function
@@ -51,7 +58,10 @@ async function main() {
         stats.stop();
 
         try {
-            await Promise.allSettled(sessions.map(session => session.stop()));
+            await Promise.allSettled([...sessions.values()].map(session => {
+                session.removeAllListeners();
+                session.stop();
+            }));
         } catch(err) {}
         sessions = [];
 
