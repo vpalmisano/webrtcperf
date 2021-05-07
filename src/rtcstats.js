@@ -1,5 +1,4 @@
 const log = require('debug-level')('app:rtcstats');
-const util = require('util');
 const config = require('../config');
 
 const RTC_STATS_NAMES = module.exports.RTC_STATS_NAMES = [
@@ -30,8 +29,8 @@ const RTC_STATS_NAMES = module.exports.RTC_STATS_NAMES = [
 ];
 
 module.exports.rtcStats = function(stats, now, index, sample) {
-  const { peerConnectionId, receiverStats, senderStats } = sample;    
-  //log.debug('rtcStats', util.inspect(sample, { depth: null }));
+  const {peerConnectionId, receiverStats, senderStats} = sample;
+  // log.debug('rtcStats', util.inspect(sample, { depth: null }));
 
   if (!stats._timestamps) {
     stats._timestamps = {};
@@ -39,18 +38,18 @@ module.exports.rtcStats = function(stats, now, index, sample) {
 
   // receiver
   if (receiverStats) {
-    //log.debug('rtcStats', util.inspect(receiverStats, { depth: null }));
+    // log.debug('rtcStats', util.inspect(receiverStats, { depth: null }));
 
-    let { inboundRTPStats, tracks } = receiverStats;
+    const {inboundRTPStats, tracks} = receiverStats;
     for (const stat of inboundRTPStats) {
       // log.debug('rtcStats', util.inspect(stat, { depth: null }));
       /*
-        {                                                                                                                                                                                                      
-        bytesReceived: 923,                                                                                                                                                                                  
-        codecId: 'RTCCodec_0_Inbound_100',                                                                                                                                                                   
-        fecPacketsDiscarded: 0,                                                                                                                                                                              
-        fecPacketsReceived: 0,                                                                                                                                                                               
-        headerBytesReceived: 1204,                                                                                                                                                                           
+        {
+        bytesReceived: 923,
+        codecId: 'RTCCodec_0_Inbound_100',
+        fecPacketsDiscarded: 0,
+        fecPacketsReceived: 0,
+        headerBytesReceived: 1204,
         id: 'RTCInboundRTPAudioStream_362585473',
         isRemote: false,
         jitter: 0,
@@ -114,24 +113,27 @@ module.exports.rtcStats = function(stats, now, index, sample) {
       const key = `${index}_${peerConnectionId}_${stat.id}`;
 
       if (stat.mediaType === 'audio') {
-        stats.audioPacketsLost[key] = 100 * stat.packetsLost / (stat.packetsLost + stat.packetsReceived);
+        stats.audioPacketsLost[key] = 100 * stat.packetsLost /
+          (stat.packetsLost + stat.packetsReceived);
         stats.audioJitter[key] = stat.jitter;
         // calculate rate
         if (stats._timestamps[key]) {
-            stats.audioRecvBitrates[key] = 8000 * 
-            (stat.bytesReceived - stats.audioBytesReceived[key]) 
-            / (now - stats._timestamps[key]);
+          stats.audioRecvBitrates[key] = 8000 *
+            (stat.bytesReceived - stats.audioBytesReceived[key]) /
+            (now - stats._timestamps[key]);
         }
         // update values
         stats.audioBytesReceived[key] = stat.bytesReceived;
-      } else if (stat.mediaType === 'video' && stat.decoderImplementation !== 'unknown') {
-        stats.videoPacketsLost[key] = 100 * stat.packetsLost / (stat.packetsLost + stat.packetsReceived);
+      } else if (stat.mediaType === 'video' &&
+                 stat.decoderImplementation !== 'unknown') {
+        stats.videoPacketsLost[key] = 100 * stat.packetsLost /
+          (stat.packetsLost + stat.packetsReceived);
         stats.videoJitter[key] = stat.jitter;
         // calculate rate
         if (stats._timestamps[key]) {
-            stats.videoRecvBitrates[key] = 8000 * 
-            (stat.bytesReceived - stats.videoBytesReceived[key]) 
-            / (now - stats._timestamps[key]);
+          stats.videoRecvBitrates[key] = 8000 *
+            (stat.bytesReceived - stats.videoBytesReceived[key]) /
+            (now - stats._timestamps[key]);
         }
         // update values
         stats.videoBytesReceived[key] = stat.bytesReceived;
@@ -140,7 +142,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
     }
 
     for (const stat of tracks) {
-      //log.debug('rtcStats', util.inspect(stat, { depth: null }));
+      // log.debug('rtcStats', util.inspect(stat, { depth: null }));
       /*
         {
           concealedSamples: 0,
@@ -157,26 +159,27 @@ module.exports.rtcStats = function(stats, now, index, sample) {
           silentConcealedSamples: 0,
           totalSamplesReceived: 228000
         },
-        {                                                                                                                                                                        
-          detached: false,                                                                                                                                                                
-          ended: false,                                                                                                                                                                   
-          framesDecoded: 10985,                                                                                                                                                           
-          framesDropped: 73,                                                                                                                                                              
-          framesReceived: 11062,                                                                                                                                                          
-          frameWidth: 640,                                                                                                                                                                
-          frameHeight: 360,                                                                                                                                                               
-          id: 'RTCMediaStreamTrack_receiver_4',                                                                                                                                           
-          jitterBufferDelay: 1450.231,                                                                                                                                                    
-          jitterBufferEmittedCount: 10984,                                                                                                                                                
+        {
+          detached: false,
+          ended: false,
+          framesDecoded: 10985,
+          framesDropped: 73,
+          framesReceived: 11062,
+          frameWidth: 640,
+          frameHeight: 360,
+          id: 'RTCMediaStreamTrack_receiver_4',
+          jitterBufferDelay: 1450.231,
+          jitterBufferEmittedCount: 10984,
           mediaType: 'video',
           remoteSource: true
         }
       */
-  
+
       const key = `${index}_${peerConnectionId}_${stat.id}`;
       if (stat.jitterBufferEmittedCount) {
         // https://www.w3.org/TR/webrtc-stats/#dom-rtcinboundrtpstreamstats-jitterbufferdelay
-        let avgjitterBufferDelay = stat.jitterBufferDelay / stat.jitterBufferEmittedCount;
+        const avgjitterBufferDelay = stat.jitterBufferDelay /
+          stat.jitterBufferEmittedCount;
         if (stat.mediaType === 'audio') {
           stats.audioAvgJitterBufferDelay[key] = avgjitterBufferDelay;
         } else if (stat.mediaType === 'video') {
@@ -186,17 +189,16 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         }
         stats._timestamps[key] = now;
       }
-  
     }
   }
 
   // sender
   if (senderStats) {
-    let { mediaSources, outboundRTPStats } = senderStats;
-    //log.debug('rtcStats', util.inspect(senderStats, { depth: null }));
+    const {mediaSources, outboundRTPStats} = senderStats;
+    // log.debug('rtcStats', util.inspect(senderStats, { depth: null }));
 
     for (const stat of mediaSources) {
-      //log.debug('rtcStats', util.inspect(stat, { depth: null }));
+      // log.debug('rtcStats', util.inspect(stat, { depth: null }));
       /*
         rtcStats {
           audioLevel: 0.6041444135868405,
@@ -216,7 +218,7 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         }
       */
       const key = `${index}_${peerConnectionId}_${stat.id}`;
-      
+
       if (stat.mediaType === 'video') {
         stats.videoSourceWidth[key] = stat.width;
         stats.videoSourceHeight[key] = stat.height;
@@ -228,39 +230,39 @@ module.exports.rtcStats = function(stats, now, index, sample) {
     for (const stat of outboundRTPStats) {
       // log.debug('rtcStats', util.inspect(stat, { depth: null }));
       /*
-        {                                                                                                                                                                                                      
-          bytesSent: 245987,                                                                                                                                                                                   
-          codecId: 'RTCCodec_0_Outbound_96',                                                                                                                                                                   
-          encoderImplementation: 'libvpx',                                                                                                                                                                     
-          firCount: 0,                                                                                                                                                                                         
-          framesEncoded: 80,                                                                                                                                                                                   
-          headerBytesSent: 23032,                                                                                                                                                                              
-          id: 'RTCOutboundRTPVideoStream_505023861',                                                                                                                                                           
-          isRemote: false,                                                                                                                                                                                     
-          keyFramesEncoded: 1,                                                                                                                                                                                 
-          mediaSourceId: 'RTCVideoSource_1',                                                                                                                                                                   
-          mediaType: 'video',                                                                                                                                                                                  
-          nackCount: 0,                                                                                                                                                                                        
-          packetsSent: 322,                                                                                                                                                                                    
-          pliCount: 0,                                                                                                                                                                                         
-          qpSum: 5389,                                                                                                                                                                                         
-          qualityLimitationReason: 'none',                                                                                                                                                                     
-          qualityLimitationResolutionChanges: 1,                                                                                                                                                               
-          remoteId: 'RTCRemoteInboundRtpVideoStream_505023861',                                                                                                                                                
-          retransmittedBytesSent: 0,                                                                                                                                                                           
-          retransmittedPacketsSent: 0,                                                                                                                                                                         
-          ssrc: 505023861,                                                                                                                                                                                     
-          totalEncodeTime: 0.424,                                                                                                                                                                              
-          totalEncodedBytesTarget: 0,                                                                                                                                                                          
-          totalPacketSendDelay: 9.825,                                                                                                                                                                         
-          trackId: 'RTCMediaStreamTrack_sender_1',                                                                                                                                                             
-          transportId: 'RTCTransport_0_1'                                                                                                                                                                      
-        },    
-        {                                                                                                                                                                                                      
-          bytesSent: 76599,                                                                                                                                                                                    
-          codecId: 'RTCCodec_1_Outbound_111',                                                                                                                                                                  
-          headerBytesSent: 28700,                                                                                                                                                                              
-          id: 'RTCOutboundRTPAudioStream_534975921',                                                                                                                                                           
+        {
+          bytesSent: 245987,
+          codecId: 'RTCCodec_0_Outbound_96',
+          encoderImplementation: 'libvpx',
+          firCount: 0,
+          framesEncoded: 80,
+          headerBytesSent: 23032,
+          id: 'RTCOutboundRTPVideoStream_505023861',
+          isRemote: false,
+          keyFramesEncoded: 1,
+          mediaSourceId: 'RTCVideoSource_1',
+          mediaType: 'video',
+          nackCount: 0,
+          packetsSent: 322,
+          pliCount: 0,
+          qpSum: 5389,
+          qualityLimitationReason: 'none',
+          qualityLimitationResolutionChanges: 1,
+          remoteId: 'RTCRemoteInboundRtpVideoStream_505023861',
+          retransmittedBytesSent: 0,
+          retransmittedPacketsSent: 0,
+          ssrc: 505023861,
+          totalEncodeTime: 0.424,
+          totalEncodedBytesTarget: 0,
+          totalPacketSendDelay: 9.825,
+          trackId: 'RTCMediaStreamTrack_sender_1',
+          transportId: 'RTCTransport_0_1'
+        },
+        {
+          bytesSent: 76599,
+          codecId: 'RTCCodec_1_Outbound_111',
+          headerBytesSent: 28700,
+          id: 'RTCOutboundRTPAudioStream_534975921',
           isRemote: false,
           mediaSourceId: 'RTCAudioSource_2',
           mediaType: 'audio',
@@ -274,16 +276,17 @@ module.exports.rtcStats = function(stats, now, index, sample) {
         }
       */
       const key = `${index}_${peerConnectionId}_${stat.id}`;
-      
+
       if (stat.mediaType === 'audio') {
         // calculate rate
         if (stats._timestamps[key]) {
-            stats.audioSendBitrates[key] = 8000 * 
+          stats.audioSendBitrates[key] = 8000 *
             (
-                (stat.bytesSent - stat.retransmittedBytesSent) 
-                - (stats.audioBytesSent[key] - stats.audioRetransmittedBytesSent[key])
-            )
-            / (now - stats._timestamps[key]);
+              (stat.bytesSent - stat.retransmittedBytesSent) -
+                (stats.audioBytesSent[key] -
+                  stats.audioRetransmittedBytesSent[key])
+            ) /
+            (now - stats._timestamps[key]);
         }
         // update values
         stats.audioBytesSent[key] = stat.bytesSent;
@@ -291,24 +294,25 @@ module.exports.rtcStats = function(stats, now, index, sample) {
       } else if (stat.mediaType === 'video') {
         // calculate rate
         if (stats._timestamps[key]) {
-            stats.videoSendBitrates[key] = 8000 * 
+          stats.videoSendBitrates[key] = 8000 *
             (
-                (stat.bytesSent - stat.retransmittedBytesSent) 
-                - (stats.videoBytesSent[key] - stats.videoRetransmittedBytesSent[key])
-            )
-            / (now - stats._timestamps[key]);
+              (stat.bytesSent - stat.retransmittedBytesSent) -
+                (stats.videoBytesSent[key] -
+                  stats.videoRetransmittedBytesSent[key])
+            ) /
+            (now - stats._timestamps[key]);
         }
         // update values
         stats.videoBytesSent[key] = stat.bytesSent;
         stats.videoRetransmittedBytesSent[key] = stat.retransmittedBytesSent;
         // https://w3c.github.io/webrtc-stats/#dom-rtcoutboundrtpstreamstats-qualitylimitationresolutionchanges
-        stats.qualityLimitationResolutionChanges[key] = stat.qualityLimitationResolutionChanges;
+        stats.qualityLimitationResolutionChanges[key] =
+          stat.qualityLimitationResolutionChanges;
       }
       stats._timestamps[key] = now;
     }
   }
-
-}
+};
 
 module.exports.purgeRtcStats = function(stats) {
   // purge stats with expired timeout
@@ -323,12 +327,12 @@ module.exports.purgeRtcStats = function(stats) {
     if (now - timestamp > 1000 * config.RTC_STATS_TIMEOUT) {
       log.debug(`expired stat ${key}`);
       //
-      delete(stats._timestamps[key]);
+      delete (stats._timestamps[key]);
       for (const name of RTC_STATS_NAMES) {
         if (stats[name]) {
-          delete(stats[name][key]);
+          delete (stats[name][key]);
         }
       }
     }
   }
-}
+};

@@ -1,28 +1,31 @@
 const log = require('debug-level')('app:session');
 const EventEmitter = require('events');
 const fs = require('fs');
-const util = require('util');
 const puppeteer = require('puppeteer');
 const chalk = require('chalk');
 const requestretry = require('requestretry');
 //
-const { getProcessStats } = require('./stats');
-const { RTC_STATS_NAMES, rtcStats, purgeRtcStats } = require('./rtcstats');
+const {getProcessStats} = require('./stats');
+const {RTC_STATS_NAMES, rtcStats, purgeRtcStats} = require('./rtcstats');
 
 const config = require('../config');
 
 module.exports = class Session extends EventEmitter {
-  constructor ({ id }) {
+  /**
+   * Session
+   * @param {*} id
+   */
+  constructor({id}) {
     super();
-    log.debug('constructor', { id });
+    log.debug('constructor', {id});
     this.id = id;
     //
     this.stats = {
       cpu: 0,
       memory: 0,
       tabs: 0,
-    }
-    RTC_STATS_NAMES.forEach(name => {
+    };
+    RTC_STATS_NAMES.forEach((name) => {
       this.stats[name] = {};
     });
     this.updateStatsTimeout = null;
@@ -30,21 +33,24 @@ module.exports = class Session extends EventEmitter {
     this.pages = new Map();
   }
 
-  async start(){
+  /**
+   * Start
+   */
+  async start() {
     log.debug(`${this.id} start`);
 
     const env = {...process.env};
     if (!config.USE_NULL_VIDEO_DECODER) {
-      delete(env.USE_NULL_VIDEO_DECODER);
+      delete (env.USE_NULL_VIDEO_DECODER);
     }
 
     try {
       // log.debug('defaultArgs:', puppeteer.defaultArgs());
-      this.browser = await puppeteer.launch({ 
+      this.browser = await puppeteer.launch({
         headless: !env.DISPLAY,
         executablePath: config.CHROMIUM_PATH,
         env,
-        //devtools: true,
+        // devtools: true,
         ignoreHTTPSErrors: true,
         defaultViewport: {
           width: config.WINDOW_WIDTH,
@@ -52,13 +58,13 @@ module.exports = class Session extends EventEmitter {
           deviceScaleFactor: 1,
           isMobile: false,
           hasTouch: false,
-          isLandscape: false
+          isLandscape: false,
         },
         ignoreDefaultArgs: [
           '--disable-dev-shm-usage',
           '--disable-gpu',
         ],
-        args: [ 
+        args: [
           // https://peter.sh/experiments/chromium-command-line-switches/
           /* puppeteer settings:
           '--disable-background-networking',
@@ -77,29 +83,31 @@ module.exports = class Session extends EventEmitter {
           '--mute-audio', */
           '--no-sandbox',
           '--no-zygote',
-          //`--window-size=320,160`,
+          // `--window-size=320,160`,
           '--ignore-certificate-errors',
           '--no-user-gesture-required',
           '--autoplay-policy=no-user-gesture-required',
           '--disable-infobars',
-          //'--ignore-gpu-blacklist',
-          '--force-fieldtrials='
-            + 'AutomaticTabDiscarding/Disabled/WebRTC-Vp9DependencyDescriptor/Enabled'
-            + '/WebRTC-DependencyDescriptorAdvertised/Enabled'
-            + (config.AUDIO_RED_FOR_OPUS ? '/WebRTC-Audio-Red-For-Opus/Enabled' : '')
-            ,
-          //'--renderer-process-limit=1',
+          // '--ignore-gpu-blacklist',
+          `${'--force-fieldtrials=' +
+            'AutomaticTabDiscarding/Disabled' +
+            '/WebRTC-Vp9DependencyDescriptor/Enabled' +
+            '/WebRTC-DependencyDescriptorAdvertised/Enabled'}${
+            config.AUDIO_RED_FOR_OPUS ?
+              '/WebRTC-Audio-Red-For-Opus/Enabled' : ''}`,
+          // '--renderer-process-limit=1',
           '--single-process',
           '--use-fake-ui-for-media-stream',
           '--use-fake-device-for-media-stream',
         ].concat(
           config.VIDEO_PATH ? [
-            `--use-file-for-fake-video-capture=${config.VIDEO_CACHE_PATH}/video.mjpeg`,
-            `--use-file-for-fake-audio-capture=${config.VIDEO_CACHE_PATH}/audio.wav`,
+            `--use-file-for-fake-video-capture=${
+              config.VIDEO_CACHE_PATH}/video.mjpeg`,
+            `--use-file-for-fake-audio-capture=${
+              config.VIDEO_CACHE_PATH}/audio.wav`,
           ] : [
-            //'--use-fake-codec-for-peer-connection'
-          ]
-        )
+            // '--use-fake-codec-for-peer-connection'
+          ]),
         /* .concat(!process.env.DISPLAY ? ['--headless'] : []) */
         /* .concat(['about:blank']) */
       });
@@ -110,19 +118,23 @@ module.exports = class Session extends EventEmitter {
       });
 
       // open pages
-      for (let i=0; i<config.TABS_PER_SESSION; i++) {
+      for (let i = 0; i < config.TABS_PER_SESSION; i++) {
         setTimeout(() => this.openPage(i), i * config.SPAWN_PERIOD);
       }
 
       // collect stats
-      this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.STATS_INTERVAL * 1000);
-
-    } catch(err) {
+      this.updateStatsTimeout = setTimeout(this.updateStats.bind(this),
+          config.STATS_INTERVAL * 1000);
+    } catch (err) {
       console.error(`${this.id} start error:`, err);
       this.stop();
     }
   }
 
+  /**
+   * openPage
+   * @param {int} tabIndex
+   */
   async openPage(tabIndex) {
     if (!this.browser) {
       return;
@@ -131,81 +143,83 @@ module.exports = class Session extends EventEmitter {
     const index = (this.id * config.TABS_PER_SESSION) + tabIndex;
 
     let url = config.URL;
-    
+
     if (config.URL_QUERY) {
-      url += '?' + config.URL_QUERY
-        .replace(/\$s/g, this.id + 1)
-        .replace(/\$S/g, config.SESSIONS)
-        .replace(/\$t/g, tabIndex + 1)
-        .replace(/\$T/g, config.TABS_PER_SESSION)
-        .replace(/\$i/g, index + 1)
-        .replace(/\$p/g, process.pid)
-        ;
+      url += `?${config.URL_QUERY
+          .replace(/\$s/g, this.id + 1)
+          .replace(/\$S/g, config.SESSIONS)
+          .replace(/\$t/g, tabIndex + 1)
+          .replace(/\$T/g, config.TABS_PER_SESSION)
+          .replace(/\$i/g, index + 1)
+          .replace(/\$p/g, process.pid)}`;
     }
 
     log.info(`opening page ${this.id + 1}-${tabIndex + 1}: ${url}`);
     const page = await this.browser.newPage();
-    
+
     //
     await page.exposeFunction('traceRtcStats', (sampleList) => {
-      //log.debug('traceRtcStats', util.inspect(sampleList, { depth: null }));
+      // log.debug('traceRtcStats', util.inspect(sampleList, { depth: null }));
       const now = Date.now();
       for (const sample of sampleList) {
         try {
           rtcStats(this.stats, now, index, sample);
-        } catch(err) { 
+        } catch (err) {
           console.error(err);
         }
       }
     });
 
     await page.evaluateOnNewDocument(
-       `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};`
-      +`window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1};`
-      +`window.WEBRTC_STRESS_TEST_INDEX = ${index + 1};`
-      +`window.STATS_INTERVAL = ${config.STATS_INTERVAL};`
-    );
+        `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};` +
+        `window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1};` +
+        `window.WEBRTC_STRESS_TEST_INDEX = ${index + 1};` +
+        `window.STATS_INTERVAL = ${config.STATS_INTERVAL};`);
 
     //
-    
-    if (config.GET_USER_MEDIA_OVERRIDES && index < config.GET_USER_MEDIA_OVERRIDES.length) {
+
+    if (config.GET_USER_MEDIA_OVERRIDES &&
+        index < config.GET_USER_MEDIA_OVERRIDES.length) {
       const override = config.GET_USER_MEDIA_OVERRIDES[index];
       log.debug('Using getUserMedia override:', override);
       await page.evaluateOnNewDocument(`
-        window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
+window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       `);
     }
 
     // load a preload script
     if (config.PRELOAD_SCRIPT_PATH) {
-      await page.evaluateOnNewDocument(await fs.promises.readFile(config.PRELOAD_SCRIPT_PATH, 'utf8'));
+      await page.evaluateOnNewDocument(
+          await fs.promises.readFile(config.PRELOAD_SCRIPT_PATH, 'utf8'));
     }
 
     // load observertc
     if (config.ENABLE_RTC_STATS) {
-      await page.evaluateOnNewDocument((await requestretry('https://cdn.jsdelivr.net/gh/vpalmisano/observer-js@custom-stats/dist/v0.6.2/observer.min.js')).body);
-      await page.evaluateOnNewDocument(await fs.promises.readFile('./observertc.js', 'utf8'));
+      await page.evaluateOnNewDocument(
+          (await requestretry('https://cdn.jsdelivr.net/gh/vpalmisano/observer-js@custom-stats/dist/v0.6.2/observer.min.js')).body);
+      await page.evaluateOnNewDocument(
+          await fs.promises.readFile('./observertc.js', 'utf8'));
     }
-   
+
     //
     page.once('domcontentloaded', async () => {
       log.debug(`page ${this.id + 1}-${tabIndex + 1} domcontentloaded`);
-     
+
       // add external script
       if (config.SCRIPT_PATH) {
         await page.addScriptTag({
           path: config.SCRIPT_PATH,
-          type: 'text/javascript'
+          type: 'text/javascript',
         });
       }
 
       // enable perf
       // https://chromedevtools.github.io/devtools-protocol/tot/Cast/
-      //const client = await page.target().createCDPSession();
-      //await client.send('Performance.enable', { timeDomain: 'timeTicks' });
+      // const client = await page.target().createCDPSession();
+      // await client.send('Performance.enable', { timeDomain: 'timeTicks' });
 
       // add to pages map
-      this.pages.set(index, { page/* , client */ });
+      this.pages.set(index, {page/* , client */});
       this.stats.tabs = this.pages.size;
     });
 
@@ -220,13 +234,15 @@ module.exports = class Session extends EventEmitter {
     });
 
     if (config.ENABLE_PAGE_LOG) {
-      page.on('console', (msg) => console.log(chalk`{yellow {bold [page ${this.id + 1}-${tabIndex + 1}]} ${msg.text()}}`));
+      page.on('console', (msg) => console.log(
+          chalk`{yellow {bold [page ${this.id + 1}-${tabIndex + 1}]} ${
+            msg.text()}}`));
     }
 
     // open the page url
     await page.goto(url, {
       waitUntil: 'load',
-      timeout: 60 * 1000
+      timeout: 60 * 1000,
     });
 
     // select the first blank page
@@ -234,13 +250,16 @@ module.exports = class Session extends EventEmitter {
     await pages[0].bringToFront();
   }
 
+  /**
+   * updateStats
+   */
   async updateStats() {
     if (!this.browser) {
       return;
     }
 
-    const pid = this.browser.process().pid;
-    //log.debug('updateStats', pid);
+    const {pid} = this.browser.process();
+    // log.debug('updateStats', pid);
 
     Object.assign(this.stats, await getProcessStats(pid, true));
 
@@ -249,8 +268,10 @@ module.exports = class Session extends EventEmitter {
       const metrics = await client.send('Performance.getMetrics');
       const pageMetrics = {};
       for (const m of metrics.metrics) {
-        if (['LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration', 'V8CompileDuration', 'TaskDuration',
-             'TaskOtherDuration', 'ThreadTime', 'ProcessTime', 'JSHeapUsedSize', 'JSHeapTotalSize'].includes(m.name)) {
+        if (['LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration',
+             'V8CompileDuration', 'TaskDuration',
+             'TaskOtherDuration', 'ThreadTime', 'ProcessTime',
+             'JSHeapUsedSize', 'JSHeapTotalSize'].includes(m.name)) {
           pageMetrics[m.name] = m.value;
         }
       }
@@ -260,12 +281,16 @@ module.exports = class Session extends EventEmitter {
     purgeRtcStats(this.stats);
 
     //
-    this.updateStatsTimeout = setTimeout(this.updateStats.bind(this), config.STATS_INTERVAL * 1000);
+    this.updateStatsTimeout = setTimeout(this.updateStats.bind(this),
+        config.STATS_INTERVAL * 1000);
   }
 
-  async stop(){
+  /**
+   * stop
+   */
+  async stop() {
     log.debug(`${this.id} stop`);
-    
+
     if (this.updateStatsTimeout) {
       clearTimeout(this.updateStatsTimeout);
       this.updateStatsTimeout = null;
@@ -274,7 +299,7 @@ module.exports = class Session extends EventEmitter {
     if (this.browser) {
       try {
         await this.browser.close();
-      } catch(err) {
+      } catch (err) {
         console.error('browser close error:', err);
       }
       this.browser = null;
@@ -284,5 +309,4 @@ module.exports = class Session extends EventEmitter {
 
     this.emit('stop');
   }
-
-}
+};

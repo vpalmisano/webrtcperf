@@ -12,7 +12,9 @@
     "test": "mocha",
     "build": "yarn && webpack --config webpack.config.js -p && docker build -t vpalmisano/webrtc-stress-test .",
     "push": "docker push vpalmisano/webrtc-stress-test:latest && docker tag vpalmisano/webrtc-stress-test vpalmisano/webrtc-stress-test:$npm_package_version && docker push vpalmisano/webrtc-stress-test:$npm_package_version",
-    "clean": "rm -f app.min.js*"
+    "clean": "rm -f app.min.js*",
+    "lint": "eslint src/*.js *.js",
+    "lint:fix": "eslint src/*.js *.js --fix"
   },
   "license": "MIT",
   "dependencies": {
@@ -30,11 +32,21 @@
     "sprintf-js": "^1.1.2"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.22.1",
+    "@typescript-eslint/parser": "^4.22.1",
     "chai": "^4.2.0",
     "chai-datetime": "^1.5.0",
+    "eslint": "^7.25.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
     "mocha": "^8.3.0",
     "nodemon": "^2.0.7",
     "terser-webpack-plugin": "^2.3.0",
+    "typescript": "^4.2.4",
     "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
