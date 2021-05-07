@@ -32,10 +32,10 @@ window.RTCPeerConnection = function(...args) {
   return pc;
 };
 
-for (const key of Object.keys(nativeRTCPeerConnection)) {
-  window.RTCPeerConnection[key] = nativeRTCPeerConnection[key];
+for (const key of Object.keys(NativeRTCPeerConnection)) {
+  window.RTCPeerConnection[key] = NativeRTCPeerConnection[key];
 }
-window.RTCPeerConnection.prototype = nativeRTCPeerConnection.prototype;
+window.RTCPeerConnection.prototype = NativeRTCPeerConnection.prototype;
 
 console.log('Override getUserMedia');
 

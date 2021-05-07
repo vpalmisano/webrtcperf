@@ -260,7 +260,7 @@ module.exports.Stats = class {
     this.statsInterval = setInterval(async () => {
       // log.debug('statsInterval');
 
-      if (!this.sessions.length) {
+      if (!this.sessions || !this.sessions.size) {
         return;
       }
 
@@ -270,7 +270,7 @@ module.exports.Stats = class {
         return obj;
       }, {});
 
-      this.sessions.forEach((session) => {
+      [...this.sessions.values()].forEach((session) => {
         if (!session.stats) {
           return;
         }
@@ -361,7 +361,7 @@ module.exports.Stats = class {
       clearInterval(this.statsInterval);
       this.statsInterval = null;
     }
-    this.sessions = [];
+    this.sessions = null;
     this.statsWriter = null;
   }
 };

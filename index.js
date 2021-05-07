@@ -63,7 +63,8 @@ async function main() {
         session.stop();
       }));
     } catch (err) {}
-    sessions = [];
+
+    sessions.clear();
 
     if (config.THROTTLE_CONFIG) {
       try {
