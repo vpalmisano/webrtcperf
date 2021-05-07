@@ -10,7 +10,7 @@ const config = require('./config');
  * Main function
  */
 async function main() {
-  let sessions = new Map();
+  const sessions = new Map();
 
   const stats = new Stats(sessions);
   await stats.start();
