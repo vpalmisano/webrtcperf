@@ -16,7 +16,7 @@
     "lint": "eslint src/*.js *.js",
     "lint:fix": "eslint src/*.js *.js --fix"
   },
-  "license": "MIT",
+  "license": "AGPL",
   "dependencies": {
     "@sitespeed.io/throttle": "^2.1.1",
     "chalk": "^4.1.0",
