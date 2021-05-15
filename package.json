@@ -14,12 +14,15 @@
     "push": "docker push vpalmisano/webrtc-stress-test:latest && docker tag vpalmisano/webrtc-stress-test vpalmisano/webrtc-stress-test:$npm_package_version && docker push vpalmisano/webrtc-stress-test:$npm_package_version",
     "clean": "rm -f app.min.js*",
     "lint": "eslint src/*.js *.js",
-    "lint:fix": "eslint src/*.js *.js --fix"
+    "lint:fix": "eslint src/*.js *.js --fix",
+    "generate-config-docs": "node generate-config-docs.js"
   },
   "license": "AGPL",
   "dependencies": {
     "@sitespeed.io/throttle": "^2.1.1",
     "chalk": "^4.1.0",
+    "convict": "^6.1.0",
+    "convict-format-with-validator": "^6.0.1",
     "debug": "^4.3.1",
     "debug-level": "^1.1.0",
     "fast-stats": "^0.0.6",

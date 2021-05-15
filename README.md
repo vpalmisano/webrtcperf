@@ -11,39 +11,9 @@ lowering the CPU requirements when running multiple browser sessions.
 
 ## Configuration options
 
-| Environment variable | Default value | Description |
-| :------------------- | :------------ | :---------- |
-| URL                  | ''            | The page url to load (mandatory). |
-| URL_QUERY            | ''            | The query string to append to the page url; the following template variables are replaced: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session, `$i` the tab absolute index. |
-| SCRIPT_PATH          | ''            | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. |
-| PRELOAD_SCRIPT_PATH  | ''            | A javascript file path to be preloaded to each  opened tab page. |
-| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). The temporary files containing the raw video and audio are stored at `${VIDEO_CACHE_PATH}/video.${VIDEO_FORMAT}` and `${VIDEO_CACHE_PATH}/audio.wav`. |
-| VIDEO_WIDTH          | 1280          | The fake video resize width. |
-| VIDEO_HEIGHT         | 720           | The fake video resize height. |
-| VIDEO_FRAMERATE      | 25            | The fake video framerate. |
-| VIDEO_SEEK           | 0             | The fake video seek position in seconds. |
-| VIDEO_DURATION       | 120           | The fake video duration in seconds. |
-| VIDEO_CACHE_RAW      | `true`        | If the temporary video and audio raw files can be reused across multiple runs. |
-| VIDEO_CACHE_PATH     | `/tmp/webrtc-stress-test` | The path where the video and audio raw files are stored. |
-| VIDEO_FORMAT         | `y4m`         | The fake video file format presented to the browser. Can be `y4m` or `mjpeg`. |
-| CHROMIUM_PATH        | `/usr/bin/chromium-browser-unstable` | The Chromium executable path. |
-| WINDOW_WIDTH         | 1920          | The browser window width. |
-| WINDOW_HEIGHT        | 1080          | The browser window height. |
-| USE_NULL_VIDEO_DECODER | `false`     | Disables the video decoding. This affects the RTC video jitter buffer stats. |
-| AUDIO_RED_FOR_OPUS   | `false`       | Enables RED for OPUS codec. |
-| DISPLAY              | ''            | If set to a valid Xserver `DISPLAY` string, the headless mode is disabled. |
-| SESSIONS             | 1             | The number of browser sessions to start. |
-| TABS_PER_SESSION     | 1             | The number of tabs to open in each browser session. |
-| SPAWN_PERIOD         | 1000          | The sessions spawn period in ms. |
-| ENABLE_PAGE_LOG      | `false`       | If `true`, the pages logs will be printed on console. |
-| SHOW_STATS           | `true`        | If statistics should be displayed on console output. |
-| STATS_PATH           | ''            | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created. |
-| STATS_INTERVAL       | 1             | The log interval in seconds. |
-| ENABLE_RTC_STATS     | `true`        | Enables the collection of RTC stats using ObserveRTC |
-| DEBUG                | ''            | Enables the debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax. |
-| GET_USER_MEDIA_OVERRIDES | ''        | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second tab in the first session. |
-| RUN_DURATION         | 0             | If greater than 0, the test will stop after the provided number of seconds. |
-| THROTTLE_CONFIG      | ''            | A JSON string with a valid [sitespeedio/throttle](https://github.com/sitespeedio/throttle#use-directly-in-nodejs) configuration (e.g. `{"up": 1000, "down": 1000, "rtt": 200}`). When used with docker, run `sudo modprobe ifb numifbs=1` first and add the `--cap-add=NET_ADMIN` docker option. |
+See the [config documentation](CONFIG.md).
+
+The `DEBUG` environment is used for enabled debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax.
 
 ## Statistics
 
@@ -237,16 +207,14 @@ cd webrtc-stress-test
 # cd ..
 
 # sendrecv test
-URL=https://127.0.0.1:3443/test \
-URL_QUERY='displayName=SendRecv $s/$S-$t/$T' \
-VIDEO_PATH=./video.mp4 \
-SCRIPT_PATH=./scripts/edumeet-sendrecv.js \
-SESSIONS=1 \
-TABS_PER_SESSION=1 \
-DEBUG=DEBUG:* \
-ENABLE_PAGE_LOG=true \
-USE_NULL_VIDEO_DECODER=true \
-    yarn start:dev index.js
+DEBUG=DEBUG:* yarn start:dev index.js \
+    --url=https://127.0.0.1:3443/test \
+    --url-query='displayName=SendRecv $s/$S-$t/$T' \
+    --video-path=./video.mp4 \
+    --script-path=./scripts/edumeet-sendrecv.js \
+    --sessions=1 \
+    --tabs-per-session=1 \
+    --enable-page-log=true
 
 # recv only
 URL=https://127.0.0.1:3443/test \

@@ -4,7 +4,7 @@ const throttle = require('@sitespeed.io/throttle');
 const Session = require('./src/session');
 const {Stats} = require('./src/stats');
 const {prepareFakeMedia} = require('./src/media');
-const config = require('./src/config');
+const {config} = require('./src/config');
 
 /**
  * Main function
@@ -16,24 +16,14 @@ async function main() {
   await stats.start();
 
   // prepare fake video and audio
-  if (config.VIDEO_PATH) {
-    await prepareFakeMedia({
-      path: config.VIDEO_PATH,
-      width: config.VIDEO_WIDTH,
-      height: config.VIDEO_HEIGHT,
-      framerate: config.VIDEO_FRAMERATE,
-      seek: config.VIDEO_SEEK,
-      duration: config.VIDEO_DURATION,
-      cacheRaw: config.VIDEO_CACHE_RAW,
-      cachePath: config.VIDEO_CACHE_PATH,
-      format: config.VIDEO_FORMAT,
-    });
+  if (config.videoPath) {
+    await prepareFakeMedia();
   }
 
   // throttle configuration
-  if (config.THROTTLE_CONFIG) {
-    console.log('Using the throttle config:', config.THROTTLE_CONFIG);
-    await throttle.start(config.THROTTLE_CONFIG);
+  if (config.throttleConfig) {
+    console.log('Using the throttle config:', config.throttleConfig);
+    await throttle.start(config.throttleConfig);
   }
 
   // starts the sessions
@@ -42,14 +32,14 @@ async function main() {
     session.once('stop', () => {
       console.warn(`Session ${id} stopped, reloading...`);
       sessions.delete(id);
-      setTimeout(startSession, config.SPAWN_PERIOD, id);
+      setTimeout(startSession, config.spawnPeriod, id);
     });
     await session.start();
     sessions.set(id, session);
   };
 
-  for (let i = 0; i < config.SESSIONS; i++) {
-    setTimeout(startSession, i * config.SPAWN_PERIOD, i);
+  for (let i = 0; i < config.sessions; i++) {
+    setTimeout(startSession, i * config.spawnPeriod, i);
   }
 
   // stop function
@@ -67,7 +57,7 @@ async function main() {
 
     sessions.clear();
 
-    if (config.THROTTLE_CONFIG) {
+    if (config.throttleConfig) {
       try {
         await throttle.stop();
       } catch (err) {}
@@ -77,8 +67,8 @@ async function main() {
   };
 
   // stop after a configured duration
-  if (config.RUN_DURATION > 0) {
-    setTimeout(stop, config.RUN_DURATION * 1000);
+  if (config.runDuration > 0) {
+    setTimeout(stop, config.runDuration * 1000);
   }
 
   // catch signals

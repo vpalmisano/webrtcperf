@@ -8,7 +8,7 @@ const requestretry = require('requestretry');
 const {getProcessStats} = require('./stats');
 const {RTC_STATS_NAMES, rtcStats, purgeRtcStats} = require('./rtcstats');
 
-const config = require('./config');
+const {config} = require('./config');
 
 module.exports = class Session extends EventEmitter {
   /**
@@ -40,21 +40,30 @@ module.exports = class Session extends EventEmitter {
     log.debug(`${this.id} start`);
 
     const env = {...process.env};
-    if (!config.USE_NULL_VIDEO_DECODER) {
+
+    if (!config.useNullVideoDecoder) {
       delete (env.USE_NULL_VIDEO_DECODER);
+    } else {
+      env.USE_NULL_VIDEO_DECODER = '1';
+    }
+
+    if (!config.display) {
+      delete (env.DISPLAY);
+    } else {
+      env.DISPLAY = config.display;
     }
 
     try {
       // log.debug('defaultArgs:', puppeteer.defaultArgs());
       this.browser = await puppeteer.launch({
-        headless: !env.DISPLAY,
-        executablePath: config.CHROMIUM_PATH,
+        headless: !config.display,
+        executablePath: config.chromiumPath,
         env,
         // devtools: true,
         ignoreHTTPSErrors: true,
         defaultViewport: {
-          width: config.WINDOW_WIDTH,
-          height: config.WINDOW_HEIGHT,
+          width: config.windowWidth,
+          height: config.windowHeight,
           deviceScaleFactor: 1,
           isMobile: false,
           hasTouch: false,
@@ -93,18 +102,18 @@ module.exports = class Session extends EventEmitter {
             'AutomaticTabDiscarding/Disabled' +
             '/WebRTC-Vp9DependencyDescriptor/Enabled' +
             '/WebRTC-DependencyDescriptorAdvertised/Enabled'}${
-            config.AUDIO_RED_FOR_OPUS ?
+            config.audioRedForOpus ?
               '/WebRTC-Audio-Red-For-Opus/Enabled' : ''}`,
           // '--renderer-process-limit=1',
           // '--single-process',
           '--use-fake-ui-for-media-stream',
           '--use-fake-device-for-media-stream',
         ].concat(
-          config.VIDEO_PATH ? [
+          config.videoPath ? [
             `--use-file-for-fake-video-capture=${
-              config.VIDEO_CACHE_PATH}/video.${config.VIDEO_FORMAT}`,
+              config.videoCachePath}/video.${config.videoFormat}`,
             `--use-file-for-fake-audio-capture=${
-              config.VIDEO_CACHE_PATH}/audio.wav`,
+              config.videoCachePath}/audio.wav`,
           ] : [
             // '--use-fake-codec-for-peer-connection'
           ]),
@@ -118,13 +127,13 @@ module.exports = class Session extends EventEmitter {
       });
 
       // open pages
-      for (let i = 0; i < config.TABS_PER_SESSION; i++) {
-        setTimeout(() => this.openPage(i), i * config.SPAWN_PERIOD);
+      for (let i = 0; i < config.tabsPerSession; i++) {
+        setTimeout(() => this.openPage(i), i * config.spawnPeriod);
       }
 
       // collect stats
       this.updateStatsTimeout = setTimeout(this.updateStats.bind(this),
-          config.STATS_INTERVAL * 1000);
+          config.statsInterval * 1000);
     } catch (err) {
       console.error(`${this.id} start error:`, err);
       this.stop();
@@ -140,16 +149,16 @@ module.exports = class Session extends EventEmitter {
       return;
     }
 
-    const index = (this.id * config.TABS_PER_SESSION) + tabIndex;
+    const index = (this.id * config.tabsPerSession) + tabIndex;
 
-    let url = config.URL;
+    let url = config.url;
 
-    if (config.URL_QUERY) {
-      url += `?${config.URL_QUERY
+    if (config.urlQuery) {
+      url += `?${config.urlQuery
           .replace(/\$s/g, this.id + 1)
-          .replace(/\$S/g, config.SESSIONS)
+          .replace(/\$S/g, config.sessions)
           .replace(/\$t/g, tabIndex + 1)
-          .replace(/\$T/g, config.TABS_PER_SESSION)
+          .replace(/\$T/g, config.tabsPerSession)
           .replace(/\$i/g, index + 1)
           .replace(/\$p/g, process.pid)}`;
     }
@@ -174,13 +183,13 @@ module.exports = class Session extends EventEmitter {
         `window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};` +
         `window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1};` +
         `window.WEBRTC_STRESS_TEST_INDEX = ${index + 1};` +
-        `window.STATS_INTERVAL = ${config.STATS_INTERVAL};`);
+        `window.STATS_INTERVAL = ${config.statsInterval};`);
 
     //
 
-    if (config.GET_USER_MEDIA_OVERRIDES &&
-        index < config.GET_USER_MEDIA_OVERRIDES.length) {
-      const override = config.GET_USER_MEDIA_OVERRIDES[index];
+    if (config.getUserMediaOverrides &&
+        index < config.getUserMediaOverrides.length) {
+      const override = config.getUserMediaOverrides[index];
       log.debug('Using getUserMedia override:', override);
       await page.evaluateOnNewDocument(`
 window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
@@ -188,13 +197,13 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     }
 
     // load a preload script
-    if (config.PRELOAD_SCRIPT_PATH) {
+    if (config.preloadScriptPath) {
       await page.evaluateOnNewDocument(
-          await fs.promises.readFile(config.PRELOAD_SCRIPT_PATH, 'utf8'));
+          await fs.promises.readFile(config.preloadScriptPath, 'utf8'));
     }
 
     // load observertc
-    if (config.ENABLE_RTC_STATS) {
+    if (config.enableRtcStats) {
       await page.evaluateOnNewDocument(
           (await requestretry('https://cdn.jsdelivr.net/gh/vpalmisano/observer-js@custom-stats/dist/v0.6.2/observer.min.js')).body);
       await page.evaluateOnNewDocument(
@@ -206,9 +215,9 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       log.debug(`page ${this.id + 1}-${tabIndex + 1} domcontentloaded`);
 
       // add external script
-      if (config.SCRIPT_PATH) {
+      if (config.scriptPath) {
         await page.addScriptTag({
-          path: config.SCRIPT_PATH,
+          path: config.scriptPath,
           type: 'text/javascript',
         });
       }
@@ -229,11 +238,11 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       this.stats.tabs = this.pages.size;
 
       if (this.browser) {
-        setTimeout(() => this.openPage(index), config.SPAWN_PERIOD);
+        setTimeout(() => this.openPage(index), config.spawnPeriod);
       }
     });
 
-    if (config.ENABLE_PAGE_LOG) {
+    if (config.enablePageLog) {
       page.on('console', (msg) => console.log(
           chalk`{yellow {bold [page ${this.id + 1}-${tabIndex + 1}]} ${
             msg.text()}}`));
@@ -282,7 +291,7 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
 
     //
     this.updateStatsTimeout = setTimeout(this.updateStats.bind(this),
-        config.STATS_INTERVAL * 1000);
+        config.statsInterval * 1000);
   }
 
   /**

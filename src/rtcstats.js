@@ -1,5 +1,5 @@
 const log = require('debug-level')('app:rtcstats');
-const config = require('./config');
+const {config} = require('./config');
 
 const RTC_STATS_NAMES = module.exports.RTC_STATS_NAMES = [
   // inbound
@@ -324,7 +324,7 @@ module.exports.purgeRtcStats = function(stats) {
   const now = Date.now();
 
   for (const [key, timestamp] of Object.entries(stats._timestamps)) {
-    if (now - timestamp > 1000 * config.RTC_STATS_TIMEOUT) {
+    if (now - timestamp > 1000 * config.rtcStatsTimeout) {
       log.debug(`expired stat ${key}`);
       //
       delete (stats._timestamps[key]);

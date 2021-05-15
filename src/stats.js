@@ -9,7 +9,7 @@ const {Stats} = require('fast-stats');
 const chalk = require('chalk');
 //
 const {RTC_STATS_NAMES} = require('./rtcstats');
-const config = require('./config');
+const {config} = require('./config');
 
 /**
  * getProcessChildren
@@ -235,8 +235,8 @@ module.exports.Stats = class {
   async start() {
     log.debug('stop');
 
-    if (config.STATS_PATH) {
-      const logPath = path.join(config.STATS_PATH,
+    if (config.statsPath) {
+      const logPath = path.join(config.statsPath,
           `${moment().format('YYYY-MM-DD_HH.mm.ss')}.csv`);
       log.info(`Logging into ${logPath}`);
       const headers = STATS.reduce(
@@ -279,7 +279,7 @@ module.exports.Stats = class {
       });
 
       // display stats on console
-      if (config.SHOW_STATS) {
+      if (config.showStats) {
         const out = sprintfStatsHeader() +
                     sprintfStats('cpu', stats.cpu, {format: '.2f', unit: '%'}) +
                     sprintfStats('memory', stats.memory,
@@ -349,7 +349,7 @@ module.exports.Stats = class {
             (v, name) => v.concat(formatStats(stats[name], true)), []);
         await this.statsWriter.push(values);
       }
-    }, config.STATS_INTERVAL * 1000);
+    }, config.statsInterval * 1000);
   }
 
   /**

@@ -9,3 +9,4 @@ logs
 yarn.lock*
 yarn-error.log
 .vscode
+config.json

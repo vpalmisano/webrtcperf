@@ -1,6 +1,7 @@
 const log = require('debug-level')('app:media');
 const fs = require('fs');
 const {exec} = require('child_process');
+const {config} = require('./config');
 
 /**
  * execAsync
@@ -20,33 +21,47 @@ function execAsync(cmd) {
   });
 }
 
-module.exports.prepareFakeMedia = async function({
-  path, width, height, framerate, seek, duration, cacheRaw, cachePath, format,
-}) {
+module.exports.prepareFakeMedia = async function() {
+  const {
+    videoPath,
+    videoWidth,
+    videoHeight,
+    videoFramerate,
+    videoSeek,
+    videoDuration,
+    videoCacheRaw,
+    videoCachePath,
+    videoFormat,
+  } = config;
   log.info('prepareFakeMedia', {
-    path, width, height, framerate, seek, duration, cacheRaw, cachePath, format,
+    videoPath, videoWidth, videoHeight, videoFramerate, videoSeek,
+    videoDuration, videoCacheRaw, videoCachePath, videoFormat,
   });
-  if (!path) {
+  if (!videoPath) {
     throw new Error('empty video path');
   }
-  if (!fs.existsSync(path)) {
-    throw new Error(`video not found: ${path}`);
+  if (!fs.existsSync(videoPath)) {
+    throw new Error(`video not found: ${videoPath}`);
   }
 
-  await fs.promises.mkdir(cachePath, {recursive: true});
+  await fs.promises.mkdir(videoCachePath, {recursive: true});
 
-  const videoPath = `${cachePath}/video.${format}`;
-  if (!fs.existsSync(videoPath) || !cacheRaw) {
-    console.log(`Converting ${path} to ${videoPath}`);
+  const destVideoPath = `${videoCachePath}/video.${videoFormat}`;
+  if (!fs.existsSync(destVideoPath) || !videoCacheRaw) {
+    console.log(`Converting ${videoPath} to ${destVideoPath}`);
     await execAsync(
-        `ffmpeg -y -i "${path}" -s ${width}:${height} -r ${framerate}` +
-        ` -ss ${seek} -t ${duration} -an ${videoPath}`);
+        `ffmpeg -y -i "${videoPath}" -s ${videoWidth}:${videoHeight} ` +
+        `-r ${videoFramerate}` +
+        ` -ss ${videoSeek} -t ${videoDuration} -an ` +
+        `${destVideoPath}`);
   }
 
-  const audioPath = `${cachePath}/audio.wav`;
-  if (!fs.existsSync(audioPath) || !cacheRaw) {
-    console.log(`Converting ${path} to ${audioPath}`);
+  const destAudioPath = `${videoCachePath}/audio.wav`;
+  if (!fs.existsSync(destAudioPath) || !videoCacheRaw) {
+    console.log(`Converting ${videoPath} to ${destAudioPath}`);
     await execAsync(
-        `ffmpeg -y -i "${path}" -ss ${seek} -t ${duration} -vn ${audioPath}`);
+        `ffmpeg -y -i "${videoPath}" ` +
+        `-ss ${videoSeek} -t ${videoDuration} -vn ` +
+        `${destAudioPath}`);
   }
 };
