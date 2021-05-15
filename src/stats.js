@@ -9,7 +9,7 @@ const {Stats} = require('fast-stats');
 const chalk = require('chalk');
 //
 const {RTC_STATS_NAMES} = require('./rtcstats');
-const config = require('../config');
+const config = require('./config');
 
 /**
  * getProcessChildren

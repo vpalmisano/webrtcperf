@@ -10,6 +10,7 @@ module.exports = {
   VIDEO_DURATION: parseInt(process.env.VIDEO_DURATION || 120),
   VIDEO_CACHE_RAW: process.env.VIDEO_CACHE_RAW !== 'false',
   VIDEO_CACHE_PATH: process.env.VIDEO_CACHE_PATH || '/tmp/webrtc-stress-test',
+  VIDEO_FORMAT: process.env.VIDEO_FORMAT || 'y4m',
   //
   CHROMIUM_PATH: process.env.CHROMIUM_PATH ||
     '/usr/bin/chromium-browser-unstable',

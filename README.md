@@ -17,7 +17,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | URL_QUERY            | ''            | The query string to append to the page url; the following template variables are replaced: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session, `$i` the tab absolute index. |
 | SCRIPT_PATH          | ''            | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. |
 | PRELOAD_SCRIPT_PATH  | ''            | A javascript file path to be preloaded to each  opened tab page. |
-| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). The temporary files containing the raw video and audio are stored at `${VIDEO_CACHE_PATH}/video.mjpeg` and `${VIDEO_CACHE_PATH}/audio.wav`. |
+| VIDEO_PATH           | ''            | The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). The temporary files containing the raw video and audio are stored at `${VIDEO_CACHE_PATH}/video.${VIDEO_FORMAT}` and `${VIDEO_CACHE_PATH}/audio.wav`. |
 | VIDEO_WIDTH          | 1280          | The fake video resize width. |
 | VIDEO_HEIGHT         | 720           | The fake video resize height. |
 | VIDEO_FRAMERATE      | 25            | The fake video framerate. |
@@ -25,6 +25,7 @@ lowering the CPU requirements when running multiple browser sessions.
 | VIDEO_DURATION       | 120           | The fake video duration in seconds. |
 | VIDEO_CACHE_RAW      | `true`        | If the temporary video and audio raw files can be reused across multiple runs. |
 | VIDEO_CACHE_PATH     | `/tmp/webrtc-stress-test` | The path where the video and audio raw files are stored. |
+| VIDEO_FORMAT         | `y4m`         | The fake video file format presented to the browser. Can be `y4m` or `mjpeg`. |
 | CHROMIUM_PATH        | `/usr/bin/chromium-browser-unstable` | The Chromium executable path. |
 | WINDOW_WIDTH         | 1920          | The browser window width. |
 | WINDOW_HEIGHT        | 1080          | The browser window height. |

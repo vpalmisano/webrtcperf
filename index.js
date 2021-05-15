@@ -4,7 +4,7 @@ const throttle = require('@sitespeed.io/throttle');
 const Session = require('./src/session');
 const {Stats} = require('./src/stats');
 const {prepareFakeMedia} = require('./src/media');
-const config = require('./config');
+const config = require('./src/config');
 
 /**
  * Main function
@@ -26,6 +26,7 @@ async function main() {
       duration: config.VIDEO_DURATION,
       cacheRaw: config.VIDEO_CACHE_RAW,
       cachePath: config.VIDEO_CACHE_PATH,
+      format: config.VIDEO_FORMAT,
     });
   }
 

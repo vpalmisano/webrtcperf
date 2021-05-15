@@ -8,7 +8,7 @@ const requestretry = require('requestretry');
 const {getProcessStats} = require('./stats');
 const {RTC_STATS_NAMES, rtcStats, purgeRtcStats} = require('./rtcstats');
 
-const config = require('../config');
+const config = require('./config');
 
 module.exports = class Session extends EventEmitter {
   /**
@@ -96,13 +96,13 @@ module.exports = class Session extends EventEmitter {
             config.AUDIO_RED_FOR_OPUS ?
               '/WebRTC-Audio-Red-For-Opus/Enabled' : ''}`,
           // '--renderer-process-limit=1',
-          '--single-process',
+          // '--single-process',
           '--use-fake-ui-for-media-stream',
           '--use-fake-device-for-media-stream',
         ].concat(
           config.VIDEO_PATH ? [
             `--use-file-for-fake-video-capture=${
-              config.VIDEO_CACHE_PATH}/video.mjpeg`,
+              config.VIDEO_CACHE_PATH}/video.${config.VIDEO_FORMAT}`,
             `--use-file-for-fake-audio-capture=${
               config.VIDEO_CACHE_PATH}/audio.wav`,
           ] : [

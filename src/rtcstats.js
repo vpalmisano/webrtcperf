@@ -1,5 +1,5 @@
 const log = require('debug-level')('app:rtcstats');
-const config = require('../config');
+const config = require('./config');
 
 const RTC_STATS_NAMES = module.exports.RTC_STATS_NAMES = [
   // inbound

@@ -21,10 +21,10 @@ function execAsync(cmd) {
 }
 
 module.exports.prepareFakeMedia = async function({
-  path, width, height, framerate, seek, duration, cacheRaw, cachePath,
+  path, width, height, framerate, seek, duration, cacheRaw, cachePath, format,
 }) {
   log.info('prepareFakeMedia', {
-    path, width, height, framerate, seek, duration, cacheRaw, cachePath,
+    path, width, height, framerate, seek, duration, cacheRaw, cachePath, format,
   });
   if (!path) {
     throw new Error('empty video path');
@@ -35,7 +35,7 @@ module.exports.prepareFakeMedia = async function({
 
   await fs.promises.mkdir(cachePath, {recursive: true});
 
-  const videoPath = `${cachePath}/video.mjpeg`;
+  const videoPath = `${cachePath}/video.${format}`;
   if (!fs.existsSync(videoPath) || !cacheRaw) {
     console.log(`Converting ${path} to ${videoPath}`);
     await execAsync(
