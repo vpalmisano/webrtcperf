@@ -2,9 +2,10 @@
 
 The configuration properties are applied in the following order (from higher to 
 lower precedence):
-- `config.json` configuration file;
+
 - arguments passed to the executable in kebab case (e.g. `url-query`);
 - environment variables in uppercase snake format (e.g. `URL_QUERY`);
+- `config.json` configuration file;
 - default values.
 
 | Name | Description | Format | Default value |
