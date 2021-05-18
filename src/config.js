@@ -1,13 +1,16 @@
 const log = require('debug-level')('app:config');
 const convict = require('convict');
+const {ipaddress, url} = require('convict-format-with-validator');
 const fs = require('fs');
+const {paramCase} = require('change-case');
 
-convict.addFormat(require('convict-format-with-validator').ipaddress);
+convict.addFormats({ipaddress, url});
 
+// config schema
 const configSchema = convict({
   url: {
     doc: `The page url to load (mandatory).`,
-    format: String,
+    format: 'url',
     default: '',
     env: 'URL',
     arg: 'url',
@@ -290,6 +293,18 @@ function formatDocs(docs, property, schema) {
  */
 function getConfigDocs() {
   return formatDocs({}, null, configSchema.getSchema());
+}
+
+// show params help
+if (process.argv.findIndex((a) => a.localeCompare('--help') === 0) !== -1) {
+  const docs = getConfigDocs();
+  let out = `Params:\n`;
+  Object.entries(docs).forEach(([name, value]) => {
+    out += `  --${paramCase(name)}
+    ${value.doc} (Default: ${value.default})\n`;
+  });
+  console.log(out);
+  process.exit(0);
 }
 
 // load configs
