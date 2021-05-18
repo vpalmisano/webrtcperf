@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.min.js",
-    "start:dev": "nodemon app.js",
+    "start:dev": "nodemon index.js",
     "test": "mocha",
     "build": "yarn && yarn lint && webpack --config webpack.config.js -p && docker build -t vpalmisano/webrtc-stress-test .",
     "push": "docker push vpalmisano/webrtc-stress-test:latest && docker tag vpalmisano/webrtc-stress-test vpalmisano/webrtc-stress-test:$npm_package_version && docker push vpalmisano/webrtc-stress-test:$npm_package_version",

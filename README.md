@@ -207,7 +207,7 @@ cd webrtc-stress-test
 # cd ..
 
 # sendrecv test
-DEBUG=DEBUG:* yarn start:dev index.js \
+DEBUG=DEBUG:* yarn start:dev \
     --url=https://127.0.0.1:3443/test \
     --url-query='displayName=SendRecv $s/$S-$t/$T' \
     --video-path=./video.mp4 \
@@ -225,5 +225,5 @@ TABS_PER_SESSION=1 \
 DEBUG=DEBUG:* \
 ENABLE_PAGE_LOG=true \
 USE_NULL_VIDEO_DECODER=true \
-    yarn start:dev index.js
+    yarn start:dev
 ```
