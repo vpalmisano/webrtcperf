@@ -249,10 +249,15 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     }
 
     // open the page url
-    await page.goto(url, {
-      waitUntil: 'load',
-      timeout: 60 * 1000,
-    });
+    try {
+      await page.goto(url, {
+        waitUntil: 'load',
+        timeout: 60 * 1000,
+      });
+    } catch (error) {
+      log.error(`Page "${url}" load error: ${error.message}`);
+      return;
+    }
 
     // select the first blank page
     const pages = await this.browser.pages();
