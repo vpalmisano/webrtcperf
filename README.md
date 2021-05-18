@@ -13,7 +13,7 @@ lowering the CPU requirements when running multiple browser sessions.
 
 See the [config documentation](CONFIG.md).
 
-The `DEBUG` environment is used for enabled debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax.
+The `DEBUG_LEVEL` environment is used for enabled debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax.
 
 ## Statistics
 
@@ -76,7 +76,6 @@ Statistics values:
 
 ### Mediasoup demo
 
-
 Starts one send-receive participant:
 
 ```sh
@@ -97,7 +96,6 @@ Starts 10 receive-only participants:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
-    -e VIDEO_PATH=/app/video.mp4 \
     -e URL=$MEDIASOUP_DEMO_URL \
     -e URL_QUERY='roomId=test&displayName=Viewer-$s-$t&produce=false' \
     -e SESSIONS=1 \
@@ -207,7 +205,7 @@ cd webrtc-stress-test
 # cd ..
 
 # sendrecv test
-DEBUG=DEBUG:* yarn start:dev \
+DEBUG_LEVEL=DEBUG:* yarn start:dev \
     --url=https://127.0.0.1:3443/test \
     --url-query='displayName=SendRecv $s/$S-$t/$T' \
     --video-path=./video.mp4 \
@@ -217,13 +215,12 @@ DEBUG=DEBUG:* yarn start:dev \
     --enable-page-log=true
 
 # recv only
-URL=https://127.0.0.1:3443/test \
-URL_QUERY='displayName=Recv $s/$S-$t/$T' \
-SCRIPT_PATH=./scripts/edumeet-recv.js \
-SESSIONS=1 \
-TABS_PER_SESSION=1 \
-DEBUG=DEBUG:* \
-ENABLE_PAGE_LOG=true \
-USE_NULL_VIDEO_DECODER=true \
-    yarn start:dev
+DEBUG_LEVEL=DEBUG:* yarn start:dev \
+    --url=https://127.0.0.1:3443/test \
+    --url-query='displayName=Recv $s/$S-$t/$T' \
+    --script-path=./scripts/edumeet-recv.js \
+    --sessions=1 \
+    --tabs-per-session=10 \
+    --enable-page-log=true \
+    --use-null-video-decoder=true
 ```

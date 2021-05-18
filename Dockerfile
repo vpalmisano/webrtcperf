@@ -17,9 +17,10 @@ RUN mkdir -p /app/
 COPY video.mp4 /app/
 
 WORKDIR /app
-COPY package.json yarn.lock observertc.js /app/
+COPY package.json yarn.lock observertc.js entrypoint.sh /app/
 COPY scripts /app/scripts/
 RUN yarn --production=true
 
 COPY app.min.js* /app/
-CMD xvfb-run -a yarn start
+ENV DEBUG_LEVEL=WARN
+ENTRYPOINT ["/app/entrypoint.sh"]

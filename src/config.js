@@ -312,7 +312,7 @@ if (fs.existsSync('./config.json')) {
   log.info(`Loading config from './config.json'`);
   configSchema.loadFile('./config.json');
 } else {
-  log.warn('No config file found, using defaults.');
+  log.info('No configuration file found, using default values.');
   configSchema.load({});
 }
 

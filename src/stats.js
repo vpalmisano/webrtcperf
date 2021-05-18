@@ -341,6 +341,7 @@ module.exports.Stats = class {
                     sprintfStats('fps', stats.videoSourceFps, {
                       format: 'd', unit: 'fps', hideSum: true});
 
+        // console.clear();
         console.log(out);
       }
       // write stats to file
