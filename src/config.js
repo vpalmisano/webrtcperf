@@ -301,7 +301,12 @@ if (fs.existsSync('./config.json')) {
   configSchema.load({});
 }
 
-configSchema.validate({allowed: 'strict'});
+try {
+  configSchema.validate({allowed: 'strict'});
+} catch (error) {
+  console.error(`Config error: ${error.message}`);
+  process.exit(-1);
+}
 
 const config = configSchema.getProperties();
 log.info('Using config:', config);
