@@ -10,7 +10,7 @@ lower precedence):
 
 | Name | Description | Format | Default value |
 | :--- | :---------- | :----- | :------------ |
-| url | The page url to load (mandatory). | `"string"` | ``""`` |
+| url | The page url to load (mandatory). | `"url"` | ``""`` |
 | urlQuery | The query string to append to the page url; the following template variables are replaced: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session, `$i` the tab absolute index. | `"string"` | ``""`` |
 | videoPath | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. | `"string"` | ``""`` |
 | videoWidth | The fake video resize width. | `"nat"` | ``1280`` |

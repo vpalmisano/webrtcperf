@@ -4,7 +4,12 @@ const throttle = require('@sitespeed.io/throttle');
 const Session = require('./src/session');
 const {Stats} = require('./src/stats');
 const {prepareFakeMedia} = require('./src/media');
-const {config} = require('./src/config');
+const {config, configError} = require('./src/config');
+
+if (configError) {
+  console.error(`Config error: ${configError}`);
+  process.exit(-1);
+}
 
 /**
  * Main function

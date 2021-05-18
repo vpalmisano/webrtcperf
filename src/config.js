@@ -316,18 +316,21 @@ if (fs.existsSync('./config.json')) {
   configSchema.load({});
 }
 
+let config = null;
+let configError = '';
+
 try {
   configSchema.validate({allowed: 'strict'});
+  config = configSchema.getProperties();
 } catch (error) {
-  console.error(`Config error: ${error.message}`);
-  process.exit(-1);
+  configError = error.message;
 }
 
-const config = configSchema.getProperties();
 log.info('Using config:', config);
 
 module.exports = {
   configSchema,
   getConfigDocs,
   config,
+  configError,
 };
