@@ -153,7 +153,7 @@ Starts 10 receive-only participants:
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher \
+docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
     -e URL=$JITSI_ROOM_URL \
     -e URL_QUERY='#config.prejoinPageEnabled=false&userInfo.displayName=Participant-$s-$t' \
@@ -165,20 +165,21 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
 ### QuavStreams
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
+docker pull vpalmisano/webrtc-stress-test:latest   
 docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
-    -e VIDEO_PATH=/app/video.mp4 \
-    -e URL=$QUAVSTREAMS_ROOM_URL \
-    -e URL_QUERY='displayName=Participant-$s-$t&publish={"video":true,"audio":true}' \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=1 \
-    vpalmisano/webrtc-stress-test:latest
+    vpalmisano/webrtc-stress-test:latest \
+    --url=${QUAVSTREAMS_ROOM_URL} \
+    --url-query='displayName=Participant-$s-$t&publish={"video":{"width":1280,"height":720,"simulcast":true,"videoCodec":"vp8","frameRate":25,"minBitrate":600,"maxBitrate":2500,"deviceName":"/tmp/webrtc-stress-test/video.y4m"},"audio":{"deviceName":"/tmp/webrtc-stress-test/video.wav","audioEnabled":true}}' \
+    --tabs-per-session=1 \
+    --sessions=1 \
+    --use-null-video-decoder=false \
+    --video-path=./video.mp4
 ```
 
 ```sh
 docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher \
+docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
     -e URL=$QUAVSTREAMS_ROOM_URL \
     -e URL_QUERY='displayName=Viewer-$s-$t' \
@@ -186,7 +187,6 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     -e TABS_PER_SESSION=1 \
     vpalmisano/webrtc-stress-test:latest
 ```
-
 
 ## Running from source code
 
