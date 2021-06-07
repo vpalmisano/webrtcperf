@@ -200,8 +200,8 @@ will be created.`,
     arg: 'enable-rtc-stats',
   },
   rtcStatsTimeout: {
-    doc: `The timeout in seconds after wich the RTC stats coming from inactive \
-streams are removed.`,
+    doc: `The timeout in seconds after which the RTC stats coming from inactive\
+ streams are removed.`,
     format: 'nat',
     default: 30,
     env: 'RTC_STATS_TIMEOUT',
