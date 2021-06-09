@@ -30,7 +30,7 @@
     "moment": "^2.29.1",
     "pidusage": "^2.0.21",
     "ps-tree": "^1.2.0",
-    "puppeteer": "^9.1.1",
+    "puppeteer": "^10.0.0",
     "request": "^2.88.2",
     "requestretry": "^5.0.0",
     "sprintf-js": "^1.1.2"
