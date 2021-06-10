@@ -181,11 +181,12 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtc-stress-test:latest
+    vpalmisano/webrtc-stress-test:latest \
     --url=${QUAVSTREAMS_ROOM_URL} \
     --url-query='displayName=Viewer-$s-$t' \
     --sessions=1 \
-    --tabs-per-session=1
+    --tabs-per-session=1 \
+    --use-null-video-decoder=false
 ```
 
 ## Running from source code
