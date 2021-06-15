@@ -82,12 +82,13 @@ Starts one send-receive participant:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
-    -e VIDEO_PATH=/app/video.mp4 \
-    -e URL=$MEDIASOUP_DEMO_URL \
-    -e URL_QUERY='roomId=test&displayName=Publisher-$s-$t' \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=1 \
-    vpalmisano/webrtc-stress-test:latest
+    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
+    vpalmisano/webrtc-stress-test:latest \
+    --video-path=/app/video.mp4 \
+    --url=$MEDIASOUP_DEMO_URL \
+    --url-query='roomId=test&displayName=Publisher($s-$t)' \
+    --sessions=1 \
+    --tabs-per-session=1
 ```
 
 Starts 10 receive-only participants:
@@ -96,11 +97,11 @@ Starts 10 receive-only participants:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
-    -e URL=$MEDIASOUP_DEMO_URL \
-    -e URL_QUERY='roomId=test&displayName=Viewer-$s-$t&produce=false' \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=10 \
-    vpalmisano/webrtc-stress-test:latest
+    vpalmisano/webrtc-stress-test:latest \
+    --url=$MEDIASOUP_DEMO_URL \
+    --url-query='roomId=test&displayName=Viewer($s-$t)&produce=false' \
+    --sessions=1 \
+    --tabs-per-session=10
 ```
 ### Edumeet
 
@@ -110,13 +111,14 @@ Starts one send-receive participant, with a random audio activation pattern:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
-    -e VIDEO_PATH=/app/video.mp4 \
-    -e URL=$EDUMEET_URL \
-    -e URL_QUERY='displayName=Publisher $s-$t' \
-    -e SCRIPT_PATH=/app/scripts/edumeet-sendrecv.js \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=1 \
-    vpalmisano/webrtc-stress-test:latest
+    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
+    vpalmisano/webrtc-stress-test:latest \
+    --video-path=/app/video.mp4 \
+    --url=$EDUMEET_URL \
+    --url-query='displayName=Publisher($s-$t)' \
+    --script-path=/app/scripts/edumeet-sendrecv.js \
+    --sessions=1 \
+    --tabs-per-session=1
 ```
 
 Starts 10 receive-only participants:
@@ -125,12 +127,12 @@ Starts 10 receive-only participants:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
-    -e URL=$EDUMEET_URL \
-    -e URL_QUERY='displayName=Viewer $s-$t' \
-    -e SCRIPT_PATH=/app/scripts/edumeet-recv.js \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=10 \
-    vpalmisano/webrtc-stress-test:latest
+    vpalmisano/webrtc-stress-test:latest \
+    --url=$EDUMEET_URL \
+    --url-query='displayName=Viewer($s-$t)' \
+    --script-path=/app/scripts/edumeet-recv.js \
+    --sessions=1 \
+    --tabs-per-session=10
 ```
 
 ### Jitsi
@@ -141,12 +143,13 @@ Starts one send-receive participant:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
-    -e VIDEO_PATH=/app/video.mp4 \
-    -e URL=$JITSI_ROOM_URL \
-    -e URL_QUERY='#config.prejoinPageEnabled=false&userInfo.displayName=Participant-$s-$t' \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=1 \
-    vpalmisano/webrtc-stress-test:latest
+    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
+    vpalmisano/webrtc-stress-test:latest \
+    --video-path=/app/video.mp4 \
+    --url=$JITSI_ROOM_URL \
+    --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
+    --sessions=1 \
+    --tabs-per-session=1
 ```
 
 Starts 10 receive-only participants:
@@ -155,11 +158,11 @@ Starts 10 receive-only participants:
 docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
-    -e URL=$JITSI_ROOM_URL \
-    -e URL_QUERY='#config.prejoinPageEnabled=false&userInfo.displayName=Participant-$s-$t' \
-    -e SESSIONS=1 \
-    -e TABS_PER_SESSION=10 \
-    vpalmisano/webrtc-stress-test:latest
+    vpalmisano/webrtc-stress-test:latest \
+    --url=$JITSI_ROOM_URL \
+    --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
+    --sessions=1 \
+    --tabs-per-session=10
 ```
 
 ### QuavStreams
@@ -170,7 +173,7 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     -v /dev/shm:/dev/shm \
     vpalmisano/webrtc-stress-test:latest \
     --url=${QUAVSTREAMS_ROOM_URL} \
-    --url-query='displayName=Participant-$s-$t&publish={"video":{"width":1280,"height":720,"simulcast":true,"videoCodec":"vp8","frameRate":25,"minBitrate":600,"maxBitrate":2500,"deviceName":"/tmp/webrtc-stress-test/video.y4m"},"audio":{"deviceName":"/tmp/webrtc-stress-test/video.wav","audioEnabled":true}}' \
+    --url-query='displayName=Participant($s-$t)&publish={"video":{"width":1280,"height":720,"simulcast":true,"videoCodec":"vp8","frameRate":25,"minBitrate":600,"maxBitrate":2500,"deviceName":"/tmp/webrtc-stress-test/video.y4m"},"audio":{"deviceName":"/tmp/webrtc-stress-test/video.wav","audioEnabled":true}}' \
     --sessions=1 \
     --tabs-per-session=1 \
     --use-null-video-decoder=false \
@@ -183,7 +186,7 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
     vpalmisano/webrtc-stress-test:latest \
     --url=${QUAVSTREAMS_ROOM_URL} \
-    --url-query='displayName=Viewer-$s-$t' \
+    --url-query='displayName=Viewer($s-$t)' \
     --sessions=1 \
     --tabs-per-session=1 \
     --use-null-video-decoder=false
@@ -208,7 +211,7 @@ cd webrtc-stress-test
 # sendrecv test
 DEBUG_LEVEL=DEBUG:* yarn start:dev \
     --url=https://127.0.0.1:3443/test \
-    --url-query='displayName=SendRecv $s/$S-$t/$T' \
+    --url-query='displayName=SendRecv($s/$S-$t/$T)' \
     --video-path=./video.mp4 \
     --script-path=./scripts/edumeet-sendrecv.js \
     --sessions=1 \
@@ -218,7 +221,7 @@ DEBUG_LEVEL=DEBUG:* yarn start:dev \
 # recv only
 DEBUG_LEVEL=DEBUG:* yarn start:dev \
     --url=https://127.0.0.1:3443/test \
-    --url-query='displayName=Recv $s/$S-$t/$T' \
+    --url-query='displayName=Recv($s/$S-$t/$T)' \
     --script-path=./scripts/edumeet-recv.js \
     --sessions=1 \
     --tabs-per-session=10 \
