@@ -27,11 +27,12 @@ session, \`$i\` the tab absolute index.`,
   },
   // fake video/audio
   videoPath: {
-    doc: `A javascript file path; if set, the file content will be injected \
-inside the DOM of each opened tab page; the following global variables are \
-attached to the \`window\` object: \`WEBRTC_STRESS_TEST_SESSION\` the session \
-number; \`WEBRTC_STRESS_TEST_TAB\` the tab number inside the session; \
-\`WEBRTC_STRESS_TEST_INDEX\` the tab absolute index.`,
+    doc: `The fake video path; if set, the video will be used as fake \
+media source. \
+The docker pre-built image contains a 2 minutes video sequence stored at \
+\`/app/video.mp4\` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). \
+The temporary files containing the raw video and audio are stored at \
+\`\${VIDEO_CACHE_PATH}/video.\${VIDEO_FORMAT}\` and \`\${VIDEO_CACHE_PATH}/audio.wav\`.`,
     format: String,
     default: '',
     env: 'VIDEO_PATH',

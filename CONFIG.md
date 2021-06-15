@@ -12,7 +12,7 @@ lower precedence):
 | :--- | :---------- | :----- | :------------ |
 | url | The page url to load (mandatory). | `"url"` | ``""`` |
 | urlQuery | The query string to append to the page url; the following template variables are replaced: `$p` the process pid, `$s` the session index, `$S` the total sessions, `$t` the tab index, `$T` the total tabs per session, `$i` the tab absolute index. | `"string"` | ``""`` |
-| videoPath | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. | `"string"` | ``""`` |
+| videoPath | The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). The temporary files containing the raw video and audio are stored at `${VIDEO_CACHE_PATH}/video.${VIDEO_FORMAT}` and `${VIDEO_CACHE_PATH}/audio.wav`. | `"string"` | ``""`` |
 | videoWidth | The fake video resize width. | `"nat"` | ``1280`` |
 | videoHeight | The fake video resize height. | `"nat"` | ``720`` |
 | videoFramerate | The fake video framerate. | `"nat"` | ``25`` |
@@ -35,7 +35,7 @@ lower precedence):
 | statsPath | The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created. | `"string"` | ``""`` |
 | statsInterval | The log interval in seconds. | `"nat"` | ``2`` |
 | enableRtcStats | Enables the collection of RTC stats using ObserveRTC. | `"boolean"` | ``true`` |
-| rtcStatsTimeout | The timeout in seconds after wich the RTC stats coming from inactive streams are removed. | `"nat"` | ``30`` |
+| rtcStatsTimeout | The timeout in seconds after which the RTC stats coming from inactive streams are removed. | `"nat"` | ``30`` |
 | scriptPath | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. | `"string"` | ``""`` |
 | preloadScriptPath | A javascript file path to be preloaded to each  opened tab page. | `"string"` | ``""`` |
 | getUserMediaOverrides | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second tab in the first session. | `"array"` | ``null`` |
