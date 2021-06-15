@@ -19,6 +19,7 @@ COPY video.mp4 /app/
 WORKDIR /app
 COPY package.json yarn.lock observertc.js entrypoint.sh /app/
 COPY scripts /app/scripts/
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 RUN yarn --production=true
 
 COPY app.min.js* /app/
