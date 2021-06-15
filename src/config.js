@@ -32,7 +32,8 @@ media source. \
 The docker pre-built image contains a 2 minutes video sequence stored at \
 \`/app/video.mp4\` extracted from this [YouTube video](https://www.youtube.com/watch?v=o8NPllzkFhE). \
 The temporary files containing the raw video and audio are stored at \
-\`\${VIDEO_CACHE_PATH}/video.\${VIDEO_FORMAT}\` and \`\${VIDEO_CACHE_PATH}/audio.wav\`.`,
+\`\${VIDEO_CACHE_PATH}/video.\${VIDEO_FORMAT}\` and \
+\`\${VIDEO_CACHE_PATH}/audio.wav\`.`,
     format: String,
     default: '',
     env: 'VIDEO_PATH',
