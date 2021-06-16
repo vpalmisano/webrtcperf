@@ -36,11 +36,12 @@ lower precedence):
 | statsInterval | The log interval in seconds. | `"nat"` | ``2`` |
 | enableRtcStats | Enables the collection of RTC stats using ObserveRTC. | `"boolean"` | ``true`` |
 | rtcStatsTimeout | The timeout in seconds after which the RTC stats coming from inactive streams are removed. | `"nat"` | ``30`` |
-| scriptPath | A javascript file path; if set, the file content will be injected inside the DOM of each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. | `"string"` | ``""`` |
+| scriptPath | A javascript file path; if set, the file content will be executed inside each opened tab page; the following global variables are attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number; `WEBRTC_STRESS_TEST_TAB` the tab number inside the session; `WEBRTC_STRESS_TEST_INDEX` the tab absolute index. | `"string"` | ``""`` |
 | preloadScriptPath | A javascript file path to be preloaded to each  opened tab page. | `"string"` | ``""`` |
 | getUserMediaOverrides | A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `[null, {"video": {"width": 360, "height": 640}}]` overrides the `video` settings for the second tab in the first session. | `"array"` | ``null`` |
 | runDuration | If greater than 0, the test will stop after the provided number of seconds. | `"nat"` | ``0`` |
 | throttleConfig | A JSON string with a valid [sitespeedio/throttle](https://github.com/sitespeedio/throttle#use-directly-in-nodejs) configuration (e.g. `{"up": 1000, "down": 1000, "rtt": 200}`). When used with docker, run `sudo modprobe ifb numifbs=1` first and add the `--cap-add=NET_ADMIN` docker option. | `"*"` | ``null`` |
+| enableGpu | It enables the Vaapi GPU acceleration (experimental). | `"boolean"` | ``false`` |
 
 
 ---

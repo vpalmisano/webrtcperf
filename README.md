@@ -91,6 +91,23 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     --tabs-per-session=1
 ```
 
+Using Vaapi GPU acceleration (experimental):
+
+```sh
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    --privileged \
+    -v /dev/dri:/dev/dri \
+    -v /dev/shm:/dev/shm \
+    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
+    vpalmisano/webrtc-stress-test:latest \
+    --video-path=/app/video.mp4 \
+    --url=$MEDIASOUP_DEMO_URL \
+    --url-query='roomId=test&displayName=Publisher($s-$t)' \
+    --sessions=1 \
+    --tabs-per-session=1 \
+    --enable-gpu=true
+```
+
 Starts 10 receive-only participants:
 
 ```sh

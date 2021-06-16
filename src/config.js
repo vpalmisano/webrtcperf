@@ -211,8 +211,8 @@ will be created.`,
   },
   //
   scriptPath: {
-    doc: `A javascript file path; if set, the file content will be injected \
-inside the DOM of each opened tab page; the following global variables are \
+    doc: `A javascript file path; if set, the file content will be executed \
+inside each opened tab page; the following global variables are \
 attached to the \`window\` object: \
 \`WEBRTC_STRESS_TEST_SESSION\` the session number; \
 \`WEBRTC_STRESS_TEST_TAB\` the tab number inside the session; \
@@ -258,6 +258,13 @@ When used with docker, run \`sudo modprobe ifb numifbs=1\` first and add the \
     default: null,
     env: 'THROTTLE_CONFIG',
     arg: 'throttle-config',
+  },
+  enableGpu: {
+    doc: `It enables the Vaapi GPU acceleration (experimental).`,
+    format: 'Boolean',
+    default: false,
+    env: 'ENABLE_GPU',
+    arg: 'enable-gpu',
   },
 });
 

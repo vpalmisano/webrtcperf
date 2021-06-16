@@ -53,6 +53,48 @@ module.exports = class Session extends EventEmitter {
       env.DISPLAY = config.display;
     }
 
+    // https://peter.sh/experiments/chromium-command-line-switches/
+    let args = [
+      '--no-sandbox',
+      '--no-zygote',
+      '--ignore-certificate-errors',
+      '--no-user-gesture-required',
+      '--autoplay-policy=no-user-gesture-required',
+      '--disable-infobars',
+      `${'--force-fieldtrials=' +
+        'AutomaticTabDiscarding/Disabled' +
+        '/WebRTC-Vp9DependencyDescriptor/Enabled' +
+        '/WebRTC-DependencyDescriptorAdvertised/Enabled'}${
+        config.audioRedForOpus ?
+          '/WebRTC-Audio-Red-For-Opus/Enabled' : ''}`,
+      // '--renderer-process-limit=1',
+      '--single-process',
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      '--mute-audio',
+    ];
+
+    if (config.videoPath) {
+      args.push(`--use-file-for-fake-video-capture=${
+        config.videoCachePath}/video.${config.videoFormat}`);
+      args.push(`--use-file-for-fake-audio-capture=${
+        config.videoCachePath}/audio.wav`);
+    }
+
+    if (config.enableGpu) {
+      args = args.concat([
+        '--ignore-gpu-blocklist',
+        '--use-gl=desktop',
+        '--enable-features=VaapiVideoDecoder',
+        '--enable-gpu-rasterization',
+        '--enable-zero-copy',
+        '--disable-gpu-sandbox',
+      ]);
+    }
+
+    log.info(`Using args:\n  ${args.join('\n  ')}`);
+    log.info(`Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`);
+
     try {
       // log.debug('defaultArgs:', puppeteer.defaultArgs());
       this.browser = await puppeteer.launch({
@@ -71,54 +113,8 @@ module.exports = class Session extends EventEmitter {
         },
         ignoreDefaultArgs: [
           '--disable-dev-shm-usage',
-          '--disable-gpu',
         ],
-        args: [
-          // https://peter.sh/experiments/chromium-command-line-switches/
-          /* puppeteer settings:
-          '--disable-background-networking',
-          '--disable-client-side-phishing-detection',
-          '--disable-default-apps',
-          '--disable-features=Translate',
-          '--disable-ipc-flooding-protection',
-          '--disable-popup-blocking',
-          '--disable-extensions',
-          '--disable-sync',
-          '--no-first-run',
-          '--enable-automation',
-          '--password-store=basic',
-          '--enable-blink-features=IdleDetection',
-          '--hide-scrollbars',
-          '--mute-audio', */
-          '--no-sandbox',
-          '--no-zygote',
-          // `--window-size=320,160`,
-          '--ignore-certificate-errors',
-          '--no-user-gesture-required',
-          '--autoplay-policy=no-user-gesture-required',
-          '--disable-infobars',
-          // '--ignore-gpu-blacklist',
-          `${'--force-fieldtrials=' +
-            'AutomaticTabDiscarding/Disabled' +
-            '/WebRTC-Vp9DependencyDescriptor/Enabled' +
-            '/WebRTC-DependencyDescriptorAdvertised/Enabled'}${
-            config.audioRedForOpus ?
-              '/WebRTC-Audio-Red-For-Opus/Enabled' : ''}`,
-          // '--renderer-process-limit=1',
-          // '--single-process',
-          '--use-fake-ui-for-media-stream',
-          '--use-fake-device-for-media-stream',
-        ].concat(
-          config.videoPath ? [
-            `--use-file-for-fake-video-capture=${
-              config.videoCachePath}/video.${config.videoFormat}`,
-            `--use-file-for-fake-audio-capture=${
-              config.videoCachePath}/audio.wav`,
-          ] : [
-            // '--use-fake-codec-for-peer-connection'
-          ]),
-        /* .concat(!process.env.DISPLAY ? ['--headless'] : []) */
-        /* .concat(['about:blank']) */
+        args,
       });
 
       this.browser.once('disconnected', () => {
@@ -134,6 +130,18 @@ module.exports = class Session extends EventEmitter {
       // collect stats
       this.updateStatsTimeout = setTimeout(this.updateStats.bind(this),
           config.statsInterval * 1000);
+
+      // get GPU infos from chrome://gpu page
+      if (config.enableGpu) {
+        const page = await this.browser.newPage();
+        await page.goto('chrome://gpu');
+        const data = await page.evaluate(() =>
+          [...document.querySelectorAll('ul.feature-status-list > li > span')]
+              .map(({innerText}, i) =>
+                `${(i % 2) === 0 ? '\n- ' : ''}${innerText}`));
+        await page.close();
+        console.log(`GPU infos:${data.join('')}`);
+      }
     } catch (err) {
       console.error(`${this.id} start error:`, err);
       this.stop();
@@ -210,17 +218,23 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
           await fs.promises.readFile('./observertc.js', 'utf8'));
     }
 
+    // execute external script
+    if (config.scriptPath) {
+      await page.evaluateOnNewDocument(
+          await fs.promises.readFile(config.scriptPath, 'utf8'));
+    }
+
     //
     page.once('domcontentloaded', async () => {
       log.debug(`page ${this.id + 1}-${tabIndex + 1} domcontentloaded`);
 
       // add external script
-      if (config.scriptPath) {
+      /* if (config.scriptPath) {
         await page.addScriptTag({
           path: config.scriptPath,
           type: 'text/javascript',
         });
-      }
+      } */
 
       // enable perf
       // https://chromedevtools.github.io/devtools-protocol/tot/Cast/

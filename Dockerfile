@@ -1,6 +1,6 @@
 FROM node:14-buster-slim
 RUN apt-get update && apt-get install -y --no-install-recommends git python bash \
-    ffmpeg curl xvfb unzip procps xvfb xauth sudo net-tools iproute2 \
+    ffmpeg curl xvfb unzip procps xvfb xauth sudo net-tools iproute2 mesa-va-drivers \
     && apt-get clean
 
 ENV CHROMIUM_DEB=chromium-browser-unstable_93.0.4538.0-1_amd64.deb
