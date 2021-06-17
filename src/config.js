@@ -267,7 +267,7 @@ When used with docker, run \`sudo modprobe ifb numifbs=1\` first and add the \
     arg: 'enable-gpu',
   },
   prometheusPushgateway: {
-    doc: `When enabled logs are sent to the specified Prometheus Pushgateway \
+    doc: `If set, logs are sent to the specified Prometheus Pushgateway \
 service (example: "http://127.0.0.1:9091").`,
     format: 'String',
     default: '',
