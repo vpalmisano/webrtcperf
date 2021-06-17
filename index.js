@@ -51,7 +51,7 @@ async function main() {
   const stop = async () => {
     console.log('Exiting...');
 
-    stats.stop();
+    await stats.stop();
 
     try {
       await Promise.allSettled([...sessions.values()].map((session) => {

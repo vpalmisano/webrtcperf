@@ -1,6 +1,6 @@
 {
   "name": "webrtc-stress-test",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": {
     "name": "Vittorio Palmisano",
     "url": "https://github.com/vpalmisano"
@@ -29,6 +29,7 @@
     "fast-stats": "^0.0.6",
     "moment": "^2.29.1",
     "pidusage": "^2.0.21",
+    "prom-client": "https://github.com/siimon/prom-client#master",
     "ps-tree": "^1.2.0",
     "puppeteer": "^10.0.0",
     "request": "^2.88.2",

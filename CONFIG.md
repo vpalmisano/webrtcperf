@@ -42,6 +42,8 @@ lower precedence):
 | runDuration | If greater than 0, the test will stop after the provided number of seconds. | `"nat"` | ``0`` |
 | throttleConfig | A JSON string with a valid [sitespeedio/throttle](https://github.com/sitespeedio/throttle#use-directly-in-nodejs) configuration (e.g. `{"up": 1000, "down": 1000, "rtt": 200}`). When used with docker, run `sudo modprobe ifb numifbs=1` first and add the `--cap-add=NET_ADMIN` docker option. | `"*"` | ``null`` |
 | enableGpu | It enables the Vaapi GPU acceleration (experimental). | `"boolean"` | ``false`` |
+| prometheusPushgateway | When enabled logs are send to the specified Prometheus Pushgateway service (example: "http://127.0.0.1:9091"). | `"string"` | ``""`` |
+| prometheusPushgatewayJobName | The Prometheus Pushgateway job name. | `"string"` | ``"default"`` |
 
 
 ---

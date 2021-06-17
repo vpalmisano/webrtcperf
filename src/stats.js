@@ -7,6 +7,7 @@ const moment = require('moment');
 const {sprintf} = require('sprintf-js');
 const {Stats} = require('fast-stats');
 const chalk = require('chalk');
+const promClient = require('prom-client');
 //
 const {RTC_STATS_NAMES} = require('./rtcstats');
 const {config} = require('./config');
@@ -227,6 +228,8 @@ module.exports.Stats = class {
     this.sessions = sessions;
     this.statsWriter = null;
     this.statsInterval = null;
+    this.gateway = null;
+    this.metrics = {};
   }
 
   /**
@@ -242,6 +245,52 @@ module.exports.Stats = class {
       const headers = STATS.reduce(
           (v, name) => v.concat(formatStatsColumns(name)), []);
       this.statsWriter = new StatsWriter(logPath, headers);
+    }
+
+    if (config.prometheusPushgateway) {
+      const register = new promClient.Registry();
+      this.gateway = new promClient.Pushgateway(config.prometheusPushgateway, {
+        timeout: 5000,
+      }, register);
+
+      promClient.collectDefaultMetrics({prefix: 'wst_', register});
+
+      /**
+       * It creates a Gauge
+       * @param {string} name gauge name
+       * @param {string} suffix gauge suffix
+       * @return {Gauge} gauge
+       */
+      function _createGauge(name, suffix) {
+        return new promClient.Gauge({
+          name: `wst_${name}_${suffix}`,
+          help: `webrtc-stress-test ${name} ${suffix}`,
+          labelNames: [],
+          registers: [register],
+        });
+      }
+
+      STATS.forEach((name) => {
+        this.metrics[name] = {
+          length: _createGauge(name, 'length'),
+          sum: _createGauge(name, 'sum'),
+          mean: _createGauge(name, 'mean'),
+          stddev: _createGauge(name, 'stddev'),
+          p25: _createGauge(name, 'p25'),
+          min: _createGauge(name, 'min'),
+          max: _createGauge(name, 'max'),
+        };
+      });
+
+      await new Promise((resolve) => {
+        this.gateway.delete({jobName: config.prometheusPushgatewayJobName},
+            (err, resp, body) => {
+              if (err) {
+                log.error(`Pushgateway delete error: ${err.message}`);
+              }
+              resolve();
+            });
+      });
     }
 
     /**
@@ -352,13 +401,38 @@ module.exports.Stats = class {
             (v, name) => v.concat(formatStats(stats[name], true)), []);
         await this.statsWriter.push(values);
       }
+
+      // send to pushgateway
+      if (this.gateway) {
+        Object.entries(this.metrics).forEach(([name, metric]) => {
+          const {length, sum, mean, stddev, p25, min, max} =
+              formatStats(stats[name]);
+          metric.length.set(length);
+          metric.sum.set(sum);
+          metric.mean.set(mean);
+          metric.stddev.set(stddev);
+          metric.p25.set(p25);
+          metric.min.set(min);
+          metric.max.set(max);
+        });
+
+        await new Promise((resolve) => {
+          this.gateway.push({jobName: config.prometheusPushgatewayJobName},
+              (err, resp, body) => {
+                if (err) {
+                  log.error(`Pushgateway push error: ${err.message}`);
+                }
+                resolve();
+              });
+        });
+      }
     }, config.statsInterval * 1000);
   }
 
   /**
    * stop
    */
-  stop() {
+  async stop() {
     log.debug('stop');
     if (this.statsInterval) {
       clearInterval(this.statsInterval);
@@ -366,5 +440,21 @@ module.exports.Stats = class {
     }
     this.sessions = null;
     this.statsWriter = null;
+
+    // delete metrics
+    if (this.gateway) {
+      await new Promise((resolve) => {
+        this.gateway.delete({jobName: config.prometheusPushgatewayJobName},
+            (err, resp, body) => {
+              if (err) {
+                log.error(`Pushgateway delete error: ${err.message}`);
+              }
+              resolve();
+            });
+      });
+
+      this.gateway = null;
+      this.metrics = {};
+    }
   }
 };
