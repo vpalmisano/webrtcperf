@@ -15,8 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
-  "iteration": 1623957208838,
+  "iteration": 1623958493310,
   "links": [],
   "panels": [
     {
@@ -678,6 +677,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1115,6 +1115,7 @@
             }
           },
           "mappings": [],
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1152,9 +1153,9 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "wst_videoPacketsLost_mean",
+          "expr": "wst_videoPacketsLost_mean{job=\"$jobName\"}",
           "interval": "",
-          "legendFormat": "total ({{job}})",
+          "legendFormat": "total",
           "refId": "A"
         }
       ],
@@ -2418,5 +2419,5 @@
   "timezone": "",
   "title": "Webrtc Stress Test",
   "uid": "default",
-  "version": 2
+  "version": 4
 }
