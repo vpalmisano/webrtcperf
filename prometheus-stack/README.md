@@ -13,7 +13,7 @@ Services:
 
 To collect statistics from webrtc-stress-test, start the tool with the 
 option: `--prometheus-pushgateway=http://localhost:9091` 
-and (optionally): `--prometheus-pushgateway-job-name=<TEST_SESSION_NAME>`.
+and (optionally): `--prometheus-pushgateway-job-name=<JOB_NAME>`.
 
 Default dashboard:
 ![Grafana dashboard](grafana-dashboard.png)
