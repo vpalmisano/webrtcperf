@@ -293,19 +293,6 @@ module.exports.Stats = class {
       });
     }
 
-    /**
-     * aggregateStats
-     * @param {*} obj
-     * @param {*} stat
-     */
-    function aggregateStats(obj, stat) {
-      if (typeof obj === 'number') {
-        stat.push(obj);
-      } else {
-        Object.values(obj).forEach((v) => stat.push(v));
-      }
-    }
-
     this.statsInterval = setInterval(async () => {
       // log.debug('statsInterval');
 
@@ -319,13 +306,19 @@ module.exports.Stats = class {
         return obj;
       }, {});
 
-      [...this.sessions.values()].forEach((session) => {
+      for (const session of this.sessions.values()) {
         if (!session.stats) {
           return;
         }
-        STATS.forEach((name) => aggregateStats(session.stats[name],
-            stats[name]));
-      });
+        STATS.forEach((name) => {
+          const obj = session.stats[name];
+          if (typeof obj === 'number') {
+            stats[name].push(obj);
+          } else {
+            stats[name].push(Object.values(obj));
+          }
+        });
+      }
 
       // display stats on console
       if (config.showStats) {
