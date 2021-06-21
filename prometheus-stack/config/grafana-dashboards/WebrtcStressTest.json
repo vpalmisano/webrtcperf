@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1623958493310,
+  "iteration": 1624300695055,
   "links": [],
   "panels": [
     {
@@ -89,7 +89,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 4,
+        "w": 5,
         "x": 0,
         "y": 1
       },
@@ -173,8 +173,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 4,
-        "x": 4,
+        "w": 5,
+        "x": 5,
         "y": 1
       },
       "id": 5,
@@ -257,8 +257,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 4,
-        "x": 8,
+        "w": 5,
+        "x": 10,
         "y": 1
       },
       "id": 26,
@@ -357,8 +357,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 4,
-        "x": 12,
+        "w": 5,
+        "x": 15,
         "y": 1
       },
       "id": 27,
@@ -458,7 +458,7 @@
       "gridPos": {
         "h": 8,
         "w": 4,
-        "x": 16,
+        "x": 20,
         "y": 1
       },
       "id": 6,
@@ -2386,8 +2386,8 @@
         "allValue": null,
         "current": {
           "selected": false,
-          "text": "recv",
-          "value": "recv"
+          "text": "send",
+          "value": "send"
         },
         "datasource": null,
         "definition": "wst_cpu_max",
@@ -2419,5 +2419,5 @@
   "timezone": "",
   "title": "Webrtc Stress Test",
   "uid": "default",
-  "version": 4
+  "version": 6
 }
