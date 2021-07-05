@@ -3,10 +3,12 @@
 export BUILDDIR=${HOME}
 
 function setup() {
-    apt install gperf
+    sudo apt install -y gperf
     # https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md
     cd "${BUILDDIR}" || exit
-    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+    if [ ! -d depot_tools ]; then
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+    fi
     export PATH="$PATH:${BUILDDIR}/depot_tools"
     mkdir -p "${BUILDDIR}"/chromium
     cd "${BUILDDIR}"/chromium || exit
