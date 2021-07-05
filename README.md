@@ -176,10 +176,27 @@ docker pull vpalmisano/webrtc-stress-test:latest
 docker run -it --rm --name=webrtc-stress-test-viewer \
     -v /dev/shm:/dev/shm \
     vpalmisano/webrtc-stress-test:latest \
-    --url=$JITSI_ROOM_URL \
+    --url=$ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
     --tabs-per-session=10
+```
+
+### Jamm
+
+Starts one send-receive participant:
+
+```sh
+docker pull vpalmisano/webrtc-stress-test:latest
+docker run -it --rm --name=webrtc-stress-test-publisher \
+    -v /dev/shm:/dev/shm \
+    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
+    vpalmisano/webrtc-stress-test:latest \
+    --video-path=/app/video.mp4 \
+    --script-path=/app/scripts/jamm-sendrecv.js \
+    --url=$ROOM_URL \
+    --sessions=1 \
+    --tabs-per-session=1
 ```
 
 ### QuavStreams
