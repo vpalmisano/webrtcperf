@@ -1,0 +1,6 @@
+process_names:
+  - comm:
+    - chromium-browse
+    - chrome
+    - node
+    - mediasoup-worke

@@ -1,7 +1,7 @@
-version: '2.2'
+version: "3.3"
 
 networks:
-  edumeet:
+  default:
     driver: bridge
     ipam:
       driver: default
@@ -31,6 +31,24 @@ services:
     image: prom/node-exporter:v1.1.2
     container_name: wst_node_exporter
     restart: unless-stopped
+    network_mode: host
+    pid: host
+    command:
+    - '--path.rootfs=/host'
+    volumes:
+    - '/:/host:ro,rslave'
+
+  process-exporter:
+    image: ncabatoff/process-exporter
+    container_name: wst_process_exporter
+    restart: unless-stopped
+    ports:
+    - 9256:9256
+    privileged: true
+    volumes:
+    - /proc:/host/proc
+    - ./config/process-exporter.config.yml:/config/config.yml
+    command: '--procfs /host/proc -config.path /config/config.yml'
 
   pushgateway:
     image: prom/pushgateway:v1.4.1
@@ -47,7 +65,7 @@ services:
     links:
     - prometheus:prometheus
     ports:
-    - 3000:3000
+    - 3001:3000
     volumes:
     - ./config/grafana-prometheus-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml
     - ./config/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/all.yml
@@ -57,3 +75,4 @@ services:
     - GF_SECURITY_ADMIN_USER=admin
     - GF_SECURITY_ADMIN_PASSWORD=admin
     - GF_USERS_ALLOW_SIGN_UP=false
+    - GF_INSTALL_PLUGINS=
