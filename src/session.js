@@ -72,6 +72,8 @@ module.exports = class Session extends EventEmitter {
       '--use-fake-ui-for-media-stream',
       '--use-fake-device-for-media-stream',
       '--mute-audio',
+      ' --allow-running-insecure-content',
+      `--unsafely-treat-insecure-origin-as-secure=${config.url}`,
     ];
 
     if (config.videoPath) {
