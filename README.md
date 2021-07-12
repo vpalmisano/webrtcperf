@@ -120,6 +120,7 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
     --sessions=1 \
     --tabs-per-session=10
 ```
+
 ### Edumeet
 
 Starts one send-receive participant, with a random audio activation pattern:
@@ -197,33 +198,6 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
     --url=$ROOM_URL \
     --sessions=1 \
     --tabs-per-session=1
-```
-
-### QuavStreams
-
-```sh
-docker pull vpalmisano/webrtc-stress-test:latest   
-docker run -it --rm --name=webrtc-stress-test-publisher \
-    -v /dev/shm:/dev/shm \
-    vpalmisano/webrtc-stress-test:latest \
-    --url=${QUAVSTREAMS_ROOM_URL} \
-    --url-query='displayName=Participant($s-$t)&publish={"video":{"width":1280,"height":720,"simulcast":true,"videoCodec":"vp8","frameRate":25,"minBitrate":600,"maxBitrate":2500,"deviceName":"/tmp/webrtc-stress-test/video.y4m"},"audio":{"deviceName":"/tmp/webrtc-stress-test/video.wav","audioEnabled":true}}' \
-    --sessions=1 \
-    --tabs-per-session=1 \
-    --use-null-video-decoder=false \
-    --video-path=./video.mp4
-```
-
-```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-viewer \
-    -v /dev/shm:/dev/shm \
-    vpalmisano/webrtc-stress-test:latest \
-    --url=${QUAVSTREAMS_ROOM_URL} \
-    --url-query='displayName=Viewer($s-$t)' \
-    --sessions=1 \
-    --tabs-per-session=1 \
-    --use-null-video-decoder=false
 ```
 
 ## Running from source code
