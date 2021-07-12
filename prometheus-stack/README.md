@@ -11,11 +11,6 @@ Docker services:
 - Prometheus web interface: http://localhost:9090
 - Pushgateway: `localhost:9091`
 - Grafana web interface: http://localhost:3000 (user:pass `admin`:`admin`)
-  Default dashboard: http://localhost:3000/d/default/webrtc-stress-test?orgId=1&refresh=10s
-
-To collect statistics from webrtc-stress-test, start the tool with the 
-option: `--prometheus-pushgateway=http://localhost:9091` 
-and (optionally): `--prometheus-pushgateway-job-name=<JOB_NAME>`.
 
 Scrape configuration:
 - prometheus (`localhost:9090`) and node-exporter (`192.168.1.1:9100`) metrics
@@ -23,8 +18,14 @@ Scrape configuration:
 - pushgateway metrics
 - medianode metrics (`192.168.1.1:3000`)
 
-Default dashboard (http://127.0.0.1:3001/d/default/webrtc-stress-test):
-![Grafana dashboard](grafana-dashboard.png)
+To collect statistics from webrtc-stress-test, start the tool with the 
+option: `--prometheus-pushgateway=http://localhost:9091` 
+and (optionally): `--prometheus-pushgateway-job-name=<JOB_NAME>`. 
 
-Medianode dashboard (http://127.0.0.1:3001/d/medianode/medianode):
+WebRTC stress test dashboard (http://127.0.0.1:3001/d/default/webrtc-stress-test):
+![WebRTC stress test dashboard](grafana-dashboard.png)
+
+Medianode statistics are collected from a medianode server running in localhost.
+
+Medianode default dashboard (http://127.0.0.1:3001/d/medianode/medianode):
 ![Medianode dashboard](medianode-dashboard.png)
