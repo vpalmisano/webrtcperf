@@ -72,6 +72,9 @@ Statistics values:
 | height                    | Total sent or received videos | The sent or received video height. |
 | fps                       | Total sent | The sent video frames per second. |
 
+## Prometheus / Grafana
+See the [prometheus stack](prometheus-stack/README.md).
+
 ## Examples
 
 ### Mediasoup demo
