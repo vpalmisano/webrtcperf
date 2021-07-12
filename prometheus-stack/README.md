@@ -1,7 +1,8 @@
-# Prometheus stack
+# Prometheus / Grafana stack
 
 Start the Prometheus / Grafana docker stack with:
 ```sh
+cd prometheus-stack
 docker-compose up
 ```
 
