@@ -28,7 +28,7 @@ async function main() {
   // throttle configuration
   if (config.throttleConfig) {
     console.log('Using the throttle config:', config.throttleConfig);
-    await throttle.start(config.throttleConfig);
+    await throttle.start(JSON.parse(config.throttleConfig));
   }
 
   // starts the sessions
