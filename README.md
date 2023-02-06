@@ -24,17 +24,30 @@ for visualization with Grafana.
 ## Install
 The tool can be executed from sources, using the pre built executables or using the Docker image.
 
-Using `npm`:
+Using Npm:
 
 ```bash
 npm install -g @vpalmisano/webrtcperf
 
 # Run a Jitsi test:
 webrtcperf \
-    --url="https://meet.jit.si/${ROOM_NAME}#config.prejoinPageEnabled=false" \
+    --url="https://meet.jit.si/${JITSI_ROOM_URL}#config.prejoinPageEnabled=false" \
     --display='' \
     --show-page-log=false
 # Press <q> to stop.
+```
+
+Using Docker:
+
+```bash
+docker pull ghcr.io/vpalmisano/webrtcperf
+docker run -it --rm \
+    -v /dev/shm:/dev/shm \
+    ghcr.io/vpalmisano/webrtcperf \
+    --url="https://meet.jit.si/$JITSI_ROOM_URL#config.prejoinPageEnabled=false" \
+    --show-page-log=false \
+    --sessions=1 \
+    --tabs-per-session=1
 ```
 
 Stop the tool pressing `q` (normal browser close) or `x` (it will close the
@@ -111,10 +124,9 @@ See the [prometheus stack](prometheus-stack/README.md).
 Starts one send-receive participant:
 
 ```sh
-docker pull vpalmisano/webrtcperf:latest
 docker run -it --rm --name=webrtcperf-publisher \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtcperf:latest \
+    ghcr.io/vpalmisano/webrtcperf \
     --url=$MEDIASOUP_DEMO_URL \
     --url-query='roomId=test&displayName=Publisher($s-$t)' \
     --sessions=1 \
@@ -124,10 +136,9 @@ docker run -it --rm --name=webrtcperf-publisher \
 Starts 10 receive-only participants:
 
 ```sh
-docker pull vpalmisano/webrtcperf:latest
 docker run -it --rm --name=webrtcperf-viewer \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtcperf:latest \
+    ghcr.io/vpalmisano/webrtcperf \
     --url=$MEDIASOUP_DEMO_URL \
     --url-query='roomId=test&displayName=Viewer($s-$t)&produce=false' \
     --sessions=1 \
@@ -139,11 +150,10 @@ docker run -it --rm --name=webrtcperf-viewer \
 Starts one send-receive participant, with a random audio activation pattern:
 
 ```sh
-docker pull vpalmisano/webrtcperf:latest
 docker run -it --rm \
     -v /dev/shm:/dev/shm \
     -v $PWD/examples:/scripts:ro \
-    vpalmisano/webrtcperf:latest \
+    ghcr.io/vpalmisano/webrtcperf \
     --url=$EDUMEET_URL \
     --url-query='displayName=Publisher($s-$t)' \
     --script-path=/scripts/edumeet-sendrecv.js \
@@ -154,11 +164,10 @@ docker run -it --rm \
 Starts 10 receive-only participants:
 
 ```sh
-docker pull vpalmisano/webrtcperf:latest
 docker run -it --rm \
     -v /dev/shm:/dev/shm \
     -v $PWD/examples:/scripts:ro \
-    vpalmisano/webrtcperf:latest \
+    ghcr.io/vpalmisano/webrtcperf \
     --url=$EDUMEET_URL \
     --url-query='displayName=Viewer($s-$t)' \
     --script-path=/scripts/edumeet-recv.js \
@@ -171,10 +180,9 @@ docker run -it --rm \
 Starts one send-receive participant:
 
 ```sh
-docker pull vpalmisano/webrtcperf:latest
 docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtcperf:latest \s
+    ghcr.io/vpalmisano/webrtcperf \s
     --url=$JITSI_ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
@@ -184,10 +192,9 @@ docker run -it --rm \
 Starts 10 receive-only participants:
 
 ```sh
-docker pull vpalmisano/webrtcperf:latest
 docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtcperf:latest \
+    ghcr.io/vpalmisano/webrtcperf \
     --url=$ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
