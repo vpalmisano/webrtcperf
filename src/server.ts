@@ -16,8 +16,9 @@ import { logger, runShellCommand } from './utils'
 const log = logger('app:server')
 
 /**
- * An HTTP(s) server instance that allows to control the tool using a REST
- * insterface.
+ * An HTTP server instance that allows to control the tool using a REST
+ * interface. Moreover, it allows to aggregate stats data coming from multiple
+ * running tool instances.
  */
 export class Server {
   /** The server listening port. */
