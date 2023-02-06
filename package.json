@@ -111,7 +111,7 @@
     "typedoc": "^0.23.24",
     "typedoc-github-wiki-theme": "^1.0.1",
     "typedoc-plugin-markdown": "^3.14.0",
-    "typescript": "^4.9.4",
+    "typescript": "^4.9.5",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.1",
     "webpack-node-externals": "^3.0.0",
