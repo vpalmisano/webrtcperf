@@ -23,10 +23,10 @@
   ],
   "typedocOptions": {
     "entryPoints": ["./src"],
-    "out": "./docs/html",
+    "out": "./docs",
     "readme": "README.md",
-    "includes": "./docs",
-    "media": "./docs/media",
+    "includes": "./docs-src",
+    "media": "./docs-src/media",
     "theme": "default",
     "plugin": "none",
     "excludeNotDocumented": true,
