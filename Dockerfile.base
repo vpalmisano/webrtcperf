@@ -53,6 +53,7 @@ RUN \
         libxrender1 \
         libxss1 \
         libxtst6 \
+        libvulkan1 \
         lsb-release \
         openssl \
         wget \
