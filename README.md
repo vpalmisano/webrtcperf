@@ -1,5 +1,5 @@
 # WebRTC Perf
-[GitHub page](https://github.com/vpalmisano/webrtcperf)
+[GitHub page](https://github.com/vpalmisano/webrtcperf) | [Documentation](https://vpalmisano.github.io/webrtcperf)
 
 A tool that allows to run concurrent WebRTC sessions using chromium web browser.
 It could be used to validate the audio/video quality and the client CPU/memory usage
@@ -62,37 +62,49 @@ See the [config documentation](https://vpalmisano.github.io/webrtcperf/types/Con
 Example output:
 
 ```
--- Mon, 08 Mar 2021 11:41:48 GMT -------------------------------------------------------------------
-                          name    count      sum     mean   stddev      25p      min      max
-                           cpu        1    67.66    67.66     0.00    67.66    67.66    67.66 %
-                        memory        1   801.13   801.13     0.00   801.13   801.13   801.13 MB
-                          tabs        1        1        1        0        1        1        1
+-- Mon, 06 Feb 2023 20:46:34 GMT -------------------------------------------------------------------
+                          name    count      sum     mean   stddev       5p      95p      min      max
+                    System CPU        1             15.89     0.00    15.89    15.89    15.89    15.89 %
+                    System GPU        1              0.00     0.00     0.00     0.00     0.00     0.00 %
+                 System Memory        1             72.18     0.00    72.18    72.18    72.18    72.18 %
+                      CPU/page        1    84.42    84.42     0.00    84.42    84.42    84.42    84.42 %
+                   Memory/page        1  1206.90  1206.90     0.00  1206.90  1206.90  1206.90  1206.90 MB
+                         Pages        1        1        1        0        1        1        1        1
+                        Errors        1        0        0        0        0        0        0        0
+                      Warnings        1        0        0        0        0        0        0        0
+              Peer Connections        1        2        2        0        2        2        2        2
 -- Inbound audio -----------------------------------------------------------------------------------
-                      received        1     0.02     0.02     0.00     0.02     0.02     0.02 MB
-                          rate        1     0.53     0.53     0.00     0.53     0.53     0.53 Kbps
-                          lost        1              0.00     0.00     0.00     0.00     0.00 %
-                        jitter        1              0.00     0.00     0.00     0.00     0.00 s
-          avgJitterBufferDelay        1             85.27     0.00    85.27    85.27    85.27 ms
+                          rate        2    28.73    14.36    14.36     0.00    28.73     0.00    28.73 Kbps
+                          lost        1              0.00     0.00     0.00     0.00     0.00     0.00 %
+                        jitter        2              0.00     0.00     0.00     0.00     0.00     0.00 s
+          avgJitterBufferDelay        1             35.29     0.00    35.29    35.29    35.29    35.29 ms
 -- Inbound video -----------------------------------------------------------------------------------
-                      received        2    26.62    13.31    13.22    13.31     0.09    26.53 MB
-                          rate        2   838.72   419.36   411.30   419.36     8.06   830.66 Kbps
-                          lost        1              0.00     0.00     0.00     0.00     0.00 %
-                        jitter        1              1.88     0.37     1.77     0.98     2.65 s
-          avgJitterBufferDelay        1             90.86     0.00    90.86    90.86    90.86 ms
-                         width        1              1280        0     1280     1280     1280 px
-                        height        1               720        0      720      720      720 px
+                      received        2     2.66     1.33     1.32     0.01     2.64     0.01     2.64 MB
+                          rate        2   967.41   483.71   483.71     0.00   967.41     0.00   967.41 Kbps
+                          lost        1              0.00     0.00     0.00     0.00     0.00     0.00 %
+                        jitter        2              0.01     0.01     0.01     0.02     0.01     0.02 s
+          avgJitterBufferDelay        1             50.48     0.00    50.48    50.48    50.48    50.48 ms
+                         width        2               960      320      640     1280      640     1280 px
+                        height        2               540      180      360      720      360      720 px
+                           fps        1                15        0       15       15       15       15 fps
 -- Outbound audio ----------------------------------------------------------------------------------
-                          sent        1     0.50     0.50     0.00     0.50     0.50     0.50 MB
-                 retransmitted        1     0.00     0.00     0.00     0.00     0.00     0.00 MB
-                          rate        1     0.00     0.00     0.00     0.00     0.00     0.00 Kbps
+                          rate        2    42.84    21.42    21.42     0.00    42.84     0.00    42.84 Kbps
+                          lost        1              0.00     0.00     0.00     0.00     0.00     0.00 %
+                 roundTripTime        1             0.001    0.000    0.001    0.001    0.001    0.001 s
 -- Outbound video ----------------------------------------------------------------------------------
-                          sent        3    43.62    14.54     7.70    10.06     4.68    23.49 MB
-                 retransmitted        3     0.00     0.00     0.00     0.00     0.00     0.00 MB
-                          rate        3     0.00     0.00     0.00     0.00     0.00     0.00 Kbps
- qualityLimitResolutionChanges        3        0        0        0        0        0        0
-                         width        1              1280        0     1280     1280     1280 px
-                        height        1               720        0      720      720      720 px
-                           fps        1                25        0       25       25       25 fps
+                          sent        2     3.25     1.62     1.58     0.04     3.21     0.04     3.21 MB
+                          rate        2  1131.25   565.63   565.63     0.00  1131.25     0.00  1131.25 Kbps
+                          lost        1              0.00     0.00     0.00     0.00     0.00     0.00 %
+                 roundTripTime        1             0.001    0.000    0.001    0.001    0.001    0.001 s
+ qualityLimitResolutionChanges        2        2        1        1        0        2        0        2
+          qualityLimitationCpu        2        0        0        0        0        0        0        0 %
+    qualityLimitationBandwidth        2       20       10       10        0       20        0       20 %
+       sentActiveSpatialLayers        2                 2        1        1        3        1        3 layers
+                sentMaxBitrate        2  3700.00  1850.00   350.00  1500.00  2200.00  1500.00  2200.00 Kbps
+                         width        2               640      640        0     1280        0     1280 px
+                        height        2               360      360        0      720        0      720 px
+                           fps        2                12       12        0       25        0       25 fps
+              pliCountReceived        2                 1        0        1        2        1        2
 ```
 
 Statistics values:
