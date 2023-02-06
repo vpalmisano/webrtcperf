@@ -34,7 +34,7 @@ process immediately).
 
 ## Configuration options
 
-See the [config documentation](docs/config.md).
+See the [config documentation](https://vpalmisano.github.io/webrtcperf/types/Config.html).
 
 ## Statistics
 
