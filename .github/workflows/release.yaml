@@ -1,0 +1,71 @@
+name: Build release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+    - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+jobs:
+  build:
+    name: Build release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1
+    - name: Get package version
+      id: get_package_version
+      run: |
+        version=$(sed -nE 's/^\s*"version": "(.*?)",$/\1/p' package.json)
+        echo ::set-output name=version::${version}
+    - name: Cache modules
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
+    - name: Cache nexe build
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/.nexe
+        key: ${{ runner.os }}-nexe
+        restore-keys: |
+          ${{ runner.os }}-nexe
+    - name: Build
+      run: |
+        yarn build:all
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        generate_release_notes: true
+        files: |
+          webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
+          webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
+          webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
+    - name: Archive build
+      uses: actions/upload-artifact@v2
+      with:
+        name: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
+        path: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
+    - name: Archive build
+      uses: actions/upload-artifact@v2
+      with:
+        name: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
+        path: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
+    - name: Archive build
+      uses: actions/upload-artifact@v2
+      with:
+        name: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
+        path: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip

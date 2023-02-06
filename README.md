@@ -1,19 +1,40 @@
-# WebRTC stress test
-A tool for running concurrent WebRTC sessions using chromium web browser in headless mode.
+# WebRTC Perf
+A tool that allows to run concurrent WebRTC sessions using chromium web browser.
+It could be used to validate the audio/video quality and the client CPU/memory usage
+when multiple connections join the same WebRTC service.
 
-Components used:
-- NodeJS application.
-- Puppeteer library for controlling chromium instances.
-- A patched version of chromium (see `./chromium` directory): setting the 
-`USE_NULL_VIDEO_DECODER` environment variable disables the video decoding, 
-lowering the CPU requirements when running multiple browser sessions.
-- RTC stats logging with [ObserveRTC](https://github.com/ObserveRTC/observer-js).
+Main features:
+- NodeJS application/library using Puppeteer for controlling chromium instances.
+- It can be executed from sources, using the pre built Docker image or with the
+executables generated for each platform.
+- It allows to inject custom Javascript source files that will run into the
+browser page context for automating some tasks (e.g. pressing a button to join
+a conference room).
+- It allows to throttle the networking configuration, limiting the ingress/egress
+available bandwdith, the RTT or the packet loss %.
+- It uses a patched version of chromium (see `./chromium` directory) that allows
+to disable the video decoding, lowering the CPU requirements when running multiple
+browser sessions.
+- RTC stats logging module that allows to send stats to Prometheus Pushgateway
+for visualization with Grafana.
+- Alert rules and report generation.
+
+## Quick start
+The tool can be executed from sources, using the pre built executables or the
+Docker image:
+
+```bash
+./webrtcperf \
+    --url="https://meet.jit.si/test12345#config.prejoinPageEnabled=false&userInfo.displayName=test" \
+    --display=''
+```
+
+Stop the tool pressing `q` (normal browser close) or `x` (it will close the
+process immediately).
 
 ## Configuration options
 
-See the [config documentation](CONFIG.md).
-
-The `DEBUG_LEVEL` environment is used for enabled debug messages; see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax.
+See the [config documentation](docs/config.md).
 
 ## Statistics
 
@@ -82,42 +103,23 @@ See the [prometheus stack](prometheus-stack/README.md).
 Starts one send-receive participant:
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher \
+docker pull vpalmisano/webrtcperf:latest
+docker run -it --rm --name=webrtcperf-publisher \
     -v /dev/shm:/dev/shm \
-    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
-    vpalmisano/webrtc-stress-test:latest \
-    --video-path=/app/video.mp4 \
+    vpalmisano/webrtcperf:latest \
     --url=$MEDIASOUP_DEMO_URL \
     --url-query='roomId=test&displayName=Publisher($s-$t)' \
     --sessions=1 \
     --tabs-per-session=1
 ```
 
-Using Vaapi GPU acceleration (experimental):
-
-```sh
-docker run -it --rm --name=webrtc-stress-test-publisher \
-    --privileged \
-    -v /dev/dri:/dev/dri \
-    -v /dev/shm:/dev/shm \
-    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
-    vpalmisano/webrtc-stress-test:latest \
-    --video-path=/app/video.mp4 \
-    --url=$MEDIASOUP_DEMO_URL \
-    --url-query='roomId=test&displayName=Publisher($s-$t)' \
-    --sessions=1 \
-    --tabs-per-session=1 \
-    --enable-gpu=true
-```
-
 Starts 10 receive-only participants:
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-viewer \
+docker pull vpalmisano/webrtcperf:latest
+docker run -it --rm --name=webrtcperf-viewer \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtc-stress-test:latest \
+    vpalmisano/webrtcperf:latest \
     --url=$MEDIASOUP_DEMO_URL \
     --url-query='roomId=test&displayName=Viewer($s-$t)&produce=false' \
     --sessions=1 \
@@ -129,15 +131,14 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
 Starts one send-receive participant, with a random audio activation pattern:
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher \
+docker pull vpalmisano/webrtcperf:latest
+docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
-    vpalmisano/webrtc-stress-test:latest \
-    --video-path=/app/video.mp4 \
+    -v $PWD/examples:/scripts:ro \
+    vpalmisano/webrtcperf:latest \
     --url=$EDUMEET_URL \
     --url-query='displayName=Publisher($s-$t)' \
-    --script-path=/app/scripts/edumeet-sendrecv.js \
+    --script-path=/scripts/edumeet-sendrecv.js \
     --sessions=1 \
     --tabs-per-session=1
 ```
@@ -145,13 +146,14 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
 Starts 10 receive-only participants:
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-viewer \
+docker pull vpalmisano/webrtcperf:latest
+docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtc-stress-test:latest \
+    -v $PWD/examples:/scripts:ro \
+    vpalmisano/webrtcperf:latest \
     --url=$EDUMEET_URL \
     --url-query='displayName=Viewer($s-$t)' \
-    --script-path=/app/scripts/edumeet-recv.js \
+    --script-path=/scripts/edumeet-recv.js \
     --sessions=1 \
     --tabs-per-session=10
 ```
@@ -161,12 +163,10 @@ docker run -it --rm --name=webrtc-stress-test-viewer \
 Starts one send-receive participant:
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher \
+docker pull vpalmisano/webrtcperf:latest
+docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
-    vpalmisano/webrtc-stress-test:latest \
-    --video-path=/app/video.mp4 \
+    vpalmisano/webrtcperf:latest \s
     --url=$JITSI_ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
@@ -176,41 +176,27 @@ docker run -it --rm --name=webrtc-stress-test-publisher \
 Starts 10 receive-only participants:
 
 ```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-viewer \
+docker pull vpalmisano/webrtcperf:latest
+docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    vpalmisano/webrtc-stress-test:latest \
+    vpalmisano/webrtcperf:latest \
     --url=$ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
     --tabs-per-session=10
 ```
 
-### Jamm
-
-Starts one send-receive participant:
-
-```sh
-docker pull vpalmisano/webrtc-stress-test:latest
-docker run -it --rm --name=webrtc-stress-test-publisher \
-    -v /dev/shm:/dev/shm \
-    -v /tmp/webrtc-stress-test:/tmp/webrtc-stress-test \
-    vpalmisano/webrtc-stress-test:latest \
-    --video-path=/app/video.mp4 \
-    --script-path=/app/scripts/jamm-sendrecv.js \
-    --url=$ROOM_URL \
-    --sessions=1 \
-    --tabs-per-session=1
-```
-
 ## Running from source code
 
+The `DEBUG_LEVEL` environment variable can be used to enable debug messages;
+see [debug-level](https://github.com/commenthol/debug-level#readme) for syntax.
+
 ```sh
-git clone https://github.com/vpalmisano/webrtc-stress-test.git
+git clone https://github.com/vpalmisano/webrtcperf.git
 
-cd webrtc-stress-test
+cd webrtcperf
 
-# build the chromium customized version
+# Optional: build the chromium customized version
 # cd chromium
 # ./build.sh setup
 # ./build.sh apply_patch
@@ -219,23 +205,27 @@ cd webrtc-stress-test
 # dpkg -i ./chromium-browser-unstable_<version>-1_amd64.deb
 # cd ..
 
+yarn build
+
 # sendrecv test
-DEBUG_LEVEL=DEBUG:* yarn start:dev \
+DEBUG_LEVEL=DEBUG:* yarn start \
     --url=https://127.0.0.1:3443/test \
     --url-query='displayName=SendRecv($s/$S-$t/$T)' \
-    --video-path=./video.mp4 \
-    --script-path=./scripts/edumeet-sendrecv.js \
+    --script-path=./examples/edumeet-sendrecv.js \
     --sessions=1 \
-    --tabs-per-session=1 \
-    --enable-page-log=true
+    --tabs-per-session=1
 
 # recv only
-DEBUG_LEVEL=DEBUG:* yarn start:dev \
+DEBUG_LEVEL=DEBUG:* yarn start \
     --url=https://127.0.0.1:3443/test \
     --url-query='displayName=Recv($s/$S-$t/$T)' \
-    --script-path=./scripts/edumeet-recv.js \
+    --script-path=./examples/edumeet-recv.js \
     --sessions=1 \
-    --tabs-per-session=10 \
-    --enable-page-log=true \
-    --use-null-video-decoder=true
+    --tabs-per-session=10
 ```
+
+## Authors
+- Vittorio Palmisano [[github](https://github.com/vpalmisano)]
+
+## License
+[AGPL](./LICENSE)

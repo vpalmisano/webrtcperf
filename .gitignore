@@ -1,12 +1,15 @@
 node_modules
 app.min.js*
 logs
+tmp
 *.mp4
 *.mkv
 *.deb
 *.zip
 *.xz
-yarn.lock*
 yarn-error.log
 .vscode
 config.json
+prometheus-stack/data*
+webrtcperf*
+build
