@@ -19,14 +19,20 @@ browser sessions.
 for visualization with Grafana.
 - Alert rules and report generation.
 
-## Quick start
-The tool can be executed from sources, using the pre built executables or the
-Docker image:
+## Install
+The tool can be executed from sources, using the pre built executables or using the Docker image.
+
+Using `npm`:
 
 ```bash
-./webrtcperf \
-    --url="https://meet.jit.si/test12345#config.prejoinPageEnabled=false&userInfo.displayName=test" \
-    --display=''
+npm install -g @vpalmisano/webrtcperf
+
+# Run a Jitsi test:
+webrtcperf \
+    --url="https://meet.jit.si/${ROOM_NAME}#config.prejoinPageEnabled=false" \
+    --display='' \
+    --show-page-log=false
+# Press <q> to stop.
 ```
 
 Stop the tool pressing `q` (normal browser close) or `x` (it will close the
