@@ -10,7 +10,7 @@ The docker-compose services are started inside the local docker network `192.168
 
 Docker services:
 - Prometheus web interface: http://localhost:9090
-- Pushgateway: `localhost:9091`
+- Pushgateway: http://localhost:9091
 - Grafana web interface: http://localhost:3000 (user:pass `admin`:`admin`)
 
 Scrape configuration:
