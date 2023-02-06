@@ -1,4 +1,6 @@
 # WebRTC Perf
+[GitHub page](https://github.com/vpalmisano/webrtcperf)
+
 A tool that allows to run concurrent WebRTC sessions using chromium web browser.
 It could be used to validate the audio/video quality and the client CPU/memory usage
 when multiple connections join the same WebRTC service.
