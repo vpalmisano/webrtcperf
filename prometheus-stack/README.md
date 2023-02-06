@@ -22,5 +22,4 @@ To collect statistics from webrtcperf, start the tool with the
 option: `--prometheus-pushgateway=http://localhost:9091`
 and (optionally): `--prometheus-pushgateway-job-name=<JOB_NAME>`.
 
-WebRTC stress test dashboard (http://127.0.0.1:3001/d/default/webrtcperf):
-![WebRTC stress test dashboard](grafana-dashboard.png)
+WebRTC stress test dashboard (http://127.0.0.1:3001/d/default/webrtcperf).
