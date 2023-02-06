@@ -1,0 +1,102 @@
+diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
+index 33d714b2a4..049eb00596 100644
+--- a/video/video_receive_stream2.cc
++++ b/video/video_receive_stream2.cc
+@@ -128,6 +128,31 @@ RenderResolution InitialDecoderResolution(const FieldTrialsView& field_trials) {
+   return RenderResolution(320, 180);
+ }
+ 
++uint getTotalVideoDecoders() {
++  FileWrapper file_wrapper = FileWrapper::OpenReadOnly("/dev/shm/chromium-video-decoders");
++  if (file_wrapper.is_open()) {
++    char buf[256];
++    file_wrapper.Read(buf, sizeof(buf));
++    file_wrapper.Close();
++    return (uint)atoi(buf);
++  }
++  return 0;
++}
++
++void updateTotalVideoDecoders(int value) {
++  char buf[256];
++  uint total_video_decoders = getTotalVideoDecoders();
++  snprintf(buf, sizeof(buf), "%u", std::max<uint>(0, total_video_decoders + value));
++
++  FileWrapper file_wrapper = FileWrapper::OpenWriteOnly("/dev/shm/chromium-video-decoders");
++  if (!file_wrapper.is_open()) {
++    RTC_LOG(LS_ERROR) << "total video decoders file cannot be opened: /dev/shm/chromium-video-decoders";
++    return;
++  }
++  file_wrapper.Write(buf, strlen(buf));
++  file_wrapper.Close();
++}
++
+ // Video decoder class to be used for unknown codecs. Doesn't support decoding
+ // but logs messages to LS_ERROR.
+ class NullVideoDecoder : public webrtc::VideoDecoder {
+@@ -140,7 +165,7 @@ class NullVideoDecoder : public webrtc::VideoDecoder {
+   int32_t Decode(const webrtc::EncodedImage& input_image,
+                  bool missing_frames,
+                  int64_t render_time_ms) override {
+-    RTC_LOG(LS_ERROR) << "The NullVideoDecoder doesn't support decoding.";
++    RTC_LOG(LS_WARNING) << "The NullVideoDecoder doesn't support decoding.";
+     return WEBRTC_VIDEO_CODEC_OK;
+   }
+ 
+@@ -361,6 +386,21 @@ void VideoReceiveStream2::Start() {
+     renderer = this;
+   }
+ 
++  // Check if we should create video decoders.
++  enable_video_decoders_ = true;
++  std::string max_video_decoders = call_->trials().Lookup("WebRTC-MaxVideoDecoders");
++  if (!max_video_decoders.empty()) {
++    uint video_decoders = getTotalVideoDecoders();
++    uint max_decoders = (uint)atoi(max_video_decoders.c_str());
++    RTC_LOG(LS_ERROR) << "WebRTC-MaxVideoDecoders: " << video_decoders << "/" << max_decoders;
++    if (video_decoders >= max_decoders) {
++      enable_video_decoders_ = false;
++    }
++  }
++  if (enable_video_decoders_)
++    updateTotalVideoDecoders(1);
++
++  int decoders_count = 0;
+   for (const Decoder& decoder : config_.decoders) {
+     VideoDecoder::Settings settings;
+     settings.set_codec_type(
+@@ -451,6 +491,9 @@ void VideoReceiveStream2::Stop() {
+     stats_proxy_.DecoderThreadStopped();
+ 
+     UpdateHistograms();
++
++    if (enable_video_decoders_)
++      updateTotalVideoDecoders(-1);
+   }
+ 
+   video_stream_decoder_.reset();
+@@ -578,8 +621,10 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+     const Decoder& decoder) {
+   TRACE_EVENT0("webrtc",
+                "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
+-  std::unique_ptr<VideoDecoder> video_decoder =
+-      config_.decoder_factory->CreateVideoDecoder(decoder.video_format);
++  std::unique_ptr<VideoDecoder> video_decoder = enable_video_decoders_ ?
++    config_.decoder_factory->CreateVideoDecoder(decoder.video_format) :
++    nullptr;
++
+   // If we still have no valid decoder, we have to create a "Null" decoder
+   // that ignores all calls. The reason we can get into this state is that the
+   // old decoder factory interface doesn't have a way to query supported
+diff --git a/video/video_receive_stream2.h b/video/video_receive_stream2.h
+index 6b3d1ce439..df63485871 100644
+--- a/video/video_receive_stream2.h
++++ b/video/video_receive_stream2.h
+@@ -277,6 +277,7 @@ class VideoReceiveStream2
+   RtpStreamsSynchronizer rtp_stream_sync_;
+ 
+   std::unique_ptr<VideoStreamBufferController> buffer_;
++  bool enable_video_decoders_;
+ 
+   std::unique_ptr<RtpStreamReceiverInterface> media_receiver_
+       RTC_GUARDED_BY(packet_sequence_checker_);

@@ -17,16 +17,10 @@ Scrape configuration:
 - prometheus (`localhost:9090`) and node-exporter (`192.168.1.1:9100`) metrics
 - process-exporter metrics (`process-exporter:9256`) used for collecting mediasoup-worker processes stats
 - pushgateway metrics
-- medianode metrics (`192.168.1.1:3000`)
 
-To collect statistics from webrtc-stress-test, start the tool with the 
-option: `--prometheus-pushgateway=http://localhost:9091` 
-and (optionally): `--prometheus-pushgateway-job-name=<JOB_NAME>`. 
+To collect statistics from webrtcperf, start the tool with the
+option: `--prometheus-pushgateway=http://localhost:9091`
+and (optionally): `--prometheus-pushgateway-job-name=<JOB_NAME>`.
 
-WebRTC stress test dashboard (http://127.0.0.1:3001/d/default/webrtc-stress-test):
+WebRTC stress test dashboard (http://127.0.0.1:3001/d/default/webrtcperf):
 ![WebRTC stress test dashboard](grafana-dashboard.png)
-
-Medianode statistics are collected from a medianode server running in localhost.
-
-Medianode default dashboard (http://127.0.0.1:3001/d/medianode/medianode):
-![Medianode dashboard](medianode-dashboard.png)
