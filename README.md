@@ -109,7 +109,7 @@ Example output:
 
 Statistics values:
 
-| Name                      | Count        | Desscription |
+| Name                      | Count        | Description |
 | :------------------------ | :----------- | :----------- |
 | cpu                       | Total sessions | The browser process cpu usage. |
 | memory                    | Total sessions | The browser process memory usage. |
