@@ -57,7 +57,7 @@ jobs:
       run: yarn
 
     - name: Docker build and push develop version
-      if: not startsWith(github.event.ref, 'refs/tags/v')
+      if: ${{ !startsWith(github.event.ref, 'refs/tags/v') }}
       uses: docker/build-push-action@v3
       with:
         context: .
