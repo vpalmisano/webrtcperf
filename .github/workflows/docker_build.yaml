@@ -53,6 +53,14 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.NPM_TOKEN }}
+
+    - name: Cache modules
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Yarn build
       run: yarn
 
