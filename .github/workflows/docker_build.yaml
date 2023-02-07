@@ -55,7 +55,19 @@ jobs:
         password: ${{ secrets.NPM_TOKEN }}
     - name: Yarn build
       run: yarn
-    - name: Docker build and push
+
+    - name: Docker build and push develop version
+      if: not startsWith(github.event.ref, 'refs/tags/v')
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: true
+        tags: ghcr.io/${{ github.repository }}:devel
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+    - name: Docker build and push new version
+      if: startsWith(github.event.ref, 'refs/tags/v')
       uses: docker/build-push-action@v3
       with:
         context: .
@@ -63,6 +75,7 @@ jobs:
         tags: ghcr.io/${{ github.repository }}:${{ steps.get_package_version.outputs.version }},ghcr.io/${{ github.repository }}:latest
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
+
     - name: Move cache
       run: |
         rm -rf /tmp/.buildx-cache
