@@ -482,7 +482,7 @@ setInterval(() => {
  * @return {Boolean}
  */
 const isDisplayTrack = videoTrack => {
-  if (videoTrack.contentHint === 'detail') {
+  if (['detail', 'text'].indexOf(videoTrack.contentHint) !== -1) {
     return true
   }
 
