@@ -339,9 +339,8 @@ the following global variables will be attached to the \`window\` object: \
     arg: 'script-path',
   },
   scriptParams: {
-    doc: `Additional parameters (in JSON format) to pass to the session \
-scripts. E.g. passing '{"muted": true}' will mute all the sessions is Session \
-rooms.`,
+    doc: `Additional parameters (in JSON format) that will be exposed into
+the page context as \`window.PARAMS\`.`,
     format: String,
     nullable: true,
     default: '',
@@ -395,7 +394,7 @@ use the host X server instance.`,
   },
   blockedUrls: {
     doc: `A comma-separated list of request URLs that will be automatically \
-blocked (e.g. "https://api.segment.io").`,
+blocked.`,
     format: String,
     nullable: true,
     default: '',
