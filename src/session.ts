@@ -431,29 +431,36 @@ export class Session extends EventEmitter {
       '--no-user-gesture-required',
       '--autoplay-policy=no-user-gesture-required',
       '--disable-infobars',
-      '--force-fieldtrials=' + // WebRTC-VP8ConferenceTemporalLayers/2
-        (this.maxVideoDecoders !== -1 && this.id >= this.maxVideoDecodersAt
-          ? `WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}`
-          : ''),
-      // `${'--force-fieldtrials=' +
-      // 'AutomaticTabDiscarding/Disabled' +
-      // '/WebRTC-Vp9DependencyDescriptor/Enabled' +
-      // '/WebRTC-DependencyDescriptorAdvertised/Enabled'}${
-      //     this.audioRedForOpus ?
-      //         '/WebRTC-Audio-Red-For-Opus/Enabled' : ''}`,
-      '--use-fake-ui-for-media-stream',
-      '--use-fake-device-for-media-stream',
       '--allow-running-insecure-content',
       `--unsafely-treat-insecure-origin-as-secure=${this.url}`,
-      //
-      // '--enable-usermedia-screen-capturing',
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
+      '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
       '--auto-select-desktop-capture-source=Entire screen',
+      // `--auto-select-tab-capture-source-by-title=about:blank`,
       `--remote-debugging-port=${
         this.debuggingPort ? this.debuggingPort + this.id : 0
       }`,
       `--remote-debugging-address=${this.debuggingAddress}`,
+      '--fake-variations-channel=stable',
     ]
+
+    const fieldTrials = [
+      // 'WebRTC-VP8ConferenceTemporalLayers/2',
+      // 'AutomaticTabDiscarding/Disabled',
+      // 'WebRTC-Vp9DependencyDescriptor/Enabled',
+      // 'WebRTC-DependencyDescriptorAdvertised/Enabled',
+    ]
+    /* if (this.audioRedForOpus) {
+      fieldTrials.push('WebRTC-Audio-Red-For-Opus/Enabled')
+    } */
+    if (this.maxVideoDecoders !== -1 && this.id >= this.maxVideoDecodersAt) {
+      fieldTrials.push(`WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}`)
+    }
+    if (fieldTrials.length) {
+      args.push(`--force-fieldtrials=${fieldTrials.join('/')}`)
+    }
 
     if (this.videoPath) {
       const name = md5(this.videoPath)
