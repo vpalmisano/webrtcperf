@@ -141,7 +141,7 @@ export type SessionParams = {
    */
   display: string
   /** Enables RED for OPUS codec (experimental).  */
-  audioRedForOpus: boolean
+  /* audioRedForOpus: boolean */
   /** The page URL. */
   url: string
   /** The page URL query. */
@@ -192,7 +192,7 @@ export class Session extends EventEmitter {
   private readonly windowWidth: number
   private readonly windowHeight: number
   private readonly display: string
-  private readonly audioRedForOpus: boolean
+  /* private readonly audioRedForOpus: boolean */
   private readonly videoPath: string
   private readonly videoCachePath: string
   private readonly videoWidth: number
@@ -262,7 +262,7 @@ export class Session extends EventEmitter {
     windowWidth,
     windowHeight,
     display,
-    audioRedForOpus,
+    /* audioRedForOpus, */
     url,
     urlQuery,
     videoPath,
@@ -309,7 +309,7 @@ export class Session extends EventEmitter {
     this.debuggingPort = debuggingPort || 0
     this.debuggingAddress = debuggingAddress || '127.0.0.1'
     this.display = display
-    this.audioRedForOpus = !!audioRedForOpus
+    /* this.audioRedForOpus = !!audioRedForOpus */
     this.url = url
     assert(this.url, 'url is required')
     this.urlQuery = urlQuery
@@ -775,34 +775,12 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       }
     })
 
-    /* const ASSETS: Record<string, string> = {
-      'https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js':
-        'node_modules/tesseract.js/dist/tesseract.min.js',
-      'https://unpkg.com/tesseract.js@2.1.5/dist/tesseract-worker.min.js':
-        'node_modules/tesseract.js/dist/worker.min.js',
-      'https://tessdata.projectnaptha.com/4.0.0/eng.traineddata.gz':
-        'assets/eng.traineddata.gz',
-      'https://unpkg.com/tesseract.js-core@v2.0.0/tesseract-core.wasm.js':
-        'node_modules/tesseract.js-core/tesseract-core.wasm.js',
-    } */
     const requestHandler = async (request: HTTPRequest) => {
       const requestUrl = request.url()
       if (requestUrl.startsWith('data:')) {
         return request.continue()
       }
-
-      //log.debug(`requestHandler ${requestUrl}`)
-      /* const localAsset = ASSETS[requestUrl]
-      if (localAsset) {
-        log.debug(`requestHandler localAsset ${requestUrl}`)
-        const body = await fs.promises.readFile(path.resolve(localAsset))
-        return request.respond({
-          status: 200,
-          contentType: 'application/javascript; charset=utf-8',
-          body,
-        })
-      } */
-
+      // log.debug(`requestHandler ${requestUrl}`)
       let modifiedHeaders: Record<string, string> = { ...request.headers() }
 
       // Add extra headers.

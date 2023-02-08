@@ -258,13 +258,13 @@ On Linux, set it to a valid X server \`DISPLAY\` string (e.g. \`:0\`).`,
     env: 'DISPLAY',
     arg: 'display',
   },
-  audioRedForOpus: {
+  /* audioRedForOpus: {
     doc: `Enables RED for OPUS codec (experimental).`,
     format: 'Boolean',
     default: false,
     env: 'AUDIO_RED_FOR_OPUS',
     arg: 'audio-red-for-opus',
-  },
+  }, */
   sessions: {
     doc: `The number of browser sessions to start.`,
     format: 'nat',
