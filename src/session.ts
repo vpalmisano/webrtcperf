@@ -6,8 +6,7 @@ import fs from 'fs'
 import JSON5 from 'json5'
 import { LoremIpsum } from 'lorem-ipsum'
 import os from 'os'
-/* import * as path from 'path' */
-import { dirname, join } from 'path'
+import path from 'path'
 import * as vanillaPuppeteer from 'puppeteer'
 import puppeteer, {
   Browser,
@@ -730,9 +729,13 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       'playout-delay-hint',
       'page-stats',
     ]) {
-      const filePath = process.env.WEBPACK
-        ? `./scripts/${name}.js`
-        : require.resolve(`../scripts/${name}.js`)
+      const filePath =
+        '__nexe' in process
+          ? `./scripts/${name}.js`
+          : process.env.WEBPACK
+          ? path.join(path.dirname(__filename), `./scripts/${name}.js`)
+          : require.resolve(`../scripts/${name}.js`)
+      log.debug(`loading ${name} script from: ${filePath}`)
       await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
     }
 
@@ -747,12 +750,14 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
         log.debug(`loading script from ${code.length} bytes`)
         await page.evaluateOnNewDocument(code)
       } else {
-        for (const path of this.scriptPath.split(',')) {
-          if (!path.trim()) {
+        for (const filePath of this.scriptPath.split(',')) {
+          if (!filePath.trim()) {
             continue
           }
-          log.debug(`loading script: ${path}`)
-          await page.evaluateOnNewDocument(await fs.readFileSync(path, 'utf8'))
+          log.debug(`loading custom script: ${filePath}`)
+          await page.evaluateOnNewDocument(
+            await fs.readFileSync(filePath, 'utf8'),
+          )
         }
       }
     }
@@ -937,7 +942,11 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       'uploadFileFromUrl',
       async (fileUrl: string, selector: string) => {
         const filename = md5(fileUrl) + '.' + fileUrl.split('.').slice(-1)[0]
-        const filePath = join(os.homedir(), '.webrtcperf/uploads', filename)
+        const filePath = path.join(
+          os.homedir(),
+          '.webrtcperf/uploads',
+          filename,
+        )
         if (!fs.existsSync(filePath)) {
           await downloadUrl(fileUrl, undefined, filePath)
         }
@@ -1002,7 +1011,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     let saveFile: fs.promises.FileHandle | undefined = undefined
     if (this.pageLogPath) {
       try {
-        await fs.promises.mkdir(dirname(this.pageLogPath), {
+        await fs.promises.mkdir(path.dirname(this.pageLogPath), {
           recursive: true,
         })
         saveFile = await fs.promises.open(this.pageLogPath, 'a')
