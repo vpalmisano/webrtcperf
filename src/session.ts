@@ -130,6 +130,8 @@ export type SessionParams = {
   chromiumUrl: string
   /** The chromium executable path. */
   chromiumPath: string
+  /** Chromium additional field trials. */
+  chromiumFieldTrials: string
   /** The browser width. */
   windowWidth: number
   /** The browser height. */
@@ -188,6 +190,7 @@ export type SessionParams = {
 export class Session extends EventEmitter {
   private readonly chromiumUrl: string
   private readonly chromiumPath?: string
+  private readonly chromiumFieldTrials?: string
   private readonly windowWidth: number
   private readonly windowHeight: number
   private readonly display: string
@@ -258,6 +261,7 @@ export class Session extends EventEmitter {
   constructor({
     chromiumUrl,
     chromiumPath,
+    chromiumFieldTrials,
     windowWidth,
     windowHeight,
     display,
@@ -303,6 +307,7 @@ export class Session extends EventEmitter {
     log.debug('constructor', { id })
     this.chromiumUrl = chromiumUrl
     this.chromiumPath = chromiumPath || undefined
+    this.chromiumFieldTrials = chromiumFieldTrials || undefined
     this.windowWidth = windowWidth || 1920
     this.windowHeight = windowHeight || 1080
     this.debuggingPort = debuggingPort || 0
@@ -444,12 +449,13 @@ export class Session extends EventEmitter {
       `--remote-debugging-address=${this.debuggingAddress}`,
     ]
 
-    const fieldTrials = [
-      // 'WebRTC-VP8ConferenceTemporalLayers/2',
-      // 'AutomaticTabDiscarding/Disabled',
-      // 'WebRTC-Vp9DependencyDescriptor/Enabled',
-      // 'WebRTC-DependencyDescriptorAdvertised/Enabled',
-    ]
+    // 'WebRTC-VP8ConferenceTemporalLayers/2',
+    // 'AutomaticTabDiscarding/Disabled',
+    // 'WebRTC-Vp9DependencyDescriptor/Enabled',
+    // 'WebRTC-DependencyDescriptorAdvertised/Enabled',
+    const fieldTrials = (this.chromiumFieldTrials || '')
+      .split(',')
+      .filter(s => !!s)
     /* if (this.audioRedForOpus) {
       fieldTrials.push('WebRTC-Audio-Red-For-Opus/Enabled')
     } */
