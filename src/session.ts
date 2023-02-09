@@ -443,7 +443,6 @@ export class Session extends EventEmitter {
         this.debuggingPort ? this.debuggingPort + this.id : 0
       }`,
       `--remote-debugging-address=${this.debuggingAddress}`,
-      '--fake-variations-channel=stable',
     ]
 
     const fieldTrials = [

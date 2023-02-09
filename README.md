@@ -27,6 +27,8 @@ The tool can be executed from sources, using the pre built executables or using 
 Using Npm:
 
 ```bash
+echo '@vpalmisano:registry=https://npm.pkg.github.com' >> ~/.npmrc
+
 npm install -g @vpalmisano/webrtcperf
 
 # Install FFMpeg:
