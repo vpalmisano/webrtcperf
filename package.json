@@ -37,7 +37,7 @@
     "clean": "rm -rf app.min.js build",
     "lint": "eslint --resolve-plugins-relative-to path=. src scripts examples",
     "lint:fix": "yarn lint --fix",
-    "docs": "yarn lint && ts-node src/generate-config-docs.ts && typedoc",
+    "docs": "ts-node src/generate-config-docs.ts && typedoc",
     "build:linux": "nexe --verbose --build -i app.min.js -o webrtcperf -r 'scripts/*' && gzip -9 -c webrtcperf > webrtcperf_${npm_package_version}_linux.gz",
     "build:macos": "nexe --target mac-x64-14.15.3 -i app.min.js -o webrtcperf -r 'scripts/*' && gzip -9 -c webrtcperf > webrtcperf_${npm_package_version}_macos.gz && rm webrtcperf",
     "build:windows": "nexe --target windows-x64-14.15.3 -i app.min.js -o webrtcperf -r 'scripts/*' && zip webrtcperf_${npm_package_version}_windows.zip webrtcperf.exe && rm webrtcperf.exe",

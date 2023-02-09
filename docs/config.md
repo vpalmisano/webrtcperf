@@ -168,6 +168,13 @@ chromium process.
 
 *Default*: `""`
 
+## chromiumFieldTrials
+Chromium additional field trials (comma-separated).
+
+*Type*: `string`
+
+*Default*: `""`
+
 ## windowWidth
 The browser window width.
 
@@ -212,13 +219,6 @@ On Linux, set it to a valid X server `DISPLAY` string (e.g. `:0`).
 *Type*: `string`
 
 *Default*: `""`
-
-## audioRedForOpus
-Enables RED for OPUS codec (experimental).
-
-*Type*: `boolean`
-
-*Default*: `false`
 
 ## sessions
 The number of browser sessions to start.
@@ -284,7 +284,8 @@ One or more JavaScript file paths (comma-separated). If set, the files contents 
 *Default*: `""`
 
 ## scriptParams
-Additional parameters (in JSON format) to pass to the session scripts. E.g. passing '{"muted": true}' will mute all the sessions is Session rooms.
+Additional parameters (in JSON format) that will be exposed into
+the page context as `window.PARAMS`.
 
 *Type*: `string`
 
@@ -326,7 +327,7 @@ It enables the GPU acceleration (experimental). Set to "desktop" to use the host
 *Default*: `""`
 
 ## blockedUrls
-A comma-separated list of request URLs that will be automatically blocked (e.g. "https://api.segment.io").
+A comma-separated list of request URLs that will be automatically blocked.
 
 *Type*: `string`
 

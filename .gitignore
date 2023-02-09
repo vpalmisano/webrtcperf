@@ -13,3 +13,4 @@ config.json
 prometheus-stack/data*
 webrtcperf*
 build
+_docs
