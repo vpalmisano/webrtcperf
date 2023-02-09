@@ -29,6 +29,11 @@ Using Npm:
 ```bash
 npm install -g @vpalmisano/webrtcperf
 
+# Install FFMpeg:
+sudo apt install ffmpeg # Linux
+# or:
+brew install ffmpeg # MacOS
+
 # Run a Jitsi test:
 webrtcperf \
     --url="https://meet.jit.si/${JITSI_ROOM_URL}#config.prejoinPageEnabled=false" \
