@@ -1,8 +1,6 @@
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
-name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+name: Update docs
 
 on:
-  # Runs on pushes targeting the default branch
   push:
     branches: ["devel"]
     paths:
@@ -11,29 +9,24 @@ on:
     - '*.json'
     - '*.js'
     - 'yarn.lock'
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  # Build job
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        
+
       - name: Cache modules
         uses: actions/cache@v3
         with:
@@ -43,7 +36,7 @@ jobs:
             ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
       - name: Build
         run: yarn && yarn docs
-        
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
@@ -51,7 +44,6 @@ jobs:
         with:
           path: ./docs
 
-  # Deployment job
   deploy:
     environment:
       name: github-pages
