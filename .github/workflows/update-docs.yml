@@ -2,7 +2,10 @@ name: Update docs
 
 on:
   push:
-    branches: ["devel"]
+    tags:
+    - 'v*'
+    branches:
+    - 'devel'
     paths:
     - 'scripts/*'
     - 'src/*'
