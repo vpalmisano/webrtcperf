@@ -83,10 +83,7 @@ RUN \
 #   apt-get update && apt-get install -y google-chrome-stable && apt-get clean
 
 # chromium-browser-unstable
-# 111.0.5546.0-1 17cNrm00_iyQ8hCc_16LRMIiyMd_W2IYo
-ENV GOOGLE_CHROME_DOWNLOAD_ID="17cNrm00_iyQ8hCc_16LRMIiyMd_W2IYo"
-
-RUN curl -Lo /chromium-browser-unstable.deb "https://drive.google.com/uc?export=download&confirm=t&id=${GOOGLE_CHROME_DOWNLOAD_ID}"
+RUN curl -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/chromium-browser-unstable_112.0.5586.0-1_amd64.deb"
 RUN dpkg -i /chromium-browser-unstable.deb && rm chromium-browser-unstable.deb
 
 RUN apt-get clean \
@@ -94,5 +91,5 @@ RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app/
-RUN curl -Lo /app/video.mp4 "https://drive.google.com/uc?export=download&id=1juOm-Yy7jUnUIzPxWtiHh0bePNmkvYgv&confirm=t" \
+RUN curl -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \
     && ffprobe /app/video.mp4
