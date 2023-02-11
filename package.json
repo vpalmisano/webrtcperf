@@ -30,8 +30,6 @@
     "start": "node app.min.js",
     "start:dev": "ts-node src/app.ts",
     "test": "",
-    "build:docker_base": "docker build -f Dockerfile.base -t ghcr.io/vpalmisano/webrtcperf-base .",
-    "push:docker_base": "docker push ghcr.io/vpalmisano/webrtcperf-base:latest && docker tag ghcr.io/vpalmisano/webrtcperf-base ghcr.io/vpalmisano/webrtcperf-base:$npm_package_version && docker push ghcr.io/vpalmisano/webrtcperf-base:$npm_package_version",
     "build:docker": "yarn && docker build -t ghcr.io/vpalmisano/webrtcperf .",
     "push:docker": "docker push ghcr.io/vpalmisano/webrtcperf:latest && docker tag ghcr.io/vpalmisano/webrtcperf ghcr.io/vpalmisano/webrtcperf:$npm_package_version && docker push ghcr.io/vpalmisano/webrtcperf:$npm_package_version",
     "clean": "rm -rf app.min.js build",

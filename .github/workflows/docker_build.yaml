@@ -2,12 +2,6 @@ name: Build Docker image
 
 on:
   workflow_dispatch:
-    inputs:
-      update_base_image:
-        description: "Update Docker base image"
-        required: true
-        type: boolean
-        default: false
   push:
     tags:
     - 'v*'
@@ -69,17 +63,6 @@ jobs:
           ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Yarn build
       run: yarn
-
-    - name: Docker build and push base image
-      if: ${{ github.event.inputs.update_base_image }}
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        file: Dockerfile.base
-        push: true
-        tags: ghcr.io/${{ github.repository }}-base:latest
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new
 
     - name: Docker build and push develop version
       if: ${{ !startsWith(github.event.ref, 'refs/tags/v') }}
