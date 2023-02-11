@@ -33,11 +33,22 @@ jobs:
       uses: actions/checkout@v3
       with:
         fetch-depth: 1
+    - name: Cache modules
+      uses: actions/cache@v3
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
+    - name: Yarn build
+      run: yarn
+
     - name: Get package version
       id: get_package_version
       run: |
         version=$(sed -nE 's/^\s*"version": "(.*?)",$/\1/p' package.json)
         echo ::set-output name=version::${version}
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
     - name: Cache Docker layers
@@ -53,16 +64,6 @@ jobs:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.NPM_TOKEN }}
-
-    - name: Cache modules
-      uses: actions/cache@v3
-      with:
-        path: node_modules
-        key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
-    - name: Yarn build
-      run: yarn
 
     - name: Docker build and push develop version
       if: ${{ !startsWith(github.event.ref, 'refs/tags/v') }}
