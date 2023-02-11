@@ -1,5 +1,6 @@
 FROM ubuntu:jammy
 LABEL org.opencontainers.image.title webrtcperf
+LABEL org.opencontainers.image.description WebRTC performance and quality evaluation tool.
 LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
 LABEL org.opencontainers.image.authors Vittorio Palmisano <vpalmisano@gmail.com>
 

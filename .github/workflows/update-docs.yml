@@ -12,6 +12,9 @@ on:
     - '*.json'
     - '*.js'
     - 'yarn.lock'
+    - '*.md'
+    - 'docs/*'
+    - 'media/*'
   workflow_dispatch:
 
 permissions:
