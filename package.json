@@ -23,7 +23,7 @@
     "webrtcperf": "app.min.js"
   },
   "scripts": {
-    "prepare": "yarn lint && tsc -b && webpack --config webpack.config.js",
+    "prepare": "yarn lint && tsc -b && webpack",
     "prepublishOnly": "yarn lint",
     "postversion": "git push && git push origin $(git tag | sort -V | tail -1)",
     "release": "yarn && yarn update-docs && npm version patch && npm publish",
@@ -32,7 +32,7 @@
     "test": "",
     "build:docker": "yarn && docker build -t ghcr.io/vpalmisano/webrtcperf .",
     "push:docker": "docker push ghcr.io/vpalmisano/webrtcperf:latest && docker tag ghcr.io/vpalmisano/webrtcperf ghcr.io/vpalmisano/webrtcperf:$npm_package_version && docker push ghcr.io/vpalmisano/webrtcperf:$npm_package_version",
-    "clean": "rm -rf app.min.js build",
+    "clean": "rm -rf app.min.js build _docs",
     "lint": "eslint --resolve-plugins-relative-to path=. src scripts examples",
     "lint:fix": "yarn lint --fix",
     "docs": "ts-node src/generate-config-docs.ts && typedoc",
