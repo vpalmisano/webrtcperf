@@ -18,18 +18,11 @@ import { hideAuth, logger, Scheduler } from './utils'
 
 const log = logger('app:stats')
 
-// Percentile value for calculating alert failures amount.
-const FAILS_AMOUNT_PERCENTILE = 95
-const FAILS_AMOUNT_PERCENTILE_MIN_SAMPLES = Math.round(
-  100 / (100 - FAILS_AMOUNT_PERCENTILE),
-)
-
-function calculateFailAmountPercentile(stat: FastStats): number {
-  if (stat.length >= FAILS_AMOUNT_PERCENTILE_MIN_SAMPLES) {
-    return Math.round(stat.percentile(FAILS_AMOUNT_PERCENTILE))
-  } else {
-    return Math.round(stat.amean())
-  }
+function calculateFailAmountPercentile(
+  stat: FastStats,
+  percentile = 75,
+): number {
+  return Math.round(stat.percentile(percentile))
 }
 
 /**
@@ -258,6 +251,15 @@ type AlertRuleValue = {
   $before?: number
 }
 
+type AlertRuleKey = {
+  length?: AlertRuleValue | AlertRuleValue[]
+  sum?: AlertRuleValue | AlertRuleValue[]
+  p95?: AlertRuleValue | AlertRuleValue[]
+  p5?: AlertRuleValue | AlertRuleValue[]
+  min?: AlertRuleValue | AlertRuleValue[]
+  max?: AlertRuleValue | AlertRuleValue[]
+}
+
 const calculateFailAmount = (checkValue: number, ruleValue: number): number => {
   if (ruleValue) {
     return 100 * Math.min(1, Math.abs(checkValue - ruleValue) / ruleValue)
@@ -289,24 +291,20 @@ export class Stats extends events.EventEmitter {
   private scheduler?: Scheduler
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  alertRules: Record<
+  private alertRules: Record<
     string,
     {
       tags: string[]
-      length?: AlertRuleValue | AlertRuleValue[]
-      sum?: AlertRuleValue | AlertRuleValue[]
-      p95?: AlertRuleValue | AlertRuleValue[]
-      p5?: AlertRuleValue | AlertRuleValue[]
-      min?: AlertRuleValue | AlertRuleValue[]
-      max?: AlertRuleValue | AlertRuleValue[]
-    }
+      failPercentile?: number
+    } & AlertRuleKey
   > | null = null
-  alertRulesFilename: string
-  pushStatsUrl: string
-  pushStatsId: string
-  serverSecret: string
+  readonly alertRulesFilename: string
+  private readonly alertRulesFailPercentile: number
+  private readonly pushStatsUrl: string
+  private readonly pushStatsId: string
+  private readonly serverSecret: string
 
-  alertRulesReport = new Map<
+  private readonly alertRulesReport = new Map<
     string,
     Map<
       string,
@@ -322,11 +320,11 @@ export class Stats extends events.EventEmitter {
       }
     >
   >()
-  gateway: promClient.Pushgateway | null = null
+  private gateway: promClient.Pushgateway | null = null
 
   /* metricConfigGauge: promClient.Gauge<string> | null = null */
-  elapsedTimeMetric: promClient.Gauge<string> | null = null
-  metrics: {
+  private elapsedTimeMetric: promClient.Gauge<string> | null = null
+  private metrics: {
     [name: string]: {
       length: promClient.Gauge<string>
       sum: promClient.Gauge<string>
@@ -346,7 +344,7 @@ export class Stats extends events.EventEmitter {
     }
   } = {}
 
-  alertTagsMetrics?: promClient.Gauge<string>
+  private alertTagsMetrics?: promClient.Gauge<string>
 
   collectedStats: Record<string, CollectedStats>
 
@@ -380,6 +378,7 @@ export class Stats extends events.EventEmitter {
     customMetrics,
     alertRules,
     alertRulesFilename,
+    alertRulesFailPercentile,
     pushStatsUrl,
     pushStatsId,
     serverSecret,
@@ -398,6 +397,7 @@ export class Stats extends events.EventEmitter {
     customMetrics: string
     alertRules: string
     alertRulesFilename: string
+    alertRulesFailPercentile: number
     pushStatsUrl: string
     pushStatsId: string
     serverSecret: string
@@ -445,6 +445,7 @@ export class Stats extends events.EventEmitter {
       )
     }
     this.alertRulesFilename = alertRulesFilename
+    this.alertRulesFailPercentile = alertRulesFailPercentile
     this.pushStatsUrl = pushStatsUrl
     this.pushStatsId = pushStatsId
     this.serverSecret = serverSecret
@@ -1209,7 +1210,7 @@ export class Stats extends events.EventEmitter {
       for (const [tag, stat] of alertRulesReportTags.entries()) {
         this.alertTagsMetrics.set(
           { datetime, tag },
-          calculateFailAmountPercentile(stat),
+          calculateFailAmountPercentile(stat, this.alertRulesFailPercentile),
         )
       }
     }
@@ -1270,10 +1271,14 @@ export class Stats extends events.EventEmitter {
       if (!this.collectedStats[key]) {
         continue
       }
+      let failPercentile = this.alertRulesFailPercentile
       const value = formatStats(this.collectedStats[key].all) as StatsData
       // eslint-disable-next-line prefer-const
       for (let [ruleKey, ruleValues] of Object.entries(rule)) {
-        if (ruleKey === 'tags') {
+        if (['tags', 'failPercentile'].includes(ruleKey)) {
+          if (ruleKey === 'failPercentile') {
+            failPercentile = ruleValues as number
+          }
           continue
         }
         if (!Array.isArray(ruleValues)) {
@@ -1341,6 +1346,7 @@ export class Stats extends events.EventEmitter {
             failAmount,
             now,
             ruleElapsedSeconds,
+            failPercentile,
           )
         }
       }
@@ -1358,10 +1364,13 @@ export class Stats extends events.EventEmitter {
     failAmount: number,
     now: number,
     elapsedSeconds: number,
+    failPercentile: number,
   ): void {
-    log.debug(
-      `updateRulesReport ${key}.${ruleDesc} failed: ${failed} failAmount: ${failAmount} elapsedSeconds: ${elapsedSeconds}`,
-    )
+    if (failed) {
+      log.debug(
+        `updateRulesReport ${key}.${ruleDesc} failed: ${failed} checkValue: ${checkValue} failAmount: ${failAmount} elapsedSeconds: ${elapsedSeconds}`,
+      )
+    }
     let report = this.alertRulesReport.get(key)
     if (!report) {
       report = new Map()
@@ -1374,7 +1383,7 @@ export class Stats extends events.EventEmitter {
         totalFailsTime: 0,
         totalFailsPerc: 0,
         lastFailed: 0,
-        valueStats: new FastStats({ store_data: false }),
+        valueStats: new FastStats(),
         valueAverage: 0,
         failAmountStats: new FastStats(),
         failAmountPercentile: 0,
@@ -1398,6 +1407,7 @@ export class Stats extends events.EventEmitter {
     reportValue.failAmountStats.push(failAmount)
     reportValue.failAmountPercentile = calculateFailAmountPercentile(
       reportValue.failAmountStats,
+      failPercentile,
     )
   }
 
@@ -1453,6 +1463,7 @@ export class Stats extends events.EventEmitter {
             totalFailsPerc: number
             failAmount: number
             count: number
+            // failAmountStats: number[]
           }
         >,
       }
@@ -1474,12 +1485,17 @@ export class Stats extends events.EventEmitter {
               totalFailsPerc,
               failAmount: failAmountPercentile,
               count: failAmountStats.length,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              // failAmountStats: (failAmountStats as any).data as number[],
             }
           }
         }
       }
       for (const [tag, stat] of alertRulesReportTags.entries()) {
-        out.tags[tag] = calculateFailAmountPercentile(stat)
+        out.tags[tag] = calculateFailAmountPercentile(
+          stat,
+          this.alertRulesFailPercentile,
+        )
       }
       return JSON.stringify(out, null, 2)
     }
@@ -1568,7 +1584,10 @@ export class Stats extends events.EventEmitter {
       )
     }
     for (const [tag, stat] of alertRulesReportTags.entries()) {
-      const failPerc = calculateFailAmountPercentile(stat)
+      const failPerc = calculateFailAmountPercentile(
+        stat,
+        this.alertRulesFailPercentile,
+      )
       if (ext) {
         // eslint-disable-next-line
         out += sprintf(`| %(tag)-${colSize}s | %(failPerc)-15s |\n`, {
