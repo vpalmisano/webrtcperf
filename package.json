@@ -67,7 +67,7 @@
     "pidusage": "^3.0.2",
     "prom-client": "^14.1.1",
     "puppeteer": "^19.7.0",
-    "puppeteer-core": "^19.7.0",
+    "puppeteer-core": "^19.7.1",
     "puppeteer-extra": "^3.3.4",
     "puppeteer-extra-plugin-stealth": "^2.11.1",
     "sprintf-js": "^1.1.2",
