@@ -241,7 +241,58 @@ const promCreateGauge = (
   })
 }
 
-type AlertRuleValue = {
+/**
+ * The alert rule description.
+ *
+ * Example:
+ * ```
+ cpu:
+    tags:
+    - performance
+    failPercentile: 90
+    p95:
+      $gt: 10
+      $lt: 100
+      $after: 60
+ * ```
+ * It will check if the `cpu` 95th percentile is lower than 100% and greater than 10%,
+ * starting the check after 60s from the test start. The alert results will be
+ * grouped into the `performance` category.
+ */
+export type AlertRule = AlertRuleOption & AlertRuleKey
+
+/**
+ * The alert rule options.
+ */
+export type AlertRuleOption = {
+  /** The alert results will be grouped into the specified categories.  */
+  tags: string[]
+  /** The alert will pass when at least `failPercentile` of the checks (95 by default) are successful. */
+  failPercentile?: number
+}
+
+/**
+ * The supported alert rule checks.
+ */
+export type AlertRuleKey = {
+  /** The total collected samples. */
+  length?: AlertRuleValue | AlertRuleValue[]
+  /** The sum of the collected samples. */
+  sum?: AlertRuleValue | AlertRuleValue[]
+  /** The 95th percentile of the collected samples. */
+  p95?: AlertRuleValue | AlertRuleValue[]
+  /** The 5th percentile of the collected samples. */
+  p5?: AlertRuleValue | AlertRuleValue[]
+  /** The minimum of the collected samples. */
+  min?: AlertRuleValue | AlertRuleValue[]
+  /** The maximum of the collected samples. */
+  max?: AlertRuleValue | AlertRuleValue[]
+}
+
+/**
+ * The alert check operators.
+ */
+export type AlertRuleValue = {
   $eq?: number
   $gt?: number
   $lt?: number
@@ -249,15 +300,6 @@ type AlertRuleValue = {
   $lte?: number
   $after?: number
   $before?: number
-}
-
-type AlertRuleKey = {
-  length?: AlertRuleValue | AlertRuleValue[]
-  sum?: AlertRuleValue | AlertRuleValue[]
-  p95?: AlertRuleValue | AlertRuleValue[]
-  p5?: AlertRuleValue | AlertRuleValue[]
-  min?: AlertRuleValue | AlertRuleValue[]
-  max?: AlertRuleValue | AlertRuleValue[]
 }
 
 const calculateFailAmount = (checkValue: number, ruleValue: number): number => {
@@ -291,13 +333,7 @@ export class Stats extends events.EventEmitter {
   private scheduler?: Scheduler
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private alertRules: Record<
-    string,
-    {
-      tags: string[]
-      failPercentile?: number
-    } & AlertRuleKey
-  > | null = null
+  private alertRules: Record<string, AlertRule> | null = null
   readonly alertRulesFilename: string
   private readonly alertRulesFailPercentile: number
   private readonly pushStatsUrl: string
