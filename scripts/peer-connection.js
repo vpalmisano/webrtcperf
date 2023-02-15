@@ -1,4 +1,6 @@
-/* global log, PeerConnections, timestampInsertableStreams, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint */
+
+const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
