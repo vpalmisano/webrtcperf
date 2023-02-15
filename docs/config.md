@@ -445,6 +445,13 @@ The alert rules report output filename.
 
 *Default*: `""`
 
+## alertRulesFailPercentile
+The alert rules report fails percentile (0-100). With the default value the alert will be successful only when at least 95% of the checks pass.
+
+*Type*: `positive int`
+
+*Default*: `95`
+
 ## pushStatsUrl
 The URL to push the collected stats.
 

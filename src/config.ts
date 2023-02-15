@@ -544,7 +544,8 @@ service (example: "http://127.0.0.1:9091").`,
     arg: 'alert-rules-filename',
   },
   alertRulesFailPercentile: {
-    doc: `The alert rules report fails percentile (0-100).`,
+    doc: `The alert rules report fails percentile (0-100). With the default value the \
+alert will be successful only when at least 95% of the checks pass.`,
     format: 'nat',
     nullable: false,
     default: 95,
