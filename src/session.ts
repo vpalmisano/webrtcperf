@@ -1413,6 +1413,8 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     }
 
     this.emit('stop', this.id)
+    this.jsonFetchCache.close()
+    this.jsonFetchCache.flushAll()
   }
 
   /**
