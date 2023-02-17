@@ -19,6 +19,8 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <title
+     id="title852">webrtcperf</title>
   <defs
      id="defs12">
     <linearGradient
@@ -54,13 +56,13 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1840"
-     inkscape:window-height="1139"
+     inkscape:window-width="3360"
+     inkscape:window-height="1379"
      id="namedview10"
      showgrid="false"
-     inkscape:zoom="5.12"
-     inkscape:cx="29.6875"
-     inkscape:cy="48.339844"
+     inkscape:zoom="5.1505487"
+     inkscape:cx="63.488381"
+     inkscape:cy="49.994673"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -75,6 +77,12 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>webrtcperf</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Vittorio Palmisano</dc:title>
+          </cc:Agent>
+        </dc:creator>
       </cc:Work>
     </rdf:RDF>
   </metadata>
