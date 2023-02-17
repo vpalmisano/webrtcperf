@@ -5,6 +5,7 @@ import EventEmitter from 'events'
 import fs from 'fs'
 import JSON5 from 'json5'
 import { LoremIpsum } from 'lorem-ipsum'
+import NodeCache from 'node-cache'
 import os from 'os'
 import path from 'path'
 import * as vanillaPuppeteer from 'puppeteer'
@@ -257,6 +258,11 @@ export class Session extends EventEmitter {
   pageWarnings = 0
   /** The page errors count. */
   pageErrors = 0
+
+  private readonly jsonFetchCache = new NodeCache({
+    stdTTL: 30,
+    checkperiod: 15,
+  })
 
   constructor({
     chromiumUrl,
@@ -863,8 +869,21 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
 
     await page.exposeFunction(
       'jsonFetch',
-      async (options: axios.AxiosRequestConfig) => {
+      async (
+        options: axios.AxiosRequestConfig,
+        cacheKey = '',
+        cacheTimeout = 0,
+      ) => {
+        if (cacheKey) {
+          const ret = this.jsonFetchCache.get(cacheKey)
+          if (ret) {
+            return ret
+          }
+        }
         const { status, data } = await axios(options)
+        if (cacheKey) {
+          this.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
+        }
         return { status, data }
       },
     )
