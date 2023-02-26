@@ -1,3 +1,6 @@
+import { EventEmitter } from 'node:events'
+
+import assert from 'assert'
 import axios from 'axios'
 import { exec, spawn } from 'child_process'
 import { createHash } from 'crypto'
@@ -461,7 +464,7 @@ const runExitHandlers = async (signal: string): Promise<void> => {
 let runExitHandlersPromise: Promise<void> | null = null
 
 const SIGNALS = [
-  'beforeExit',
+  'exit',
   'uncaughtException',
   'unhandledRejection',
   'SIGHUP',
@@ -727,29 +730,109 @@ export class Scheduler {
   }
 }
 
-//
-export class PeerConnectionExternal {
-  public id: number
-  private process
-  private static cache = new Map<number, PeerConnectionExternal>()
+export class Future<T> {
+  promise: Promise<T>
+  _resolve?: (value: T) => void
+  _reject?: (reason?: unknown) => void
 
+  constructor() {
+    this.promise = new Promise((resolve, reject) => {
+      this._resolve = resolve
+      this._reject = reject
+    })
+  }
+
+  resolve(value: T): void {
+    if (this._resolve) {
+      this._resolve(value)
+      this._resolve = undefined
+    }
+  }
+
+  reject(reason?: unknown): void {
+    if (this._reject) {
+      this._reject(reason)
+      this._reject = undefined
+    }
+  }
+}
+
+//
+export class PeerConnectionExternal extends EventEmitter {
+  public readonly id: number
+  public connectionState = 'closed'
+  private readonly process
+  private static cache = new Map<number, PeerConnectionExternal>()
+  private commandId = 0
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(options?: any) {
-    this.process = spawn('sleep', ['600'])
-    this.id = this.process.pid || -1
-    log.debug(`PeerConnectionExternal contructor: ${this.id}`, options)
+  private commands = new Map<number, Future<any>>()
+  private stdoutBuf = ''
+
+  constructor(id: number, options: string) {
+    super()
+    log.debug(`PeerConnectionExternal-${id} constructor`, options)
+    this.id = id
     PeerConnectionExternal.cache.set(this.id, this)
 
+    const dirPath =
+      '__nexe' in process ? '.' : path.resolve(path.dirname(__filename), '..')
+    const execPath = path.join(
+      dirPath,
+      'peer-connection-external/peer-connection-external',
+    )
+    log.debug(`starting ${execPath} ${options}`)
+    this.process = spawn(execPath, [options])
+    assert(this.process.pid, 'PeerConnectionExternal spawn failed')
+
     this.process.stdout.on('data', data => {
-      log.debug(`PeerConnectionExternal stdout: ${data}`)
+      //log.debug(`PeerConnectionExternal-${this.id} stdout: "${data}"`)
+      this.stdoutBuf += String(data)
+      while (this.stdoutBuf.length) {
+        const index = this.stdoutBuf.indexOf('\n')
+        if (index === -1) {
+          break
+        }
+        const line = this.stdoutBuf.slice(0, index)
+        this.stdoutBuf = this.stdoutBuf.slice(index + 1)
+
+        const [sid, name, value] = line.split('|', 3)
+        log.debug(
+          `PeerConnectionExternal-${this.id} > [${sid}] ${name}: "${value}"`,
+        )
+        if (sid === 'e') {
+          if (name === 'connectionstatechange') {
+            this.connectionState = value
+          }
+          this.emit('event', {
+            name,
+            value,
+          })
+        } else {
+          const id = parseInt(sid)
+          const command = this.commands.get(id)
+          if (command) {
+            this.commands.delete(id)
+            command.resolve(value)
+          }
+        }
+      }
     })
 
     this.process.stderr.on('data', data => {
-      log.debug(`PeerConnectionExternal stderr: ${data}`)
+      log.debug(`PeerConnectionExternal-${this.id} [stderr] "${data}"`)
     })
 
     this.process.on('close', code => {
-      log.debug(`PeerConnectionExternal process exited with code ${code}`)
+      log.debug(
+        `PeerConnectionExternal-${this.id} process exited with code ${code}`,
+      )
+      PeerConnectionExternal.cache.delete(this.id)
+      this.connectionState = 'closed'
+      this.emit('event', {
+        name: 'connectionstatechange',
+        value: this.connectionState,
+      })
+      this.stdoutBuf = ''
       PeerConnectionExternal.cache.delete(this.id)
     })
   }
@@ -758,22 +841,28 @@ export class PeerConnectionExternal {
     return PeerConnectionExternal.cache.get(id)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async createOffer(options: any) {
-    log.debug(`PeerConnectionExternal createOffer`, { options })
-    return {}
+  static stopAll(): void {
+    log.debug(
+      `PeerConnectionExternal stopAll (${PeerConnectionExternal.cache.size})`,
+    )
+    PeerConnectionExternal.cache.forEach(p => {
+      p.process.kill('SIGINT')
+    })
+    PeerConnectionExternal.cache.clear()
   }
 
-  setLocalDescription(description: string) {
-    log.debug(`PeerConnectionExternal setLocalDescription`, description)
-  }
-
-  setRemoteDescription(description: string) {
-    log.debug(`PeerConnectionExternal setRemoteDescription`, description)
+  sendCommand(name: string, value = ''): Promise<any> {
+    const id = this.commandId
+    log.debug(`PeerConnectionExternal-${this.id} < [${id}] ${name}: "${value}"`)
+    this.commandId++
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = new Future<any>()
+    this.commands.set(id, p)
+    this.process.stdin.write(`${id}|${name}|${value}\n`)
+    return p.promise
   }
 }
 
-export type PeerConnectionExternalMethod =
-  | 'createOffer'
-  | 'setLocalDescription'
-  | 'setRemoteDescription'
+registerExitHandler(async () => {
+  PeerConnectionExternal.stopAll()
+})

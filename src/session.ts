@@ -57,7 +57,6 @@ import {
   logger,
   md5,
   PeerConnectionExternal,
-  PeerConnectionExternalMethod,
   resolveIP,
   sleep,
 } from './utils'
@@ -892,8 +891,21 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     await page.exposeFunction(
       'createPeerConnectionExternal',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (options: any) => {
-        const pc = new PeerConnectionExternal(options)
+      (id: number, options: string) => {
+        const pc = new PeerConnectionExternal(id, options)
+        pc.on('event', async ({ name, value }) => {
+          await page.evaluate(
+            ({ id, name, value }) => {
+              window.dispatchEvent(
+                new CustomEvent(`peer-connection-${id}-event-${name}`, {
+                  bubbles: true,
+                  detail: value,
+                }),
+              )
+            },
+            { id, name, value },
+          )
+        })
         return { id: pc.id }
       },
     )
@@ -901,10 +913,14 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     await page.exposeFunction(
       'callPeerConnectionExternalMethod',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (id: number, name: PeerConnectionExternalMethod, arg: any) => {
+      async (id: number, name: string, args: string) => {
         const pc = PeerConnectionExternal.get(id)
         if (pc) {
-          return pc[name](arg)
+          return pc.sendCommand(name, args)
+        } else {
+          log.warn(
+            `callPeerConnectionExternalMethod ${name}: id=${id} not found`,
+          )
         }
       },
     )
