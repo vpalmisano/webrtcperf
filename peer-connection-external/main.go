@@ -3,12 +3,12 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -19,10 +19,8 @@ func readStdin(channel chan string) {
 		for {
 			var err error
 			in, err = r.ReadString('\n')
-			if err != io.EOF {
-				if err != nil {
-					panic(err)
-				}
+			if err != nil {
+				os.Exit(0)
 			}
 			in = strings.TrimSpace(in)
 			if len(in) > 0 {
@@ -33,9 +31,15 @@ func readStdin(channel chan string) {
 	}
 }
 
-func onError(id string, msg string, err error) {
-	println(fmt.Sprintf("[peer-connection-external] [%s] %s error: %s", id, msg, err))
-	fmt.Printf("e|error|%s", err.Error())
+func onResult(id string, command string, value string) {
+	println(fmt.Sprintf("[peer-connection-external] [%s] %s", id, command))
+	//println(fmt.Sprintf("[peer-connection-external] [%s] %s result: '%s'", id, command, value))
+	fmt.Printf("r%s|%s|%s\n", id, command, value)
+}
+
+func onError(id string, command string, err error) {
+	println(fmt.Sprintf("[peer-connection-external] [%s] %s error: %s", id, command, err))
+	fmt.Printf("e%s|%s|%s\n", id, command, err.Error())
 }
 
 func main() {
@@ -44,52 +48,53 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	peerConnection, err := webrtc.NewPeerConnection(config)
 	if err != nil {
 		panic(err)
 	}
 
 	peerConnection.OnConnectionStateChange(func(state webrtc.PeerConnectionState) {
-		fmt.Println("e|connectionstatechange|" + state.String())
+		onResult("ev", "connectionstatechange", state.String())
 	})
 
 	peerConnection.OnICEConnectionStateChange(func(state webrtc.ICEConnectionState) {
-		fmt.Println("e|iceconnectionstatechange|" + state.String())
+		onResult("ev", "iceconnectionstatechange", state.String())
 	})
 
 	peerConnection.OnICEGatheringStateChange(func(state webrtc.ICEGathererState) {
-		fmt.Println("e|icegatheringstatechange|" + state.String())
+		onResult("ev", "icegatheringstatechange", state.String())
 	})
 
 	peerConnection.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		buf := make([]byte, 1400)
+		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
+		go func() {
+			ticker := time.NewTicker(time.Second * 5)
+			for range ticker.C {
+				rtcpSendErr := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())}})
+				if rtcpSendErr != nil {
+					fmt.Println(rtcpSendErr)
+				}
+			}
+		}()
+
+		codecName := strings.Split(track.Codec().RTPCodecCapability.MimeType, "/")[1]
+		println(fmt.Sprintf("[peer-connection-external] OnTrack type %d: %s", track.PayloadType(), codecName))
+
+		/* buf := make([]byte, 1400)
 		for {
 			i, _, readErr := track.Read(buf)
 			if readErr != nil {
 				panic(err)
 			}
 			println("[peer-connection-external] OnTrack data", i)
-		}
+		} */
 	})
-
-	/* gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
-	go func() {
-		<-gatherComplete
-
-		b, err := json.Marshal(*peerConnection.LocalDescription())
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("e||" + string(b))
-	} */
 
 	//
 	channel := make(chan string)
 	go readStdin(channel)
 
-	for {
-		msg := <-channel
+	for msg := range channel {
 		commands := strings.SplitN(msg, "|", 3)
 		id := commands[0]
 		command := commands[1]
@@ -99,7 +104,7 @@ func main() {
 
 		switch {
 		case command == "close":
-			fmt.Println(id + "|" + command)
+			onResult(id, command, "")
 			return
 
 		case command == "addTransceiver":
@@ -110,33 +115,12 @@ func main() {
 				continue
 			}
 			trackOrKind := args["trackOrKind"].(string)
-			if trackOrKind == "audio" {
-				audioTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: "audio/opus"}, "audio", "a1")
-				if err != nil {
-					onError(id, command, err)
-					continue
-				}
-				_, err = peerConnection.AddTrack(audioTrack)
-				if err != nil {
-					onError(id, command, err)
-					continue
-				}
-				fmt.Println(id + "|" + command)
-			} else if trackOrKind == "video" {
-				videoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: "video/vp8"}, "video", "v1")
-				if err != nil {
-					onError(id, command, err)
-					continue
-				}
-				_, err = peerConnection.AddTrack(videoTrack)
-				if err != nil {
-					onError(id, command, err)
-					continue
-				}
-				fmt.Println(id + "|" + command)
-			} else {
-				onError(id, command, errors.New("InvalidTrackOrKind"))
+			_, err := peerConnection.AddTransceiverFromKind(webrtc.NewRTPCodecType(trackOrKind))
+			if err != nil {
+				onError(id, command, err)
+				continue
 			}
+			onResult(id, command, "")
 
 		case command == "createOffer":
 			offer, err := peerConnection.CreateOffer(nil)
@@ -154,7 +138,7 @@ func main() {
 				onError(id, command, err)
 				continue
 			}
-			fmt.Println(id + "|" + command + "|" + string(b))
+			onResult(id, command, string(b))
 
 		case command == "createAnswer":
 			answer, err := peerConnection.CreateAnswer(nil)
@@ -174,20 +158,20 @@ func main() {
 				onError(id, command, err)
 				continue
 			}
-			fmt.Println(id + "|" + command + "|" + string(b))
+			onResult(id, command, string(b))
 
-		case command == "setLocalDescription":
-			offer := webrtc.SessionDescription{}
-			err = json.Unmarshal([]byte(value), &offer)
-			if err != nil {
-				onError(id, command, err)
-				continue
-			}
-			/* if err = peerConnection.SetLocalDescription(offer); err != nil {
-				onError(id, command, err)
-				continue
-			} */
-			fmt.Println(id + "|" + command)
+		/* case command == "setLocalDescription":
+		offer := webrtc.SessionDescription{}
+		err = json.Unmarshal([]byte(value), &offer)
+		if err != nil {
+			onError(id, command, err)
+			continue
+		}
+		if err = peerConnection.SetLocalDescription(offer); err != nil {
+			onError(id, command, err)
+			continue
+		}
+		fmt.Println(id + "|" + command) */
 
 		case command == "setRemoteDescription":
 			answer := webrtc.SessionDescription{}
@@ -201,111 +185,12 @@ func main() {
 				onError(id, command, err)
 				continue
 			}
-			fmt.Println(id + "|" + command)
-		}
-	}
-}
-
-func test() {
-	config := webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
-			},
-		},
-	}
-	peerConnection, err := webrtc.NewPeerConnection(config)
-	if err != nil {
-		panic(err)
-	}
-
-	peerConnection.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
-		buf := make([]byte, 1400)
-		for {
-			i, _, readErr := track.Read(buf)
-			if readErr != nil {
-				panic(err)
+			b, err := json.Marshal(*peerConnection.RemoteDescription())
+			if err != nil {
+				onError(id, command, err)
+				continue
 			}
-			fmt.Printf("Read %d", i)
+			onResult(id, command, string(b))
 		}
-	})
-
-	// Set the handler for ICE connection state
-	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		fmt.Printf("[connectionstatechange]%s\n", connectionState.String())
-	})
-
-	// Create a audio track
-	audioTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: "audio/opus"}, "audio", "a1")
-	if err != nil {
-		panic(err)
 	}
-	_, err = peerConnection.AddTrack(audioTrack)
-	if err != nil {
-		panic(err)
-	}
-
-	// Create a video track
-	firstVideoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: "video/vp8"}, "video", "v1")
-	if err != nil {
-		panic(err)
-	}
-	_, err = peerConnection.AddTrack(firstVideoTrack)
-	if err != nil {
-		panic(err)
-	}
-
-	// Create an offer
-	offer, err := peerConnection.CreateOffer(nil)
-	if err != nil {
-		panic(err)
-	}
-
-	// Sets the LocalDescription, and starts our UDP listeners
-	// Note: this will start the gathering of ICE candidates
-	if err = peerConnection.SetLocalDescription(offer); err != nil {
-		panic(err)
-	}
-
-	fmt.Println(offer)
-
-	/*
-		// Wait for the offer to be pasted
-		offer := webrtc.SessionDescription{}
-		err = json.Unmarshal([]byte(signal.MustReadStdin()), &offer)
-		if err != nil {
-			panic(err)
-		}
-
-		// Set the remote SessionDescription
-		err = peerConnection.SetRemoteDescription(offer)
-		if err != nil {
-			panic(err)
-		}
-
-		// Create an answer
-		answer, err := peerConnection.CreateAnswer(nil)
-		if err != nil {
-			panic(err)
-		}
-
-		// Create channel that is blocked until ICE Gathering is complete
-		gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
-
-		// Sets the LocalDescription, and starts our UDP listeners
-		err = peerConnection.SetLocalDescription(answer)
-		if err != nil {
-			panic(err)
-		}
-
-		// Block until ICE Gathering is complete, disabling trickle ICE
-		// we do this because we only can exchange one signaling message
-		// in a production application you should exchange ICE Candidates via OnICECandidate
-		<-gatherComplete
-
-		// Output the answer in base64 so we can paste it in browser
-		fmt.Println(signal.Encode(*peerConnection.LocalDescription())) */
-
-	// Block forever
-	select {}
 }

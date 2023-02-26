@@ -760,7 +760,6 @@ export class Future<T> {
 //
 export class PeerConnectionExternal extends EventEmitter {
   public readonly id: number
-  public connectionState = 'closed'
   private readonly process
   private static cache = new Map<number, PeerConnectionExternal>()
   private commandId = 0
@@ -785,7 +784,8 @@ export class PeerConnectionExternal extends EventEmitter {
     assert(this.process.pid, 'PeerConnectionExternal spawn failed')
 
     this.process.stdout.on('data', data => {
-      //log.debug(`PeerConnectionExternal-${this.id} stdout: "${data}"`)
+      log.debug(`PeerConnectionExternal-${this.id} [stdout] "${data}"`)
+
       this.stdoutBuf += String(data)
       while (this.stdoutBuf.length) {
         const index = this.stdoutBuf.indexOf('\n')
@@ -796,23 +796,27 @@ export class PeerConnectionExternal extends EventEmitter {
         this.stdoutBuf = this.stdoutBuf.slice(index + 1)
 
         const [sid, name, value] = line.split('|', 3)
-        log.debug(
+        /* log.debug(
           `PeerConnectionExternal-${this.id} > [${sid}] ${name}: "${value}"`,
-        )
-        if (sid === 'e') {
-          if (name === 'connectionstatechange') {
-            this.connectionState = value
-          }
+        ) */
+        if (sid.startsWith('rev')) {
           this.emit('event', {
             name,
             value,
           })
-        } else {
-          const id = parseInt(sid)
+        } else if (sid.startsWith('r')) {
+          const id = parseInt(sid.slice(1))
           const command = this.commands.get(id)
           if (command) {
             this.commands.delete(id)
             command.resolve(value)
+          }
+        } else if (sid.startsWith('e')) {
+          const id = parseInt(sid.slice(1))
+          const command = this.commands.get(id)
+          if (command) {
+            this.commands.delete(id)
+            command.reject(new Error(value))
           }
         }
       }
@@ -827,10 +831,9 @@ export class PeerConnectionExternal extends EventEmitter {
         `PeerConnectionExternal-${this.id} process exited with code ${code}`,
       )
       PeerConnectionExternal.cache.delete(this.id)
-      this.connectionState = 'closed'
       this.emit('event', {
         name: 'connectionstatechange',
-        value: this.connectionState,
+        value: 'closed',
       })
       this.stdoutBuf = ''
       PeerConnectionExternal.cache.delete(this.id)
