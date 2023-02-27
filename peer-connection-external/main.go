@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/pion/rtcp"
+	"github.com/pion/interceptor"
 	"github.com/pion/webrtc/v3"
 )
 
@@ -43,12 +42,24 @@ func onError(id string, command string, err error) {
 }
 
 func main() {
+	m := &webrtc.MediaEngine{}
+	if err := m.RegisterDefaultCodecs(); err != nil {
+		panic(err)
+	}
+	i := &interceptor.Registry{}
+	if err := webrtc.RegisterDefaultInterceptors(m, i); err != nil {
+		panic(err)
+	}
+	settingEngine := webrtc.SettingEngine{}
+	settingEngine.SetLite(true)
+	api := webrtc.NewAPI(webrtc.WithMediaEngine(m), webrtc.WithInterceptorRegistry(i), webrtc.WithSettingEngine(settingEngine))
+
 	config := webrtc.Configuration{}
 	err := json.Unmarshal([]byte(os.Args[1]), &config)
 	if err != nil {
 		panic(err)
 	}
-	peerConnection, err := webrtc.NewPeerConnection(config)
+	peerConnection, err := api.NewPeerConnection(config)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +78,7 @@ func main() {
 
 	peerConnection.OnTrack(func(track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 		// Send a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
-		go func() {
+		/* go func() {
 			ticker := time.NewTicker(time.Second * 5)
 			for range ticker.C {
 				rtcpSendErr := peerConnection.WriteRTCP([]rtcp.Packet{&rtcp.PictureLossIndication{MediaSSRC: uint32(track.SSRC())}})
@@ -75,19 +86,19 @@ func main() {
 					fmt.Println(rtcpSendErr)
 				}
 			}
-		}()
+		}() */
 
 		codecName := strings.Split(track.Codec().RTPCodecCapability.MimeType, "/")[1]
 		println(fmt.Sprintf("[peer-connection-external] OnTrack type %d: %s", track.PayloadType(), codecName))
 
-		/* buf := make([]byte, 1400)
+		buf := make([]byte, 1400)
 		for {
 			i, _, readErr := track.Read(buf)
 			if readErr != nil {
 				panic(err)
 			}
 			println("[peer-connection-external] OnTrack data", i)
-		} */
+		}
 	})
 
 	//
@@ -171,7 +182,12 @@ func main() {
 			onError(id, command, err)
 			continue
 		}
-		fmt.Println(id + "|" + command) */
+		b, err := json.Marshal(*peerConnection.LocalDescription())
+		if err != nil {
+			onError(id, command, err)
+			continue
+		}
+		onResult(id, command, string(b)) */
 
 		case command == "setRemoteDescription":
 			answer := webrtc.SessionDescription{}

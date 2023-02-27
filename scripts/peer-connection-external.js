@@ -1,5 +1,26 @@
 /* global log, PeerConnections */
 
+const FakeAudioMediaStreamTrack = () => {
+  const ctx = new AudioContext()
+  const oscillator = ctx.createOscillator()
+  const dst = oscillator.connect(ctx.createMediaStreamDestination())
+  oscillator.start()
+  return Object.assign(dst.stream.getAudioTracks()[0], { enabled: false })
+}
+
+const FakeVideoMediaStreamTrack = ({ width = 640, height = 480 } = {}) => {
+  const canvas = Object.assign(document.createElement('canvas'), {
+    width,
+    height,
+  })
+  canvas.getContext('2d').fillRect(0, 0, width, height)
+  const stream = canvas.captureStream()
+  return Object.assign(stream.getVideoTracks()[0], { enabled: false })
+}
+
+const fakeAudioTrack = FakeAudioMediaStreamTrack()
+const fakeVideoTrack = FakeVideoMediaStreamTrack()
+
 window.RTCPeerConnection = class {
   #pendingTasks = []
 
@@ -7,6 +28,7 @@ window.RTCPeerConnection = class {
   iceConnectionState = 'new'
   localDescription = null
   remoteDescription = null
+  transceivers = []
 
   constructor(options) {
     log(`RTCPeerConnection`, options)
@@ -25,14 +47,6 @@ window.RTCPeerConnection = class {
       log(`RTCPeerConnection connectionstatechange`, connectionState)
       this.connectionState = connectionState
       if (connectionState === 'closed') {
-        PeerConnections.delete(this.id)
-      }
-    })
-
-    this.addEventListener('iceconnectionstatechange', iceConnectionState => {
-      log(`RTCPeerConnection iceconnectionstatechange`, iceConnectionState)
-      this.iceConnectionState = iceConnectionState
-      if (iceConnectionState === 'closed') {
         PeerConnections.delete(this.id)
       }
     })
@@ -58,10 +72,11 @@ window.RTCPeerConnection = class {
     }
   }
 
-  async close() {
+  close() {
     log(`RTCPeerConnection-${this.id} close`)
-    await this.waitPendingTasks()
-    await window.callPeerConnectionExternalMethod(this.id, 'close')
+    this.waitPendingTasks().then(
+      window.callPeerConnectionExternalMethod(this.id, 'close'),
+    )
   }
 
   addEventListener(name, cb) {
@@ -93,8 +108,8 @@ window.RTCPeerConnection = class {
   }
 
   getTransceivers() {
-    log(`RTCPeerConnection-${this.id} getTransceivers`)
-    return []
+    log(`RTCPeerConnection-${this.id} getTransceivers`, this.transceivers)
+    return this.transceivers
   }
 
   async createOffer(options) {
@@ -122,6 +137,31 @@ window.RTCPeerConnection = class {
       ),
     )
     this.localDescription = JSON.parse(ret)
+
+    const sections = []
+    for (const line of this.localDescription.sdp.split('\r\n')) {
+      if (line.startsWith('m=')) {
+        const kind = line.replace('m=', '').split(' ')[0]
+        sections.push({ kind })
+      } else if (line.startsWith('a=mid:')) {
+        const mid = line.replace('a=mid:', '')
+        sections[sections.length - 1].mid = mid
+      }
+    }
+    sections.forEach(({ mid, kind }) => {
+      if (this.transceivers.findIndex(t => t.mid === mid) === -1) {
+        this.transceivers.push({
+          mid,
+          receiver: {
+            track: kind === 'audio' ? fakeAudioTrack : fakeVideoTrack,
+            getStats: () => {
+              return []
+            },
+          },
+        })
+      }
+    })
+
     return this.localDescription
   }
 
@@ -131,14 +171,15 @@ window.RTCPeerConnection = class {
       JSON.stringify(description),
     )
     await this.waitPendingTasks()
-    /*
-    await this.addTask(
+    /* const ret = await this.addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'setLocalDescription',
         JSON.stringify(description),
       ),
-    ) */
+    )
+    this.localDescription = JSON.parse(ret)
+    return this.localDescription */
   }
 
   async setRemoteDescription(description) {
@@ -170,6 +211,6 @@ window.RTCPeerConnection = class {
 
   async getStats() {
     log(`RTCPeerConnection-${this.id} getStats`)
-    return {}
+    return []
   }
 }
