@@ -137,31 +137,6 @@ window.RTCPeerConnection = class {
       ),
     )
     this.localDescription = JSON.parse(ret)
-
-    const sections = []
-    for (const line of this.localDescription.sdp.split('\r\n')) {
-      if (line.startsWith('m=')) {
-        const kind = line.replace('m=', '').split(' ')[0]
-        sections.push({ kind })
-      } else if (line.startsWith('a=mid:')) {
-        const mid = line.replace('a=mid:', '')
-        sections[sections.length - 1].mid = mid
-      }
-    }
-    sections.forEach(({ mid, kind }) => {
-      if (this.transceivers.findIndex(t => t.mid === mid) === -1) {
-        this.transceivers.push({
-          mid,
-          receiver: {
-            track: kind === 'audio' ? fakeAudioTrack : fakeVideoTrack,
-            getStats: () => {
-              return []
-            },
-          },
-        })
-      }
-    })
-
     return this.localDescription
   }
 
@@ -196,6 +171,31 @@ window.RTCPeerConnection = class {
       ),
     )
     this.remoteDescription = JSON.parse(ret)
+
+    // Add fake transceivers.
+    const sections = []
+    for (const line of this.remoteDescription.sdp.split('\r\n')) {
+      if (line.startsWith('m=')) {
+        const kind = line.replace('m=', '').split(' ')[0]
+        sections.push({ kind })
+      } else if (line.startsWith('a=mid:')) {
+        const mid = line.replace('a=mid:', '')
+        sections[sections.length - 1].mid = mid
+      }
+    }
+    sections.forEach(({ mid, kind }) => {
+      if (this.transceivers.findIndex(t => t.mid === mid) === -1) {
+        this.transceivers.push({
+          mid,
+          receiver: {
+            track: kind === 'audio' ? fakeAudioTrack : fakeVideoTrack,
+            getStats: () => {
+              return []
+            },
+          },
+        })
+      }
+    })
   }
 
   async addStream(mediaStream) {
