@@ -870,7 +870,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     await page.exposeFunction(
       'jsonFetch',
       async (
-        options: axios.AxiosRequestConfig,
+        options: axios.AxiosRequestConfig & { downloadPath: string },
         cacheKey = '',
         cacheTimeout = 0,
       ) => {
@@ -880,11 +880,36 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
             return ret
           }
         }
-        const { status, data } = await axios(options)
-        if (cacheKey) {
-          this.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
+        try {
+          const { status, data, headers } = await axios(options)
+          if (cacheKey) {
+            this.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
+          }
+          if (options.responseType === 'stream') {
+            if (options.downloadPath) {
+              log.debug(
+                `jsonFetch saving file to: ${options.downloadPath}`,
+                headers['content-disposition'],
+              )
+              await fs.promises.mkdir(path.dirname(options.downloadPath), {
+                recursive: true,
+              })
+              const writer = fs.createWriteStream(options.downloadPath)
+              await new Promise<void>((resolve, reject) => {
+                writer.on('error', err => reject(err))
+                writer.on('close', () => resolve())
+                data.pipe(writer)
+              })
+            }
+            return { status }
+          } else {
+            return { status, data }
+          }
+        } catch (err) {
+          const error = (err as Error).message
+          log.warn(`jsonFetch error: ${error}`)
+          return { status: 500, error }
         }
-        return { status, data }
       },
     )
 
