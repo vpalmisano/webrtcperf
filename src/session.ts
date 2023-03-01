@@ -898,6 +898,9 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
                 data.pipe(writer)
               })
             }
+            if (cacheKey) {
+              Session.jsonFetchCache.set(cacheKey, { status }, cacheTimeout)
+            }
             return { status }
           } else {
             if (cacheKey) {
