@@ -1,5 +1,5 @@
 diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
-index 9cc78c7241..0b4fa9bd6c 100644
+index 9cc78c7241..f6bbf6ef8f 100644
 --- a/video/video_receive_stream2.cc
 +++ b/video/video_receive_stream2.cc
 @@ -124,6 +124,31 @@ RenderResolution InitialDecoderResolution(const FieldTrialsView& field_trials) {
@@ -43,7 +43,7 @@ index 9cc78c7241..0b4fa9bd6c 100644
      return WEBRTC_VIDEO_CODEC_OK;
    }
  
-@@ -352,6 +377,21 @@ void VideoReceiveStream2::Start() {
+@@ -352,6 +377,20 @@ void VideoReceiveStream2::Start() {
      renderer = this;
    }
  
@@ -61,11 +61,10 @@ index 9cc78c7241..0b4fa9bd6c 100644
 +  if (enable_video_decoders_)
 +    updateTotalVideoDecoders(1);
 +
-+  int decoders_count = 0;
    for (const Decoder& decoder : config_.decoders) {
      VideoDecoder::Settings settings;
      settings.set_codec_type(
-@@ -430,6 +470,9 @@ void VideoReceiveStream2::Stop() {
+@@ -430,6 +469,9 @@ void VideoReceiveStream2::Stop() {
      stats_proxy_.DecoderThreadStopped();
  
      UpdateHistograms();
@@ -75,7 +74,7 @@ index 9cc78c7241..0b4fa9bd6c 100644
    }
  
    // TODO(bugs.webrtc.org/11993): Make these calls on the network thread.
-@@ -521,8 +564,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+@@ -521,8 +563,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
      const Decoder& decoder) {
    TRACE_EVENT0("webrtc",
                 "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
