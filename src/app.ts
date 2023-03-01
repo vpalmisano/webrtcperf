@@ -51,13 +51,7 @@ async function main(): Promise<void> {
   // Control server.
   let server: Server
   if (config.serverPort) {
-    server = new Server(
-      config.serverPort,
-      config.serverSecret,
-      config.serverUseHttps,
-      config.pageLogPath,
-      stats,
-    )
+    server = new Server(config, stats)
     await server.start()
   }
 

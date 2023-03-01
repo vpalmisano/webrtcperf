@@ -592,6 +592,14 @@ The auth user name is set to \`admin\` by default`,
     env: 'SERVER_USE_HTTPS',
     arg: 'server-use-https',
   },
+  serverData: {
+    doc: `An optional path that the HTTP server will expose with the /data endpoint.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'SERVER_DATA',
+    arg: 'server-data',
+  },
 })
 
 type ConfigDocs = Record<
