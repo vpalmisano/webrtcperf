@@ -259,7 +259,7 @@ export class Session extends EventEmitter {
   /** The page errors count. */
   pageErrors = 0
 
-  private readonly jsonFetchCache = new NodeCache({
+  private static readonly jsonFetchCache = new NodeCache({
     stdTTL: 30,
     checkperiod: 15,
   })
@@ -875,7 +875,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
         cacheTimeout = 0,
       ) => {
         if (cacheKey) {
-          const ret = this.jsonFetchCache.get(cacheKey)
+          const ret = Session.jsonFetchCache.get(cacheKey)
           if (ret) {
             return ret
           }
@@ -883,7 +883,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
         try {
           const { status, data, headers } = await axios(options)
           if (cacheKey) {
-            this.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
+            Session.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
           }
           if (options.responseType === 'stream') {
             if (options.downloadPath) {
@@ -1438,8 +1438,6 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     }
 
     this.emit('stop', this.id)
-    this.jsonFetchCache.close()
-    this.jsonFetchCache.flushAll()
   }
 
   /**
