@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-export DIR=$(dirname $BASH_SOURCE)
+export DIR=$(dirname $(realpath "${BASH_SOURCE:-$0}"))
 export BUILDDIR=${HOME}
 export PATCH_FILE=${DIR}/max-video-decoders.patch
 
@@ -80,7 +80,7 @@ EOF
 function apply_patch() {
     cd ${BUILDDIR}/chromium/src/third_party/webrtc
     git apply < ${PATCH_FILE}
-    git diff
+    git diff --compact-summary
 }
 
 function remove_patch() {
@@ -91,6 +91,7 @@ function remove_patch() {
 function update() {
     remove_patch
     cd ${BUILDDIR}/chromium/src
+    git switch main
     git pull origin main
     git rebase-update
     gclient sync -D
