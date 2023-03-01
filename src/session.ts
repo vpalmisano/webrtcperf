@@ -882,11 +882,8 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
         }
         try {
           const { status, data, headers } = await axios(options)
-          if (cacheKey) {
-            Session.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
-          }
           if (options.responseType === 'stream') {
-            if (options.downloadPath) {
+            if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
               log.debug(
                 `jsonFetch saving file to: ${options.downloadPath}`,
                 headers['content-disposition'],
@@ -903,6 +900,13 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
             }
             return { status }
           } else {
+            if (cacheKey) {
+              Session.jsonFetchCache.set(
+                cacheKey,
+                { status, data },
+                cacheTimeout,
+              )
+            }
             return { status, data }
           }
         } catch (err) {
