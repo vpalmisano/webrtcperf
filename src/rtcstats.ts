@@ -83,7 +83,7 @@ export enum RtcStatsMetricNames {
   /** The sent video total resolution changes for quality limitations. */
   videoQualityLimitationResolutionChanges = 'videoQualityLimitationResolutionChanges',
   /** The sent video Simulcast active spatial layers. */
-  videoSentActiveSpatialLayers = 'videoSentActiveSpatialLayers',
+  videoSentActiveEncodings = 'videoSentActiveEncodings',
   /** The sent video bitrates. */
   videoSentBitrates = 'videoSentBitrates',
   /** The sent video bytes. */
@@ -123,7 +123,7 @@ export enum RtcStatsMetricNames {
   /** The sent screen resolustion changes caused by quality limitation. */
   screenQualityLimitationResolutionChanges = 'screenQualityLimitationResolutionChanges',
   /** The sent screen active Simulcast spatial layers. */
-  screenSentActiveSpatialLayers = 'screenSentActiveSpatialLayers',
+  screenSentActiveEncodings = 'screenSentActiveEncodings',
   /** The sent screen bitrates. */
   screenSentBitrates = 'screenSentBitrates',
   /** The sent screen bytes. */
@@ -244,7 +244,7 @@ export function updateRtcStats(
     inboundRtp,
     outboundRtp,
     remoteAddress,
-    videoSentActiveSpatialLayers,
+    videoSentActiveEncodings,
     videoSentMaxBitrate,
     isDisplay,
     codec,
@@ -397,9 +397,9 @@ export function updateRtcStats(
       if (outboundRtp.kind === 'video') {
         setStats(
           stats,
-          (prefix + 'SentActiveSpatialLayers') as RtcStatsMetricNames,
+          (prefix + 'SentActiveEncodings') as RtcStatsMetricNames,
           key,
-          videoSentActiveSpatialLayers,
+          videoSentActiveEncodings,
         )
         setStats(
           stats,

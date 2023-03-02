@@ -107,7 +107,7 @@ Example output:
  qualityLimitResolutionChanges        2        2        1        1        0        2        0        2
           qualityLimitationCpu        2        0        0        0        0        0        0        0 %
     qualityLimitationBandwidth        2       20       10       10        0       20        0       20 %
-       sentActiveSpatialLayers        2                 2        1        1        3        1        3 layers
+           sentActiveEncodings        2                 2        1        1        3        1        3 encodings
                 sentMaxBitrate        2  3700.00  1850.00   350.00  1500.00  2200.00  1500.00  2200.00 Kbps
                          width        2               640      640        0     1280        0     1280 px
                         height        2               360      360        0      720        0      720 px

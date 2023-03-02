@@ -102,7 +102,7 @@ async function getPeerConnectionStats(
         }
         if (track.kind === 'video') {
           values.isDisplay = isDisplayTrack(track)
-          values.videoSentActiveSpatialLayers = encodings.length
+          values.videoSentActiveEncodings = encodings.length
           values.videoSentMaxBitrate = encodings.reduce((prev, encoding) => {
             prev += encoding.maxBitrate || 0
             return prev
