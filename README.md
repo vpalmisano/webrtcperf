@@ -202,7 +202,7 @@ Starts one send-receive participant:
 ```sh
 docker run -it --rm \
     -v /dev/shm:/dev/shm \
-    ghcr.io/vpalmisano/webrtcperf \s
+    ghcr.io/vpalmisano/webrtcperf \
     --url=$JITSI_ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
