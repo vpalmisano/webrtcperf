@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 if [ $1 = '--run-xvfb' ]; then
     shift
