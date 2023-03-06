@@ -26,7 +26,7 @@
     "prepare": "yarn lint && tsc -b && webpack",
     "prepublishOnly": "yarn lint",
     "postversion": "git push && git push origin $(git tag | sort -V | tail -1)",
-    "release": "yarn && yarn update-docs && npm version patch && npm publish",
+    "release": "yarn && yarn docs && npm version patch && npm publish",
     "start": "node app.min.js",
     "start:dev": "ts-node src/app.ts",
     "test": "",
