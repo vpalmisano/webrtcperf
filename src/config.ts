@@ -368,7 +368,7 @@ e.g. \`{"video": {"width": 360, "height": 640}}\``,
   getDisplayMediaOverride: {
     doc: `A JSON string with the \`getDisplayMedia\` constraints to override \
 for each tab in each session; \
-e.g. \`{"video": {"width": 360, "height": 640}}`,
+e.g. \`{"video": {"width": 360, "height": 640}}\``,
     format: String,
     nullable: true,
     default: '',
@@ -578,8 +578,7 @@ alert will be successful only when at least 95% of the checks pass.`,
     arg: 'server-port',
   },
   serverSecret: {
-    doc: `The HTTP server basic auth secret.
-The auth user name is set to \`admin\` by default`,
+    doc: `The HTTP server basic auth secret. The auth user name is set to \`admin\` by default.`,
     format: String,
     default: 'secret',
     env: 'SERVER_SECRET',

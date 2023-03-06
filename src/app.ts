@@ -1,6 +1,7 @@
 import { paramCase } from 'change-case'
 import fs from 'fs'
 import json5 from 'json5'
+import wrap from 'word-wrap'
 
 import { getConfigDocs, loadConfig } from './config'
 import { prepareFakeMedia } from './media'
@@ -27,7 +28,8 @@ function showHelpOrVersion(): void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.entries(docs).forEach(([name, value]: [string, any]) => {
       out += `  --${paramCase(name)}
-        ${value.doc} (Default: ${value.default})\n`
+${wrap(value.doc, { width: 72, indent: '        ' })}
+        Default: ${value.default}\n`
     })
     console.log(out)
     process.exit(0)
