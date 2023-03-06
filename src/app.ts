@@ -23,7 +23,7 @@ const log = logger('app')
 function showHelpOrVersion(): void {
   if (process.argv.findIndex(a => a.localeCompare('--help') === 0) !== -1) {
     const docs = getConfigDocs()
-    let out = `Params:\n`
+    let out = `Params:\n  --version\n        It shows the package version.\n`
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.entries(docs).forEach(([name, value]: [string, any]) => {
       out += `  --${paramCase(name)}
