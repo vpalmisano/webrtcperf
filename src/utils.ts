@@ -70,6 +70,19 @@ export class LoggerInterface {
 const log = logger('app:utils')
 
 /**
+ * Resolves the absolute path from the package installation directory.
+ * @param relativePath The relative path.
+ * @returns The absolute path.
+ */
+export function resolvePackagePath(relativePath: string): string {
+  return '__nexe' in process
+    ? relativePath
+    : process.env.WEBPACK
+    ? path.join(path.dirname(__filename), relativePath)
+    : require.resolve(path.join('..', relativePath))
+}
+
+/**
  * Calculates the md5 sum.
  * @param data The string input
  */

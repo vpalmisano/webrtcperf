@@ -59,6 +59,7 @@ import {
   PeerConnectionExternal,
   PeerConnectionExternalMethod,
   resolveIP,
+  resolvePackagePath,
   sleep,
 } from './utils'
 
@@ -741,12 +742,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       'playout-delay-hint',
       'page-stats',
     ]) {
-      const filePath =
-        '__nexe' in process
-          ? `./scripts/${name}.js`
-          : process.env.WEBPACK
-          ? path.join(path.dirname(__filename), `./scripts/${name}.js`)
-          : require.resolve(`../scripts/${name}.js`)
+      const filePath = resolvePackagePath(`scripts/${name}.js`)
       log.debug(`loading ${name} script from: ${filePath}`)
       await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
     }
