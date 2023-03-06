@@ -766,6 +766,10 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
           if (!filePath.trim()) {
             continue
           }
+          if (!fs.existsSync(filePath)) {
+            log.warn(`custom script not found: ${filePath}`)
+            continue
+          }
           log.debug(`loading custom script: ${filePath}`)
           await page.evaluateOnNewDocument(
             await fs.readFileSync(filePath, 'utf8'),
