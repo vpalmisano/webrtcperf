@@ -157,7 +157,7 @@ The Chromium revision number. It will be downloaded if the chromium path is not 
 
 *Type*: `string`
 
-*Default*: `"1083080"`
+*Default*: `"1095492"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -299,7 +299,7 @@ A JSON string with the `getUserMedia` constraints to override for each tab in ea
 *Default*: `""`
 
 ## getDisplayMediaOverride
-A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}
+A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}`
 
 *Type*: `string`
 
@@ -474,8 +474,7 @@ The HTTP server listening port.
 *Default*: `0`
 
 ## serverSecret
-The HTTP server basic auth secret.
-The auth user name is set to `admin` by default
+The HTTP server basic auth secret. The auth user name is set to `admin` by default.
 
 *Type*: `string`
 
@@ -487,6 +486,13 @@ If true, the server will use the HTTPS protocol.
 *Type*: `boolean`
 
 *Default*: `false`
+
+## serverData
+An optional path that the HTTP server will expose with the /data endpoint.
+
+*Type*: `string`
+
+*Default*: `""`
 
 
 
