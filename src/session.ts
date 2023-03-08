@@ -870,7 +870,10 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     await page.exposeFunction(
       'jsonFetch',
       async (
-        options: axios.AxiosRequestConfig & { downloadPath: string },
+        options: axios.AxiosRequestConfig & {
+          validStatuses: number[]
+          downloadPath: string
+        },
         cacheKey = '',
         cacheTimeout = 0,
       ) => {
@@ -881,6 +884,10 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
           }
         }
         try {
+          if (options.validStatuses) {
+            options.validateStatus = status =>
+              options.validStatuses.includes(status)
+          }
           const { status, data, headers } = await axios(options)
           if (options.responseType === 'stream') {
             if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
