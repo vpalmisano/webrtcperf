@@ -901,7 +901,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
             if (cacheKey) {
               Session.jsonFetchCache.set(cacheKey, { status }, cacheTimeout)
             }
-            return { status }
+            return { status, headers }
           } else {
             if (cacheKey) {
               Session.jsonFetchCache.set(
@@ -910,7 +910,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
                 cacheTimeout,
               )
             }
-            return { status, data }
+            return { status, headers, data }
           }
         } catch (err) {
           const error = (err as Error).message
