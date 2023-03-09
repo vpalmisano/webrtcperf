@@ -357,6 +357,7 @@ export class Stats extends events.EventEmitter {
     >
   >()
   private gateway: promClient.Pushgateway | null = null
+  private gatewayForDelete: promClient.Pushgateway | null = null
 
   /* metricConfigGauge: promClient.Gauge<string> | null = null */
   private elapsedTimeMetric: promClient.Gauge<string> | null = null
@@ -614,6 +615,16 @@ export class Stats extends events.EventEmitter {
         },
         register,
       )
+      this.gatewayForDelete = new promClient.Pushgateway(
+        this.prometheusPushgateway,
+        {
+          timeout: 5000,
+          auth: this.prometheusPushgatewayAuth,
+          rejectUnauthorized: false,
+          agent,
+        },
+        register,
+      )
 
       // promClient.collectDefaultMetrics({ prefix: promPrefix, register })
 
@@ -703,13 +714,7 @@ export class Stats extends events.EventEmitter {
         ])
       }
 
-      try {
-        await this.gateway.delete({
-          jobName: this.prometheusPushgatewayJobName,
-        })
-      } catch (err) {
-        log.error(`Pushgateway delete error: ${(err as Error).message}`)
-      }
+      await this.deletePushgatewayStats()
     }
 
     this.scheduler = new Scheduler(
@@ -718,6 +723,26 @@ export class Stats extends events.EventEmitter {
       this.collectStats.bind(this),
     )
     this.scheduler.start()
+  }
+
+  async deletePushgatewayStats(): Promise<void> {
+    if (!this.gatewayForDelete) {
+      return
+    }
+    try {
+      const { resp, body } = await this.gatewayForDelete.delete({
+        jobName: this.prometheusPushgatewayJobName,
+      })
+      if ((body as string).length) {
+        log.warn(
+          `Pushgateway delete error ${
+            (resp as http.ServerResponse).statusCode
+          }: ${body as string}`,
+        )
+      }
+    } catch (err) {
+      log.error(`Pushgateway delete error: ${(err as Error).message}`)
+    }
   }
 
   /**
@@ -1252,11 +1277,15 @@ export class Stats extends events.EventEmitter {
     }
 
     try {
-      const { body } = await this.gateway.push({
+      const { resp, body } = await this.gateway.push({
         jobName: this.prometheusPushgatewayJobName,
       })
       if ((body as string).length) {
-        log.warn(`Pushgateway error: ${body as string}`)
+        log.warn(
+          `Pushgateway error ${(resp as http.ServerResponse).statusCode}: ${
+            body as string
+          }`,
+        )
       }
     } catch (err) {
       log.error(`Pushgateway push error: ${(err as Error).message}`)
@@ -1716,14 +1745,9 @@ export class Stats extends events.EventEmitter {
 
     // delete metrics
     if (this.gateway) {
-      try {
-        await this.gateway.delete({
-          jobName: this.prometheusPushgatewayJobName,
-        })
-      } catch (err) {
-        log.error(`Pushgateway delete error: ${(err as Error).message}`)
-      }
+      await this.deletePushgatewayStats()
       this.gateway = null
+      this.gatewayForDelete = null
       this.metrics = {}
     }
 
