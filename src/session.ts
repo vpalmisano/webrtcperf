@@ -563,7 +563,7 @@ export class Session extends EventEmitter {
 
       try {
         // log.debug('defaultArgs:', puppeteer.defaultArgs());
-        this.browser = (await (process.env.USE_PUPPETEER_EXTRA
+        this.browser = (await (process.env.USE_PUPPETEER_EXTRA === 'true'
           ? puppeteerExtra
           : puppeteer
         ).launch({
