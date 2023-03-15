@@ -268,7 +268,7 @@ export async function randomActivateAudio(
     for (const [i, page] of pagesWithAudio.entries()) {
       try {
         if (i === index) {
-          log.info(
+          log.debug(
             `Changing audio in page ${i + 1}/${
               pagesWithAudio.length
             } (enable: ${enable})`,
