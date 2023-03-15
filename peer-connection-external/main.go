@@ -51,7 +51,7 @@ func main() {
 		panic(err)
 	}
 	settingEngine := webrtc.SettingEngine{}
-	settingEngine.SetLite(true)
+	// settingEngine.SetLite(true)
 	api := webrtc.NewAPI(webrtc.WithMediaEngine(m), webrtc.WithInterceptorRegistry(i), webrtc.WithSettingEngine(settingEngine))
 
 	config := webrtc.Configuration{}

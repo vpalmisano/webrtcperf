@@ -854,6 +854,7 @@ export class PeerConnectionExternal extends EventEmitter {
     PeerConnectionExternal.cache.clear()
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendCommand(name: string, value = ''): Promise<any> {
     const id = this.commandId
     log.debug(`PeerConnectionExternal-${this.id} < [${id}] ${name}: "${value}"`)
