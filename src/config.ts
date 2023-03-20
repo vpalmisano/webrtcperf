@@ -400,6 +400,13 @@ use the host X server instance.`,
     env: 'ENABLE_GPU',
     arg: 'enable-gpu',
   },
+  enableBrowserLogging: {
+    doc: `It enables the Chromium browser logging to standard output.`,
+    format: 'Boolean',
+    default: false,
+    env: 'ENABLE_BROWSER_LOGGING',
+    arg: 'enable-browser-logging',
+  },
   blockedUrls: {
     doc: `A comma-separated list of request URLs that will be automatically \
 blocked.`,
