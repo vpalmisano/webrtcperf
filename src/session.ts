@@ -510,7 +510,7 @@ export class Session extends EventEmitter {
     }
 
     if (this.enableBrowserLogging) {
-      args = args.concat(['--enable-logging', '--vmodule=*/webrtc/*=1'])
+      args = args.concat(['--enable-logging=stderr', '--vmodule=*/webrtc/*=1'])
     }
 
     return args
