@@ -72,7 +72,7 @@
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "sprintf-js": "^1.1.2",
     "tar-fs": "^2.1.1",
-    "terser": "^5.16.5",
+    "terser": "^5.16.8",
     "uuid": "^9.0.0",
     "word-wrap": "^1.2.3",
     "yaml": "^2.2.1"
