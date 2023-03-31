@@ -86,7 +86,7 @@ RUN \
 #   apt-get update && apt-get install -y google-chrome-stable && apt-get clean
 
 # chromium-browser-unstable
-RUN curl -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/chromium-browser-unstable_113.0.5625.0-1_amd64.deb"
+RUN curl -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/chromium-browser-unstable_114.0.5684.0-1_amd64.deb"
 RUN dpkg -i /chromium-browser-unstable.deb && rm chromium-browser-unstable.deb
 
 RUN apt-get clean \
