@@ -157,7 +157,7 @@ The Chromium revision number. It will be downloaded if the chromium path is not 
 
 *Type*: `string`
 
-*Default*: `"1095492"`
+*Default*: `"1108766"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -325,6 +325,13 @@ It enables the GPU acceleration (experimental). Set to "desktop" to use the host
 *Type*: `string`
 
 *Default*: `""`
+
+## enableBrowserLogging
+It enables the Chromium browser logging to standard output.
+
+*Type*: `boolean`
+
+*Default*: `false`
 
 ## blockedUrls
 A comma-separated list of request URLs that will be automatically blocked.
