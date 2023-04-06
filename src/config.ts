@@ -55,7 +55,7 @@ The temporary files containing the raw video and audio will be stored at \
 \`\${VIDEO_CACHE_PATH}/audio.wav\`.`,
     format: String,
     default:
-      'https://drive.google.com/uc?export=download&id=1juOm-Yy7jUnUIzPxWtiHh0bePNmkvYgv&confirm=t',
+      'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4',
     env: 'VIDEO_PATH',
     arg: 'video-path',
   },
