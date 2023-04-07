@@ -375,6 +375,21 @@ e.g. \`{"video": {"width": 360, "height": 640}}\``,
     env: 'GET_DISPLAY_MEDIA_OVERRIDE',
     arg: 'get-display-media-override',
   },
+  getDisplayMediaType: {
+    doc: `The fake display type to use for \`getDisplayMedia\`. It could be \`monitor\`, \`window\` or \`browser\`,`,
+    format: String,
+    default: 'monitor',
+    env: 'GET_DISPLAY_MEDIA_TYPE',
+    arg: 'get-display-media-type',
+  },
+  getDisplayMediaCrop: {
+    doc: `An HTML selector used for cropping the \`getDisplayMedia\` video track.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'GET_DISPLAY_MEDIA_CROP',
+    arg: 'get-display-media-crop',
+  },
   localStorage: {
     doc: `A JSON string with the \`localStorage\` object to be set on page \
 load.`,

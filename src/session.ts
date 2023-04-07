@@ -164,6 +164,8 @@ export type SessionParams = {
   statsInterval: number
   getUserMediaOverride: string
   getDisplayMediaOverride: string
+  getDisplayMediaType: string
+  getDisplayMediaCrop: string
   localStorage: string
   clearCookies: boolean
   scriptPath: string
@@ -215,6 +217,8 @@ export class Session extends EventEmitter {
   private readonly getUserMediaOverride: any | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly getDisplayMediaOverride: any | null
+  private readonly getDisplayMediaType: string
+  private readonly getDisplayMediaCrop: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly localStorage?: any
   private readonly clearCookies: boolean
@@ -292,6 +296,8 @@ export class Session extends EventEmitter {
     statsInterval,
     getUserMediaOverride,
     getDisplayMediaOverride,
+    getDisplayMediaType,
+    getDisplayMediaCrop,
     localStorage,
     clearCookies,
     scriptPath,
@@ -366,6 +372,8 @@ export class Session extends EventEmitter {
         this.getDisplayMediaOverride = null
       }
     }
+    this.getDisplayMediaType = getDisplayMediaType
+    this.getDisplayMediaCrop = getDisplayMediaCrop
     if (localStorage) {
       try {
         this.localStorage = JSON5.parse(localStorage)
@@ -449,10 +457,13 @@ export class Session extends EventEmitter {
       '--allow-running-insecure-content',
       `--unsafely-treat-insecure-origin-as-secure=${this.url}`,
       '--use-fake-ui-for-media-stream',
-      '--use-fake-device-for-media-stream',
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
-      '--auto-select-desktop-capture-source=Entire screen',
+      '--auto-accept-this-tab-capture',
+      `--use-fake-device-for-media-stream=display-media-type=${
+        this.getDisplayMediaType || 'monitor'
+      },fps=30`,
+      // '--auto-select-desktop-capture-source=Entire screen',
       // `--auto-select-tab-capture-source-by-title=about:blank`,
       `--remote-debugging-port=${
         this.debuggingPort ? this.debuggingPort + this.id : 0
@@ -716,6 +727,14 @@ window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       log.debug('Using getDisplayMedia override:', override)
       await page.evaluateOnNewDocument(`
 window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
+      `)
+    }
+
+    if (this.getDisplayMediaCrop) {
+      const crop = this.getDisplayMediaCrop
+      log.debug('Using getDisplayMedia crop:', crop)
+      await page.evaluateOnNewDocument(`
+window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       `)
     }
 
