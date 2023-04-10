@@ -92,7 +92,7 @@
     "@types/tar-fs": "^2.0.1",
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^5.57.0",
-    "@typescript-eslint/parser": "^5.57.0",
+    "@typescript-eslint/parser": "^5.58.0",
     "eslint": "^8.37.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-config-standard": "^16.0.3",
