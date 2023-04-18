@@ -27,7 +27,7 @@ The fake video path; if set, the video will be used as fake media source. The do
 
 *Type*: `string`
 
-*Default*: `"https://drive.google.com/uc?export=download&id=1juOm-Yy7jUnUIzPxWtiHh0bePNmkvYgv&confirm=t"`
+*Default*: `"https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4"`
 
 ## videoWidth
 The fake video resize width.
@@ -300,6 +300,20 @@ A JSON string with the `getUserMedia` constraints to override for each tab in ea
 
 ## getDisplayMediaOverride
 A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}`
+
+*Type*: `string`
+
+*Default*: `""`
+
+## getDisplayMediaType
+The fake display type to use for `getDisplayMedia`. It could be `monitor`, `window` or `browser`,
+
+*Type*: `string`
+
+*Default*: `"monitor"`
+
+## getDisplayMediaCrop
+An HTML selector used for cropping the `getDisplayMedia` video track.
 
 *Type*: `string`
 
