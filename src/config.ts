@@ -41,6 +41,17 @@ session, \`$i\` the tab absolute index.`,
     env: 'URL_QUERY',
     arg: 'url-query',
   },
+  customUrlHandler: {
+    doc: `The path to custom page url handler; the following \
+variables are provided: \`$p\` the process pid, \`$s\` the session index, \
+\`$S\` the total sessions, \`$t\` the tab index, \`$T\` the total tabs per \
+session, \`$i\` the tab absolute index.`,
+    format: String,
+    default: '',
+    nullable: true,
+    env: 'CUSTOM_URL_HANDLER',
+    arg: 'custom-url-handler',
+  },
   // fake video/audio
   videoPath: {
     doc: `The fake video path; if set, the video will be used as fake \

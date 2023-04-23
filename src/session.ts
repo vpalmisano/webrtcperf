@@ -149,6 +149,8 @@ export type SessionParams = {
   url: string
   /** The page URL query. */
   urlQuery: string
+  /** Custom URL handler. */
+  customUrlHandler: string
   videoPath: string
   videoCachePath: string
   videoWidth: number
@@ -257,6 +259,22 @@ export class Session extends EventEmitter {
   readonly url: string
   /** The url query. */
   readonly urlQuery: string
+  /**
+   * The custom URL handler. This is the path to the JavaScript file containing the function.
+   * The function itself takes an object as input with the following parameters:
+   *
+   * @typedef {Object} CustomUrlHandler
+   * @property {string} id - The identifier for the URL.
+   * @property {string} sessions - The number of sessions.
+   * @property {string} tabIndex - The index of the current tab.
+   * @property {string} tabsPerSession - The number of tabs per session.
+   * @property {string} index - The index for the URL.
+   * @property {string} pid - The process identifier for the URL.
+   *
+   * @type {string} path - The path to the JavaScript file containing the function:
+   *   (params: CustomUrlHandler) => string
+   */
+  readonly customUrlHandler: string
   /** The latest stats extracted from page. */
   stats: SessionStats = {}
   /** The browser opened pages. */
@@ -281,6 +299,7 @@ export class Session extends EventEmitter {
     /* audioRedForOpus, */
     url,
     urlQuery,
+    customUrlHandler,
     videoPath,
     videoCachePath,
     videoWidth,
@@ -331,13 +350,16 @@ export class Session extends EventEmitter {
     this.display = display
     /* this.audioRedForOpus = !!audioRedForOpus */
     this.url = url
-    assert(this.url, 'url is required')
+    if (!customUrlHandler) {
+      assert(this.url, 'url is required')
+    }
     this.urlQuery = urlQuery
     if (!this.urlQuery && url.indexOf('?') !== -1) {
       const parts = url.split('?', 2)
       this.url = parts[0]
       this.urlQuery = parts[1]
     }
+    this.customUrlHandler = customUrlHandler
     this.videoPath = videoPath
     this.videoCachePath = videoCachePath
     this.videoWidth = videoWidth
@@ -455,7 +477,9 @@ export class Session extends EventEmitter {
       '--autoplay-policy=no-user-gesture-required',
       '--disable-infobars',
       '--allow-running-insecure-content',
-      `--unsafely-treat-insecure-origin-as-secure=${this.url}`,
+      `--unsafely-treat-insecure-origin-as-secure=${
+        this.url || 'http://localhost'
+      }`,
       '--use-fake-ui-for-media-stream',
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
@@ -664,6 +688,29 @@ export class Session extends EventEmitter {
     const index = this.id + tabIndex
 
     let url = this.url
+
+    if (this.customUrlHandler && !this.url) {
+      const customUrlHandlerPath = path.resolve(
+        process.cwd(),
+        this.customUrlHandler,
+      )
+      if (!fs.existsSync(customUrlHandlerPath)) {
+        console.error(`Custom error handler not found: ${customUrlHandlerPath}`)
+        process.exit(1)
+      }
+      const customUrlHandler = (
+        await import(/* webpackIgnore: true */ customUrlHandlerPath)
+      ).default
+
+      url = customUrlHandler({
+        id: this.id,
+        sessions: this.sessions,
+        tabIndex,
+        tabsPerSession: this.tabsPerSession,
+        index,
+        pid: process.pid,
+      })
+    }
 
     if (this.urlQuery) {
       url += `?${this.urlQuery
