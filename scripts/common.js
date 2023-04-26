@@ -176,7 +176,7 @@ window.MeasuredStats = class {
     }
     try {
       localStorage.setItem(
-        `MeasuredStats-${this.storeId}`,
+        `webrtcperf-MeasuredStats-${this.storeId}`,
         JSON.stringify({
           stats: this.stats,
           statsSum: this.statsSum,
@@ -193,7 +193,9 @@ window.MeasuredStats = class {
       return
     }
     try {
-      const data = localStorage.getItem(`MeasuredStats-${this.storeId}`)
+      const data = localStorage.getItem(
+        `webrtcperf-MeasuredStats-${this.storeId}`,
+      )
       if (data) {
         const { stats, statsSum, statsCount } = JSON.parse(data)
         this.stats = stats
