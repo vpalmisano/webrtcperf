@@ -7,20 +7,24 @@ It allows to validate the audio/video quality and the client CPU/memory usage
 when multiple connections join the same WebRTC service.
 
 Main features:
-- NodeJS application/library using Puppeteer for controlling chromium instances.
-- It can be executed from sources, using the pre built Docker image or with the
-executables generated for each platform.
+- A NodeJS application/library using Puppeteer for controlling chromium instances.
+- It can be executed:
+  - using the pre built Docker image; this is the suggested way to run the tool
+    without installing any dependency;
+  - from sources (using git pull or npm install);
+  - using the pre built executables generated for each platform.
 - It allows to inject custom Javascript source files that will run into the
 browser page context for automating some tasks (e.g. pressing a button to join
 a conference room).
 - It allows to throttle the networking configuration, limiting the ingress/egress
-available bandwdith, the RTT or the packet loss %.
+available bandwidth, the RTT or the packet loss %.
 - It uses a patched version of chromium (see `./chromium` directory) that allows
 to disable the video decoding, lowering the CPU requirements when running multiple
 browser sessions.
-- RTC stats logging module that allows to send stats to Prometheus Pushgateway
-for visualization with Grafana.
-- Alert rules and report generation.
+- It contains an RTC stats logging module that allows to collect metrics and
+send them to a Prometheus Pushgateway server for live visualization with Grafana.
+- It allows to override getUserMedia and getDisplayMedia calls.
+- It allows to define alert rules and generate reports.
 
 ## Install
 The tool can be executed from sources, using the pre built executables or using the Docker image.
