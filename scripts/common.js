@@ -151,11 +151,13 @@ window.unregisterServiceWorkers = () => {
 }
 
 window.MeasuredStats = class {
-  constructor(ttl = 30, secondsPerSample = 1) {
+  constructor(ttl = 30, secondsPerSample = 1, storeId = '') {
     /** @type number */
     this.ttl = ttl
     /** @type number */
     this.secondsPerSample = secondsPerSample
+    /** @type string */
+    this.storeId = storeId
     /** @type number */
     this.maxItems = Math.ceil(this.ttl / this.secondsPerSample)
     /** @type Array<{ timestamp: number; value: number; count: number }> */
@@ -164,6 +166,50 @@ window.MeasuredStats = class {
     this.statsSum = 0
     /** @type number */
     this.statsCount = 0
+    // Restore from localStorage.
+    this.load()
+  }
+
+  store() {
+    if (!this.storeId) {
+      return
+    }
+    try {
+      localStorage.setItem(
+        `MeasuredStats-${this.storeId}`,
+        JSON.stringify({
+          stats: this.stats,
+          statsSum: this.statsSum,
+          statsCount: this.statsCount,
+        }),
+      )
+    } catch (err) {
+      log(`MeasuredStats store error: ${err.message}`)
+    }
+  }
+
+  load() {
+    if (!this.storeId) {
+      return
+    }
+    try {
+      const data = localStorage.getItem(`MeasuredStats-${this.storeId}`)
+      if (data) {
+        const { stats, statsSum, statsCount } = JSON.parse(data)
+        this.stats = stats
+        this.statsSum = statsSum
+        this.statsCount = statsCount
+      }
+    } catch (err) {
+      log(`MeasuredStats load error: ${err.message}`)
+    }
+  }
+
+  clear() {
+    this.stats = []
+    this.statsSum = 0
+    this.statsCount = 0
+    this.store()
   }
 
   purge() {
@@ -191,6 +237,7 @@ window.MeasuredStats = class {
         this.statsCount -= count
       }
     }
+    this.store()
   }
 
   /**
