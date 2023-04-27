@@ -1205,61 +1205,72 @@ export class Stats extends events.EventEmitter {
           for (const ruleValue of ruleValues) {
             // Send rule values as metrics.
             if (
-              (ruleValue.$after !== undefined &&
-                elapsedSeconds < ruleValue.$after) ||
-              (ruleValue.$before !== undefined &&
-                elapsedSeconds > ruleValue.$before)
+              ruleValue.$after !== undefined &&
+              elapsedSeconds < ruleValue.$after
             ) {
               continue
             }
             const ruleName = `alert_${name}_${ruleKey}`
             const ruleObj = this.metrics[name].alertRules[ruleName]
+            const remove =
+              ruleValue.$before !== undefined &&
+              elapsedSeconds > ruleValue.$before
             // Send rule report as metric.
             const ruleDesc = this.getAlertRuleDesc(ruleKey, ruleValue)
             const report = this.alertRulesReport.get(name)
             if (report) {
               const ruleReport = report.get(ruleDesc)
               if (ruleReport) {
-                ruleObj.report.set(
-                  { rule: ruleDesc, datetime },
-                  ruleReport.failAmountPercentile,
-                )
-                ruleObj.mean.set(
-                  { rule: ruleDesc, datetime },
-                  ruleReport.valueAverage,
-                )
+                const labels = { rule: ruleDesc, datetime }
+                if (!remove) {
+                  ruleObj.report.set(labels, ruleReport.failAmountPercentile)
+                  ruleObj.mean.set(labels, ruleReport.valueAverage)
+                } else {
+                  ruleObj.report.remove(labels)
+                  ruleObj.mean.remove(labels)
+                }
               }
             }
             // Send rules values as metrics.
             if (ruleValue.$eq !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} =`, datetime },
-                ruleValue.$eq,
-              )
+              const labels = { rule: `${name} ${ruleKey} =`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$eq)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$lt !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} <`, datetime },
-                ruleValue.$lt,
-              )
+              const labels = { rule: `${name} ${ruleKey} <`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$lt)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$lte !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} <=`, datetime },
-                ruleValue.$lte,
-              )
+              const labels = { rule: `${name} ${ruleKey} <=`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$lte)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$gt !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} >`, datetime },
-                ruleValue.$gt,
-              )
+              const labels = { rule: `${name} ${ruleKey} >`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$gt)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$gte !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} >=`, datetime },
-                ruleValue.$gte,
-              )
+              const labels = { rule: `${name} ${ruleKey} >=`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$gte)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
           }
         }
