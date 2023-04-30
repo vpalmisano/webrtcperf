@@ -275,6 +275,27 @@ export class Session extends EventEmitter {
    *   (params: CustomUrlHandler) => Promise<string>
    */
   readonly customUrlHandler: string
+  /**
+   * Imported custom URL handler function.
+   * @typedef {Object} CustomUrlHandler
+   * @property {string} id - The identifier for the URL.
+   * @property {string} sessions - The number of sessions.
+   * @property {string} tabIndex - The index of the current tab.
+   * @property {string} tabsPerSession - The number of tabs per session.
+   * @property {string} index - The index for the URL.
+   * @property {string} pid - The process identifier for the URL.
+   *
+   * @type {string} path - The path to the JavaScript file containing the function:
+   *   (params: CustomUrlHandler) => Promise<string>
+   */
+  private customUrlHandlerFn?: (params: {
+    id: string
+    sessions: string
+    tabIndex: string
+    tabsPerSession: string
+    index: string
+    pid: string
+  }) => Promise<string>
   /** The latest stats extracted from page. */
   stats: SessionStats = {}
   /** The browser opened pages. */
@@ -360,6 +381,7 @@ export class Session extends EventEmitter {
       this.urlQuery = parts[1]
     }
     this.customUrlHandler = customUrlHandler
+    this.customUrlHandlerFn = undefined
     this.videoPath = videoPath
     this.videoCachePath = videoCachePath
     this.videoWidth = videoWidth
@@ -700,18 +722,19 @@ export class Session extends EventEmitter {
           `Custom error handler not found: "${customUrlHandlerPath}"`,
         )
       }
-      const customUrlHandler = (
+      this.customUrlHandlerFn = (
         await import(/* webpackIgnore: true */ customUrlHandlerPath)
       ).default
-
-      url = await customUrlHandler({
-        id: this.id,
-        sessions: this.sessions,
-        tabIndex,
-        tabsPerSession: this.tabsPerSession,
-        index,
-        pid: process.pid,
-      })
+      if (this.customUrlHandlerFn) {
+        url = await this.customUrlHandlerFn({
+          id: this.id.toString(10),
+          sessions: this.sessions.toString(10),
+          tabIndex: tabIndex.toString(10),
+          tabsPerSession: this.tabsPerSession.toString(10),
+          index: index.toString(10),
+          pid: process.pid.toString(),
+        })
+      }
     }
 
     if (this.urlQuery) {
