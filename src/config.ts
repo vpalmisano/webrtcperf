@@ -42,10 +42,11 @@ session, \`$i\` the tab absolute index.`,
     arg: 'url-query',
   },
   customUrlHandler: {
-    doc: `The path to custom page url handler; the following \
-variables are provided: \`$p\` the process pid, \`$s\` the session index, \
-\`$S\` the total sessions, \`$t\` the tab index, \`$T\` the total tabs per \
-session, \`$i\` the tab absolute index.`,
+    doc: `This argument specifies the file path for the custom page URL handler that will be exported by default. \
+The custom page URL handler allows you to define custom URLs that can be used to open your application, \
+and provides the following variables for customization: \`$p\`: the process pid, \`$s\`: the session index, \
+\`$S\`: the total sessions, \`$t\`: the tab index, \`$T\`: the total tabs per session, \`$i\`: the tab absolute index.
+You can use these variables to create custom URL schemes that suit your application's needs.`,
     format: String,
     default: '',
     nullable: true,

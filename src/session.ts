@@ -260,7 +260,7 @@ export class Session extends EventEmitter {
   /** The url query. */
   readonly urlQuery: string
   /**
-   * The custom URL handler. This is the path to the JavaScript file containing the function.
+   * The custom URL handler. This is the path to a JavaScript module (.mjs) exporting the function.
    * The function itself takes an object as input with the following parameters:
    *
    * @typedef {Object} CustomUrlHandler
@@ -272,7 +272,7 @@ export class Session extends EventEmitter {
    * @property {string} pid - The process identifier for the URL.
    *
    * @type {string} path - The path to the JavaScript file containing the function:
-   *   (params: CustomUrlHandler) => string
+   *   (params: CustomUrlHandler) => Promise<string>
    */
   readonly customUrlHandler: string
   /** The latest stats extracted from page. */
@@ -695,14 +695,16 @@ export class Session extends EventEmitter {
         this.customUrlHandler,
       )
       if (!fs.existsSync(customUrlHandlerPath)) {
-        console.error(`Custom error handler not found: ${customUrlHandlerPath}`)
-        process.exit(1)
+        log.error(`Custom error handler not found: "${customUrlHandlerPath}"`)
+        throw new Error(
+          `Custom error handler not found: "${customUrlHandlerPath}"`,
+        )
       }
       const customUrlHandler = (
         await import(/* webpackIgnore: true */ customUrlHandlerPath)
       ).default
 
-      url = customUrlHandler({
+      url = await customUrlHandler({
         id: this.id,
         sessions: this.sessions,
         tabIndex,
