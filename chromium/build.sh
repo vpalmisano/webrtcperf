@@ -23,25 +23,23 @@ function setup() {
     gn args out/Default
     cat <<EOF > out/Default/args.gn
 # Set build arguments here. See "gn help buildargs".
-is_debug = false
-is_component_build = false
-symbol_level = 1
-enable_nacl = false
+
+is_debug=false
+is_component_build=false
+symbol_level=0
+enable_nacl=false
 blink_symbol_level=0
 v8_symbol_level=0
-enable_linux_installer = true
+enable_linux_installer=true
+is_official_build=true
 
-media_use_ffmpeg = true
-media_use_libvpx = true
-proprietary_codecs = true
-ffmpeg_branding = "Chrome"
+media_use_ffmpeg=true
+media_use_libvpx=true
+proprietary_codecs=true
+ffmpeg_branding="Chrome"
 
-build_with_tflite_lib=false
 chrome_pgo_phase=0
-clang_use_chrome_plugins=false
 disable_fieldtrial_testing_config=true
-enable_hangout_services_extension=false
-enable_mdns=false
 enable_mse_mpeg2ts_stream_parser=true
 enable_reading_list=false
 enable_remoting=false
@@ -55,24 +53,7 @@ google_default_client_secret=""
 treat_warnings_as_errors=false
 use_official_google_api_keys=false
 use_unofficial_version_number=false
-
-is_official_build=true
-symbol_level=1
-blink_enable_generated_code_formatting=false
-is_cfi=false
-use_gnome_keyring=false
-use_vaapi=true
-use_ozone=true
-use_goma=false
-enable_vr=false
-enable_iterator_debugging=false
-optimize_webui=true
-use_gio=true
-use_lld=true
-is_clang=true
 use_kerberos=false
-use_cups=true
-v8_enable_backtrace=true
 EOF
 }
 
