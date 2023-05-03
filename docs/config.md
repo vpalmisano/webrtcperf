@@ -276,6 +276,13 @@ If set, page console logs will be saved on the selected file path.
 
 *Default*: `""`
 
+## userAgent
+The user agent override.
+
+*Type*: `string`
+
+*Default*: `""`
+
 ## scriptPath
 One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number (1-indexed); `WEBRTC_STRESS_TEST_TAB` the tab number inside the same session (1-indexed); `WEBRTC_STRESS_TEST_INDEX` the page absolute index (1-indexed). 
 

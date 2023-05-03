@@ -172,6 +172,7 @@ export type SessionParams = {
   showPageLog: boolean
   pageLogFilter: string
   pageLogPath: string
+  userAgent: string
   id: number
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluateAfter?: any[]
@@ -226,6 +227,7 @@ export class Session extends EventEmitter {
   private readonly showPageLog: boolean
   private readonly pageLogFilter: string
   private readonly pageLogPath: string
+  private readonly userAgent: string
   private readonly evaluateAfter: {
     // eslint-disable-next-line @typescript-eslint/ban-types
     pageFunction: Function
@@ -304,6 +306,7 @@ export class Session extends EventEmitter {
     showPageLog,
     pageLogFilter,
     pageLogPath,
+    userAgent,
     id,
     evaluateAfter,
     exposedFunctions,
@@ -387,6 +390,7 @@ export class Session extends EventEmitter {
     this.showPageLog = showPageLog
     this.pageLogFilter = pageLogFilter
     this.pageLogPath = pageLogPath
+    this.userAgent = userAgent
     this.randomAudioPeriod = randomAudioPeriod
     this.maxVideoDecoders = maxVideoDecoders
     this.maxVideoDecodersAt = maxVideoDecodersAt
@@ -687,6 +691,10 @@ export class Session extends EventEmitter {
       this.context = this.browser.defaultBrowserContext()
     }
     const page = await this.context.newPage()
+
+    if (this.userAgent) {
+      await page.setUserAgent(this.userAgent)
+    }
 
     await Promise.all(
       Object.keys(this.exposedFunctions).map(

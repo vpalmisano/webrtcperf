@@ -333,6 +333,14 @@ on console. Regexp string allowed.`,
     env: 'PAGE_LOG_PATH',
     arg: 'page-log-path',
   },
+  userAgent: {
+    doc: `The user agent override.`,
+    format: String,
+    default: '',
+    nullable: true,
+    env: 'USER_AGENT',
+    arg: 'user-agent',
+  },
   scriptPath: {
     doc: `One or more JavaScript file paths (comma-separated). \
 If set, the files contents will be executed inside each opened tab page; \
