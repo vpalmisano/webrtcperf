@@ -158,6 +158,7 @@ export enum RtcStatsMetricNames {
   audioRecvPacketsLost = 'audioRecvPacketsLost',
   //'audioRecvPacketsLostCount',
   audioRecvNackCountSent = 'audioRecvNackCountSent',
+  audioRecvLevel = 'audioRecvLevel',
   // inbound video,
   videoRecvCodec = 'videoRecvCodec',
   //'videoFirCountSent',
@@ -303,6 +304,14 @@ export function updateRtcStats(
         key,
         inboundRtp.nackCount,
       )
+      if (inboundRtp.kind === 'audio') {
+        setStats(
+          stats,
+          (prefix + 'RecvLevel') as RtcStatsMetricNames,
+          key,
+          inboundRtp.audioLevel,
+        )
+      }
       if (
         inboundRtp.kind === 'video' &&
         inboundRtp.decoderImplementation !== 'unknown'
