@@ -138,7 +138,7 @@ async function main(): Promise<void> {
   }
 
   // Start the local sessions.
-  if (config.url && config.sessions) {
+  if ((config.url || config.customUrlHandler) && config.sessions) {
     if (config.randomAudioPeriod) {
       await randomActivateAudio(
         stats.sessions,

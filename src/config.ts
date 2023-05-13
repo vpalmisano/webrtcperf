@@ -41,6 +41,18 @@ session, \`$i\` the tab absolute index.`,
     env: 'URL_QUERY',
     arg: 'url-query',
   },
+  customUrlHandler: {
+    doc: `This argument specifies the file path for the custom page URL handler that will be exported by default. \
+The custom page URL handler allows you to define custom URLs that can be used to open your application, \
+and provides the following variables for customization: \`$p\`: the process pid, \`$s\`: the session index, \
+\`$S\`: the total sessions, \`$t\`: the tab index, \`$T\`: the total tabs per session, \`$i\`: the tab absolute index.
+You can use these variables to create custom URL schemes that suit your application's needs.`,
+    format: String,
+    default: '',
+    nullable: true,
+    env: 'CUSTOM_URL_HANDLER',
+    arg: 'custom-url-handler',
+  },
   // fake video/audio
   videoPath: {
     doc: `The fake video path; if set, the video will be used as fake \
