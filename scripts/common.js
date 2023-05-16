@@ -151,7 +151,14 @@ window.unregisterServiceWorkers = () => {
 }
 
 window.MeasuredStats = class {
-  constructor(ttl = 30, secondsPerSample = 1, storeId = '') {
+  constructor(
+    { ttl, maxItems, secondsPerSample, storeId } = {
+      ttl: 0,
+      maxItems: 0,
+      secondsPerSample: 1,
+      storeId: '',
+    },
+  ) {
     /** @type number */
     this.ttl = ttl
     /** @type number */
@@ -159,7 +166,7 @@ window.MeasuredStats = class {
     /** @type string */
     this.storeId = storeId
     /** @type number */
-    this.maxItems = Math.ceil(this.ttl / this.secondsPerSample)
+    this.maxItems = maxItems
     /** @type Array<{ timestamp: number; value: number; count: number }> */
     this.stats = []
     /** @type number */
@@ -215,19 +222,26 @@ window.MeasuredStats = class {
   }
 
   purge() {
-    const now = Date.now()
-    let removeToIndex = -1
-    for (const [index, { timestamp }] of this.stats.entries()) {
-      if (now - timestamp > this.ttl * 1000) {
-        removeToIndex = index
-      } else {
-        break
+    let changed = false
+    if (this.ttl > 0) {
+      const now = Date.now()
+      let removeToIndex = -1
+      for (const [index, { timestamp }] of this.stats.entries()) {
+        if (now - timestamp > this.ttl * 1000) {
+          removeToIndex = index
+        } else {
+          break
+        }
       }
-    }
-    if (removeToIndex >= 0) {
-      for (const { value, count } of this.stats.splice(0, removeToIndex + 1)) {
-        this.statsSum -= value
-        this.statsCount -= count
+      if (removeToIndex >= 0) {
+        for (const { value, count } of this.stats.splice(
+          0,
+          removeToIndex + 1,
+        )) {
+          this.statsSum -= value
+          this.statsCount -= count
+        }
+        changed = true
       }
     }
     if (this.maxItems && this.stats.length > this.maxItems) {
@@ -238,8 +252,11 @@ window.MeasuredStats = class {
         this.statsSum -= value
         this.statsCount -= count
       }
+      changed = true
     }
-    this.store()
+    if (changed) {
+      this.store()
+    }
   }
 
   /**
