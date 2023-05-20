@@ -1,12 +1,13 @@
 import compression from 'compression'
 import express, { json } from 'express'
 import basicAuth from 'express-basic-auth'
-import { readFileSync } from 'fs'
-import * as fs from 'fs/promises'
+import fs from 'fs'
 import { createServer, Server as HttpServer } from 'http'
 import { createServer as _createServer, Server as HttpsServer } from 'https'
 import os from 'os'
-import * as path from 'path'
+import path from 'path'
+import tar from 'tar-fs'
+import zlib from 'zlib'
 
 import { loadConfig } from './config'
 import { Session, SessionParams } from './session'
@@ -22,11 +23,13 @@ const log = logger('app:server')
  */
 export class Server {
   /** The server listening port. */
-  serverPort: number
+  readonly serverPort: number
   /** The basic auth secret. */
-  serverSecret: string
+  readonly serverSecret: string
   /** If HTTPS protocol should be used. */
-  serverUseHttps: boolean
+  readonly serverUseHttps: boolean
+  /** An optional path that the HTTP server will expose with the /data endpoint. */
+  readonly serverData: string
   /** The file path that will be used to serve the \`/view/page.log\` requests. */
   pageLogPath: string
   /** A {@link Stats} class instance. */
@@ -42,19 +45,24 @@ export class Server {
    * @param serverPort The server listening port.
    * @param serverSecret The basic auth secret.
    * @param serverUseHttps If HTTPS protocol should be used.
+   * @param serverData An optional path that the HTTP server will expose with the /data endpoint.
    * @param pageLogPath The file path that will be used to serve the \`/view/page.log\` requests.
    * @param stats A {@link Stats} class instance.
    */
   constructor(
-    serverPort = 5000,
-    serverSecret = 'secret',
-    serverUseHttps = false,
-    pageLogPath = '',
+    {
+      serverPort = 5000,
+      serverSecret = 'secret',
+      serverUseHttps = false,
+      serverData = '',
+      pageLogPath = '',
+    } = {},
     stats: Stats,
   ) {
     this.serverPort = serverPort
     this.serverSecret = serverSecret
     this.serverUseHttps = serverUseHttps
+    this.serverData = serverData
     this.pageLogPath = pageLogPath
     this.stats = stats
     //
@@ -90,6 +98,9 @@ export class Server {
     this.app.get('/download/alert-rules', this.getAlertRules.bind(this))
     this.app.get('/download/stats', this.getStatsFile.bind(this))
     this.app.get('/empty-page', this.getEmptyPage.bind(this))
+    if (this.serverData) {
+      this.app.get('/data/*', this.getData.bind(this))
+    }
 
     this.app.use(
       (
@@ -387,7 +398,7 @@ export class Server {
   ): Promise<void> {
     log.debug(`GET /view/docker.log`, req.query)
     try {
-      const containerId = await fs.readFile(
+      const containerId = await fs.promises.readFile(
         `${os.homedir()}/.webrtcperf/docker.id`,
         'utf-8',
       )
@@ -435,6 +446,41 @@ export class Server {
 <body>
 </body>
 </html>`)
+  }
+
+  /**
+   * GET /data/* endpoint.
+   *
+   * Returns the file content relative to the {@link Config} `serverData` path.
+   * If the requested path points to a directory, it returns the directory
+   * content in tar.gz format.
+   */
+  private getData(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ): void {
+    const paramPath = path
+      .normalize(req.params[0])
+      .replace(/^(\.\.(\/|\\|$))+/, '')
+    log.debug(`GET /data/${paramPath}`, req.query)
+    const fpath = path.resolve(this.serverData, paramPath)
+    if (!fs.existsSync(fpath)) {
+      return next(new Error(`${paramPath} not found`))
+    }
+    if (fs.lstatSync(fpath).isDirectory()) {
+      res.header(
+        'Content-Disposition',
+        `attachment; filename="${path.basename(fpath)}.tar.gz"`,
+      )
+      res.setHeader('content-type', 'application/gzip')
+      tar.pack(fpath).pipe(zlib.createGzip()).pipe(res)
+    } else {
+      if (req.query.range && !req.headers.range) {
+        req.headers.range = `bytes=${req.query.range}`
+      }
+      res.sendFile(fpath)
+    }
   }
 
   /**
@@ -495,8 +541,8 @@ export class Server {
       )
       this.server = _createServer(
         {
-          key: readFileSync(`${destDir}/domain.key`),
-          cert: readFileSync(`${destDir}/domain.crt`),
+          key: fs.readFileSync(`${destDir}/domain.key`),
+          cert: fs.readFileSync(`${destDir}/domain.crt`),
         },
         this.app,
       )

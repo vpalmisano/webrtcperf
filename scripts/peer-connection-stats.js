@@ -102,7 +102,7 @@ async function getPeerConnectionStats(
         }
         if (track.kind === 'video') {
           values.isDisplay = isDisplayTrack(track)
-          values.videoSentActiveSpatialLayers = encodings.length
+          values.videoSentActiveEncodings = encodings.length
           values.videoSentMaxBitrate = encodings.reduce((prev, encoding) => {
             prev += encoding.maxBitrate || 0
             return prev
@@ -352,6 +352,8 @@ async function getPeerConnectionStats(
               jitterBufferDelay,
               totalRoundTripTime,
               roundTripTimeMeasurements,
+              totalAudioEnergy,
+              totalSamplesDuration,
             } = s
             Object.assign(values.inboundRtp, {
               kind,
@@ -375,6 +377,8 @@ async function getPeerConnectionStats(
               jitterBufferDelay,
               totalRoundTripTime,
               roundTripTimeMeasurements,
+              totalAudioEnergy,
+              totalSamplesDuration,
             })
           } else if (s.type === 'remote-candidate') {
             values.remoteAddress = s.address
@@ -434,6 +438,19 @@ async function getPeerConnectionStats(
                   prevStats.values.inboundRtp.totalDecodeTime) /
                 (values.inboundRtp.framesDecoded -
                   prevStats.values.inboundRtp.framesDecoded)
+            }
+            // Update audio level.
+            if (values.inboundRtp.kind === 'audio') {
+              const energy = positiveDiff(
+                values.inboundRtp.totalAudioEnergy,
+                prevStats.values.inboundRtp.totalAudioEnergy,
+              )
+              const samples = positiveDiff(
+                values.inboundRtp.totalSamplesDuration,
+                prevStats.values.inboundRtp.totalSamplesDuration,
+              )
+              values.inboundRtp.audioLevel =
+                samples > 0 ? Math.sqrt(energy / samples) : undefined
             }
           }
           values.inboundRtp = filterUndefined(values.inboundRtp)

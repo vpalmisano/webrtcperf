@@ -51,6 +51,19 @@ function overrideGetDisplayMedia(constraints) {
   )
 }
 
+async function applyGetDisplayMediaCrop(mediaStream) {
+  if (!window.GET_DISPLAY_MEDIA_CROP) {
+    return
+  }
+  const area = document.querySelector(window.GET_DISPLAY_MEDIA_CROP)
+  const videoTrack = mediaStream.getVideoTracks()[0]
+  if (area && videoTrack && videoTrack.cropTo) {
+    log(`applyGetDisplayMediaCrop to "${window.GET_DISPLAY_MEDIA_CROP}"`)
+    const cropTarget = await window.CropTarget.fromElement(area)
+    await videoTrack.cropTo(cropTarget)
+  }
+}
+
 const AudioTracks = new Set()
 const VideoTracks = new Set()
 
@@ -329,7 +342,17 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     log(`getDisplayMedia:`, constraints)
     overrideGetDisplayMedia(constraints)
     const mediaStream = await nativeGetDisplayMedia(constraints, ...args)
+    await applyGetDisplayMediaCrop(mediaStream)
     collectMediaTracks(mediaStream)
     return mediaStream
+  }
+}
+
+if (navigator.mediaDevices && navigator.mediaDevices.setCaptureHandleConfig) {
+  const setCaptureHandleConfig =
+    navigator.mediaDevices.setCaptureHandleConfig.bind(navigator.mediaDevices)
+  navigator.mediaDevices.setCaptureHandleConfig = config => {
+    log('setCaptureHandleConfig', config)
+    return setCaptureHandleConfig(config)
   }
 }

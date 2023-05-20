@@ -21,13 +21,21 @@ The query string to append to the page url; the following template variables are
 
 *Default*: `""`
 
+## customUrlHandler
+This argument specifies the file path for the custom page URL handler that will be exported by default. The custom page URL handler allows you to define custom URLs that can be used to open your application, and provides the following variables for customization: `$p`: the process pid, `$s`: the session index, `$S`: the total sessions, `$t`: the tab index, `$T`: the total tabs per session, `$i`: the tab absolute index.
+You can use these variables to create custom URL schemes that suit your application's needs.
+
+*Type*: `string`
+
+*Default*: `""`
+
 ## videoPath
 The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4`. It accepts a local file, an http endpoint or a string starting with
 `generate:` (example: `generate:null` will generate a black video with silent audio). The temporary files containing the raw video and audio will be stored at `${VIDEO_CACHE_PATH}/video.${VIDEO_FORMAT}` and `${VIDEO_CACHE_PATH}/audio.wav`.
 
 *Type*: `string`
 
-*Default*: `"https://drive.google.com/uc?export=download&id=1juOm-Yy7jUnUIzPxWtiHh0bePNmkvYgv&confirm=t"`
+*Default*: `"https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4"`
 
 ## videoWidth
 The fake video resize width.
@@ -157,7 +165,7 @@ The Chromium revision number. It will be downloaded if the chromium path is not 
 
 *Type*: `string`
 
-*Default*: `"1083080"`
+*Default*: `"1108766"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -276,6 +284,13 @@ If set, page console logs will be saved on the selected file path.
 
 *Default*: `""`
 
+## userAgent
+The user agent override.
+
+*Type*: `string`
+
+*Default*: `""`
+
 ## scriptPath
 One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number (1-indexed); `WEBRTC_STRESS_TEST_TAB` the tab number inside the same session (1-indexed); `WEBRTC_STRESS_TEST_INDEX` the page absolute index (1-indexed). 
 
@@ -299,7 +314,21 @@ A JSON string with the `getUserMedia` constraints to override for each tab in ea
 *Default*: `""`
 
 ## getDisplayMediaOverride
-A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}
+A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}`
+
+*Type*: `string`
+
+*Default*: `""`
+
+## getDisplayMediaType
+The fake display type to use for `getDisplayMedia`. It could be `monitor`, `window` or `browser`,
+
+*Type*: `string`
+
+*Default*: `"monitor"`
+
+## getDisplayMediaCrop
+An HTML selector used for cropping the `getDisplayMedia` video track.
 
 *Type*: `string`
 
@@ -325,6 +354,13 @@ It enables the GPU acceleration (experimental). Set to "desktop" to use the host
 *Type*: `string`
 
 *Default*: `""`
+
+## enableBrowserLogging
+It enables the Chromium browser logging to standard output.
+
+*Type*: `boolean`
+
+*Default*: `false`
 
 ## blockedUrls
 A comma-separated list of request URLs that will be automatically blocked.
@@ -474,8 +510,7 @@ The HTTP server listening port.
 *Default*: `0`
 
 ## serverSecret
-The HTTP server basic auth secret.
-The auth user name is set to `admin` by default
+The HTTP server basic auth secret. The auth user name is set to `admin` by default.
 
 *Type*: `string`
 
@@ -487,6 +522,13 @@ If true, the server will use the HTTPS protocol.
 *Type*: `boolean`
 
 *Default*: `false`
+
+## serverData
+An optional path that the HTTP server will expose with the /data endpoint.
+
+*Type*: `string`
+
+*Default*: `""`
 
 
 

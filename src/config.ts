@@ -41,6 +41,18 @@ session, \`$i\` the tab absolute index.`,
     env: 'URL_QUERY',
     arg: 'url-query',
   },
+  customUrlHandler: {
+    doc: `This argument specifies the file path for the custom page URL handler that will be exported by default. \
+The custom page URL handler allows you to define custom URLs that can be used to open your application, \
+and provides the following variables for customization: \`$p\`: the process pid, \`$s\`: the session index, \
+\`$S\`: the total sessions, \`$t\`: the tab index, \`$T\`: the total tabs per session, \`$i\`: the tab absolute index.
+You can use these variables to create custom URL schemes that suit your application's needs.`,
+    format: String,
+    default: '',
+    nullable: true,
+    env: 'CUSTOM_URL_HANDLER',
+    arg: 'custom-url-handler',
+  },
   // fake video/audio
   videoPath: {
     doc: `The fake video path; if set, the video will be used as fake \
@@ -55,7 +67,7 @@ The temporary files containing the raw video and audio will be stored at \
 \`\${VIDEO_CACHE_PATH}/audio.wav\`.`,
     format: String,
     default:
-      'https://drive.google.com/uc?export=download&id=1juOm-Yy7jUnUIzPxWtiHh0bePNmkvYgv&confirm=t',
+      'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4',
     env: 'VIDEO_PATH',
     arg: 'video-path',
   },
@@ -333,6 +345,14 @@ on console. Regexp string allowed.`,
     env: 'PAGE_LOG_PATH',
     arg: 'page-log-path',
   },
+  userAgent: {
+    doc: `The user agent override.`,
+    format: String,
+    default: '',
+    nullable: true,
+    env: 'USER_AGENT',
+    arg: 'user-agent',
+  },
   scriptPath: {
     doc: `One or more JavaScript file paths (comma-separated). \
 If set, the files contents will be executed inside each opened tab page; \
@@ -368,12 +388,27 @@ e.g. \`{"video": {"width": 360, "height": 640}}\``,
   getDisplayMediaOverride: {
     doc: `A JSON string with the \`getDisplayMedia\` constraints to override \
 for each tab in each session; \
-e.g. \`{"video": {"width": 360, "height": 640}}`,
+e.g. \`{"video": {"width": 360, "height": 640}}\``,
     format: String,
     nullable: true,
     default: '',
     env: 'GET_DISPLAY_MEDIA_OVERRIDE',
     arg: 'get-display-media-override',
+  },
+  getDisplayMediaType: {
+    doc: `The fake display type to use for \`getDisplayMedia\`. It could be \`monitor\`, \`window\` or \`browser\`,`,
+    format: String,
+    default: 'monitor',
+    env: 'GET_DISPLAY_MEDIA_TYPE',
+    arg: 'get-display-media-type',
+  },
+  getDisplayMediaCrop: {
+    doc: `An HTML selector used for cropping the \`getDisplayMedia\` video track.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'GET_DISPLAY_MEDIA_CROP',
+    arg: 'get-display-media-crop',
   },
   localStorage: {
     doc: `A JSON string with the \`localStorage\` object to be set on page \
@@ -399,6 +434,13 @@ use the host X server instance.`,
     default: '',
     env: 'ENABLE_GPU',
     arg: 'enable-gpu',
+  },
+  enableBrowserLogging: {
+    doc: `It enables the Chromium browser logging to standard output.`,
+    format: 'Boolean',
+    default: false,
+    env: 'ENABLE_BROWSER_LOGGING',
+    arg: 'enable-browser-logging',
   },
   blockedUrls: {
     doc: `A comma-separated list of request URLs that will be automatically \
@@ -578,8 +620,7 @@ alert will be successful only when at least 95% of the checks pass.`,
     arg: 'server-port',
   },
   serverSecret: {
-    doc: `The HTTP server basic auth secret.
-The auth user name is set to \`admin\` by default`,
+    doc: `The HTTP server basic auth secret. The auth user name is set to \`admin\` by default.`,
     format: String,
     default: 'secret',
     env: 'SERVER_SECRET',
@@ -591,6 +632,14 @@ The auth user name is set to \`admin\` by default`,
     default: false,
     env: 'SERVER_USE_HTTPS',
     arg: 'server-use-https',
+  },
+  serverData: {
+    doc: `An optional path that the HTTP server will expose with the /data endpoint.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'SERVER_DATA',
+    arg: 'server-data',
   },
 })
 

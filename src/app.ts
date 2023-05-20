@@ -1,4 +1,7 @@
 import { paramCase } from 'change-case'
+import fs from 'fs'
+import json5 from 'json5'
+import wrap from 'word-wrap'
 
 import { getConfigDocs, loadConfig } from './config'
 import { prepareFakeMedia } from './media'
@@ -11,25 +14,33 @@ import {
   logger,
   randomActivateAudio,
   registerExitHandler,
+  resolvePackagePath,
   sleep,
   stopUpdateSystemStats,
 } from './utils'
 
 const log = logger('app')
 
-/**
- * Show the params help.
- */
-function showHelp(): void {
+function showHelpOrVersion(): void {
   if (process.argv.findIndex(a => a.localeCompare('--help') === 0) !== -1) {
     const docs = getConfigDocs()
-    let out = `Params:\n`
+    let out = `Params:\n  --version\n        It shows the package version.\n`
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.entries(docs).forEach(([name, value]: [string, any]) => {
       out += `  --${paramCase(name)}
-        ${value.doc} (Default: ${value.default})\n`
+${wrap(value.doc, { width: 72, indent: '        ' })}
+        Default: ${value.default}\n`
     })
     console.log(out)
+    process.exit(0)
+  } else if (
+    process.argv.findIndex(a => a.localeCompare('--version') === 0) !== -1
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const version = json5.parse(
+      fs.readFileSync(resolvePackagePath('package.json')).toString(),
+    ).version
+    console.log(version)
     process.exit(0)
   }
 }
@@ -38,7 +49,7 @@ function showHelp(): void {
  * Main function
  */
 async function main(): Promise<void> {
-  showHelp()
+  showHelpOrVersion()
 
   const config = loadConfig(process.argv[2])
   if (!config.startTimestamp) {
@@ -51,13 +62,7 @@ async function main(): Promise<void> {
   // Control server.
   let server: Server
   if (config.serverPort) {
-    server = new Server(
-      config.serverPort,
-      config.serverSecret,
-      config.serverUseHttps,
-      config.pageLogPath,
-      stats,
-    )
+    server = new Server(config, stats)
     await server.start()
   }
 
@@ -133,7 +138,7 @@ async function main(): Promise<void> {
   }
 
   // Start the local sessions.
-  if (config.url && config.sessions) {
+  if ((config.url || config.customUrlHandler) && config.sessions) {
     if (config.randomAudioPeriod) {
       await randomActivateAudio(
         stats.sessions,

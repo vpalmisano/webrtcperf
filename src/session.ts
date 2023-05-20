@@ -58,6 +58,7 @@ import {
   md5,
   PeerConnectionExternal,
   resolveIP,
+  resolvePackagePath,
   sleep,
 } from './utils'
 
@@ -147,6 +148,8 @@ export type SessionParams = {
   url: string
   /** The page URL query. */
   urlQuery: string
+  /** Custom URL handler. */
+  customUrlHandler: string
   videoPath: string
   videoCachePath: string
   videoWidth: number
@@ -154,6 +157,7 @@ export type SessionParams = {
   videoFramerate: number
   videoFormat: string
   enableGpu: string
+  enableBrowserLogging: boolean
   startTimestamp: number
   sessions: number
   tabsPerSession: number
@@ -161,12 +165,15 @@ export type SessionParams = {
   statsInterval: number
   getUserMediaOverride: string
   getDisplayMediaOverride: string
+  getDisplayMediaType: string
+  getDisplayMediaCrop: string
   localStorage: string
   clearCookies: boolean
   scriptPath: string
   showPageLog: boolean
   pageLogFilter: string
   pageLogPath: string
+  userAgent: string
   id: number
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluateAfter?: any[]
@@ -202,6 +209,7 @@ export class Session extends EventEmitter {
   private readonly videoFramerate: number
   private readonly videoFormat: string
   private readonly enableGpu: string
+  private readonly enableBrowserLogging: boolean
   private readonly startTimestamp: number
   private readonly sessions: number
   private readonly tabsPerSession: number
@@ -211,6 +219,8 @@ export class Session extends EventEmitter {
   private readonly getUserMediaOverride: any | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly getDisplayMediaOverride: any | null
+  private readonly getDisplayMediaType: string
+  private readonly getDisplayMediaCrop: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly localStorage?: any
   private readonly clearCookies: boolean
@@ -218,6 +228,7 @@ export class Session extends EventEmitter {
   private readonly showPageLog: boolean
   private readonly pageLogFilter: string
   private readonly pageLogPath: string
+  private readonly userAgent: string
   private readonly evaluateAfter: {
     // eslint-disable-next-line @typescript-eslint/ban-types
     pageFunction: Function
@@ -249,6 +260,43 @@ export class Session extends EventEmitter {
   readonly url: string
   /** The url query. */
   readonly urlQuery: string
+  /**
+   * The custom URL handler. This is the path to a JavaScript module (.mjs) exporting the function.
+   * The function itself takes an object as input with the following parameters:
+   *
+   * @typedef {Object} CustomUrlHandler
+   * @property {string} id - The identifier for the URL.
+   * @property {string} sessions - The number of sessions.
+   * @property {string} tabIndex - The index of the current tab.
+   * @property {string} tabsPerSession - The number of tabs per session.
+   * @property {string} index - The index for the URL.
+   * @property {string} pid - The process identifier for the URL.
+   *
+   * @type {string} path - The path to the JavaScript file containing the function:
+   *   (params: CustomUrlHandler) => Promise<string>
+   */
+  readonly customUrlHandler: string
+  /**
+   * Imported custom URL handler function.
+   * @typedef {Object} CustomUrlHandler
+   * @property {string} id - The identifier for the URL.
+   * @property {string} sessions - The number of sessions.
+   * @property {string} tabIndex - The index of the current tab.
+   * @property {string} tabsPerSession - The number of tabs per session.
+   * @property {string} index - The index for the URL.
+   * @property {string} pid - The process identifier for the URL.
+   *
+   * @type {string} path - The path to the JavaScript file containing the function:
+   *   (params: CustomUrlHandler) => Promise<string>
+   */
+  private customUrlHandlerFn?: (params: {
+    id: string
+    sessions: string
+    tabIndex: string
+    tabsPerSession: string
+    index: string
+    pid: string
+  }) => Promise<string>
   /** The latest stats extracted from page. */
   stats: SessionStats = {}
   /** The browser opened pages. */
@@ -258,7 +306,7 @@ export class Session extends EventEmitter {
   /** The page errors count. */
   pageErrors = 0
 
-  private readonly jsonFetchCache = new NodeCache({
+  private static readonly jsonFetchCache = new NodeCache({
     stdTTL: 30,
     checkperiod: 15,
   })
@@ -273,6 +321,7 @@ export class Session extends EventEmitter {
     /* audioRedForOpus, */
     url,
     urlQuery,
+    customUrlHandler,
     videoPath,
     videoCachePath,
     videoWidth,
@@ -280,6 +329,7 @@ export class Session extends EventEmitter {
     videoFramerate,
     videoFormat,
     enableGpu,
+    enableBrowserLogging,
     startTimestamp,
     sessions,
     tabsPerSession,
@@ -287,12 +337,15 @@ export class Session extends EventEmitter {
     statsInterval,
     getUserMediaOverride,
     getDisplayMediaOverride,
+    getDisplayMediaType,
+    getDisplayMediaCrop,
     localStorage,
     clearCookies,
     scriptPath,
     showPageLog,
     pageLogFilter,
     pageLogPath,
+    userAgent,
     id,
     evaluateAfter,
     exposedFunctions,
@@ -320,13 +373,17 @@ export class Session extends EventEmitter {
     this.display = display
     /* this.audioRedForOpus = !!audioRedForOpus */
     this.url = url
-    assert(this.url, 'url is required')
+    if (!customUrlHandler) {
+      assert(this.url, 'url is required')
+    }
     this.urlQuery = urlQuery
     if (!this.urlQuery && url.indexOf('?') !== -1) {
       const parts = url.split('?', 2)
       this.url = parts[0]
       this.urlQuery = parts[1]
     }
+    this.customUrlHandler = customUrlHandler
+    this.customUrlHandlerFn = undefined
     this.videoPath = videoPath
     this.videoCachePath = videoCachePath
     this.videoWidth = videoWidth
@@ -334,6 +391,7 @@ export class Session extends EventEmitter {
     this.videoFramerate = videoFramerate
     this.videoFormat = videoFormat || 'y4m'
     this.enableGpu = enableGpu
+    this.enableBrowserLogging = enableBrowserLogging
     this.startTimestamp = startTimestamp || Date.now()
     this.sessions = sessions || 1
     this.tabsPerSession = tabsPerSession || 1
@@ -360,6 +418,8 @@ export class Session extends EventEmitter {
         this.getDisplayMediaOverride = null
       }
     }
+    this.getDisplayMediaType = getDisplayMediaType
+    this.getDisplayMediaCrop = getDisplayMediaCrop
     if (localStorage) {
       try {
         this.localStorage = JSON5.parse(localStorage)
@@ -373,6 +433,7 @@ export class Session extends EventEmitter {
     this.showPageLog = showPageLog
     this.pageLogFilter = pageLogFilter
     this.pageLogPath = pageLogPath
+    this.userAgent = userAgent
     this.randomAudioPeriod = randomAudioPeriod
     this.maxVideoDecoders = maxVideoDecoders
     this.maxVideoDecodersAt = maxVideoDecodersAt
@@ -441,12 +502,17 @@ export class Session extends EventEmitter {
       '--autoplay-policy=no-user-gesture-required',
       '--disable-infobars',
       '--allow-running-insecure-content',
-      `--unsafely-treat-insecure-origin-as-secure=${this.url}`,
+      `--unsafely-treat-insecure-origin-as-secure=${
+        this.url || 'http://localhost'
+      }`,
       '--use-fake-ui-for-media-stream',
-      '--use-fake-device-for-media-stream',
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
-      '--auto-select-desktop-capture-source=Entire screen',
+      '--auto-accept-this-tab-capture',
+      `--use-fake-device-for-media-stream=display-media-type=${
+        this.getDisplayMediaType || 'monitor'
+      },fps=30`,
+      // '--auto-select-desktop-capture-source=Entire screen',
       // `--auto-select-tab-capture-source-by-title=about:blank`,
       `--remote-debugging-port=${
         this.debuggingPort ? this.debuggingPort + this.id : 0
@@ -501,6 +567,10 @@ export class Session extends EventEmitter {
         // '--renderer-process-limit=2',
         // '--single-process',
       ])
+    }
+
+    if (this.enableBrowserLogging) {
+      args = args.concat(['--enable-logging=stderr', '--vmodule=*/webrtc/*=1'])
     }
 
     return args
@@ -561,7 +631,7 @@ export class Session extends EventEmitter {
 
       try {
         // log.debug('defaultArgs:', puppeteer.defaultArgs());
-        this.browser = (await (process.env.USE_PUPPETEER_EXTRA
+        this.browser = (await (process.env.USE_PUPPETEER_EXTRA === 'true'
           ? puppeteerExtra
           : puppeteer
         ).launch({
@@ -569,6 +639,7 @@ export class Session extends EventEmitter {
           executablePath,
           handleSIGINT: false,
           env,
+          dumpio: this.enableBrowserLogging,
           // devtools: true,
           ignoreHTTPSErrors: true,
           defaultViewport: {
@@ -643,6 +714,32 @@ export class Session extends EventEmitter {
 
     let url = this.url
 
+    if (this.customUrlHandler && !this.url) {
+      const customUrlHandlerPath = path.resolve(
+        process.cwd(),
+        this.customUrlHandler,
+      )
+      if (!fs.existsSync(customUrlHandlerPath)) {
+        log.error(`Custom error handler not found: "${customUrlHandlerPath}"`)
+        throw new Error(
+          `Custom error handler not found: "${customUrlHandlerPath}"`,
+        )
+      }
+      this.customUrlHandlerFn = (
+        await import(/* webpackIgnore: true */ customUrlHandlerPath)
+      ).default
+      if (this.customUrlHandlerFn) {
+        url = await this.customUrlHandlerFn({
+          id: this.id.toString(10),
+          sessions: this.sessions.toString(10),
+          tabIndex: tabIndex.toString(10),
+          tabsPerSession: this.tabsPerSession.toString(10),
+          index: index.toString(10),
+          pid: process.pid.toString(),
+        })
+      }
+    }
+
     if (this.urlQuery) {
       url += `?${this.urlQuery
         .replace(/\$s/g, String(this.id + 1))
@@ -665,6 +762,10 @@ export class Session extends EventEmitter {
       this.context = this.browser.defaultBrowserContext()
     }
     const page = await this.context.newPage()
+
+    if (this.userAgent) {
+      await page.setUserAgent(this.userAgent)
+    }
 
     await Promise.all(
       Object.keys(this.exposedFunctions).map(
@@ -708,6 +809,14 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       `)
     }
 
+    if (this.getDisplayMediaCrop) {
+      const crop = this.getDisplayMediaCrop
+      log.debug('Using getDisplayMedia crop:', crop)
+      await page.evaluateOnNewDocument(`
+window.GET_DISPLAY_MEDIA_CROP = "${crop}";
+      `)
+    }
+
     if (this.localStorage) {
       log.debug('Using localStorage:', this.localStorage)
       let cmd = ''
@@ -740,12 +849,7 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       'playout-delay-hint',
       'page-stats',
     ]) {
-      const filePath =
-        '__nexe' in process
-          ? `./scripts/${name}.js`
-          : process.env.WEBPACK
-          ? path.join(path.dirname(__filename), `./scripts/${name}.js`)
-          : require.resolve(`../scripts/${name}.js`)
+      const filePath = resolvePackagePath(`scripts/${name}.js`)
       log.debug(`loading ${name} script from: ${filePath}`)
       await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
     }
@@ -763,6 +867,10 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
       } else {
         for (const filePath of this.scriptPath.split(',')) {
           if (!filePath.trim()) {
+            continue
+          }
+          if (!fs.existsSync(filePath)) {
+            log.warn(`custom script not found: ${filePath}`)
             continue
           }
           log.debug(`loading custom script: ${filePath}`)
@@ -869,21 +977,60 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     await page.exposeFunction(
       'jsonFetch',
       async (
-        options: axios.AxiosRequestConfig,
+        options: axios.AxiosRequestConfig & {
+          validStatuses: number[]
+          downloadPath: string
+        },
         cacheKey = '',
         cacheTimeout = 0,
       ) => {
         if (cacheKey) {
-          const ret = this.jsonFetchCache.get(cacheKey)
+          const ret = Session.jsonFetchCache.get(cacheKey)
           if (ret) {
             return ret
           }
         }
-        const { status, data } = await axios(options)
-        if (cacheKey) {
-          this.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
+        try {
+          if (options.validStatuses) {
+            options.validateStatus = status =>
+              options.validStatuses.includes(status)
+          }
+          const { status, data, headers } = await axios(options)
+          if (options.responseType === 'stream') {
+            if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
+              log.debug(
+                `jsonFetch saving file to: ${options.downloadPath}`,
+                headers['content-disposition'],
+              )
+              await fs.promises.mkdir(path.dirname(options.downloadPath), {
+                recursive: true,
+              })
+              const writer = fs.createWriteStream(options.downloadPath)
+              await new Promise<void>((resolve, reject) => {
+                writer.on('error', err => reject(err))
+                writer.on('close', () => resolve())
+                data.pipe(writer)
+              })
+            }
+            if (cacheKey) {
+              Session.jsonFetchCache.set(cacheKey, { status }, cacheTimeout)
+            }
+            return { status, headers }
+          } else {
+            if (cacheKey) {
+              Session.jsonFetchCache.set(
+                cacheKey,
+                { status, data },
+                cacheTimeout,
+              )
+            }
+            return { status, headers, data }
+          }
+        } catch (err) {
+          const error = (err as Error).message
+          log.warn(`jsonFetch error: ${error}`)
+          return { status: 500, error }
         }
-        return { status, data }
       },
     )
 
@@ -1429,8 +1576,6 @@ window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
     }
 
     this.emit('stop', this.id)
-    this.jsonFetchCache.close()
-    this.jsonFetchCache.flushAll()
   }
 
   /**

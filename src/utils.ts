@@ -73,6 +73,19 @@ export class LoggerInterface {
 const log = logger('app:utils')
 
 /**
+ * Resolves the absolute path from the package installation directory.
+ * @param relativePath The relative path.
+ * @returns The absolute path.
+ */
+export function resolvePackagePath(relativePath: string): string {
+  return '__nexe' in process
+    ? relativePath
+    : process.env.WEBPACK
+    ? path.join(path.dirname(__filename), relativePath)
+    : require.resolve(path.join('..', relativePath))
+}
+
+/**
  * Calculates the md5 sum.
  * @param data The string input
  */
@@ -258,7 +271,7 @@ export async function randomActivateAudio(
     for (const [i, page] of pagesWithAudio.entries()) {
       try {
         if (i === index) {
-          log.info(
+          log.debug(
             `Changing audio in page ${i + 1}/${
               pagesWithAudio.length
             } (enable: ${enable})`,
@@ -644,9 +657,10 @@ export async function systemGpuStats(): Promise<{ gpu: number; mem: number }> {
  * Schedules a function call at the specified time interval.
  */
 export class Scheduler {
-  private name: string
-  private interval: number
-  private callback: (now: number) => Promise<void>
+  private readonly name: string
+  private readonly interval: number
+  private readonly callback: (now: number) => Promise<void>
+  private readonly verbose: boolean
 
   private running = false
   private last = 0
@@ -658,15 +672,18 @@ export class Scheduler {
    * @param name Logging name.
    * @param interval Update interval in seconds.
    * @param callback Callback function.
+   * @param verbose Verbose logging.
    */
   constructor(
     name: string,
     interval: number,
     callback: (now: number) => Promise<void>,
+    verbose = false,
   ) {
     this.name = name
     this.interval = interval * 1000
     this.callback = callback
+    this.verbose = verbose
     log.debug(
       `[${this.name}-scheduler] constructor interval=${this.interval}ms`,
     )
@@ -697,11 +714,13 @@ export class Scheduler {
         -this.interval,
         this.interval,
       )
-      log.debug(
-        `[${this.name}-scheduler] last=${now - this.last}ms drift=${
-          this.errorSum
-        }ms`,
-      )
+      if (this.verbose) {
+        log.debug(
+          `[${this.name}-scheduler] last=${now - this.last}ms drift=${
+            this.errorSum
+          }ms`,
+        )
+      }
     }
     this.last = now
     this.statsTimeoutId = setTimeout(async () => {
@@ -713,7 +732,7 @@ export class Scheduler {
           log.warn(
             `[${this.name}-scheduler] callback elapsed=${elapsed}ms > ${this.interval}ms`,
           )
-        } else {
+        } else if (this.verbose) {
           log.debug(`[${this.name}-scheduler] callback elapsed=${elapsed}ms`)
         }
       } catch (err) {

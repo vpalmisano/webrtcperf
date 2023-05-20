@@ -28,7 +28,6 @@
     "includes": "./docs",
     "media": "./media",
     "theme": "default",
-    "plugin": "none",
     "excludeNotDocumented": true,
     "hideGenerator": true,
     "cleanOutputDir": true

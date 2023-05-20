@@ -68,7 +68,7 @@ export async function prepareFakeMedia({
   const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
   const destVideoPath = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.${videoFormat}`
   if (!existsSync(destVideoPath) || !videoCacheRaw) {
-    console.log(`Converting ${videoPath} to ${destVideoPath}`)
+    log.info(`Converting ${videoPath} to ${destVideoPath}`)
     try {
       let source = `-i "${videoPath}"`
       if (videoPath === 'generate:null') {
@@ -91,7 +91,7 @@ export async function prepareFakeMedia({
   const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
   const destAudioPath = `${videoCachePath}/${name}.wav`
   if (!existsSync(destAudioPath) || !videoCacheRaw) {
-    console.log(`Converting ${videoPath} to ${destAudioPath}`)
+    log.info(`Converting ${videoPath} to ${destAudioPath}`)
     try {
       let source = `-i "${videoPath}"`
       if (videoPath === 'generate:null') {

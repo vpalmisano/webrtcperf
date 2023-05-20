@@ -357,6 +357,7 @@ export class Stats extends events.EventEmitter {
     >
   >()
   private gateway: promClient.Pushgateway | null = null
+  private gatewayForDelete: promClient.Pushgateway | null = null
 
   /* metricConfigGauge: promClient.Gauge<string> | null = null */
   private elapsedTimeMetric: promClient.Gauge<string> | null = null
@@ -614,6 +615,16 @@ export class Stats extends events.EventEmitter {
         },
         register,
       )
+      this.gatewayForDelete = new promClient.Pushgateway(
+        this.prometheusPushgateway,
+        {
+          timeout: 5000,
+          auth: this.prometheusPushgatewayAuth,
+          rejectUnauthorized: false,
+          agent,
+        },
+        register,
+      )
 
       // promClient.collectDefaultMetrics({ prefix: promPrefix, register })
 
@@ -703,13 +714,7 @@ export class Stats extends events.EventEmitter {
         ])
       }
 
-      try {
-        await this.gateway.delete({
-          jobName: this.prometheusPushgatewayJobName,
-        })
-      } catch (err) {
-        log.error(`Pushgateway delete error: ${(err as Error).message}`)
-      }
+      await this.deletePushgatewayStats()
     }
 
     this.scheduler = new Scheduler(
@@ -718,6 +723,26 @@ export class Stats extends events.EventEmitter {
       this.collectStats.bind(this),
     )
     this.scheduler.start()
+  }
+
+  async deletePushgatewayStats(): Promise<void> {
+    if (!this.gatewayForDelete) {
+      return
+    }
+    try {
+      const { resp, body } = await this.gatewayForDelete.delete({
+        jobName: this.prometheusPushgatewayJobName,
+      })
+      if ((body as string).length) {
+        log.warn(
+          `Pushgateway delete error ${
+            (resp as http.ServerResponse).statusCode
+          }: ${body as string}`,
+        )
+      }
+    } catch (err) {
+      log.error(`Pushgateway delete error: ${(err as Error).message}`)
+    }
   }
 
   /**
@@ -1180,61 +1205,72 @@ export class Stats extends events.EventEmitter {
           for (const ruleValue of ruleValues) {
             // Send rule values as metrics.
             if (
-              (ruleValue.$after !== undefined &&
-                elapsedSeconds < ruleValue.$after) ||
-              (ruleValue.$before !== undefined &&
-                elapsedSeconds > ruleValue.$before)
+              ruleValue.$after !== undefined &&
+              elapsedSeconds < ruleValue.$after
             ) {
               continue
             }
             const ruleName = `alert_${name}_${ruleKey}`
             const ruleObj = this.metrics[name].alertRules[ruleName]
+            const remove =
+              ruleValue.$before !== undefined &&
+              elapsedSeconds > ruleValue.$before
             // Send rule report as metric.
             const ruleDesc = this.getAlertRuleDesc(ruleKey, ruleValue)
             const report = this.alertRulesReport.get(name)
             if (report) {
               const ruleReport = report.get(ruleDesc)
               if (ruleReport) {
-                ruleObj.report.set(
-                  { rule: ruleDesc, datetime },
-                  ruleReport.failAmountPercentile,
-                )
-                ruleObj.mean.set(
-                  { rule: ruleDesc, datetime },
-                  ruleReport.valueAverage,
-                )
+                const labels = { rule: ruleDesc, datetime }
+                if (!remove) {
+                  ruleObj.report.set(labels, ruleReport.failAmountPercentile)
+                  ruleObj.mean.set(labels, ruleReport.valueAverage)
+                } else {
+                  ruleObj.report.remove(labels)
+                  ruleObj.mean.remove(labels)
+                }
               }
             }
             // Send rules values as metrics.
             if (ruleValue.$eq !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} =`, datetime },
-                ruleValue.$eq,
-              )
+              const labels = { rule: `${name} ${ruleKey} =`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$eq)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$lt !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} <`, datetime },
-                ruleValue.$lt,
-              )
+              const labels = { rule: `${name} ${ruleKey} <`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$lt)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$lte !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} <=`, datetime },
-                ruleValue.$lte,
-              )
+              const labels = { rule: `${name} ${ruleKey} <=`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$lte)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$gt !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} >`, datetime },
-                ruleValue.$gt,
-              )
+              const labels = { rule: `${name} ${ruleKey} >`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$gt)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
             if (ruleValue.$gte !== undefined) {
-              ruleObj.rule.set(
-                { rule: `${name} ${ruleKey} >=`, datetime },
-                ruleValue.$gte,
-              )
+              const labels = { rule: `${name} ${ruleKey} >=`, datetime }
+              if (!remove) {
+                ruleObj.rule.set(labels, ruleValue.$gte)
+              } else {
+                ruleObj.rule.remove(labels)
+              }
             }
           }
         }
@@ -1252,11 +1288,15 @@ export class Stats extends events.EventEmitter {
     }
 
     try {
-      const { body } = await this.gateway.push({
+      const { resp, body } = await this.gateway.push({
         jobName: this.prometheusPushgatewayJobName,
       })
       if ((body as string).length) {
-        log.warn(`Pushgateway error: ${body as string}`)
+        log.warn(
+          `Pushgateway error ${(resp as http.ServerResponse).statusCode}: ${
+            body as string
+          }`,
+        )
       }
     } catch (err) {
       log.error(`Pushgateway push error: ${(err as Error).message}`)
@@ -1716,14 +1756,9 @@ export class Stats extends events.EventEmitter {
 
     // delete metrics
     if (this.gateway) {
-      try {
-        await this.gateway.delete({
-          jobName: this.prometheusPushgatewayJobName,
-        })
-      } catch (err) {
-        log.error(`Pushgateway delete error: ${(err as Error).message}`)
-      }
+      await this.deletePushgatewayStats()
       this.gateway = null
+      this.gatewayForDelete = null
       this.metrics = {}
     }
 
