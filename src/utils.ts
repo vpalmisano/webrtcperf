@@ -803,7 +803,7 @@ export class PeerConnectionExternal extends EventEmitter {
     assert(this.process.pid, 'PeerConnectionExternal spawn failed')
 
     this.process.stdout.on('data', data => {
-      log.debug(`PeerConnectionExternal-${this.id} [stdout] "${data}"`)
+      //log.debug(`PeerConnectionExternal-${this.id} [stdout] "${data}"`)
 
       this.stdoutBuf += String(data)
       while (this.stdoutBuf.length) {
@@ -842,7 +842,9 @@ export class PeerConnectionExternal extends EventEmitter {
     })
 
     this.process.stderr.on('data', data => {
-      log.debug(`PeerConnectionExternal-${this.id} [stderr] "${data}"`)
+      log.debug(
+        `PeerConnectionExternal-${this.id} [stderr] "${String(data).trim()}"`,
+      )
     })
 
     this.process.on('close', code => {

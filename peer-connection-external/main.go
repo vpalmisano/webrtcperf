@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -31,8 +32,8 @@ func readStdin(channel chan string) {
 }
 
 func onResult(id string, command string, value string) {
-	println(fmt.Sprintf("[peer-connection-external] [%s] %s", id, command))
-	//println(fmt.Sprintf("[peer-connection-external] [%s] %s result: '%s'", id, command, value))
+	//println(fmt.Sprintf("[peer-connection-external] [%s] %s", id, command))
+	println(fmt.Sprintf("[peer-connection-external] [%s] %s result: '%s'", id, command, value))
 	fmt.Printf("r%s|%s|%s\n", id, command, value)
 }
 
@@ -46,6 +47,7 @@ func main() {
 	if err := m.RegisterDefaultCodecs(); err != nil {
 		panic(err)
 	}
+
 	i := &interceptor.Registry{}
 	if err := webrtc.RegisterDefaultInterceptors(m, i); err != nil {
 		panic(err)
@@ -59,6 +61,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	peerConnection, err := api.NewPeerConnection(config)
 	if err != nil {
 		panic(err)
@@ -139,7 +142,13 @@ func main() {
 				onError(id, command, err)
 				continue
 			}
-			err = peerConnection.SetLocalDescription(offer)
+			b, err := json.Marshal(offer)
+			if err != nil {
+				onError(id, command, err)
+				continue
+			}
+			onResult(id, command, string(b))
+			/* err = peerConnection.SetLocalDescription(offer)
 			if err != nil {
 				onError(id, command, err)
 				continue
@@ -149,7 +158,7 @@ func main() {
 				onError(id, command, err)
 				continue
 			}
-			onResult(id, command, string(b))
+			onResult(id, command, string(b)) */
 
 		case command == "createAnswer":
 			answer, err := peerConnection.CreateAnswer(nil)
@@ -157,13 +166,13 @@ func main() {
 				onError(id, command, err)
 				continue
 			}
-			gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
+			//gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
 			err = peerConnection.SetLocalDescription(answer)
 			if err != nil {
 				onError(id, command, err)
 				continue
 			}
-			<-gatherComplete
+			//<-gatherComplete
 			b, err := json.Marshal(*peerConnection.LocalDescription())
 			if err != nil {
 				onError(id, command, err)
@@ -171,42 +180,36 @@ func main() {
 			}
 			onResult(id, command, string(b))
 
-		/* case command == "setLocalDescription":
-		offer := webrtc.SessionDescription{}
-		err = json.Unmarshal([]byte(value), &offer)
-		if err != nil {
-			onError(id, command, err)
-			continue
-		}
-		if err = peerConnection.SetLocalDescription(offer); err != nil {
-			onError(id, command, err)
-			continue
-		}
-		b, err := json.Marshal(*peerConnection.LocalDescription())
-		if err != nil {
-			onError(id, command, err)
-			continue
-		}
-		onResult(id, command, string(b)) */
+		case command == "setLocalDescription":
+			sdp := webrtc.SessionDescription{}
+			err = json.Unmarshal([]byte(value), &sdp)
+			if err != nil {
+				onError(id, command, err)
+				continue
+			}
+			/* if err = peerConnection.SetLocalDescription(sdp); err != nil {
+				onError(id, command, err)
+				continue
+			} */
+			onResult(id, command, "")
 
 		case command == "setRemoteDescription":
-			answer := webrtc.SessionDescription{}
-			err = json.Unmarshal([]byte(value), &answer)
+			sdp := webrtc.SessionDescription{}
+			err = json.Unmarshal([]byte(value), &sdp)
 			if err != nil {
 				onError(id, command, err)
 				continue
 			}
-			err = peerConnection.SetRemoteDescription(answer)
+			err = peerConnection.SetRemoteDescription(sdp)
 			if err != nil {
 				onError(id, command, err)
 				continue
 			}
-			b, err := json.Marshal(*peerConnection.RemoteDescription())
-			if err != nil {
-				onError(id, command, err)
-				continue
-			}
-			onResult(id, command, string(b))
+			onResult(id, command, "")
+
+		default:
+			onError(id, command, errors.New("command not found"))
+			continue
 		}
 	}
 }

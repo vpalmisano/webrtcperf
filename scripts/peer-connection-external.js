@@ -50,14 +50,19 @@ window.RTCPeerConnection = class {
         PeerConnections.delete(this.id)
       }
     })
+
+    this.addEventListener('iceconnectionstatechange', connectionState => {
+      log(`RTCPeerConnection iceconnectionstatechange`, connectionState)
+      this.iceConnectionState = connectionState
+    })
   }
 
-  async addTask(p) {
+  async #addTask(p) {
     this.#pendingTasks.push(p)
     return p
   }
 
-  async waitPendingTasks() {
+  async #waitPendingTasks() {
     /* log(
       `RTCPeerConnection-${this.id} waitPendingTasks ${
         this.#pendingTasks.length
@@ -74,7 +79,7 @@ window.RTCPeerConnection = class {
 
   close() {
     log(`RTCPeerConnection-${this.id} close`)
-    this.waitPendingTasks().then(
+    this.#waitPendingTasks().then(
       window.callPeerConnectionExternalMethod(this.id, 'close'),
     )
   }
@@ -95,7 +100,7 @@ window.RTCPeerConnection = class {
 
   addTransceiver(trackOrKind, init) {
     log(`RTCPeerConnection-${this.id} addTransceiver`, { trackOrKind, init })
-    this.addTask(
+    this.#addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'addTransceiver',
@@ -114,22 +119,21 @@ window.RTCPeerConnection = class {
 
   async createOffer(options) {
     log(`RTCPeerConnection-${this.id} createOffer`, JSON.stringify(options))
-    await this.waitPendingTasks()
-    const ret = await this.addTask(
+    await this.#waitPendingTasks()
+    const ret = await this.#addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'createOffer',
         JSON.stringify(options),
       ),
     )
-    this.localDescription = JSON.parse(ret)
-    return this.localDescription
+    return JSON.parse(ret)
   }
 
   async createAnswer(options) {
-    log(`RTCPeerConnection-${this.id} createAnswer`, JSON.stringify(options))
-    await this.waitPendingTasks()
-    const ret = await this.addTask(
+    log(`RTCPeerConnection-${this.id} createAnswer`, options)
+    await this.#waitPendingTasks()
+    const ret = await this.#addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'createAnswer',
@@ -137,40 +141,43 @@ window.RTCPeerConnection = class {
       ),
     )
     this.localDescription = JSON.parse(ret)
+    log(
+      `RTCPeerConnection-${this.id} createAnswer done, localDescription:`,
+      this.localDescription,
+    )
     return this.localDescription
   }
 
   async setLocalDescription(description) {
     log(
       `RTCPeerConnection-${this.id} setLocalDescription`,
-      JSON.stringify(description),
+      description,
+      'current localDescription:',
+      this.localDescription,
     )
-    await this.waitPendingTasks()
-    /* const ret = await this.addTask(
+    await this.#waitPendingTasks()
+    await this.#addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'setLocalDescription',
         JSON.stringify(description),
       ),
     )
-    this.localDescription = JSON.parse(ret)
-    return this.localDescription */
+    this.localDescription = description
   }
 
   async setRemoteDescription(description) {
-    log(
-      `RTCPeerConnection-${this.id} setRemoteDescription`,
-      JSON.stringify(description),
-    )
-    await this.waitPendingTasks()
-    const ret = await this.addTask(
+    log(`RTCPeerConnection-${this.id} setRemoteDescription`, description)
+    await this.#waitPendingTasks()
+    await this.#addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'setRemoteDescription',
         JSON.stringify(description),
       ),
     )
-    this.remoteDescription = JSON.parse(ret)
+    log(`RTCPeerConnection-${this.id} setRemoteDescription done`, description)
+    this.remoteDescription = description
 
     // Add fake transceivers.
     const sections = []
@@ -200,7 +207,7 @@ window.RTCPeerConnection = class {
 
   async addStream(mediaStream) {
     log(`RTCPeerConnection-${this.id} addStream`, mediaStream)
-    /* this.addTask(
+    /* this.#addTask(
       window.callPeerConnectionExternalMethod(
         this.id,
         'addStream',
@@ -211,6 +218,11 @@ window.RTCPeerConnection = class {
 
   async getStats() {
     log(`RTCPeerConnection-${this.id} getStats`)
+    return []
+  }
+
+  getSenders() {
+    log(`RTCPeerConnection-${this.id} getSenders`)
     return []
   }
 }
