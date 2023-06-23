@@ -1,4 +1,4 @@
-/* global log, loadScript, Tesseract */
+/* global log, loadScript, sleep, Tesseract */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -319,6 +319,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     } catch (err) {
       log(`overrideGetUserMedia error:`, err)
     }
+    if (window.PARAMS?.getUserMediaWaitTime > 0) {
+      await sleep(window.PARAMS?.getUserMediaWaitTime)
+    }
     const mediaStream = await nativeGetUserMedia(constraints, ...args)
     try {
       collectMediaTracks(mediaStream)
@@ -341,6 +344,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
   ) {
     log(`getDisplayMedia:`, constraints)
     overrideGetDisplayMedia(constraints)
+    if (window.PARAMS?.getDisplayMediaWaitTime > 0) {
+      await sleep(window.PARAMS?.getDisplayMediaWaitTime)
+    }
     const mediaStream = await nativeGetDisplayMedia(constraints, ...args)
     await applyGetDisplayMediaCrop(mediaStream)
     collectMediaTracks(mediaStream)
