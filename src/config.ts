@@ -243,6 +243,13 @@ chromium process.`,
     env: 'WINDOW_HEIGHT',
     arg: 'window-height',
   },
+  deviceScaleFactor: {
+    doc: `The browser device scale factor.`,
+    format: 'nat',
+    default: 1,
+    env: 'DEVICE_SCALE_FACTOR',
+    arg: 'device-scale-factor',
+  },
   maxVideoDecoders: {
     doc: `Specifies the maximum number of concurrent WebRTC video decoder \
 instances that can be created on the same host.

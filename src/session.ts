@@ -138,6 +138,8 @@ export type SessionParams = {
   windowWidth: number
   /** The browser height. */
   windowHeight: number
+  /** The browser device scale factor. */
+  deviceScaleFactor: number
   /**
    * If unset, the browser will run in headless mode.
    * When running on Linux, set to a valid X display variable (e.g. `:0`).
@@ -201,6 +203,7 @@ export class Session extends EventEmitter {
   private readonly chromiumFieldTrials?: string
   private readonly windowWidth: number
   private readonly windowHeight: number
+  private readonly deviceScaleFactor: number
   private readonly display: string
   /* private readonly audioRedForOpus: boolean */
   private readonly videoPath: string
@@ -318,6 +321,7 @@ export class Session extends EventEmitter {
     chromiumFieldTrials,
     windowWidth,
     windowHeight,
+    deviceScaleFactor,
     display,
     /* audioRedForOpus, */
     url,
@@ -369,6 +373,7 @@ export class Session extends EventEmitter {
     this.chromiumFieldTrials = chromiumFieldTrials || undefined
     this.windowWidth = windowWidth || 1920
     this.windowHeight = windowHeight || 1080
+    this.deviceScaleFactor = deviceScaleFactor || 1
     this.debuggingPort = debuggingPort || 0
     this.debuggingAddress = debuggingAddress || '127.0.0.1'
     this.display = display
@@ -600,7 +605,7 @@ export class Session extends EventEmitter {
           defaultViewport: {
             width: this.windowWidth,
             height: this.windowHeight,
-            deviceScaleFactor: 1,
+            deviceScaleFactor: this.deviceScaleFactor,
             isMobile: false,
             hasTouch: false,
             isLandscape: false,
@@ -646,7 +651,7 @@ export class Session extends EventEmitter {
           defaultViewport: {
             width: this.windowWidth,
             height: this.windowHeight,
-            deviceScaleFactor: 1,
+            deviceScaleFactor: this.deviceScaleFactor,
             isMobile: false,
             hasTouch: false,
             isLandscape: false,
