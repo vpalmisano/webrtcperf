@@ -1297,6 +1297,8 @@ export class Stats extends events.EventEmitter {
             body as string
           }`,
         )
+      } else {
+        log.debug(`Message pushed successfully: ${JSON.stringify(body)}`)
       }
     } catch (err) {
       log.error(`Pushgateway push error: ${(err as Error).message}`)
