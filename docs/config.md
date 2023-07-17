@@ -197,6 +197,13 @@ The browser window height.
 
 *Default*: `1080`
 
+## deviceScaleFactor
+The browser device scale factor.
+
+*Type*: `positive int`
+
+*Default*: `1`
+
 ## maxVideoDecoders
 Specifies the maximum number of concurrent WebRTC video decoder instances that can be created on the same host.
 If set it will disable the received video resolution and jitter buffer stats. This option is supported only when using the custom chromium build. The total decoders count is stored into the virtual file `/dev/shm/chromium-video-decoders`
