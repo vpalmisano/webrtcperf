@@ -1,0 +1,16 @@
+#livekit
+yarn start --sessions=1 \
+--url="http://localhost:3000/#/room" \
+--url-query='url=ws%3A%2F%2Flocalhost%3A7880&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODg4MDc2MDAsImlzcyI6ImRldmtleSIsIm5hbWUiOiJ1c2VyMiIsIm5iZiI6MTY4ODcyMTIwMCwic3ViIjoidXNlcjIiLCJ2aWRlbyI6eyJyb29tIjoibG9hZC10ZXN0Iiwicm9vbUpvaW4iOnRydWV9fQ.pzIhg2dCSFSXyaYlfGwKzZlL0DBvJGcmzRLQ48Kn2Dc&videoEnabled=1&audioEnabled=1&simulcast=1&dynacast=1&adaptiveStream=1&videoDeviceId=4b8757b64f9507870a81db740c98fdd9727f65018317997906094ba172357eef'
+
+#kurento
+yarn start \
+--url="https://localhost:8443/#" \
+--script-path=examples/kurento-one2one-direct.js \
+--prometheus-pushgateway=http://localhost:9091 \
+--prometheus-pushgateway-gzip=false \
+--show-page-log=false \
+--tabs-per-session=1 \
+--sessions=1
+
+
