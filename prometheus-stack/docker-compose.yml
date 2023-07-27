@@ -11,7 +11,7 @@ networks:
 services:
 
   prometheus:
-    image: prom/prometheus:v2.27.1
+    image: prom/prometheus:v2.46.0
     user: root
     container_name: wst_prometheus
     restart: unless-stopped
@@ -28,7 +28,7 @@ services:
     - pushgateway:pushgateway
 
   node-exporter:
-    image: prom/node-exporter:v1.1.2
+    image: prom/node-exporter:v1.6.1
     container_name: wst_node_exporter
     restart: unless-stopped
     network_mode: host
@@ -51,14 +51,14 @@ services:
     command: '--procfs /host/proc -config.path /config/config.yml'
 
   pushgateway:
-    image: prom/pushgateway:v1.4.1
+    image: prom/pushgateway:v1.6.0
     container_name: wst_pushgateway
     restart: unless-stopped
     ports:
     - 9091:9091
 
   grafana:
-    image: grafana/grafana:8.0.2
+    image: grafana/grafana:9.5.6
     user: root
     container_name: wst_grafana
     restart: unless-stopped

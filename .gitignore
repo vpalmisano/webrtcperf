@@ -12,6 +12,8 @@ yarn-error.log
 .vscode
 config.json
 prometheus-stack/data*
-webrtcperf*
+webrtcperf
+webrtcperf.exe
+webrtcperf_*.gz
 build
 _docs
