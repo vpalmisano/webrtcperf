@@ -8,7 +8,7 @@ export PATCH_FILE=${DIR}/max-video-decoders.patch
 export PATH="$PATH:${BUILDDIR}/depot_tools"
 
 function setup() {
-    sudo apt install -y gperf
+    which gperf || sudo apt install -y gperf
     # https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md
     mkdir -p ${BUILDDIR}
     cd ${BUILDDIR}
@@ -85,7 +85,7 @@ function update() {
 
 function build() {
     cd ${CHROMIUM_SRC}
-    time ionice -c3 nice -n19 autoninja -C out/Default "chrome/installer/linux:unstable_deb"
+    time ionice -c3 nice -n19 autoninja -C out/Default -j8 "chrome/installer/linux:unstable_deb"
     mv out/Default/*.deb ${DIR}
 }
 
