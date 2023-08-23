@@ -94,6 +94,13 @@ window.RTCPeerConnection = function (options) {
     handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
   })
 
+  window.dispatchEvent(
+    new CustomEvent('webrtcperf:peerconnectioncreated', {
+      bubbles: true,
+      detail: { id, pc },
+    }),
+  )
+
   return pc
 }
 
