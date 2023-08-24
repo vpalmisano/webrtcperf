@@ -408,7 +408,7 @@ export function updateRtcStats(
       )
       setStats(
         stats,
-        ('transportSentAvailableOutgoingBitrate') as RtcStatsMetricNames,
+        'transportSentAvailableOutgoingBitrate' as RtcStatsMetricNames,
         key,
         availableOutgoingBitrate,
       )
