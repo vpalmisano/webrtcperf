@@ -199,6 +199,9 @@ export enum RtcStatsMetricNames {
   screenRecvWidth = 'screenRecvWidth',
   //'screenTotalDecodeTime',
   screenTotalFreezesDuration = 'screenTotalFreezesDuration',
+
+  /** The transport availableOutgoingBitrate stat. */
+  transportSentAvailableOutgoingBitrate = 'transportSentAvailableOutgoingBitrate',
 }
 
 /**
@@ -249,7 +252,7 @@ export function updateRtcStats(
     videoSentMaxBitrate,
     isDisplay,
     codec,
-    // availableOutgoingBitrate,
+    availableOutgoingBitrate,
   } = value
   const hostName = signalingHost || remoteAddress
   const key = `${trackId}:${hostName}:${codec}`
@@ -402,6 +405,12 @@ export function updateRtcStats(
         (prefix + 'SentTransportRoundTripTime') as RtcStatsMetricNames,
         key,
         outboundRtp.transportRoundTripTime,
+      )
+      setStats(
+        stats,
+        ('transportSentAvailableOutgoingBitrate') as RtcStatsMetricNames,
+        key,
+        availableOutgoingBitrate,
       )
       if (outboundRtp.kind === 'video') {
         setStats(
