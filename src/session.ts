@@ -1040,6 +1040,14 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       },
     )
 
+    await page.exposeFunction(
+      'readLocalFile',
+      (filePath: string, encoding?: BufferEncoding) => {
+        filePath = path.resolve(process.cwd(), filePath)
+        return fs.promises.readFile(filePath, encoding)
+      },
+    )
+
     // PeerConnectionExternal
     await page.exposeFunction(
       'createPeerConnectionExternal',

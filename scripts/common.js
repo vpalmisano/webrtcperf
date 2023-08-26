@@ -114,7 +114,7 @@ window.watchObjectProperty = (object, name, cb) => {
   })
 }
 
-window.loadScript = (name, src) => {
+window.loadScript = (name, src = '', textContent = '') => {
   return new Promise((resolve, reject) => {
     let script = document.getElementById(name)
     if (script) {
@@ -123,11 +123,20 @@ window.loadScript = (name, src) => {
     }
     script = document.createElement('script')
     script.setAttribute('id', name)
-    script.setAttribute('src', src)
-    script.setAttribute('referrerpolicy', 'no-referrer')
-    script.addEventListener('load', () => script && resolve(script), false)
-    script.addEventListener('error', err => reject(err), false)
+    if (src) {
+      script.setAttribute('src', src)
+      script.setAttribute('referrerpolicy', 'no-referrer')
+      script.addEventListener('load', () => script && resolve(script), false)
+      script.addEventListener('error', err => reject(err), false)
+    } else if (textContent) {
+      script.textContent = textContent
+    } else {
+      reject(new Error('src or textContent must be provided'))
+    }
     document.head.appendChild(script)
+    if (textContent) {
+      resolve(script)
+    }
   })
 }
 
