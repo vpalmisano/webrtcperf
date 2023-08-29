@@ -322,7 +322,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     if (window.PARAMS?.getUserMediaWaitTime > 0) {
       await sleep(window.PARAMS?.getUserMediaWaitTime)
     }
-    const mediaStream = await nativeGetUserMedia(constraints, ...args)
+    let mediaStream = await nativeGetUserMedia(constraints, ...args)
+    if (window.overrideGetUserMediaStream !== undefined) {
+      try {
+        mediaStream = window.overrideGetUserMediaStream(mediaStream)
+      } catch (err) {
+        log(`overrideGetUserMediaStream error:`, err)
+      }
+    }
     try {
       collectMediaTracks(mediaStream)
     } catch (err) {
