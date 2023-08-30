@@ -23,7 +23,7 @@
     "webrtcperf": "app.min.js"
   },
   "scripts": {
-    "prepare": "yarn lint && tsc -b && webpack",
+    "prepare": "yarn lint && tsc -b && webpack && cd peer-connection-external && go build",
     "prepublishOnly": "yarn lint",
     "postversion": "git push && git push origin $(git tag | sort -V | tail -1)",
     "release": "yarn && yarn docs && npm version patch && npm publish",
