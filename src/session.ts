@@ -1086,8 +1086,8 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     // Simulate keypress
     await page.exposeFunction(
       'keypressText',
-      async (selector: string, text: string) => {
-        await page.type(selector, text)
+      async (selector: string, text: string, delay = 20) => {
+        await page.type(selector, text, { delay })
       },
     )
 
