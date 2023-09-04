@@ -12,7 +12,6 @@ RUN \
         bash \
         ffmpeg \
         curl \
-        awscli \
         xvfb \
         unzip \
         procps \
