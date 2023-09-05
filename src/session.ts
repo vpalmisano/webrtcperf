@@ -16,6 +16,7 @@ import puppeteer, {
   ElementHandle,
   HTTPRequest,
   JSHandle,
+  Metrics,
   Page,
 } from 'puppeteer-core'
 import { addExtra } from 'puppeteer-extra'
@@ -94,6 +95,15 @@ const describeJsHandle = async (jsHandle: JSHandle): Promise<string> => {
     log.debug(`describeJsHandle ${jsHandle} error: ${(err as Error).message}`)
   }
   return ''
+}
+
+const metricsTotalDuration = (metrics: Metrics): number => {
+  return (
+    (metrics.LayoutDuration || 0) +
+    (metrics.RecalcStyleCount || 0) +
+    (metrics.ScriptDuration || 0) +
+    (metrics.TaskDuration || 0)
+  )
 }
 
 declare global {
@@ -306,6 +316,8 @@ export class Session extends EventEmitter {
   stats: SessionStats = {}
   /** The browser opened pages. */
   readonly pages = new Map<number, Page>()
+  /** The browser opened pages metrics. */
+  readonly pagesMetrics = new Map<number, Metrics>()
   /** The page warnings count. */
   pageWarnings = 0
   /** The page errors count. */
@@ -888,16 +900,6 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       }
     }
 
-    /* page.once('domcontentloaded', async () => {
-      log.debug(`Page ${index + 1} domcontentloaded`)
-
-      // enable perf
-      // https://chromedevtools.github.io/devtools-protocol/tot/Cast/
-      page._CDP_client = await page.target().createCDPSession();
-      await page._CDP_client.send('Performance.enable',
-          {timeDomain: 'timeTicks'});
-    }) */
-
     page.on('dialog', async dialog => {
       log.info(`page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`)
       await dialog.dismiss()
@@ -906,6 +908,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     page.on('close', () => {
       log.info(`page ${index + 1} closed`)
       this.pages.delete(index)
+      this.pagesMetrics.delete(index)
 
       if (this.browser && this.running) {
         setTimeout(() => this.openPage(index), 1000)
@@ -1271,6 +1274,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
 
     // add to pages map
     this.pages.set(index, page)
+    this.pagesMetrics.set(index, await page.metrics())
 
     log.debug(`Page ${index + 1} "${url}" loaded`)
 
@@ -1385,11 +1389,14 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvBitrateStats: Record<string, number> = {}
     const httpRecvLatencyStats: Record<string, number> = {}
+    const pageCpu: Record<string, number> = {}
+    const pageMemory: Record<string, number> = {}
 
     const customStats: Record<string, Record<string, number | string>> = {}
 
     for (const [pageIndex, page] of this.pages.entries()) {
       try {
+        // Collect stats from page.
         const { peerConnectionStats, videoEndToEndStats, httpResourcesStats } =
           await page.evaluate(async () => ({
             peerConnectionStats: await collectPeerConnectionStats(),
@@ -1413,7 +1420,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         const { stats, activePeerConnections, signalingHost } =
           peerConnectionStats
 
-        // Set pages count.
+        // Calculate stats keys.
         const hostKey = rtcStatKey({ hostName: signalingHost, participantName })
         const pageKey = rtcStatKey({
           pageIndex,
@@ -1493,6 +1500,20 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
             }`,
           )
         }
+
+        // Collect page metrics
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const metrics = await page.metrics()
+        const lastMetrics = this.pagesMetrics.get(pageIndex)
+        if (metrics.Timestamp && lastMetrics?.Timestamp) {
+          const elapsedTime = metrics.Timestamp - lastMetrics.Timestamp
+          const durationDiff =
+            metricsTotalDuration(metrics) - metricsTotalDuration(lastMetrics)
+          const usage = (100 * durationDiff) / elapsedTime
+          pageCpu[pageKey] = usage
+          pageMemory[pageKey] = (metrics.JSHeapUsedSize || 0) / 1e6
+        }
+        this.pagesMetrics.set(pageIndex, metrics)
       } catch (err) {
         log.error(`collectPeerConnectionStats error: ${(err as Error).message}`)
       }
@@ -1506,30 +1527,14 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvBitrate = httpRecvBitrateStats
     collectedStats.httpRecvLatency = httpRecvLatencyStats
+    collectedStats.pageCpu = pageCpu
+    collectedStats.pageMemory = pageMemory
 
     Object.assign(collectedStats, customStats)
 
     if (pages.size < this.pages.size) {
       log.warn(`updateStats collected pages ${pages.size} < ${this.pages.size}`)
     }
-
-    // Page perf metrics.
-    /* for (const [index, page] of this.pages.entries()) {
-      if (!page._CDP_client) {
-        continue;
-      }
-      const metrics = await page._CDP_client.send('Performance.getMetrics');
-      const pageMetrics = {};
-      for (const m of metrics.metrics) {
-        if (['LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration',
-          'V8CompileDuration', 'TaskDuration',
-          'TaskOtherDuration', 'ThreadTime', 'ProcessTime',
-          'JSHeapUsedSize', 'JSHeapTotalSize'].includes(m.name)) {
-          pageMetrics[m.name] = m.value;
-        }
-      }
-      log.info(`page-${index}:`, pageMetrics);
-    } */
 
     this.stats = collectedStats
     return this.stats
@@ -1575,6 +1580,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         }
       }
       this.pages.clear()
+      this.pagesMetrics.clear()
       this.browser = undefined
     }
 

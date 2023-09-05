@@ -802,7 +802,7 @@ export class Stats extends events.EventEmitter {
           if (obj === undefined) {
             return
           }
-          log.log(name, obj)
+          //log.log(name, obj)
           const collectedStats = this.collectedStats[name]
           if (typeof obj === 'number' && isFinite(obj)) {
             collectedStats.all.push(obj)

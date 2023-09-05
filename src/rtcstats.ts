@@ -4,9 +4,9 @@ import assert from 'assert'
  * Page stats metric names.
  */
 export enum PageStatsNames {
-  /** The browser page CPU usage. */
+  /** The browser processes CPU usage (per page). */
   cpu = 'cpu',
-  /** The browser page memory usage. */
+  /** The browser processes memory usage (per page). */
   memory = 'memory',
   /** The tool nodejs CPU usage. */
   nodeCpu = 'nodeCpu',
@@ -18,6 +18,10 @@ export enum PageStatsNames {
   usedMemory = 'usedMemory',
   /** The system total GPU usage. */
   usedGpu = 'usedGpu',
+  /** The page CPU usage calculated as the sum of Layout, RecalcStyle, Script and Task durations. */
+  pageCpu = 'pageCpu',
+  /** The page memory usage (JSHeapUsedSize). */
+  pageMemory = 'pageMemory',
 
   /** The opened pages count. */
   pages = 'pages',
