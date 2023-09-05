@@ -334,7 +334,7 @@ export class Stats extends events.EventEmitter {
   readonly rtcStatsTimeout: number
   readonly customMetrics: Record<string, { labels?: string[] }> = {}
   readonly startTimestamp: number
-  readonly enableParticipantStats: boolean
+  readonly enableDetailedStats: boolean
   private readonly startTimestampString: string
 
   sessions = new Map<number, Session>()
@@ -432,7 +432,7 @@ export class Stats extends events.EventEmitter {
     serverSecret,
     startSessionId,
     startTimestamp,
-    enableParticipantStats,
+    enableDetailedStats,
   }: {
     statsPath: string
     prometheusPushgateway: string
@@ -452,7 +452,7 @@ export class Stats extends events.EventEmitter {
     serverSecret: string
     startSessionId: number
     startTimestamp: number
-    enableParticipantStats: boolean
+    enableDetailedStats: boolean
   }) {
     super()
     this.statsPath = statsPath
@@ -490,7 +490,7 @@ export class Stats extends events.EventEmitter {
     this.nextSessionId = startSessionId
     this.startTimestamp = startTimestamp
     this.startTimestampString = new Date(this.startTimestamp).toISOString()
-    this.enableParticipantStats = enableParticipantStats
+    this.enableDetailedStats = enableDetailedStats
 
     this.statsWriter = null
     if (alertRules.trim()) {
@@ -703,7 +703,7 @@ export class Stats extends events.EventEmitter {
           alertRules: {},
         }
 
-        if (this.enableParticipantStats) {
+        if (this.enableDetailedStats) {
           this.metrics[name].value = promCreateGauge(register, name, '', [
             'participantName',
             'trackId',
@@ -820,7 +820,7 @@ export class Stats extends events.EventEmitter {
                 }
                 stats.push(value as number)
                 // Push participant and track values.
-                if (this.enableParticipantStats && participantName) {
+                if (this.enableDetailedStats && participantName) {
                   collectedStats.byParticipantAndTrack[
                     `${participantName}:${trackId || ''}`
                   ] = value as number

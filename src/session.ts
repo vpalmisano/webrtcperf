@@ -1502,7 +1502,6 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         }
 
         // Collect page metrics
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const metrics = await page.metrics()
         const lastMetrics = this.pagesMetrics.get(pageIndex)
         if (metrics.Timestamp && lastMetrics?.Timestamp) {
