@@ -47,7 +47,7 @@ require('puppeteer-extra-plugin-user-data-dir')
 require('puppeteer-extra-plugin-user-preferences')
 //
 
-import { RtcStats, updateRtcStats } from './rtcstats'
+import { rtcStatKey, RtcStats, updateRtcStats } from './rtcstats'
 import {
   checkChromiumExecutable,
   downloadUrl,
@@ -112,6 +112,7 @@ declare global {
     recvLatency: number
   }
   let collectCustomMetrics: () => Promise<Record<string, number | string>>
+  let getParticipantName: () => string
 }
 
 const PageLogColors = {
@@ -1344,12 +1345,12 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       return this.stats
     }
 
-    const collectedcStats: SessionStats = {}
+    const collectedStats: SessionStats = {}
 
     try {
       const processStats = await getProcessStats()
-      collectedcStats.nodeCpu = processStats.cpu
-      collectedcStats.nodeMemory = processStats.memory
+      collectedStats.nodeCpu = processStats.cpu
+      collectedStats.nodeMemory = processStats.memory
     } catch (err) {
       log.error(`node getProcessStats error: ${(err as Error).message}`)
     }
@@ -1357,9 +1358,9 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     try {
       const systemStats = getSystemStats()
       if (systemStats) {
-        collectedcStats.usedCpu = systemStats.usedCpu
-        collectedcStats.usedMemory = systemStats.usedMemory
-        collectedcStats.usedGpu = systemStats.usedGpu
+        collectedStats.usedCpu = systemStats.usedCpu
+        collectedStats.usedMemory = systemStats.usedMemory
+        collectedStats.usedGpu = systemStats.usedGpu
       }
     } catch (err) {
       log.error(`node getSystemStats error: ${(err as Error).message}`)
@@ -1371,7 +1372,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         const processStats = await getProcessStats(browserProcess.pid, true)
         processStats.cpu /= this.tabsPerSession
         processStats.memory /= this.tabsPerSession
-        Object.assign(collectedcStats, processStats)
+        Object.assign(collectedStats, processStats)
       } catch (err) {
         log.error(`getProcessStats error: ${(err as Error).message}`)
       }
@@ -1395,6 +1396,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
             videoEndToEndStats: collectVideoEndToEndDelayStats(),
             httpResourcesStats: collectHttpResourcesStats(),
           }))
+        const participantName = await page.evaluate(() => getParticipantName())
 
         // Get host from the first collected remote address.
         if (
@@ -1412,9 +1414,12 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
           peerConnectionStats
 
         // Set pages count.
-        // N.B. The `:<host>` key will be indexed.
-        const hostKey = `:${signalingHost || 'unknown'}`
-        const pageHostKey = `${pageIndex}:${signalingHost}`
+        const hostKey = rtcStatKey({ hostName: signalingHost, participantName })
+        const pageKey = rtcStatKey({
+          pageIndex,
+          hostName: signalingHost,
+          participantName,
+        })
 
         // Set pages counter.
         if (!pages[hostKey]) {
@@ -1432,26 +1437,27 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         if (videoEndToEndStats) {
           const { videoEndToEndDelay, videoEndToEndNetworkDelay } =
             videoEndToEndStats
-          videoEndToEndDelayStats[pageHostKey] = videoEndToEndDelay
-          videoEndToEndNetworkDelayStats[pageHostKey] =
-            videoEndToEndNetworkDelay
+          videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
+          videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
         }
 
         // HTTP stats.
-        httpRecvBytesStats[pageHostKey] = httpResourcesStats.recvBytes
-        httpRecvBitrateStats[pageHostKey] = httpResourcesStats.recvBitrate
-        httpRecvLatencyStats[pageHostKey] = httpResourcesStats.recvLatency
+        httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
+        httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
+        httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
 
         // Collect RTC stats.
         for (const s of stats) {
           for (const [trackId, value] of Object.entries(s)) {
             try {
               updateRtcStats(
-                collectedcStats as RtcStats,
-                `${pageIndex}-${trackId}`,
+                collectedStats as RtcStats,
+                pageIndex,
+                trackId,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 value,
                 signalingHost,
+                participantName,
               )
             } catch (err) {
               log.error(
@@ -1477,7 +1483,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
               if (!customStats[name]) {
                 customStats[name] = {}
               }
-              customStats[name][pageHostKey] = value
+              customStats[name][pageKey] = value
             }
           }
         } catch (err) {
@@ -1491,17 +1497,17 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         log.error(`collectPeerConnectionStats error: ${(err as Error).message}`)
       }
     }
-    collectedcStats.pages = pages
-    collectedcStats.errors = this.pageErrors
-    collectedcStats.warnings = this.pageWarnings
-    collectedcStats.peerConnections = peerConnections
-    collectedcStats.videoEndToEndDelay = videoEndToEndDelayStats
-    collectedcStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
-    collectedcStats.httpRecvBytes = httpRecvBytesStats
-    collectedcStats.httpRecvBitrate = httpRecvBitrateStats
-    collectedcStats.httpRecvLatency = httpRecvLatencyStats
+    collectedStats.pages = pages
+    collectedStats.errors = this.pageErrors
+    collectedStats.warnings = this.pageWarnings
+    collectedStats.peerConnections = peerConnections
+    collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
+    collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
+    collectedStats.httpRecvBytes = httpRecvBytesStats
+    collectedStats.httpRecvBitrate = httpRecvBitrateStats
+    collectedStats.httpRecvLatency = httpRecvLatencyStats
 
-    Object.assign(collectedcStats, customStats)
+    Object.assign(collectedStats, customStats)
 
     if (pages.size < this.pages.size) {
       log.warn(`updateStats collected pages ${pages.size} < ${this.pages.size}`)
@@ -1525,7 +1531,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       log.info(`page-${index}:`, pageMetrics);
     } */
 
-    this.stats = collectedcStats
+    this.stats = collectedStats
     return this.stats
   }
 

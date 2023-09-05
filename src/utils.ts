@@ -734,9 +734,7 @@ export class Scheduler {
         }
       } catch (err) {
         log.error(
-          `[${this.name}-scheduler] callback error: ${
-            (err as Error).message
-          } %j`,
+          `[${this.name}-scheduler] callback error: ${(err as Error).message}`,
           err,
         )
       } finally {

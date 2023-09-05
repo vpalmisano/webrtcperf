@@ -12,7 +12,7 @@ import * as promClient from 'prom-client'
 import { sprintf } from 'sprintf-js'
 import * as zlib from 'zlib'
 
-import { PageStatsNames, RtcStatsMetricNames } from './rtcstats'
+import { PageStatsNames, parseRtStatKey, RtcStatsMetricNames } from './rtcstats'
 import { Session } from './session'
 import { hideAuth, logger, Scheduler } from './utils'
 
@@ -113,7 +113,16 @@ type StatsDataKey = keyof StatsData
 
 type CollectedStats = {
   all: FastStats
-  [host: string]: FastStats
+  byHost: Record<string, FastStats>
+  byCodec: Record<string, FastStats>
+  byParticipantAndTrack: Record<string, number>
+}
+
+type CollectedStatsRaw = {
+  all: number[]
+  byHost: Record<string, number[]>
+  byCodec: Record<string, number[]>
+  byParticipantAndTrack: Record<string, number>
 }
 
 /**
@@ -325,6 +334,7 @@ export class Stats extends events.EventEmitter {
   readonly rtcStatsTimeout: number
   readonly customMetrics: Record<string, { labels?: string[] }> = {}
   readonly startTimestamp: number
+  readonly enableParticipantStats: boolean
   private readonly startTimestampString: string
 
   sessions = new Map<number, Session>()
@@ -371,6 +381,7 @@ export class Stats extends events.EventEmitter {
       p95: promClient.Gauge<string>
       min: promClient.Gauge<string>
       max: promClient.Gauge<string>
+      value?: promClient.Gauge<string>
       alertRules: {
         [name: string]: {
           report: promClient.Gauge<string>
@@ -421,6 +432,7 @@ export class Stats extends events.EventEmitter {
     serverSecret,
     startSessionId,
     startTimestamp,
+    enableParticipantStats,
   }: {
     statsPath: string
     prometheusPushgateway: string
@@ -440,6 +452,7 @@ export class Stats extends events.EventEmitter {
     serverSecret: string
     startSessionId: number
     startTimestamp: number
+    enableParticipantStats: boolean
   }) {
     super()
     this.statsPath = statsPath
@@ -466,6 +479,9 @@ export class Stats extends events.EventEmitter {
     this.collectedStats = this.statsNames.reduce((prev, name: string) => {
       prev[name] = {
         all: new FastStats(),
+        byHost: {},
+        byCodec: {},
+        byParticipantAndTrack: {},
       } as CollectedStats
       return prev
     }, {} as Record<string, CollectedStats>)
@@ -474,6 +490,8 @@ export class Stats extends events.EventEmitter {
     this.nextSessionId = startSessionId
     this.startTimestamp = startTimestamp
     this.startTimestampString = new Date(this.startTimestamp).toISOString()
+    this.enableParticipantStats = enableParticipantStats
+
     this.statsWriter = null
     if (alertRules.trim()) {
       this.alertRules = json5.parse(alertRules)
@@ -685,6 +703,14 @@ export class Stats extends events.EventEmitter {
           alertRules: {},
         }
 
+        if (this.enableParticipantStats) {
+          this.metrics[name].value = promCreateGauge(register, name, '', [
+            'participantName',
+            'trackId',
+            'datetime',
+          ])
+        }
+
         if (this.alertRules && this.alertRules[name]) {
           const rule = this.alertRules[name]
           for (const ruleKey of Object.keys(rule)) {
@@ -759,9 +785,12 @@ export class Stats extends events.EventEmitter {
     // Prepare config.
     this.collectedStatsConfig.pages = 0
     this.collectedStatsConfig.startTime = this.startTimestamp
-    // Prepare collectedStats object.
+    // Reset collectedStats object.
     Object.values(this.collectedStats).forEach(stats => {
-      Object.values(stats).forEach(s => s.reset())
+      stats.all.reset()
+      Object.values(stats.byHost).forEach(s => s.reset())
+      Object.values(stats.byCodec).forEach(s => s.reset())
+      stats.byParticipantAndTrack = {}
     })
     for (const session of this.sessions.values()) {
       try {
@@ -773,39 +802,43 @@ export class Stats extends events.EventEmitter {
           if (obj === undefined) {
             return
           }
-          /* const metricHist = this.metrics[name].hist; */
+          log.log(name, obj)
+          const collectedStats = this.collectedStats[name]
           if (typeof obj === 'number' && isFinite(obj)) {
-            this.collectedStats[name].all.push(obj)
-            /* if (metricHist) {
-              metricHist.observe(obj);
-            } */
+            collectedStats.all.push(obj)
           } else {
             for (const [key, value] of Object.entries(obj)) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               if (typeof value === 'number' && isFinite(value as any)) {
-                this.collectedStats[name].all.push(value as number)
-                // Push host variables.
-                const label = `host:${key.split(':')[1]}`
-                if (!this.collectedStats[name][label]) {
-                  this.collectedStats[name][label] = new FastStats()
+                collectedStats.all.push(value as number)
+                // Push host label.
+                const { trackId, hostName, participantName } =
+                  parseRtStatKey(key)
+                let stats = collectedStats.byHost[hostName]
+                if (!stats) {
+                  stats = collectedStats.byHost[hostName] = new FastStats()
                 }
-                this.collectedStats[name][label].push(value as number)
-                /* if (metricHist) {
-                  metricHist.observe(value);
-                } */
+                stats.push(value as number)
+                // Push participant and track values.
+                if (this.enableParticipantStats && participantName) {
+                  collectedStats.byParticipantAndTrack[
+                    `${participantName}:${trackId || ''}`
+                  ] = value as number
+                }
               } else if (typeof value === 'string') {
-                this.collectedStats[name].all.push(1)
-                const label = `codec:${value}`
-                if (!this.collectedStats[name][label]) {
-                  this.collectedStats[name][label] = new FastStats()
+                // Codec stats.
+                collectedStats.all.push(1)
+                let stats = collectedStats.byCodec[value]
+                if (!stats) {
+                  stats = collectedStats.byCodec[value] = new FastStats()
                 }
-                this.collectedStats[name][label].push(1)
+                stats.push(1)
               }
             }
           }
         }
       } catch (err) {
-        log.error(`session getStats error: ${(err as Error).message}`)
+        log.error(`session getStats error: ${(err as Error).message}`, err)
       }
     }
     // Add external collected stats.
@@ -826,37 +859,56 @@ export class Stats extends events.EventEmitter {
       }
       // Add metrics.
       this.statsNames.forEach(name => {
-        const stats = externalStats[name]
+        const stats = externalStats[name] as CollectedStatsRaw
         if (!stats) {
           return
         }
-        for (const [label, values] of Object.entries(stats)) {
-          // all hosts label
-          this.collectedStats[name].all.push(values as number[])
-          // host label
-          if (label !== 'all') {
-            if (!this.collectedStats[name][label]) {
-              this.collectedStats[name][label] = new FastStats()
-            }
-            this.collectedStats[name][label].push(values as number[])
+        const collectedStats = this.collectedStats[name]
+        collectedStats.all.push(stats.all)
+        Object.entries(stats.byHost).forEach(([host, values]) => {
+          if (!collectedStats.byHost[host]) {
+            collectedStats.byHost[host] = new FastStats()
           }
-        }
+          collectedStats.byHost[host].push(values)
+        })
+        Object.entries(stats.byCodec).forEach(([codec, values]) => {
+          if (!collectedStats.byCodec[codec]) {
+            collectedStats.byCodec[codec] = new FastStats()
+          }
+          collectedStats.byCodec[codec].push(values)
+        })
+        Object.entries(stats.byParticipantAndTrack).forEach(
+          ([label, value]) => {
+            collectedStats.byParticipantAndTrack[label] = value
+          },
+        )
       })
     }
     this.emit('stats', this.collectedStats)
     // Push to an external instance.
     if (this.pushStatsInstance) {
-      const pushStats: Record<string, { [name: string]: number[] }> = {}
+      const pushStats: Record<string, CollectedStatsRaw> = {}
       for (const [name, stats] of Object.entries(this.collectedStats)) {
-        pushStats[name] = {}
-        const hostFound = Object.keys(stats).length > 1
-        for (const [label, stat] of Object.entries(stats)) {
-          // Push hosts stats or "all" if no other labels are present.
-          if (!hostFound || label !== 'all') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pushStats[name][label] = (stat as any).data
-          }
+        pushStats[name] = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          all: (stats.all as any).data,
+          byHost: {},
+          byCodec: {},
+          byParticipantAndTrack: {},
         }
+        Object.entries(stats.byHost).forEach(([host, stat]) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          pushStats[name].byHost[host] = (stat as any).data
+        })
+        Object.entries(stats.byCodec).forEach(([codec, stat]) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          pushStats[name].byCodec[codec] = (stat as any).data
+        })
+        Object.entries(stats.byParticipantAndTrack).forEach(
+          ([label, value]) => {
+            pushStats[name].byParticipantAndTrack[label] = value
+          },
+        )
       }
       try {
         const res = await this.pushStatsInstance.put('/collected-stats', {
@@ -1169,14 +1221,12 @@ export class Stats extends events.EventEmitter {
       if (!this.collectedStats[name]) {
         return
       }
-      Object.entries(this.collectedStats[name]).forEach(([label, stats]) => {
-        let host = 'all'
-        let codec = 'all'
-        if (label.startsWith('host:')) {
-          host = label.replace('host:', '')
-        } else if (label.startsWith('codec:')) {
-          codec = label.replace('codec:', '')
-        }
+
+      const setStats = (
+        stats: FastStats,
+        host: string,
+        codec: string,
+      ): void => {
         const { length, sum, mean, stddev, p5, p95, min, max } = formatStats(
           stats,
         ) as StatsData
@@ -1188,7 +1238,28 @@ export class Stats extends events.EventEmitter {
         metric.p95.set({ host, codec, datetime }, p95)
         metric.min.set({ host, codec, datetime }, min)
         metric.max.set({ host, codec, datetime }, max)
-      })
+      }
+
+      setStats(this.collectedStats[name].all, 'all', 'all')
+      Object.entries(this.collectedStats[name].byHost).forEach(
+        ([host, stats]) => {
+          setStats(stats, host, 'all')
+        },
+      )
+      Object.entries(this.collectedStats[name].byCodec).forEach(
+        ([codec, stats]) => {
+          setStats(stats, 'all', codec)
+        },
+      )
+      if (metric.value) {
+        Object.entries(this.collectedStats[name].byParticipantAndTrack).forEach(
+          ([label, value]) => {
+            const [participantName, trackId] = label.split(':', 2)
+            metric.value?.set({ participantName, trackId, datetime }, value)
+          },
+        )
+      }
+
       // Set alerts metrics.
       if (this.alertRules && this.alertRules[name]) {
         const rule = this.alertRules[name]
