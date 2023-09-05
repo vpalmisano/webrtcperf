@@ -1274,7 +1274,6 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
 
     // add to pages map
     this.pages.set(index, page)
-    this.pagesMetrics.set(index, await page.metrics())
 
     log.debug(`Page ${index + 1} "${url}" loaded`)
 
