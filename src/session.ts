@@ -1502,16 +1502,23 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
 
         // Collect page metrics
         const metrics = await page.metrics()
-        const lastMetrics = this.pagesMetrics.get(pageIndex)
-        if (metrics.Timestamp && lastMetrics?.Timestamp) {
-          const elapsedTime = metrics.Timestamp - lastMetrics.Timestamp
-          const durationDiff =
-            metricsTotalDuration(metrics) - metricsTotalDuration(lastMetrics)
-          const usage = (100 * durationDiff) / elapsedTime
-          pageCpu[pageKey] = usage
-          pageMemory[pageKey] = (metrics.JSHeapUsedSize || 0) / 1e6
+        if (metrics.Timestamp) {
+          const lastMetrics = this.pagesMetrics.get(pageIndex)
+          if (lastMetrics?.Timestamp) {
+            const elapsedTime = metrics.Timestamp - lastMetrics.Timestamp
+            if (elapsedTime > 1000) {
+              const durationDiff =
+                metricsTotalDuration(metrics) -
+                metricsTotalDuration(lastMetrics)
+              const usage = (100 * durationDiff) / elapsedTime
+              pageCpu[pageKey] = usage
+              pageMemory[pageKey] = (metrics.JSHeapUsedSize || 0) / 1e6
+              this.pagesMetrics.set(pageIndex, metrics)
+            }
+          } else {
+            this.pagesMetrics.set(pageIndex, metrics)
+          }
         }
-        this.pagesMetrics.set(pageIndex, metrics)
       } catch (err) {
         log.error(`collectPeerConnectionStats error: ${(err as Error).message}`)
       }
