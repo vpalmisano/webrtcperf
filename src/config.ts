@@ -321,6 +321,13 @@ calculated using \`Date.now()\``,
     env: 'START_TIMESTAMP',
     arg: 'start-timestamp',
   },
+  enableDetailedStats: {
+    doc: `If \`true\`, each individual participant stats values will be reported.`,
+    format: 'Boolean',
+    default: false,
+    env: 'ENABLE_DETAILED_STATS',
+    arg: 'enable-detailed-stats',
+  },
   spawnRate: {
     doc: `The pages spawn rate (pages/s).`,
     format: 'float',

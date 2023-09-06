@@ -4,9 +4,9 @@ import assert from 'assert'
  * Page stats metric names.
  */
 export enum PageStatsNames {
-  /** The browser page CPU usage. */
+  /** The browser processes CPU usage (per page). */
   cpu = 'cpu',
-  /** The browser page memory usage. */
+  /** The browser processes memory usage (per page). */
   memory = 'memory',
   /** The tool nodejs CPU usage. */
   nodeCpu = 'nodeCpu',
@@ -18,6 +18,10 @@ export enum PageStatsNames {
   usedMemory = 'usedMemory',
   /** The system total GPU usage. */
   usedGpu = 'usedGpu',
+  /** The page CPU usage calculated as the sum of Layout, RecalcStyle, Script and Task durations. */
+  pageCpu = 'pageCpu',
+  /** The page memory usage (JSHeapUsedSize). */
+  pageMemory = 'pageMemory',
 
   /** The opened pages count. */
   pages = 'pages',
@@ -233,15 +237,59 @@ function setStats(
   stats[name][key] = value
 }
 
+export function rtcStatKey({
+  pageIndex,
+  trackId,
+  hostName,
+  codec,
+  participantName,
+}: {
+  pageIndex?: number
+  trackId?: string
+  hostName?: string
+  codec?: string
+  participantName?: string
+}): string {
+  return [
+    pageIndex ?? '',
+    participantName || '',
+    hostName || 'unknown',
+    codec || '',
+    trackId || '',
+  ].join(':')
+}
+
+export function parseRtStatKey(key: string): {
+  pageIndex?: number
+  trackId?: string
+  hostName: string
+  codec?: string
+  participantName?: string
+} {
+  const [pageIndex, participantName, hostName, codec, trackId] = key.split(
+    ':',
+    5,
+  )
+  return {
+    pageIndex: pageIndex ? parseInt(pageIndex) : undefined,
+    trackId: trackId || undefined,
+    hostName: hostName || 'unknown',
+    codec: codec || undefined,
+    participantName: participantName || undefined,
+  }
+}
+
 /**
  * Updates the {@link RtcStats} object with the collected track values.
  */
 export function updateRtcStats(
   stats: RtcStats,
+  pageIndex: number,
   trackId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any,
-  signalingHost: string | null = null,
+  signalingHost?: string,
+  participantName?: string,
 ): void {
   const {
     enabled,
@@ -255,7 +303,13 @@ export function updateRtcStats(
     availableOutgoingBitrate,
   } = value
   const hostName = signalingHost || remoteAddress
-  const key = `${trackId}:${hostName}:${codec}`
+  const key = rtcStatKey({
+    pageIndex,
+    trackId,
+    hostName,
+    codec,
+    participantName,
+  })
   //log.log(`updateRtcStats`, {enabled, signalingHost, remoteAddress, isDisplay, key})
   // inbound
   if (inboundRtp) {

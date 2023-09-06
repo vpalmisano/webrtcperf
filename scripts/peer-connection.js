@@ -4,6 +4,8 @@ const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
+let peerConnectionNextId = 0
+
 window.RTCPeerConnection = function (options) {
   //log(`RTCPeerConnection`, options)
 
@@ -12,10 +14,7 @@ window.RTCPeerConnection = function (options) {
     encodedInsertableStreams: timestampInsertableStreams,
   })
 
-  let id = Math.round(Math.random() * 1e8)
-  while (PeerConnections.has(id)) {
-    id = Math.round(Math.random() * 1e8)
-  }
+  const id = peerConnectionNextId++
   PeerConnections.set(id, pc)
 
   pc.addEventListener('connectionstatechange', () => {

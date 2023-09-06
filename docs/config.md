@@ -263,6 +263,13 @@ The start timestamp (in milliseconds). If 0, the value will be calculated using 
 
 *Default*: `0`
 
+## enableDetailedStats
+If `true`, each individual participant stats values will be reported.
+
+*Type*: `boolean`
+
+*Default*: `false`
+
 ## spawnRate
 The pages spawn rate (pages/s).
 

@@ -16,6 +16,7 @@ import puppeteer, {
   ElementHandle,
   HTTPRequest,
   JSHandle,
+  Metrics,
   Page,
 } from 'puppeteer-core'
 import { addExtra } from 'puppeteer-extra'
@@ -47,7 +48,7 @@ require('puppeteer-extra-plugin-user-data-dir')
 require('puppeteer-extra-plugin-user-preferences')
 //
 
-import { RtcStats, updateRtcStats } from './rtcstats'
+import { rtcStatKey, RtcStats, updateRtcStats } from './rtcstats'
 import {
   checkChromiumExecutable,
   downloadUrl,
@@ -96,6 +97,15 @@ const describeJsHandle = async (jsHandle: JSHandle): Promise<string> => {
   return ''
 }
 
+const metricsTotalDuration = (metrics: Metrics): number => {
+  return (
+    (metrics.LayoutDuration || 0) +
+    (metrics.RecalcStyleCount || 0) +
+    (metrics.ScriptDuration || 0) +
+    (metrics.TaskDuration || 0)
+  )
+}
+
 declare global {
   let collectPeerConnectionStats: () => Promise<{
     stats: RtcStats[]
@@ -112,6 +122,7 @@ declare global {
     recvLatency: number
   }
   let collectCustomMetrics: () => Promise<Record<string, number | string>>
+  let getParticipantName: () => string
 }
 
 const PageLogColors = {
@@ -305,6 +316,8 @@ export class Session extends EventEmitter {
   stats: SessionStats = {}
   /** The browser opened pages. */
   readonly pages = new Map<number, Page>()
+  /** The browser opened pages metrics. */
+  readonly pagesMetrics = new Map<number, Metrics>()
   /** The page warnings count. */
   pageWarnings = 0
   /** The page errors count. */
@@ -887,16 +900,6 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       }
     }
 
-    /* page.once('domcontentloaded', async () => {
-      log.debug(`Page ${index + 1} domcontentloaded`)
-
-      // enable perf
-      // https://chromedevtools.github.io/devtools-protocol/tot/Cast/
-      page._CDP_client = await page.target().createCDPSession();
-      await page._CDP_client.send('Performance.enable',
-          {timeDomain: 'timeTicks'});
-    }) */
-
     page.on('dialog', async dialog => {
       log.info(`page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`)
       await dialog.dismiss()
@@ -905,6 +908,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     page.on('close', () => {
       log.info(`page ${index + 1} closed`)
       this.pages.delete(index)
+      this.pagesMetrics.delete(index)
 
       if (this.browser && this.running) {
         setTimeout(() => this.openPage(index), 1000)
@@ -1344,12 +1348,12 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       return this.stats
     }
 
-    const collectedcStats: SessionStats = {}
+    const collectedStats: SessionStats = {}
 
     try {
       const processStats = await getProcessStats()
-      collectedcStats.nodeCpu = processStats.cpu
-      collectedcStats.nodeMemory = processStats.memory
+      collectedStats.nodeCpu = processStats.cpu
+      collectedStats.nodeMemory = processStats.memory
     } catch (err) {
       log.error(`node getProcessStats error: ${(err as Error).message}`)
     }
@@ -1357,9 +1361,9 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     try {
       const systemStats = getSystemStats()
       if (systemStats) {
-        collectedcStats.usedCpu = systemStats.usedCpu
-        collectedcStats.usedMemory = systemStats.usedMemory
-        collectedcStats.usedGpu = systemStats.usedGpu
+        collectedStats.usedCpu = systemStats.usedCpu
+        collectedStats.usedMemory = systemStats.usedMemory
+        collectedStats.usedGpu = systemStats.usedGpu
       }
     } catch (err) {
       log.error(`node getSystemStats error: ${(err as Error).message}`)
@@ -1371,7 +1375,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         const processStats = await getProcessStats(browserProcess.pid, true)
         processStats.cpu /= this.tabsPerSession
         processStats.memory /= this.tabsPerSession
-        Object.assign(collectedcStats, processStats)
+        Object.assign(collectedStats, processStats)
       } catch (err) {
         log.error(`getProcessStats error: ${(err as Error).message}`)
       }
@@ -1384,17 +1388,21 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvBitrateStats: Record<string, number> = {}
     const httpRecvLatencyStats: Record<string, number> = {}
+    const pageCpu: Record<string, number> = {}
+    const pageMemory: Record<string, number> = {}
 
     const customStats: Record<string, Record<string, number | string>> = {}
 
     for (const [pageIndex, page] of this.pages.entries()) {
       try {
+        // Collect stats from page.
         const { peerConnectionStats, videoEndToEndStats, httpResourcesStats } =
           await page.evaluate(async () => ({
             peerConnectionStats: await collectPeerConnectionStats(),
             videoEndToEndStats: collectVideoEndToEndDelayStats(),
             httpResourcesStats: collectHttpResourcesStats(),
           }))
+        const participantName = await page.evaluate(() => getParticipantName())
 
         // Get host from the first collected remote address.
         if (
@@ -1411,10 +1419,13 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         const { stats, activePeerConnections, signalingHost } =
           peerConnectionStats
 
-        // Set pages count.
-        // N.B. The `:<host>` key will be indexed.
-        const hostKey = `:${signalingHost || 'unknown'}`
-        const pageHostKey = `${pageIndex}:${signalingHost}`
+        // Calculate stats keys.
+        const hostKey = rtcStatKey({ hostName: signalingHost, participantName })
+        const pageKey = rtcStatKey({
+          pageIndex,
+          hostName: signalingHost,
+          participantName,
+        })
 
         // Set pages counter.
         if (!pages[hostKey]) {
@@ -1432,26 +1443,27 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         if (videoEndToEndStats) {
           const { videoEndToEndDelay, videoEndToEndNetworkDelay } =
             videoEndToEndStats
-          videoEndToEndDelayStats[pageHostKey] = videoEndToEndDelay
-          videoEndToEndNetworkDelayStats[pageHostKey] =
-            videoEndToEndNetworkDelay
+          videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
+          videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
         }
 
         // HTTP stats.
-        httpRecvBytesStats[pageHostKey] = httpResourcesStats.recvBytes
-        httpRecvBitrateStats[pageHostKey] = httpResourcesStats.recvBitrate
-        httpRecvLatencyStats[pageHostKey] = httpResourcesStats.recvLatency
+        httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
+        httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
+        httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
 
         // Collect RTC stats.
         for (const s of stats) {
           for (const [trackId, value] of Object.entries(s)) {
             try {
               updateRtcStats(
-                collectedcStats as RtcStats,
-                `${pageIndex}-${trackId}`,
+                collectedStats as RtcStats,
+                pageIndex,
+                trackId,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 value,
                 signalingHost,
+                participantName,
               )
             } catch (err) {
               log.error(
@@ -1477,7 +1489,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
               if (!customStats[name]) {
                 customStats[name] = {}
               }
-              customStats[name][pageHostKey] = value
+              customStats[name][pageKey] = value
             }
           }
         } catch (err) {
@@ -1487,45 +1499,49 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
             }`,
           )
         }
+
+        // Collect page metrics
+        const metrics = await page.metrics()
+        if (metrics.Timestamp) {
+          const lastMetrics = this.pagesMetrics.get(pageIndex)
+          if (lastMetrics?.Timestamp) {
+            const elapsedTime = metrics.Timestamp - lastMetrics.Timestamp
+            if (elapsedTime > 1000) {
+              const durationDiff =
+                metricsTotalDuration(metrics) -
+                metricsTotalDuration(lastMetrics)
+              const usage = (100 * durationDiff) / elapsedTime
+              pageCpu[pageKey] = usage
+              pageMemory[pageKey] = (metrics.JSHeapUsedSize || 0) / 1e6
+              this.pagesMetrics.set(pageIndex, metrics)
+            }
+          } else {
+            this.pagesMetrics.set(pageIndex, metrics)
+          }
+        }
       } catch (err) {
         log.error(`collectPeerConnectionStats error: ${(err as Error).message}`)
       }
     }
-    collectedcStats.pages = pages
-    collectedcStats.errors = this.pageErrors
-    collectedcStats.warnings = this.pageWarnings
-    collectedcStats.peerConnections = peerConnections
-    collectedcStats.videoEndToEndDelay = videoEndToEndDelayStats
-    collectedcStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
-    collectedcStats.httpRecvBytes = httpRecvBytesStats
-    collectedcStats.httpRecvBitrate = httpRecvBitrateStats
-    collectedcStats.httpRecvLatency = httpRecvLatencyStats
+    collectedStats.pages = pages
+    collectedStats.errors = this.pageErrors
+    collectedStats.warnings = this.pageWarnings
+    collectedStats.peerConnections = peerConnections
+    collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
+    collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
+    collectedStats.httpRecvBytes = httpRecvBytesStats
+    collectedStats.httpRecvBitrate = httpRecvBitrateStats
+    collectedStats.httpRecvLatency = httpRecvLatencyStats
+    collectedStats.pageCpu = pageCpu
+    collectedStats.pageMemory = pageMemory
 
-    Object.assign(collectedcStats, customStats)
+    Object.assign(collectedStats, customStats)
 
     if (pages.size < this.pages.size) {
       log.warn(`updateStats collected pages ${pages.size} < ${this.pages.size}`)
     }
 
-    // Page perf metrics.
-    /* for (const [index, page] of this.pages.entries()) {
-      if (!page._CDP_client) {
-        continue;
-      }
-      const metrics = await page._CDP_client.send('Performance.getMetrics');
-      const pageMetrics = {};
-      for (const m of metrics.metrics) {
-        if (['LayoutDuration', 'RecalcStyleDuration', 'ScriptDuration',
-          'V8CompileDuration', 'TaskDuration',
-          'TaskOtherDuration', 'ThreadTime', 'ProcessTime',
-          'JSHeapUsedSize', 'JSHeapTotalSize'].includes(m.name)) {
-          pageMetrics[m.name] = m.value;
-        }
-      }
-      log.info(`page-${index}:`, pageMetrics);
-    } */
-
-    this.stats = collectedcStats
+    this.stats = collectedStats
     return this.stats
   }
 
@@ -1569,6 +1585,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         }
       }
       this.pages.clear()
+      this.pagesMetrics.clear()
       this.browser = undefined
     }
 
