@@ -1506,7 +1506,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
           const lastMetrics = this.pagesMetrics.get(pageIndex)
           if (lastMetrics?.Timestamp) {
             const elapsedTime = metrics.Timestamp - lastMetrics.Timestamp
-            if (elapsedTime > 1000) {
+            if (elapsedTime > 10) {
               const durationDiff =
                 metricsTotalDuration(metrics) -
                 metricsTotalDuration(lastMetrics)
