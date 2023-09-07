@@ -97,15 +97,6 @@ const describeJsHandle = async (jsHandle: JSHandle): Promise<string> => {
   return ''
 }
 
-const metricsTotalDuration = (metrics: Metrics): number => {
-  return (
-    (metrics.LayoutDuration || 0) +
-    (metrics.RecalcStyleCount || 0) +
-    (metrics.ScriptDuration || 0) +
-    (metrics.TaskDuration || 0)
-  )
-}
-
 declare global {
   let collectPeerConnectionStats: () => Promise<{
     stats: RtcStats[]
@@ -1508,8 +1499,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
             const elapsedTime = metrics.Timestamp - lastMetrics.Timestamp
             if (elapsedTime > 10) {
               const durationDiff =
-                metricsTotalDuration(metrics) -
-                metricsTotalDuration(lastMetrics)
+                (metrics.TaskDuration || 0) - (lastMetrics.TaskDuration || 0)
               const usage = (100 * durationDiff) / elapsedTime
               pageCpu[pageKey] = usage
               pageMemory[pageKey] = (metrics.JSHeapUsedSize || 0) / 1e6
