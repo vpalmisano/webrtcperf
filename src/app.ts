@@ -68,7 +68,9 @@ async function main(): Promise<void> {
 
   // Prepare fake video and audio.
   if (config.videoPath) {
-    await prepareFakeMedia(config)
+    for (const videoPath of config.videoPath.split(',')) {
+      await prepareFakeMedia({ ...config, videoPath })
+    }
   }
 
   // Network throttle.

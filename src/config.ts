@@ -56,7 +56,8 @@ You can use these variables to create custom URL schemes that suit your applicat
   // fake video/audio
   videoPath: {
     doc: `The fake video path; if set, the video will be used as fake \
-media source. \
+media source. It accepts a single path or a comma-separated list of videos \
+paths that will be used in round-robin by the started sessions. \
 The docker pre-built image contains a 2 minutes video sequence stored at \
 \`/app/video.mp4\`. \
 It accepts a local file, an http endpoint or a string starting with

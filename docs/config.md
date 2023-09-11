@@ -30,7 +30,7 @@ You can use these variables to create custom URL schemes that suit your applicat
 *Default*: `""`
 
 ## videoPath
-The fake video path; if set, the video will be used as fake media source. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4`. It accepts a local file, an http endpoint or a string starting with
+The fake video path; if set, the video will be used as fake media source. It accepts a single path or a comma-separated list of videos paths that will be used in round-robin by the started sessions. The docker pre-built image contains a 2 minutes video sequence stored at `/app/video.mp4`. It accepts a local file, an http endpoint or a string starting with
 `generate:` (example: `generate:null` will generate a black video with silent audio). The temporary files containing the raw video and audio will be stored at `${VIDEO_CACHE_PATH}/video.${VIDEO_FORMAT}` and `${VIDEO_CACHE_PATH}/audio.wav`.
 
 *Type*: `string`

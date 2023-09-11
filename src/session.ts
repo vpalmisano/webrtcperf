@@ -557,7 +557,10 @@ export class Session extends EventEmitter {
     }
 
     if (this.videoPath) {
-      const name = md5(this.videoPath)
+      const videoPaths = this.videoPath.split(',')
+      const videoPath = videoPaths[this.id % videoPaths.length]
+      log.debug(`${this.id} using ${videoPath} as fake source`)
+      const name = md5(videoPath)
       args.push(
         `--use-file-for-fake-video-capture=${this.videoCachePath}/${name}_${this.videoWidth}x${this.videoHeight}_${this.videoFramerate}fps.${this.videoFormat}`,
       )
