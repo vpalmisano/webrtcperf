@@ -793,16 +793,16 @@ export class Stats extends events.EventEmitter {
       stats.byParticipantAndTrack = {}
     })
     for (const session of this.sessions.values()) {
-      try {
-        this.collectedStatsConfig.url =
-          `${hideAuth(session.url)}?${session.urlQuery}` || ''
-        this.collectedStatsConfig.pages += session.pages.size || 0
-        const sessionStats = await session.updateStats(now)
-        for (const [name, obj] of Object.entries(sessionStats)) {
-          if (obj === undefined) {
-            return
-          }
-          //log.log(name, obj)
+      this.collectedStatsConfig.url =
+        `${hideAuth(session.url)}?${session.urlQuery}` || ''
+      this.collectedStatsConfig.pages += session.pages.size || 0
+      const sessionStats = await session.updateStats(now)
+      for (const [name, obj] of Object.entries(sessionStats)) {
+        if (obj === undefined) {
+          return
+        }
+        //log.log(name, obj)
+        try {
           const collectedStats = this.collectedStats[name]
           if (typeof obj === 'number' && isFinite(obj)) {
             collectedStats.all.push(obj)
@@ -836,9 +836,12 @@ export class Stats extends events.EventEmitter {
               }
             }
           }
+        } catch (err) {
+          log.error(
+            `session getStats name: ${name} error: ${(err as Error).message}`,
+            err,
+          )
         }
-      } catch (err) {
-        log.error(`session getStats error: ${(err as Error).message}`, err)
       }
     }
     // Add external collected stats.
