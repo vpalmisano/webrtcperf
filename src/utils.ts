@@ -504,7 +504,7 @@ process.setMaxListeners(process.getMaxListeners() + SIGNALS.length)
 SIGNALS.forEach(event =>
   process.once(event, async signal => {
     if (signal instanceof Error) {
-      log.debug(`Exit on error: ${signal.stack || signal.message}`)
+      log.error(`Exit on error: ${signal.stack || signal.message}`)
     } else {
       log.debug(`Exit on signal: ${signal}`)
     }
