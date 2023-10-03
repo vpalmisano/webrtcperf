@@ -354,6 +354,10 @@ async function getPeerConnectionStats(
               roundTripTimeMeasurements,
               totalAudioEnergy,
               totalSamplesDuration,
+              concealedSamples,
+              concealmentEvents,
+              insertedSamplesForDeceleration,
+              removedSamplesForAcceleration,
             } = s
             Object.assign(values.inboundRtp, {
               kind,
@@ -379,6 +383,10 @@ async function getPeerConnectionStats(
               roundTripTimeMeasurements,
               totalAudioEnergy,
               totalSamplesDuration,
+              concealedSamples,
+              concealmentEvents,
+              insertedSamplesForDeceleration,
+              removedSamplesForAcceleration,
             })
           } else if (s.type === 'remote-candidate') {
             values.remoteAddress = s.address
@@ -439,8 +447,9 @@ async function getPeerConnectionStats(
                 (values.inboundRtp.framesDecoded -
                   prevStats.values.inboundRtp.framesDecoded)
             }
-            // Update audio level.
+            // Update audio metrics.
             if (values.inboundRtp.kind === 'audio') {
+              // Audio level.
               const energy = positiveDiff(
                 values.inboundRtp.totalAudioEnergy,
                 prevStats.values.inboundRtp.totalAudioEnergy,

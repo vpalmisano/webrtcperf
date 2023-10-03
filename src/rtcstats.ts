@@ -1,5 +1,7 @@
 import assert from 'assert'
 
+import { toTitleCase } from './utils'
+
 /**
  * Page stats metric names.
  */
@@ -163,6 +165,10 @@ export enum RtcStatsMetricNames {
   //'audioRecvPacketsLostCount',
   audioRecvNackCountSent = 'audioRecvNackCountSent',
   audioRecvLevel = 'audioRecvLevel',
+  audioRecvConcealedSamples = 'audioRecvConcealedSamples',
+  audioRecvConcealmentEvents = 'audioRecvConcealmentEvents',
+  audioRecvInsertedSamplesForDeceleration = 'audioRecvInsertedSamplesForDeceleration',
+  audioRecvRemovedSamplesForAcceleration = 'audioRecvRemovedSamplesForAcceleration',
   // inbound video,
   videoRecvCodec = 'videoRecvCodec',
   //'videoFirCountSent',
@@ -362,12 +368,22 @@ export function updateRtcStats(
         inboundRtp.nackCount,
       )
       if (inboundRtp.kind === 'audio') {
-        setStats(
-          stats,
-          (prefix + 'RecvLevel') as RtcStatsMetricNames,
-          key,
-          inboundRtp.audioLevel,
-        )
+        ;[
+          'audioLevel',
+          'concealedSamples',
+          'concealmentEvents',
+          'insertedSamplesForDeceleration',
+          'removedSamplesForAcceleration',
+        ].forEach(name => {
+          setStats(
+            stats,
+            (prefix +
+              'Recv' +
+              toTitleCase(name.replace('audio', ''))) as RtcStatsMetricNames,
+            key,
+            inboundRtp[name],
+          )
+        })
       }
       if (
         inboundRtp.kind === 'video' &&
