@@ -783,7 +783,8 @@ export class Session extends EventEmitter {
     } else {
       this.context = this.browser.defaultBrowserContext()
     }
-    const page = await this.context.newPage()
+
+    const page = await this.getNewPage(tabIndex)
 
     if (this.userAgent) {
       await page.setUserAgent(this.userAgent)
@@ -1293,6 +1294,11 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       const pages = await this.browser.pages()
       await pages[0].bringToFront()
     }
+  }
+
+  private async getNewPage(_tabIndex: number): Promise<Page> {
+    assert(this.context, 'NoBrowserContextCreated')
+    return await this.context.newPage()
   }
 
   private async onPageMessage(
