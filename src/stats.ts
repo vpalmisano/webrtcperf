@@ -476,16 +476,7 @@ export class Stats extends events.EventEmitter {
       )
     }
 
-    this.collectedStats = this.statsNames.reduce((prev, name: string) => {
-      prev[name] = {
-        all: new FastStats(),
-        byHost: {},
-        byCodec: {},
-        byParticipantAndTrack: {},
-      } as CollectedStats
-      return prev
-    }, {} as Record<string, CollectedStats>)
-
+    this.collectedStats = this.initCollectedStats()
     this.sessions = new Map()
     this.nextSessionId = startSessionId
     this.startTimestamp = startTimestamp
@@ -539,6 +530,18 @@ export class Stats extends events.EventEmitter {
         ],
       })
     }
+  }
+
+  private initCollectedStats(): Record<string, CollectedStats> {
+    return this.statsNames.reduce((prev, name: string) => {
+      prev[name] = {
+        all: new FastStats(),
+        byHost: {},
+        byCodec: {},
+        byParticipantAndTrack: {},
+      } as CollectedStats
+      return prev
+    }, {} as Record<string, CollectedStats>)
   }
 
   private get statsNames(): string[] {
@@ -1836,7 +1839,7 @@ export class Stats extends events.EventEmitter {
       this.metrics = {}
     }
 
-    this.collectedStats = {}
+    this.collectedStats = this.initCollectedStats()
     this.externalCollectedStats.clear()
   }
 }
