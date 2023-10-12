@@ -4,6 +4,7 @@ import { createHash } from 'crypto'
 import * as dns from 'dns'
 import fs, { createWriteStream, WriteStream } from 'fs'
 import { Agent } from 'https'
+import * as ipaddrJs from 'ipaddr.js'
 import NodeCache from 'node-cache'
 import * as OSUtils from 'node-os-utils'
 import os from 'os'
@@ -238,6 +239,9 @@ export async function randomActivateAudio(
   randomAudioProbability: number,
   randomAudioRange: number,
 ): Promise<void> {
+  if (!randomAudioPeriod) {
+    return
+  }
   try {
     let pages: (Page | null)[] = []
     for (const session of sessions.values()) {
@@ -284,7 +288,7 @@ export async function randomActivateAudio(
             } (enable: ${enable})`,
           )
           await page.evaluate(async enable => {
-            if (publisherSetMuted) {
+            if (typeof publisherSetMuted !== 'undefined') {
               await publisherSetMuted(!enable)
             } else {
               getActiveAudioTracks().forEach(track => {
@@ -295,7 +299,7 @@ export async function randomActivateAudio(
           }, enable)
         } else {
           await page.evaluate(async () => {
-            if (publisherSetMuted) {
+            if (typeof publisherSetMuted !== 'undefined') {
               await publisherSetMuted(true)
             } else {
               getActiveAudioTracks().forEach(track => {
@@ -315,8 +319,7 @@ export async function randomActivateAudio(
     }
   } catch (err) {
     log.error(`randomActivateAudio error: ${(err as Error).stack}`)
-  }
-  if (randomAudioPeriod) {
+  } finally {
     const nextTime = randomAudioPeriod * (1 + Math.random())
     randomActivateAudioTimeoutId && clearTimeout(randomActivateAudioTimeoutId)
     randomActivateAudioTimeoutId = setTimeout(
@@ -583,6 +586,9 @@ export async function resolveIP(
   ip: string,
   cacheTime = 60000,
 ): Promise<string> {
+  if (ipaddrJs.parse(ip).range() === 'private') {
+    return ip
+  }
   const timestamp = Date.now()
   const ret = ipCache.get(ip)
   if (!ret || timestamp - ret.timestamp > cacheTime) {

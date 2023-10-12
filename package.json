@@ -57,6 +57,7 @@
     "express-basic-auth": "^1.2.1",
     "fast-stats": "^0.0.6",
     "fix-esm": "^1.0.1",
+    "ipaddr.js": "^2.1.0",
     "json5": "^2.2.3",
     "lorem-ipsum": "^2.0.8",
     "moment": "^2.29.4",
