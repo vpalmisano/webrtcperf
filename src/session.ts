@@ -421,9 +421,7 @@ export class Session extends EventEmitter {
       try {
         this.getUserMediaOverride = JSON5.parse(getUserMediaOverride)
       } catch (err: unknown) {
-        log.error(
-          `error parsing getUserMediaOverride: ${(err as Error).message}`,
-        )
+        log.error(`error parsing getUserMediaOverride: ${(err as Error).stack}`)
         this.getUserMediaOverride = null
       }
     }
@@ -432,7 +430,7 @@ export class Session extends EventEmitter {
         this.getDisplayMediaOverride = JSON5.parse(getDisplayMediaOverride)
       } catch (err: unknown) {
         log.error(
-          `error parsing getDisplayMediaOverride: ${(err as Error).message}`,
+          `error parsing getDisplayMediaOverride: ${(err as Error).stack}`,
         )
         this.getDisplayMediaOverride = null
       }
@@ -443,7 +441,7 @@ export class Session extends EventEmitter {
       try {
         this.localStorage = JSON5.parse(localStorage)
       } catch (err: unknown) {
-        log.error(`error parsing localStorage: ${(err as Error).message}`)
+        log.error(`error parsing localStorage: ${(err as Error).stack}`)
         this.localStorage = null
       }
     }
@@ -467,7 +465,7 @@ export class Session extends EventEmitter {
       } catch (err) {
         log.error(
           `error parsing scriptParams '${scriptParams}': ${
-            (err as Error).message
+            (err as Error).stack
           }`,
         )
         throw err
@@ -486,7 +484,7 @@ export class Session extends EventEmitter {
       try {
         this.extraHeaders = JSON5.parse(extraHeaders)
       } catch (err) {
-        log.error(`error parsing extraHeaders: ${(err as Error).message}`)
+        log.error(`error parsing extraHeaders: ${(err as Error).stack}`)
         this.extraHeaders = undefined
       }
     } else {
@@ -498,7 +496,7 @@ export class Session extends EventEmitter {
       try {
         this.cookies = JSON5.parse(cookies)
       } catch (err) {
-        log.error(`error parsing cookies: ${(err as Error).message}`)
+        log.error(`error parsing cookies: ${(err as Error).stack}`)
         this.cookies = undefined
       }
     } else {
@@ -628,7 +626,7 @@ export class Session extends EventEmitter {
           },
         })
       } catch (err) {
-        log.error(`${this.id} browser connect error: %j`, err)
+        log.error(`${this.id} browser connect error: ${(err as Error).stack}`)
         return this.stop()
       }
     } else {
@@ -681,7 +679,9 @@ export class Session extends EventEmitter {
         // const version = await this.browser.version();
         // console.log(`[session ${this.id}] Using chrome version: ${version}`);
       } catch (err) {
-        log.error(`[session ${this.id}] Browser launch error:`, err)
+        log.error(
+          `[session ${this.id}] Browser launch error: ${(err as Error).stack}`,
+        )
         return this.stop()
       }
     }
@@ -716,7 +716,7 @@ export class Session extends EventEmitter {
     // open pages
     for (let i = 0; i < this.tabsPerSession; i++) {
       this.openPage(i).catch(err =>
-        log.error(`openPage error: ${(err as Error).message} %j`, err),
+        log.error(`openPage error: ${(err as Error).stack}`),
       )
       if (i < this.tabsPerSession - 1) {
         await sleep(this.spawnPeriod)
@@ -856,7 +856,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         const client = await page.target().createCDPSession()
         await client.send('Network.clearBrowserCookies')
       } catch (err) {
-        log.error(`clearCookies error: ${(err as Error).message}`)
+        log.error(`clearCookies error: ${(err as Error).stack}`)
       }
     }
 
@@ -950,7 +950,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
             return request.abort('blockedbyclient')
           }
         } catch (err) {
-          log.error(`request block error: ${(err as Error).message}`)
+          log.error(`request block error: ${(err as Error).stack}`)
         }
       }
 
@@ -979,7 +979,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
           page.on('request', requestHandler)
         }
       } catch (err) {
-        log.error(`setRequestInterception error: ${(err as Error).message}`)
+        log.error(`setRequestInterception error: ${(err as Error).stack}`)
       }
     }
 
@@ -1172,7 +1172,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
           })
         }, this.extraCSS.replace(/important/g, '!important'))
       } catch (err) {
-        log.error(`Add extraCSS error: ${(err as Error).message}`)
+        log.error(`Add extraCSS error: ${(err as Error).stack}`)
       }
     }
 
@@ -1196,7 +1196,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
           }),
         )
       } catch (err) {
-        log.error(`Set cookies error: ${(err as Error).message}`)
+        log.error(`Set cookies error: ${(err as Error).stack}`)
       }
     }
 
@@ -1211,7 +1211,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       } catch (err) {
         log.error(
           `error opening page log file: ${this.pageLogPath}: ${
-            (err as Error).message
+            (err as Error).stack
           }`,
         )
       }
@@ -1270,7 +1270,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       })
     } catch (error) {
       log.error(
-        `Page ${index + 1} "${url}" load error: ${(error as Error).message}`,
+        `Page ${index + 1} "${url}" load error: ${(error as Error).stack}`,
       )
       await page.close()
       return
@@ -1364,7 +1364,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       collectedStats.nodeCpu = processStats.cpu
       collectedStats.nodeMemory = processStats.memory
     } catch (err) {
-      log.error(`node getProcessStats error: ${(err as Error).message}`)
+      log.error(`node getProcessStats error: ${(err as Error).stack}`)
     }
 
     try {
@@ -1375,7 +1375,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         collectedStats.usedGpu = systemStats.usedGpu
       }
     } catch (err) {
-      log.error(`node getSystemStats error: ${(err as Error).message}`)
+      log.error(`node getSystemStats error: ${(err as Error).stack}`)
     }
 
     const browserProcess = this.browser.process()
@@ -1386,7 +1386,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         processStats.memory /= this.tabsPerSession
         Object.assign(collectedStats, processStats)
       } catch (err) {
-        log.error(`getProcessStats error: ${(err as Error).message}`)
+        log.error(`getProcessStats error: ${(err as Error).stack}`)
       }
     }
 
@@ -1476,9 +1476,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
               )
             } catch (err) {
               log.error(
-                `updateRtcStats error for ${trackId}: ${
-                  (err as Error).message
-                }`,
+                `updateRtcStats error for ${trackId}: ${(err as Error).stack}`,
                 err,
               )
             }
@@ -1504,7 +1502,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         } catch (err) {
           log.error(
             `updateRtcStats collectCustomMetrics error: ${
-              (err as Error).message
+              (err as Error).stack
             }`,
           )
         }
@@ -1529,7 +1527,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
           }
         }
       } catch (err) {
-        log.error(`collectPeerConnectionStats error: ${(err as Error).message}`)
+        log.error(`collectPeerConnectionStats error: ${(err as Error).stack}`)
       }
     }
     collectedStats.pages = pages
@@ -1590,7 +1588,7 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         try {
           await this.browser.close()
         } catch (err) {
-          log.error('browser close error:', err)
+          log.error(`browser close error: ${(err as Error).stack}`)
         }
       }
       this.pages.clear()

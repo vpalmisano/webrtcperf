@@ -116,7 +116,7 @@ async function main(): Promise<void> {
         try {
           await stop()
         } catch (err: unknown) {
-          log.error(`stop error: ${(err as Error).message}`)
+          log.error(`stop error: ${(err as Error).stack}`)
           process.exit(1)
         }
       } else if (data[0] === 'x'.charCodeAt(0)) {

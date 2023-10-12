@@ -770,7 +770,7 @@ export class Stats extends events.EventEmitter {
         )
       }
     } catch (err) {
-      log.error(`Pushgateway delete error: ${(err as Error).message}`)
+      log.error(`Pushgateway delete error: ${(err as Error).stack}`)
     }
   }
 
@@ -841,7 +841,7 @@ export class Stats extends events.EventEmitter {
           }
         } catch (err) {
           log.error(
-            `session getStats name: ${name} error: ${(err as Error).message}`,
+            `session getStats name: ${name} error: ${(err as Error).stack}`,
             err,
           )
         }
@@ -924,7 +924,7 @@ export class Stats extends events.EventEmitter {
         })
         log.debug(`pushStats message=${res.data.message}`)
       } catch (err) {
-        log.error(`pushStats error: ${(err as Error).message}`)
+        log.error(`pushStats error: ${(err as Error).stack}`)
       }
     }
     // Check alerts.
@@ -1376,7 +1376,7 @@ export class Stats extends events.EventEmitter {
         )
       }
     } catch (err) {
-      log.error(`Pushgateway push error: ${(err as Error).message}`)
+      log.error(`Pushgateway push error: ${(err as Error).stack}`)
     }
   }
 
@@ -1801,7 +1801,7 @@ export class Stats extends events.EventEmitter {
       })
       await fs.promises.writeFile(this.alertRulesFilename, out)
     } catch (err) {
-      log.error(`writeAlertRulesReport error: ${(err as Error).message}`)
+      log.error(`writeAlertRulesReport error: ${(err as Error).stack}`)
     }
   }
 
@@ -1824,7 +1824,7 @@ export class Stats extends events.EventEmitter {
         session.removeAllListeners()
         await session.stop()
       } catch (err) {
-        log.error(`session stop error: ${(err as Error).message}`)
+        log.error(`session stop error: ${(err as Error).stack}`)
       }
     }
     this.sessions.clear()

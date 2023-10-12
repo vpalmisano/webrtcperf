@@ -100,7 +100,7 @@ async function applyRules(
       try {
         await runShellCommand(cmd)
       } catch (err) {
-        log.error(`error running "${cmd}": ${(err as Error).message}`)
+        log.error(`error running "${cmd}": ${(err as Error).stack}`)
       }
     }
 
@@ -121,7 +121,7 @@ async function applyRules(
       try {
         await runShellCommand(cmd)
       } catch (err) {
-        log.error(`error running "${cmd}": ${(err as Error).message}`)
+        log.error(`error running "${cmd}": ${(err as Error).stack}`)
       }
     }, (at || 0) * 1000)
   }
@@ -167,7 +167,7 @@ export async function startThrottle(config: string): Promise<void> {
     log.info('Starting throttle with config:', throttleConfig)
     await start(throttleConfig)
   } catch (err) {
-    log.error(`startThrottle "${config}" error: ${(err as Error).message}`)
+    log.error(`startThrottle "${config}" error: ${(err as Error).stack}`)
     await stopThrottle()
     throw err
   }
@@ -181,6 +181,6 @@ export async function stopThrottle(): Promise<void> {
     log.info('Stopping throttle')
     await stop()
   } catch (err) {
-    log.error(`Stop throttle error: ${(err as Error).message}`)
+    log.error(`Stop throttle error: ${(err as Error).stack}`)
   }
 }

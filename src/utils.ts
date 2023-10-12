@@ -154,7 +154,7 @@ export async function getProcessStats(
         }
       }
     } catch (err) {
-      log.error(`getProcessStats children error: ${(err as Error).message}`)
+      log.error(`getProcessStats children error: ${(err as Error).stack}`)
     }
   }
   ProcessStatsCache.set(processPid, stat)
@@ -259,7 +259,7 @@ export async function randomActivateAudio(
       try {
         active = await page.evaluate(() => getActiveAudioTracks().length)
       } catch (err) {
-        log.error(`randomActivateAudio error: ${(err as Error).message}`)
+        log.error(`randomActivateAudio error: ${(err as Error).stack}`)
       }
       if (!active) {
         pages[i] = null
@@ -309,12 +309,12 @@ export async function randomActivateAudio(
         log.error(
           `randomActivateAudio in page ${i + 1}/${
             pagesWithAudio.length
-          } error: ${(err as Error).message}`,
+          } error: ${(err as Error).stack}`,
         )
       }
     }
   } catch (err) {
-    log.error(`randomActivateAudio error: ${(err as Error).message}`)
+    log.error(`randomActivateAudio error: ${(err as Error).stack}`)
   }
   if (randomAudioPeriod) {
     const nextTime = randomAudioPeriod * (1 + Math.random())
@@ -605,7 +605,7 @@ export async function resolveIP(
           }
         })
         .catch(err => {
-          log.error(`resolveIP error: ${(err as Error).message}`)
+          log.error(`resolveIP error: ${(err as Error).stack}`)
           ipCache.set(ip, { host: ip, timestamp })
         }),
     ])
@@ -655,7 +655,7 @@ export async function systemGpuStats(): Promise<{ gpu: number; mem: number }> {
       return { gpu, mem: 0 }
     }
   } catch (err) {
-    log.debug(`systemGpuStats error: ${(err as Error).message}`)
+    log.debug(`systemGpuStats error: ${(err as Error).stack}`)
   }
   return { gpu: 0, mem: 0 }
 }
@@ -744,7 +744,7 @@ export class Scheduler {
         }
       } catch (err) {
         log.error(
-          `[${this.name}-scheduler] callback error: ${(err as Error).message}`,
+          `[${this.name}-scheduler] callback error: ${(err as Error).stack}`,
           err,
         )
       } finally {
