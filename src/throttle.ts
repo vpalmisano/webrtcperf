@@ -20,16 +20,18 @@ sudo tc qdisc del dev ifb0 root; \
 `)
 }
 
-function calculateBufferedPackets(rate: number, halfWayRTT: number): number {
+function calculateBufferedPackets(rate: number, delay: number): number {
   // https://lists.linuxfoundation.org/pipermail/netem/2007-March/001094.html
-  return Math.ceil((((1.5 * rate * 1000) / 8) * (halfWayRTT / 1000)) / 1500)
+  return Math.ceil((((1.5 * rate * 1000) / 8) * (delay / 1000)) / 1500)
 }
 
 /** The network throttle rules to be applied to uplink or downlink. */
 export type ThrottleRule = {
   /** The available bandwidth (Kbps). */
   rate?: number
-  /** The RTT (ms). */
+  /** The one-way delay (ms). */
+  delay?: number
+  /** The RTT (ms). Deprecated, use `delay` instead. */
   rtt?: number
   /** The packet loss percentage with optional correlation (e.g. \`"5% 25%"\`).
    * Refer to [netem documentation](https://wiki.linuxfoundation.org/networking/netem#packet_loss) for additional string options.
@@ -46,15 +48,15 @@ export type ThrottleRule = {
 /**
  * The network throttling rules.
  * Specify multiple {@link ThrottleRule} with different `at` values to schedule
- * network bandwidth/RTT fluctuations during the test run, e.g.:
+ * network bandwidth/delay fluctuations during the test run, e.g.:
  *
  * ```javascript
  * {
     down: [
-      { protocol: "udp", rate: 1000000, rtt: 50, loss: "0%", queue: 5 },
-      { protocol: "udp", rate: 200000, rtt: 100, loss: "5%", queue: 5, at: 60},
+      { protocol: "udp", rate: 1000000, delay: 50, loss: "0%", queue: 5 },
+      { protocol: "udp", rate: 200000, delay: 100, loss: "5%", queue: 5, at: 60},
     ],
-    up: { rate: 100000, rtt: 50, queue: 5 },
+    up: { rate: 100000, delay: 50, queue: 5 },
   }
  * ```
  */
@@ -75,11 +77,11 @@ async function applyRules(
   })
 
   for (const [i, rule] of rules.entries()) {
-    const { rate, rtt, loss, queue, protocol, at } = rule
+    const { rate, rtt, delay: delay_, loss, queue, protocol, at } = rule
     const action = i === 0 ? 'add' : 'change'
-    const halfWayRTT = (rtt || 0) / 2
+    const delay = delay_ || (rtt || 0) / 2
     const lossString = loss ? loss.split(',').join(' ') : '0%'
-    const limit = calculateBufferedPackets(rate || 0, halfWayRTT) + (queue || 0)
+    const limit = calculateBufferedPackets(rate || 0, delay) + (queue || 0)
 
     if (i === 0) {
       const filterMatch =
@@ -106,14 +108,14 @@ async function applyRules(
 
     setTimeout(async () => {
       log.info(
-        `applying rules on ${device}: rate ${rate}kbit, delay ${halfWayRTT}ms, loss ${lossString}, limit ${limit}`,
+        `applying rules on ${device}: rate ${rate}kbit, delay ${delay}ms, loss ${lossString}, limit ${limit}`,
       )
       const cmd = `\
         sudo tc qdisc ${action} dev ${device} \
           parent 1:1 \
           handle 10: \
           netem \
-          delay ${halfWayRTT}ms \
+          delay ${delay}ms \
           rate ${rate}kbit \
           loss ${lossString} \
           limit ${limit}; \
