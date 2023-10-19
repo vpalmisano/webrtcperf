@@ -160,9 +160,9 @@ export enum RtcStatsMetricNames {
   audioRecvBitrates = 'audioRecvBitrates',
   audioRecvJitter = 'audioRecvJitter',
   audioRecvRoundTripTime = 'audioRecvRoundTripTime',
-  //'audioRecvPackets',
+  audioRecvPackets = 'audioRecvPackets',
   audioRecvPacketsLost = 'audioRecvPacketsLost',
-  //'audioRecvPacketsLostCount',
+  audioRecvRetransmittedPackets = 'audioRecvRetransmittedPackets',
   audioRecvNackCountSent = 'audioRecvNackCountSent',
   audioRecvLevel = 'audioRecvLevel',
   audioRecvConcealedSamples = 'audioRecvConcealedSamples',
@@ -182,9 +182,9 @@ export enum RtcStatsMetricNames {
   videoRecvHeight = 'videoRecvHeight',
   videoRecvJitter = 'videoRecvJitter',
   videoRecvRoundTripTime = 'videoRecvRoundTripTime',
-  //'videoRecvPackets',
+  videoRecvPackets = 'videoRecvPackets',
   videoRecvPacketsLost = 'videoRecvPacketsLost',
-  //'videoRecvPacketsLostCount',
+  videoRecvRetransmittedPackets = 'videoRecvRetransmittedPackets',
   videoRecvNackCountSent = 'videoRecvNackCountSent',
   videoRecvWidth = 'videoRecvWidth',
   //'videoTotalDecodeTime',
@@ -202,9 +202,9 @@ export enum RtcStatsMetricNames {
   screenRecvHeight = 'screenRecvHeight',
   screenRecvJitter = 'screenRecvJitter',
   screenRecvRoundTripTime = 'screenRecvRoundTripTime',
-  //'screenRecvPackets',
+  screenRecvPackets = 'screenRecvPackets',
   screenRecvPacketsLost = 'screenRecvPacketsLost',
-  //'screenRecvPacketsLostCount',
+  screenRecvRetransmittedPackets = 'screenRecvRetransmittedPackets',
   screenRecvNackCountSent = 'screenRecvNackCountSent',
   screenRecvWidth = 'screenRecvWidth',
   //'screenTotalDecodeTime',
@@ -353,14 +353,24 @@ export function updateRtcStats(
         key,
         inboundRtp.transportRoundTripTime,
       )
-      //setStats(stats, prefix + 'RecvPackets', key, inboundRtp.packetsReceived)
+      setStats(
+        stats,
+        (prefix + 'RecvPackets') as RtcStatsMetricNames,
+        key,
+        inboundRtp.packetsReceived,
+      )
+      setStats(
+        stats,
+        (prefix + 'RecvRetransmittedPackets') as RtcStatsMetricNames,
+        key,
+        inboundRtp.retransmittedPacketsReceived,
+      )
       setStats(
         stats,
         (prefix + 'RecvPacketsLost') as RtcStatsMetricNames,
         key,
         inboundRtp.packetsLossRate,
       )
-      //setStats(stats, prefix + 'RecvPacketsLostCount', key, inboundRtp.packetsLost)
       setStats(
         stats,
         (prefix + 'RecvNackCountSent') as RtcStatsMetricNames,
