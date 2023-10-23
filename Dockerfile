@@ -69,7 +69,11 @@ RUN \
         libu2f-udev
 
 RUN \
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -; \
+    mkdir -p /etc/apt/keyrings; \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg; \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list; \
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -; \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list; \
     wget -q -O- https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub | gpg --dearmor -o /usr/share/keyrings/nvidia-drivers.gpg; \

@@ -519,8 +519,8 @@ export class Session extends EventEmitter {
       '--autoplay-policy=no-user-gesture-required',
       '--disable-infobars',
       '--allow-running-insecure-content',
-      `--unsafely-treat-insecure-origin-as-secure=${
-        this.url || 'http://localhost'
+      `--unsafely-treat-insecure-origin-as-secure=http://${
+        new URL(this.url || 'http://localhost').host
       }`,
       '--use-fake-ui-for-media-stream',
       '--enable-usermedia-screen-capturing',

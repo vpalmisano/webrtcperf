@@ -514,6 +514,10 @@ const isDisplayTrack = videoTrack => {
     return true
   }
 
+  if (!navigator.mediaDevices) {
+    return false
+  }
+
   const trackSettings = videoTrack.getSettings()
   const trackConstraints = videoTrack.getConstraints()
 
