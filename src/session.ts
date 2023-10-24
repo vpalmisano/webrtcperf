@@ -790,6 +790,8 @@ export class Session extends EventEmitter {
 
     const page = await this.getNewPage(tabIndex)
 
+    await page.setBypassCSP(true)
+
     if (this.userAgent) {
       await page.setUserAgent(this.userAgent)
     }

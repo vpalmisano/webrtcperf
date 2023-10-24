@@ -1,6 +1,7 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
+const timestampWatermark = !!window.PARAMS?.timestampWatermark
 
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
@@ -84,10 +85,18 @@ window.RTCPeerConnection = function (options) {
   pc.addEventListener('track', event => {
     //log(`RTCPeerConnection-${id} track`)
     const { receiver, transceiver } = event
-    if (receiver?.track && !receiver._encodedStreams) {
+    if (receiver?.track) {
       //log(`RTCPeerConnection-${id} ontrack`, track.kind, event)
       if (timestampInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
+      }
+      if (timestampWatermark) {
+        window.recognizeTimestampWatermark(
+          receiver?.track,
+          ({ timestamp, delay }) => {
+            videoEndToEndDelayStats.push(timestamp, delay)
+          },
+        )
       }
     }
     handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
