@@ -655,7 +655,11 @@ export class Session extends EventEmitter {
           ? puppeteerExtra
           : puppeteer
         ).launch({
-          headless: !this.display,
+          headless: this.display
+            ? false
+            : process.env.PUPPETEER_HEADLESS_NEW
+            ? 'new'
+            : true,
           executablePath,
           handleSIGINT: false,
           env,
