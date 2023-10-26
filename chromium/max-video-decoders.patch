@@ -1,5 +1,5 @@
 diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
-index 9cc78c7241..f6bbf6ef8f 100644
+index 6c1df7d874..1cea587cdc 100644
 --- a/video/video_receive_stream2.cc
 +++ b/video/video_receive_stream2.cc
 @@ -124,6 +124,31 @@ RenderResolution InitialDecoderResolution(const FieldTrialsView& field_trials) {
@@ -34,16 +34,16 @@ index 9cc78c7241..f6bbf6ef8f 100644
  // Video decoder class to be used for unknown codecs. Doesn't support decoding
  // but logs messages to LS_ERROR.
  class NullVideoDecoder : public webrtc::VideoDecoder {
-@@ -136,7 +161,7 @@ class NullVideoDecoder : public webrtc::VideoDecoder {
+@@ -135,7 +160,7 @@ class NullVideoDecoder : public webrtc::VideoDecoder {
+ 
    int32_t Decode(const webrtc::EncodedImage& input_image,
-                  bool missing_frames,
                   int64_t render_time_ms) override {
 -    RTC_LOG(LS_ERROR) << "The NullVideoDecoder doesn't support decoding.";
 +    RTC_LOG(LS_WARNING) << "The NullVideoDecoder doesn't support decoding.";
      return WEBRTC_VIDEO_CODEC_OK;
    }
  
-@@ -352,6 +377,20 @@ void VideoReceiveStream2::Start() {
+@@ -351,6 +376,20 @@ void VideoReceiveStream2::Start() {
      renderer = this;
    }
  
@@ -64,7 +64,7 @@ index 9cc78c7241..f6bbf6ef8f 100644
    for (const Decoder& decoder : config_.decoders) {
      VideoDecoder::Settings settings;
      settings.set_codec_type(
-@@ -430,6 +469,9 @@ void VideoReceiveStream2::Stop() {
+@@ -429,6 +468,9 @@ void VideoReceiveStream2::Stop() {
      stats_proxy_.DecoderThreadStopped();
  
      UpdateHistograms();
@@ -74,7 +74,7 @@ index 9cc78c7241..f6bbf6ef8f 100644
    }
  
    // TODO(bugs.webrtc.org/11993): Make these calls on the network thread.
-@@ -521,8 +563,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+@@ -520,8 +562,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
      const Decoder& decoder) {
    TRACE_EVENT0("webrtc",
                 "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
@@ -87,7 +87,7 @@ index 9cc78c7241..f6bbf6ef8f 100644
    // that ignores all calls. The reason we can get into this state is that the
    // old decoder factory interface doesn't have a way to query supported
 diff --git a/video/video_receive_stream2.h b/video/video_receive_stream2.h
-index ef4f900f94..bc95681e59 100644
+index 31b9a7eb7c..fea951ac42 100644
 --- a/video/video_receive_stream2.h
 +++ b/video/video_receive_stream2.h
 @@ -280,6 +280,7 @@ class VideoReceiveStream2
