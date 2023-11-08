@@ -5,6 +5,7 @@ tmp
 *.mp4
 *.mkv
 *.deb
+*.rpm
 *.zip
 *.xz
 *.bz2

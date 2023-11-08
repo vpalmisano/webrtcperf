@@ -4,8 +4,9 @@ set -ex
 export DIR=$(dirname $(realpath "${BASH_SOURCE:-$0}"))
 export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
-export PATCH_FILE=${DIR}/max-video-decoders.patch
 export PATH="$PATH:${BUILDDIR}/depot_tools"
+
+export DEFAULT_BRANCH="tags/121.0.6113.2"
 
 function setup() {
     which gperf || sudo apt install -y gperf
@@ -62,25 +63,34 @@ EOF
 }
 
 function apply_patch() {
+    local branch=${1:-${DEFAULT_BRANCH}}
+    local filepath=${DIR}/max-video-decoders_$(echo ${branch} | sed s/'tags\/'//).patch
+    if [ ! -f ${filepath} ]; then
+        echo "ERROR: patch file not found: ${filepath}, using patch for main branch"
+        filepath=${DIR}/max-video-decoders_main.patch
+        return
+    fi
     cd ${CHROMIUM_SRC}/third_party/webrtc
-    git checkout .
-    git apply < ${PATCH_FILE}
+    git apply < ${filepath}
     git diff --compact-summary
 }
 
 function remove_patch() {
     cd ${CHROMIUM_SRC}/third_party/webrtc
-    git checkout .
+    git reset --hard HEAD
 }
 
 function update() {
+    local branch=${1:-${DEFAULT_BRANCH}}
     remove_patch
     cd ${CHROMIUM_SRC}
-    git checkout .
-    git switch main
-    git pull origin main
+    git checkout main
+    git pull
+    git fetch --tags
+    git checkout ${branch}
+    git pull origin ${branch}
     gclient sync -D --force --reset
-    apply_patch
+    apply_patch ${branch}
 }
 
 function build() {
@@ -95,7 +105,7 @@ function clean() {
 }
 
 #
-export BRANCH=5735
+export CEF_BRANCH=5735
 export CEF_USE_GN=1
 export GN_DEFINES='cc_wrapper="CCACHE_SLOPPINESS=time_macros ccache" is_official_build=true proprietary_codecs=true ffmpeg_branding=Chrome use_gnome_keyring=false use_system_libdrm=false use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false'
 export CEF_ARCHIVE_FORMAT=tar.bz2
@@ -107,7 +117,7 @@ function update_cef() {
     python automate-git.py \
         --download-dir=${BUILDDIR}/src \
         --depot-tools-dir=${BUILDDIR}/depot_tools \
-        --branch=${BRANCH} \
+        --branch=${CEF_BRANCH} \
         --build-target=cefsimple \
         --with-pgo-profiles \
         --x64-build \
@@ -122,7 +132,7 @@ function build_cef() {
     time ionice -c3 nice -n19 python automate-git.py \
         --download-dir=${BUILDDIR}/src \
         --depot-tools-dir=${BUILDDIR}/depot_tools \
-        --branch=${BRANCH} \
+        --branch=${CEF_BRANCH} \
         --build-target=cefsimple \
         --with-pgo-profiles \
         --x64-build \
