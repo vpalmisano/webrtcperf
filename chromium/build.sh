@@ -66,9 +66,8 @@ function apply_patch() {
     local branch=${1:-${DEFAULT_BRANCH}}
     local filepath=${DIR}/max-video-decoders_$(echo ${branch} | sed s/'tags\/'//).patch
     if [ ! -f ${filepath} ]; then
-        echo "ERROR: patch file not found: ${filepath}, using patch for main branch"
+        echo "WARN: patch file not found: ${filepath}, using patch for main branch"
         filepath=${DIR}/max-video-decoders_main.patch
-        return
     fi
     cd ${CHROMIUM_SRC}/third_party/webrtc
     git apply < ${filepath}
