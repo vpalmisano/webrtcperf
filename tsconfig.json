@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "incremental": true,
-    "target": "ES2020",
-    "module": "commonjs",                       /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+    "target": "es2022",
+    "module": "node16",                         /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
     "allowJs": false,                           /* Allow javascript files to be compiled. */
     "declaration": true,                        /* Generates corresponding '.d.ts' file. */
     "sourceMap": true,                          /* Generates corresponding '.map' file. */

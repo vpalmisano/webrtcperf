@@ -467,13 +467,23 @@ blocked.`,
     arg: 'blocked-urls',
   },
   extraHeaders: {
-    doc: `A dictionary of headers keyed by the url in JSON format (e.g. \
-\`{ "https://url.com": { "header-name": "value" } }\`).`,
+    doc: `A dictionary of headers keyed by the url in JSON5 format (e.g. \
+\`{ "https://url.com/*": { "header-name": "value" } }\`).`,
     format: String,
     nullable: true,
     default: '',
     env: 'EXTRA_HEADERS',
     arg: 'extra-headers',
+  },
+  responseModifiers: {
+    doc: `A dictionary of content replacements keyed by the url in JSON5 format (e.g. \
+\`{ "https://url.com/*": [{ search: "searchString": replace: "anotherString" }] }\`).\
+The search string should be a valid regular expression.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'RESPONSE_MODIFIERS',
+    arg: 'response-modifiers',
   },
   extraCSS: {
     doc: `A string with a CSS styles to inject into each page. \

@@ -14,13 +14,14 @@ import puppeteer, {
   BrowserContext,
   CDPSession,
   ElementHandle,
-  HTTPRequest,
   JSHandle,
   Metrics,
   Page,
 } from 'puppeteer-core'
 import { addExtra } from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import type { Interception } from 'puppeteer-intercept-and-modify-requests'
+import { RequestInterceptionManager } from 'puppeteer-intercept-and-modify-requests'
 import { gunzipSync } from 'zlib'
 
 const puppeteerExtra = addExtra(vanillaPuppeteer)
@@ -195,6 +196,7 @@ export type SessionParams = {
   scriptParams: string
   blockedUrls: string
   extraHeaders: string
+  responseModifiers: string
   extraCSS: string
   cookies: string
   debuggingPort: number
@@ -256,6 +258,10 @@ export class Session extends EventEmitter {
   private readonly scriptParams: any
   private readonly blockedUrls: string[]
   private readonly extraHeaders?: Record<string, Record<string, string>>
+  private readonly responseModifiers: Record<
+    string,
+    { search: RegExp; replace: string }[]
+  > = {}
   private readonly extraCSS: string
   private readonly cookies?: Record<string, string>
   private readonly debuggingPort: number
@@ -370,6 +376,7 @@ export class Session extends EventEmitter {
     scriptParams,
     blockedUrls,
     extraHeaders,
+    responseModifiers,
     extraCSS,
     cookies,
     debuggingPort,
@@ -490,6 +497,26 @@ export class Session extends EventEmitter {
     } else {
       this.extraHeaders = undefined
     }
+
+    if (responseModifiers) {
+      try {
+        const parsed = JSON5.parse(responseModifiers) as Record<
+          string,
+          { search: string; replace: string }[]
+        >
+        Object.entries(parsed).forEach(([url, replacements]) => {
+          this.responseModifiers[url] = replacements.map(
+            ({ search, replace }) => ({
+              search: new RegExp(search, 'g'),
+              replace,
+            }),
+          )
+        })
+      } catch (err) {
+        log.error(`error parsing responseModifiers: ${(err as Error).stack}`)
+      }
+    }
+
     this.extraCSS = extraCSS
 
     if (cookies) {
@@ -925,49 +952,68 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       }
     })
 
-    const requestHandler = async (request: HTTPRequest) => {
-      const requestUrl = request.url()
-      if (requestUrl.startsWith('data:')) {
-        return request.continue()
-      }
-      // log.debug(`requestHandler ${requestUrl}`)
-      let modifiedHeaders: Record<string, string> = { ...request.headers() }
+    // Enable request interception.
+    let setRequestInterceptionState = true
 
-      // Add extra headers.
-      if (this.extraHeaders) {
-        const url = page.url()
-        const headers = this.extraHeaders && this.extraHeaders[url]
-        if (headers) {
-          // log.debug(`adding extra headers to ${requestUrl} on: ${url}`)
-          modifiedHeaders = Object.assign(modifiedHeaders, headers)
-        }
-      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pageCDPSession = (page as any)._client() as CDPSession
+    await pageCDPSession.send('Network.setBypassServiceWorker', {
+      bypass: true,
+    })
 
-      // Blocked URLs.
-      if (this.blockedUrls.length) {
-        let url: string
-        try {
-          url = new URL(requestUrl).origin
-          const found = this.blockedUrls.findIndex(
-            blockedUrl => url.search(blockedUrl) !== -1,
-          )
-          if (found !== -1) {
-            log.debug(`Blocked request to: ${url}`)
-            return request.abort('blockedbyclient')
-          }
-        } catch (err) {
-          log.error(`request block error: ${(err as Error).stack}`)
-        }
-      }
+    const interceptManager = new RequestInterceptionManager(pageCDPSession, {
+      onError: error => {
+        log.error('Request interception error:', error)
+      },
+    })
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return request.continue({ modifiedHeaders } as any)
+    const interceptions: Interception[] = []
+
+    // Blocked URLs.
+    this.blockedUrls.forEach(blockedUrl => {
+      interceptions.push({
+        urlPattern: blockedUrl,
+        modifyRequest: () => ({ errorReason: 'BlockedByClient' }),
+      })
+    })
+
+    // Add extra headers.
+    if (this.extraHeaders) {
+      Object.entries(this.extraHeaders).forEach(([url, obj]) => {
+        const headers = Object.entries(obj).map(([name, value]) => ({
+          name,
+          value,
+        }))
+        interceptions.push({
+          urlPattern: url,
+          modifyRequest: ({ event }) => {
+            log.debug(`adding extraHeaders in: ${event.request.url}`, headers)
+            return { headers }
+          },
+        })
+      })
     }
 
-    // Enable request interception.
-    await page.setRequestInterception(true)
-    let setRequestInterceptionState = true
-    page.on('request', requestHandler)
+    // Response modifiers.
+    Object.entries(this.responseModifiers).forEach(([url, replacements]) => {
+      interceptions.push({
+        urlPattern: url,
+        modifyResponse: ({ event, body }) => {
+          if (body) {
+            log.debug(
+              `using responseModifiers in: ${event.request.url}`,
+              replacements,
+            )
+            replacements.forEach(({ search, replace }) => {
+              body = body?.replace(search, replace)
+            })
+          }
+          return { body }
+        },
+      })
+    })
+
+    await interceptManager.intercept(...interceptions)
 
     // Allow to change the setRequestInterception state from page.
     const setRequestInterceptionFunction = async (value: boolean) => {
@@ -977,13 +1023,11 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
       log.debug(`setRequestInterception to ${value}`)
       try {
         if (!value) {
-          page.off('request', requestHandler)
+          await interceptManager.disable()
+        } else {
+          await interceptManager.enable()
         }
-        await page.setRequestInterception(value)
         setRequestInterceptionState = value
-        if (value) {
-          page.on('request', requestHandler)
-        }
       } catch (err) {
         log.error(`setRequestInterception error: ${(err as Error).stack}`)
       }
@@ -1082,12 +1126,6 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
         }
       },
     )
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pageCDPSession = (page as any)._client() as CDPSession
-    await pageCDPSession.send('Network.setBypassServiceWorker', {
-      bypass: true,
-    })
 
     /* pageCDPSession.on('Network.webSocketFrameSent', ({requestId, timestamp, response}) => {
       log('Network.webSocketFrameSent', requestId, timestamp, response.payloadData)
