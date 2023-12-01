@@ -939,7 +939,16 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
 
     page.on('dialog', async dialog => {
       log.info(`page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`)
-      await dialog.dismiss()
+      try {
+        await dialog.accept()
+      } catch (err) {
+        log.debug(`dialog accept error: ${(err as Error).message}`)
+      }
+      try {
+        await dialog.dismiss()
+      } catch (err) {
+        log.debug(`dialog dismiss error: ${(err as Error).message}`)
+      }
     })
 
     page.on('close', () => {
