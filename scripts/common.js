@@ -382,3 +382,18 @@ window.setupActions = async () => {
       runNext()
     })
 }
+
+// WebSocket client.
+window.wsClient = async url => {
+  const client = new WebSocket(url, [])
+  await new Promise((resolve, reject) => {
+    if (client.readyState === WebSocket.OPEN) {
+      resolve()
+    } else if (client.readyState === WebSocket.CLOSED) {
+      reject(new Error('WebSocket closed'))
+    }
+    client.addEventListener('open', resolve, { once: true })
+    client.addEventListener('error', reject, { once: true })
+  })
+  return client
+}
