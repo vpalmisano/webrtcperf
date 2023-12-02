@@ -241,6 +241,11 @@ if (
   }
 } */
 
+/**
+ * handleTransceiverForInsertableStreams
+ * @param {string} id
+ * @param {RTCRtpTransceiver} transceiver
+ */
 // eslint-disable-next-line no-unused-vars
 const handleTransceiverForInsertableStreams = (id, transceiver) => {
   // log(`RTCPeerConnection-${id} handleTransceiver ${transceiver.direction}`)
