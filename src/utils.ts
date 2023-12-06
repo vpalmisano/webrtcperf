@@ -14,6 +14,7 @@ import pidusage from 'pidusage'
 import { BrowserFetcher, Page } from 'puppeteer-core'
 
 import { Session } from './session'
+import { parse } from 'json5'
 
 // eslint-disable-next-line
 const ps = require('pidusage/lib/ps')
@@ -813,4 +814,164 @@ export type PeerConnectionExternalMethod =
 
 export function toTitleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+type VideoInfo = {
+  width: number
+  height: number
+  frameRate: number
+  start_pts: number
+  start_time: number
+  duration: number
+  keyFrames: { index: number; pkt_pts_time: number }[]
+}
+
+// VMAF score methods.
+async function getInfos(fpath: string): Promise<VideoInfo> {
+  const { stdout } = await runShellCommand(
+    `ffprobe -v quiet -show_format -show_streams -show_frames -show_entries frame=key_frame,pkt_pts_time -print_format json ${fpath}`,
+  )
+  const data = JSON.parse(stdout) as {
+    format: { start_pts: number; duration: string }
+    streams: {
+      width: number
+      height: number
+      r_frame_rate: string
+      start_pts: number
+      start_time: string
+      duration: string
+    }[]
+    frames: { key_frame: number; pkt_pts_time: string }[]
+  }
+  const [den, num] = data.streams[0].r_frame_rate
+    .split('/')
+    .map(i => parseInt(i))
+  return {
+    width: data.streams[0].width,
+    height: data.streams[0].height,
+    start_pts: data.streams[0].start_pts,
+    start_time: parseFloat(data.streams[0].start_time),
+    duration: parseFloat(data.streams[0].duration),
+    frameRate: den / num,
+    keyFrames: data.frames.map((f, index) => ({ index, key: f.key_frame === 1, pkt_pts_time: parseFloat(f.pkt_pts_time) })).filter(f => f.key),
+  }
+}
+
+function getFrameIndex(referenceInfos: VideoInfo, degradedInfos: VideoInfo,): [number, number] | undefined {
+  for (const referenceFrame of referenceInfos.keyFrames) {
+    for (const degradedFrame of degradedInfos.keyFrames) {
+      if (degradedFrame.pkt_pts_time === referenceFrame.pkt_pts_time) {
+        return [referenceFrame.index, degradedFrame.index]
+      }
+    }
+  }
+}
+
+async function runVmaf(
+  referencePath: string,
+  degradedPath: string,
+  referenceInfos: VideoInfo,
+  degradedInfos: VideoInfo,
+): Promise<void> {
+  log.debug('runVmaf', {
+    referencePath,
+    degradedPath,
+    referenceInfos,
+    degradedInfos,
+  })
+  const { width, height, frameRate } = referenceInfos
+  const vmafLogPath = degradedPath.replace(/\.[^.]+$/, '.vmaf.json')
+  const cpus = os.cpus().length
+
+  const frameIndex = getFrameIndex(referenceInfos, degradedInfos)
+  if (!frameIndex) {
+    throw new Error('No matching frame index')
+  }
+  const [referenceIndex, degradedIndex] = frameIndex
+
+  const cmd = `ffmpeg -re -loglevel warning -y -threads ${cpus} \
+-i ${degradedPath} \
+-i ${referencePath} \
+-filter_complex '\
+[0:v]select=gte(n\\,${degradedIndex}),setpts=PTS-STARTPTS,scale=w=${width}:h=${height}:flags=bicubic,fps=fps=${frameRate},split[deg1][deg2];\
+[1:v]select=gte(n\\,${referenceIndex}),setpts=PTS-STARTPTS,scale=w=${width}:h=${height}:flags=bicubic,fps=fps=${frameRate},split[ref1][ref2];\
+[deg1][ref1]libvmaf=log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf];\
+[ref2][deg2]hstack=shortest=1[stacked]' \
+-shortest \
+-map [vmaf] -f null - \
+-map [stacked] -f xv display \
+`
+  log.debug('runVmaf', cmd)
+  const { stdout, stderr } = await runShellCommand(cmd)
+  const vmafLog = JSON.parse(await fs.promises.readFile(vmafLogPath, 'utf-8'))
+  log.debug('runVmaf', {
+    stdout,
+    stderr,
+    vmafLog: vmafLog['pooled_metrics']['vmaf'],
+  })
+  log.info('VMAF metrics:', vmafLog['pooled_metrics']['vmaf'])
+
+  const plotlyPath = degradedPath.replace(/\.[^.]+$/, '.plotly')
+  const title = path.basename(degradedPath).replace(/\.[^.]+$/, '')
+  const plotlyData = {
+    data: [
+      {
+        uid: 'id',
+        fill: 'none',
+        mode: 'lines',
+        name: 'VMAF score',
+        type: 'scatter',
+        x: vmafLog.frames.map(({ frameNum }: { frameNum: number }) => frameNum),
+        y: vmafLog.frames.map(
+          ({ metrics }: { metrics: { vmaf: number } }) => metrics.vmaf,
+        ),
+      },
+    ],
+    layout: {
+      title,
+      width: 1280,
+      height: 720,
+      xaxis: {
+        type: 'linear',
+        range: [0, vmafLog.frames.length],
+        title: 'Frame',
+        showgrid: true,
+        autorange: true,
+      },
+      yaxis: {
+        type: 'linear',
+        range: [0, 100],
+        title: 'Score',
+        showgrid: true,
+        autorange: true,
+      },
+      autosize: false,
+    },
+    frames: [],
+  }
+  await fs.promises.writeFile(plotlyPath, JSON.stringify(plotlyData))
+}
+
+export async function calculateVmafScore(
+  referencePath: string,
+  degradedPaths: string[],
+): Promise<void> {
+  log.debug(
+    ` calculateVmafScore referencePath=${referencePath} degradedPaths=${degradedPaths}`,
+  )
+
+  const referenceInfos = await getInfos(referencePath)
+
+  for (const degradedPath of degradedPaths) {
+    const degradedInfos = await getInfos(degradedPath)
+
+    await runVmaf(
+      referencePath,
+      degradedPath,
+      referenceInfos,
+      degradedInfos,
+    )
+  }
+
+  //log.debug(`calculateVmafScore startPts=${startPts}`)
 }

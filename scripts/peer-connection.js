@@ -7,15 +7,23 @@ const NativeRTCPeerConnection = window.RTCPeerConnection
 
 let peerConnectionNextId = 0
 
-window.RTCPeerConnection = function (options) {
-  //log(`RTCPeerConnection`, options)
-
-  const pc = new NativeRTCPeerConnection({
-    ...options,
-    encodedInsertableStreams: timestampInsertableStreams,
-  })
-
+window.RTCPeerConnection = function (conf, options) {
   const id = peerConnectionNextId++
+
+  log(`RTCPeerConnection-${id}`, { conf, options })
+
+  const encodedInsertableStreams =
+    conf.encodedInsertableStreams ||
+    (timestampInsertableStreams && conf?.sdpSemantics === 'unified-plan')
+
+  const pc = new NativeRTCPeerConnection(
+    {
+      ...conf,
+      encodedInsertableStreams,
+    },
+    options,
+  )
+
   PeerConnections.set(id, pc)
 
   pc.addEventListener('connectionstatechange', () => {
@@ -49,17 +57,38 @@ window.RTCPeerConnection = function (options) {
     //log(`RTCPeerConnection addTransceiver`, args)
 
     const transceiver = addTransceiverNative(...args)
-    // log(`RTCPeerConnection-${id} addTransceiver`, transceiver)
-    /* if (transceiver.sender) {
+    log(`RTCPeerConnection-${id} addTransceiver`, transceiver)
+    if (transceiver.sender) {
       const setParametersNative = transceiver.sender.setParameters.bind(
         transceiver.sender,
       )
-      setParametersNative.setParameters = parameters => {
+      transceiver.sender.setParameters = parameters => {
         log(`RTCPeerConnection-${id} transceiver.setParameters`, parameters)
         return setParametersNative(parameters)
       }
-    } */
-    if (timestampInsertableStreams) {
+
+      const setStreamsNative = transceiver.sender.setStreams.bind(
+        transceiver.sender,
+      )
+      transceiver.sender.setStreams = (...streams) => {
+        log(`RTCPeerConnection-${id} transceiver.setStreams`, streams)
+        return setStreamsNative(...streams)
+      }
+
+      const replaceTrackNative = transceiver.sender.replaceTrack.bind(
+        transceiver.sender,
+      )
+      transceiver.sender.replaceTrack = async track => {
+        log(`RTCPeerConnection-${id} transceiver.replaceTrack`, track)
+        await replaceTrackNative(track)
+
+        if (encodedInsertableStreams) {
+          handleTransceiverForInsertableStreams(id, transceiver)
+        }
+      }
+    }
+
+    if (encodedInsertableStreams) {
       handleTransceiverForInsertableStreams(id, transceiver)
     }
 
@@ -67,14 +96,13 @@ window.RTCPeerConnection = function (options) {
     return transceiver
   }
 
-  // Used by OpenTok.
   const addStreamNative = pc.addStream.bind(pc)
   pc.addStream = (...args) => {
+    log(`RTCPeerConnection-${id} addStream`)
     addStreamNative(...args)
-    //log(`RTCPeerConnection-${id} addStream`)
     for (const transceiver of pc.getTransceivers()) {
       if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
-        if (timestampInsertableStreams) {
+        if (encodedInsertableStreams) {
           handleTransceiverForInsertableStreams(id, transceiver)
         }
         handleTransceiverForPlayoutDelayHint(id, transceiver, 'addStream')
@@ -83,16 +111,16 @@ window.RTCPeerConnection = function (options) {
   }
 
   pc.addEventListener('track', event => {
-    //log(`RTCPeerConnection-${id} track`)
+    log(`RTCPeerConnection-${id} track`)
     const { receiver, transceiver } = event
     if (receiver?.track) {
-      //log(`RTCPeerConnection-${id} ontrack`, track.kind, event)
-      if (timestampInsertableStreams) {
+      log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
+      if (encodedInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
-      if (timestampWatermark && receiver?.track?.kind === 'video') {
+      if (timestampWatermark && receiver.track.kind === 'video') {
         window.recognizeTimestampWatermark(
-          receiver?.track,
+          receiver.track,
           ({ timestamp, delay }) => {
             videoEndToEndDelayStats.push(timestamp, delay)
           },
@@ -101,6 +129,15 @@ window.RTCPeerConnection = function (options) {
     }
     handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
   })
+
+  const setConfigurationNative = pc.setConfiguration.bind(pc)
+  pc.setConfiguration = configuration => {
+    log(`RTCPeerConnection-${id} setConfiguration`, configuration)
+    return setConfigurationNative({
+      ...configuration,
+      encodedInsertableStreams,
+    })
+  }
 
   window.dispatchEvent(
     new CustomEvent('webrtcperf:peerconnectioncreated', {

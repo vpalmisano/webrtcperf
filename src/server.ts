@@ -576,29 +576,49 @@ export class Server {
             log.debug(`ws write-stream ${paramPath}`)
             const fpath = path.resolve(this.serverData, paramPath)
             const stream = fs.createWriteStream(fpath)
+            let written = 0
 
-            const close = () => {
+            const close = async () => {
               stream.close()
               ws.close()
+
+              try {
+                if (!written) {
+                  await fs.promises.unlink(fpath)
+                } else if (fpath.endsWith('.ivf')) {
+                  const data = new ArrayBuffer(4)
+                  const view = new DataView(data)
+                  view.setUint32(0, written - 1, true)
+                  const fd = await fs.promises.open(fpath, 'r+')
+                  await fd.write(new Uint8Array(data), 0, 4, 24)
+                  await fd.close()
+                }
+              } catch (err) {
+                log.error(
+                  `ws write-stream close error: ${(err as Error).message}`,
+                )
+              }
             }
 
             stream.on('error', (err: Error) => {
               log.error(`ws write-stream error: ${err.message}`)
-              close()
+              void close()
             })
 
             ws.on('error', (err: Error) => {
               log.error(`ws write-stream error: ${err.message}`)
-              close()
+              void close()
             })
 
             ws.on('close', () => {
               log.debug(`ws write-stream close`)
-              close()
+              void close()
             })
 
-            ws.on('message', data => {
+            ws.on('message', (data: ArrayBuffer) => {
               stream.write(data)
+              data.byteLength
+              written++
             })
 
             break
