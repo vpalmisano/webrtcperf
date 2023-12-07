@@ -55,7 +55,7 @@ async function streamWriter(
   width,
   height,
   frameRate,
-  receiver = false,
+  sender = false,
 ) {
   const ws = await wsClient(
     `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
@@ -80,34 +80,39 @@ async function streamWriter(
   }
 
   let gotKeyframe = false
+  /* let startTimestamp = 0
+  let startClockTime = 0 */
 
   return {
-    write(encodedFrame, clockTime) {
+    write(encodedFrame, pts) {
       const frameData = encodedFrame.data
       const type = encodedFrame.type
       const metadata = encodedFrame.getMetadata()
       if (!gotKeyframe) {
         if (type === 'key') {
           gotKeyframe = true
+          /* startTimestamp = metadata.timestamp
+          startClockTime = Number(clockTime) * (90000 / 1000) */
           writeHeader(metadata.width, metadata.height)
         } else {
-          return
+          return false
         }
       }
-      if (
-        !receiver &&
-        (metadata.width !== width || metadata.height !== height)
-      ) {
-        return
+      if (sender && (metadata.width !== width || metadata.height !== height)) {
+        return false
       }
-      const pts = Math.round((frameRate * Number(clockTime)) / 1000)
-      /*
-      let pts = Math.round(
+      /* let pts = Math.round((frameRate * Number(clockTime)) / 1000)
+      if (pts === prevPts) {
+        pts++
+      }
+      prevPts = pts */
+
+      /* let pts = Math.round(
         (frameRate *
           (encodedFrame.timestamp - startTimestamp + startClockTime)) /
           90000,
-      )
-      */
+      ) */
+
       /* log(
         'write',
         filename,
@@ -115,12 +120,14 @@ async function streamWriter(
         type,
         (encodedFrame.timestamp - startTimestamp) / 90000,
       ) */
+
       const data = new ArrayBuffer(12 + frameData.byteLength)
       const view = new DataView(data)
       view.setUint32(0, frameData.byteLength, true)
       view.setBigUint64(4, BigInt(pts), true)
       new Uint8Array(data).set(new Uint8Array(frameData), 12)
       ws.send(data)
+      return true
     },
     close() {
       ws.close()
@@ -137,28 +144,30 @@ async function handleInsertableStreams(data, debug = false) {
   }
   let transformStream = null
   const insertableStreamsHeader = stringToBinary('WP00')
-  const headerSize = 12
+  const headerSize = 16
   let writer = null
 
   if (operation === 'encode') {
+    let pts = 0
+    const { width, height, frameRate } = track.getSettings()
     if (saveStreams) {
-      const { width, height, frameRate } = track.getSettings()
       writer = await streamWriter(
         `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
         width,
         height,
         frameRate,
+        true,
       )
     }
 
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
-        const timestamp = BigInt(Date.now())
-
-        try {
-          writer?.write(encodedFrame, timestamp)
-        } catch (err) {
-          log('writer error', err)
+        if (writer) {
+          try {
+            if (writer.write(encodedFrame, pts)) pts++
+          } catch (err) {
+            log('writer error', err)
+          }
         }
 
         const newData = new ArrayBuffer(
@@ -167,19 +176,18 @@ async function handleInsertableStreams(data, debug = false) {
         const newView = new DataView(newData)
         new Uint8Array(newData).set(new Uint8Array(encodedFrame.data))
         let pos = encodedFrame.data.byteLength
-        newView.setUint32(pos, insertableStreamsHeader, false)
-        pos += 4
-        newView.setBigUint64(pos, timestamp, false)
-        pos += 8
+        newView.setUint32(pos, insertableStreamsHeader, true)
+        newView.setBigUint64(pos + 4, BigInt(Date.now()), true)
+        newView.setUint32(pos + 12, pts, true)
         encodedFrame.data = newData
-        if (debug) {
+        /* if (debug) {
           dumpFrame(
             encodedFrame,
             'e',
             encodedFrame.data.byteLength - headerSize,
             encodedFrame.data.byteLength,
           )
-        }
+        } */
         controller.enqueue(encodedFrame)
       },
     })
@@ -190,31 +198,31 @@ async function handleInsertableStreams(data, debug = false) {
         window.VIDEO_WIDTH,
         window.VIDEO_HEIGHT,
         window.VIDEO_FRAMERATE,
-        true,
       )
     }
 
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
-        if (debug) {
+        /* if (debug) {
           dumpFrame(
             encodedFrame,
             'd',
             encodedFrame.data.byteLength - headerSize,
             encodedFrame.data.byteLength,
           )
-        }
+        } */
         const view = new DataView(encodedFrame.data)
         let pos = encodedFrame.data.byteLength - headerSize
-        const header = view.getUint32(pos, false)
+        const header = view.getUint32(pos, true)
         if (header === insertableStreamsHeader) {
           const timestamp = Date.now()
-          const ts = view.getBigUint64(pos + 4, false)
+          const ts = Number(view.getBigUint64(pos + 4, true))
+          const pts = view.getUint32(pos + 12, true)
           if (
             !transformStream._lastTimestamp ||
             timestamp - transformStream._lastTimestamp > 1000
           ) {
-            const delay = parseInt(BigInt(timestamp) - ts)
+            const delay = timestamp - ts
             videoEndToEndNetworkDelayStats.push(timestamp, delay / 1000)
             transformStream._lastTimestamp = timestamp
             if (debug) {
@@ -228,7 +236,7 @@ async function handleInsertableStreams(data, debug = false) {
           encodedFrame.data = newData
 
           try {
-            writer?.write(encodedFrame, ts)
+            writer?.write(encodedFrame, pts)
           } catch (err) {
             log('writer error', err)
           }
