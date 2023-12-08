@@ -14,7 +14,7 @@ import zlib from 'zlib'
 import { loadConfig } from './config'
 import { Session, SessionParams } from './session'
 import { Stats } from './stats'
-import { logger, runShellCommand } from './utils'
+import { fixIvfFrames, logger, runShellCommand } from './utils'
 
 const log = logger('app:server')
 
@@ -576,22 +576,19 @@ export class Server {
             log.debug(`ws write-stream ${paramPath}`)
             const fpath = path.resolve(this.serverData, paramPath)
             const stream = fs.createWriteStream(fpath)
-            let written = 0
+
+            let headerWritten = false
+            let framesWritten = 0
 
             const close = async () => {
               stream.close()
               ws.close()
 
               try {
-                if (!written) {
+                if (!framesWritten) {
                   await fs.promises.unlink(fpath)
                 } else if (fpath.endsWith('.ivf')) {
-                  const data = new ArrayBuffer(4)
-                  const view = new DataView(data)
-                  view.setUint32(0, written - 1, true)
-                  const fd = await fs.promises.open(fpath, 'r+')
-                  await fd.write(new Uint8Array(data), 0, 4, 24)
-                  await fd.close()
+                  await fixIvfFrames(fpath)
                 }
               } catch (err) {
                 log.error(
@@ -616,9 +613,13 @@ export class Server {
             })
 
             ws.on('message', (data: ArrayBuffer) => {
+              if (!headerWritten) {
+                stream.write(data)
+                headerWritten = true
+                return
+              }
               stream.write(data)
-              data.byteLength
-              written++
+              framesWritten++
             })
 
             break

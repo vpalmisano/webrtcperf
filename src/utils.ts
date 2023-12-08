@@ -862,13 +862,13 @@ export async function ffprobe(fpath: string): Promise<VideoInfo> {
 }
 
 // VMAF score methods.
-type IvfFrame = {
+export type IvfFrame = {
   index: number
   position: number
   size: number
 }
 
-type IvfInfo = {
+export type IvfInfo = {
   width: number
   height: number
   frameRate: number
@@ -924,6 +924,50 @@ async function parseIvf(fpath: string): Promise<IvfInfo> {
   return { width, height, frameRate, ptsIndex, frames }
 }
 
+export async function fixIvfFrames(fpath: string, backup = false) {
+  if (!fpath.endsWith('.ivf')) {
+    throw new Error('Only IVF files are supported')
+  }
+  const infos = await parseIvf(fpath)
+  const { width, height, frameRate } = infos
+  log.debug(`fixIvfFrames ${fpath}`, { width, height, frameRate })
+
+  const fd = await fs.promises.open(fpath, 'r')
+  const fixedPath = fpath.replace('.ivf', '.fixed.ivf')
+  const fixedFd = await fs.promises.open(fixedPath, 'w')
+
+  const headerData = new ArrayBuffer(32)
+  const headerView = new DataView(headerData)
+  await fd.read(headerView, 0, headerData.byteLength, 0)
+  headerView.setUint32(24, infos.ptsIndex.length, true)
+  await fixedFd.write(new Uint8Array(headerData), 0, headerData.byteLength, 0)
+
+  let position = 32
+
+  for (const pts of infos.ptsIndex) {
+    const frame = infos.frames.get(pts)
+    if (!frame) {
+      throw new Error('frame not found')
+    }
+
+    const frameData = new ArrayBuffer(frame.size)
+    const frameView = new DataView(frameData)
+    await fd.read(frameView, 0, frame.size, frame.position)
+    await fixedFd.write(new Uint8Array(frameData), 0, frame.size, position)
+    position += frame.size
+  }
+
+  await fd.close()
+  await fixedFd.close()
+
+  if (backup) {
+    await fs.promises.rename(fpath, fpath + '.bk')
+  }
+  await fs.promises.rename(fixedPath, fpath)
+
+  return infos
+}
+
 async function alignVideos(referencePath: string, degradedPath: string) {
   if (!referencePath.endsWith('.ivf') || !degradedPath.endsWith('.ivf')) {
     throw new Error('Only IVF files are supported')
@@ -936,53 +980,10 @@ async function alignVideos(referencePath: string, degradedPath: string) {
   const { width, height, frameRate } = referenceInfos
   const degradedInfos = await parseIvf(degradedPath)
 
-  if (!fs.existsSync(degradedPath + '.bk')) {
-    const degraded = await fs.promises.open(degradedPath, 'r')
-    const degradedAlignedPath = degradedPath.replace('.ivf', '.aligned.ivf')
-    const degradedAligned = await fs.promises.open(degradedAlignedPath, 'w')
-
-    const headerData = new ArrayBuffer(32)
-    const headerView = new DataView(headerData)
-    await degraded.read(headerView, 0, headerData.byteLength, 0)
-    await degradedAligned.write(
-      new Uint8Array(headerData),
-      0,
-      headerData.byteLength,
-      0,
-    )
-
-    let degradedPosition = 32
-
-    for (const pts of degradedInfos.ptsIndex) {
-      const degradedFrame = degradedInfos.frames.get(pts)
-      if (!degradedFrame) {
-        throw new Error('Degraded frame not found')
-      }
-
-      const degradedFrameData = new ArrayBuffer(degradedFrame.size)
-      const degradedFrameView = new DataView(degradedFrameData)
-      await degraded.read(
-        degradedFrameView,
-        0,
-        degradedFrame.size,
-        degradedFrame.position,
-      )
-      await degradedAligned.write(
-        new Uint8Array(degradedFrameData),
-        0,
-        degradedFrame.size,
-        degradedPosition,
-      )
-      degradedPosition += degradedFrame.size
-    }
-
-    await degraded.close()
-    await degradedAligned.close()
-    await fs.promises.rename(degradedPath, degradedPath + '.bk')
-    await fs.promises.rename(degradedAlignedPath, degradedPath)
-  }
-
-  const startPts = Math.max(referenceInfos.ptsIndex[0], degradedInfos.ptsIndex[0])
+  const startPts = Math.max(
+    referenceInfos.ptsIndex[0],
+    degradedInfos.ptsIndex[0],
+  )
   return { width, height, frameRate, startPts }
 }
 
@@ -992,7 +993,9 @@ async function runVmaf(
   preview = true,
 ) {
   log.debug('runVmaf', { referencePath, degradedPath })
-  const comparisonPath = referencePath.replace(/\.[^.]+$/, '_compared-with_') + path.basename(degradedPath.replace(/\.[^.]+$/, ''))
+  const comparisonPath =
+    referencePath.replace(/\.[^.]+$/, '_compared-with_') +
+    path.basename(degradedPath.replace(/\.[^.]+$/, ''))
   const vmafLogPath = comparisonPath + '.vmaf.json'
   const cpus = os.cpus().length
 
@@ -1012,7 +1015,7 @@ async function runVmaf(
 [ref2][deg2]hstack=shortest=1[stacked]' \
 -shortest \
 -map [vmaf] -f null - \
--map [stacked] -f mp4 ${comparisonPath + '.mp4'} \
+-map [stacked] -c:v libx264 -crf 20 -f mp4 ${comparisonPath + '.mp4'} \
 `
     : `ffmpeg -loglevel warning -y -threads ${cpus} -vsync 0 \
 -i ${degradedPath} \
