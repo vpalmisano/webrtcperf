@@ -914,9 +914,9 @@ async function parseIvf(fpath: string): Promise<IvfInfo> {
     } else {
       ptsIndex.push(pts)
       frames.set(pts, { index, position, size: size + 12 })
+      index++
     }
     position += size + 12
-    index++
   } while (bytesRead === 12)
 
   await fd.close()
@@ -924,12 +924,16 @@ async function parseIvf(fpath: string): Promise<IvfInfo> {
   return { width, height, frameRate, ptsIndex, frames }
 }
 
-export async function fixIvfFrames(fpath: string, backup = false) {
-  if (!fpath.endsWith('.ivf')) {
-    throw new Error('Only IVF files are supported')
+export async function fixIvfFrames(
+  fpath: string,
+  infos: IvfInfo,
+  backup = true,
+) {
+  const { width, height, frameRate, frames, ptsIndex } = infos
+  if (!ptsIndex.length) {
+    log.warn(`IVF file ${fpath}: no pts found`)
+    return
   }
-  const infos = await parseIvf(fpath)
-  const { width, height, frameRate } = infos
   log.debug(`fixIvfFrames ${fpath}`, { width, height, frameRate })
 
   const fd = await fs.promises.open(fpath, 'r')
@@ -939,15 +943,16 @@ export async function fixIvfFrames(fpath: string, backup = false) {
   const headerData = new ArrayBuffer(32)
   const headerView = new DataView(headerData)
   await fd.read(headerView, 0, headerData.byteLength, 0)
-  headerView.setUint32(24, infos.ptsIndex.length, true)
+  headerView.setUint32(24, ptsIndex.length, true)
   await fixedFd.write(new Uint8Array(headerData), 0, headerData.byteLength, 0)
 
   let position = 32
 
-  for (const pts of infos.ptsIndex) {
-    const frame = infos.frames.get(pts)
+  for (const pts of ptsIndex) {
+    const frame = frames.get(pts)
     if (!frame) {
-      throw new Error('frame not found')
+      log.warn(`IVF file ${fpath}: pts ${pts} not found, skipping`)
+      continue
     }
 
     const frameData = new ArrayBuffer(frame.size)
@@ -964,8 +969,6 @@ export async function fixIvfFrames(fpath: string, backup = false) {
     await fs.promises.rename(fpath, fpath + '.bk')
   }
   await fs.promises.rename(fixedPath, fpath)
-
-  return infos
 }
 
 async function alignVideos(referencePath: string, degradedPath: string) {
@@ -977,8 +980,16 @@ async function alignVideos(referencePath: string, degradedPath: string) {
     `alignVideos referencePath: ${referencePath} degradedPath: ${degradedPath}`,
   )
   const referenceInfos = await parseIvf(referencePath)
+  //await fixIvfFrames(referencePath, referenceInfos)
+
   const { width, height, frameRate } = referenceInfos
   const degradedInfos = await parseIvf(degradedPath)
+  //await fixIvfFrames(degradedPath, degradedInfos)
+
+  log.log({
+    referenceInfos: referenceInfos.ptsIndex.slice(0, 24 * 10),
+    degradedInfos: degradedInfos.ptsIndex.slice(0, 24 * 10),
+  })
 
   const startPts = Math.max(
     referenceInfos.ptsIndex[0],
@@ -1005,7 +1016,7 @@ async function runVmaf(
   )
 
   const cmd = preview
-    ? `ffmpeg -loglevel warning -y -threads ${cpus} -vsync 0 \
+    ? `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
 -ss ${startPts / frameRate} -i ${referencePath} \
 -filter_complex '\
@@ -1017,7 +1028,7 @@ async function runVmaf(
 -map [vmaf] -f null - \
 -map [stacked] -c:v libx264 -crf 20 -f mp4 ${comparisonPath + '.mp4'} \
 `
-    : `ffmpeg -loglevel warning -y -threads ${cpus} -vsync 0 \
+    : `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
 -ss ${startPts / frameRate} -i ${referencePath} \
 -filter_complex '\

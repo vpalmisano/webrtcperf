@@ -1,6 +1,4 @@
-/* global log, MeasuredStats, wsClient */
-
-const saveStreams = !!window.PARAMS?.saveStreams
+/* global log, MeasuredStats, stringToBinary, streamWriter */
 
 /**
  * Video end-to-end delay stats.
@@ -43,56 +41,6 @@ function dumpFrame(encodedFrame, direction, offset = 0, end = 32) {
   )
 }
 
-function stringToBinary(str) {
-  return str
-    .split('')
-    .reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
-}
-
-// IVF writer
-async function streamWriter(filename, width, height, frameRate) {
-  const ws = await wsClient(
-    `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
-      window.SERVER_PORT
-    }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`,
-  )
-
-  const writeHeader = () => {
-    const data = new ArrayBuffer(32)
-    const view = new DataView(data)
-    view.setUint32(0, stringToBinary('DKIF'), true)
-    view.setUint16(4, 0, true) // version
-    view.setUint16(6, 32, true) // header size
-    view.setUint32(8, stringToBinary('VP80'), true) // fourcc
-    view.setUint16(12, width, true) // width
-    view.setUint16(14, height, true) // header
-    view.setUint32(16, frameRate, true) // framerate denominator
-    view.setUint32(20, 1, true) // framerate numerator
-    view.setUint32(24, 0, true) // frame count
-    view.setUint32(28, 0, true) // unused
-    ws.send(data)
-  }
-
-  writeHeader()
-
-  return {
-    write(encodedFrame, pts) {
-      const frameData = encodedFrame.data
-      //log('write', filename, frameData.byteLength, type, pts)
-
-      const data = new ArrayBuffer(12 + frameData.byteLength)
-      const view = new DataView(data)
-      view.setUint32(0, frameData.byteLength, true)
-      view.setBigUint64(4, BigInt(pts), true)
-      new Uint8Array(data).set(new Uint8Array(frameData), 12)
-      ws.send(data)
-    },
-    close() {
-      ws.close()
-    },
-  }
-}
-
 async function handleInsertableStreams(data, debug = false) {
   const { operation, track, readable, writable } = data
   // console.log(`onmessage ${operation} ${track.kind}`)
@@ -113,7 +61,7 @@ async function handleInsertableStreams(data, debug = false) {
       frameRate,
     } = track.getSettings()
 
-    if (saveStreams) {
+    if (window.PARAMS?.saveStreams) {
       writer = await streamWriter(
         `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
         trackWidth,
@@ -132,12 +80,17 @@ async function handleInsertableStreams(data, debug = false) {
         }
         let pts = prevPts[synchronizationSource] + 1
         prevPts[synchronizationSource] = pts
-        /* Math.round(
-            (frameRate * (encodedFrame.timestamp - startTimestamp)) / 90000,
-          ) + temporalIndex */
 
         if (writer && width === trackWidth && height === trackHeight) {
-          //log('send', pts, pts / frameRate, encodedFrame.getMetadata())
+          /* log(
+            'send',
+            encodedFrame.type,
+            temporalIndex,
+            pts,
+            pts / frameRate,
+            encodedFrame.timestamp / 90000,
+            encodedFrame.getMetadata(),
+          ) */
           try {
             writer.write(encodedFrame, pts)
           } catch (err) {
@@ -167,7 +120,7 @@ async function handleInsertableStreams(data, debug = false) {
       },
     })
   } else if (operation === 'decode') {
-    if (saveStreams) {
+    if (window.PARAMS?.saveStreams) {
       writer = await streamWriter(
         `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
         window.VIDEO_WIDTH,
@@ -211,6 +164,14 @@ async function handleInsertableStreams(data, debug = false) {
           encodedFrame.data = newData
 
           if (writer) {
+            /* log(
+              'recv',
+              encodedFrame.type,
+              pts,
+              encodedFrame.timestamp / 90000,
+              pts / window.VIDEO_FRAMERATE,
+              encodedFrame.getMetadata(),
+            ) */
             try {
               writer.write(encodedFrame, pts)
             } catch (err) {

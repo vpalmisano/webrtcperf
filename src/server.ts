@@ -14,7 +14,7 @@ import zlib from 'zlib'
 import { loadConfig } from './config'
 import { Session, SessionParams } from './session'
 import { Stats } from './stats'
-import { fixIvfFrames, logger, runShellCommand } from './utils'
+import { logger, runShellCommand } from './utils'
 
 const log = logger('app:server')
 
@@ -587,8 +587,6 @@ export class Server {
               try {
                 if (!framesWritten) {
                   await fs.promises.unlink(fpath)
-                } else if (fpath.endsWith('.ivf')) {
-                  await fixIvfFrames(fpath)
                 }
               } catch (err) {
                 log.error(

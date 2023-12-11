@@ -397,3 +397,64 @@ window.wsClient = async url => {
   })
   return client
 }
+
+window.stringToBinary = str => {
+  return str
+    .split('')
+    .reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
+}
+const stringToBinary = window.stringToBinary
+
+// Writer
+const writeIvfHeader = (ws, width, height, frameRate, fourcc) => {
+  const data = new ArrayBuffer(32)
+  const view = new DataView(data)
+  view.setUint32(0, stringToBinary('DKIF'), true)
+  view.setUint16(4, 0, true) // version
+  view.setUint16(6, 32, true) // header size
+  view.setUint32(8, stringToBinary(fourcc), true) // fourcc
+  view.setUint16(12, width, true) // width
+  view.setUint16(14, height, true) // header
+  view.setUint32(16, frameRate, true) // framerate denominator
+  view.setUint32(20, 1, true) // framerate numerator
+  view.setUint32(24, 0, true) // frame count
+  view.setUint32(28, 0, true) // unused
+  ws.send(data)
+}
+
+window.streamWriter = async (
+  filename,
+  width,
+  height,
+  frameRate,
+  fourcc = 'VP80',
+) => {
+  const ws = await window.wsClient(
+    `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
+      window.SERVER_PORT
+    }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`,
+  )
+
+  if (filename.endsWith('.ivf')) {
+    writeIvfHeader(ws, width, height, frameRate, fourcc)
+  }
+
+  return {
+    write(frameData, pts) {
+      //log('write', filename, frameData.byteLength, pts)
+      if (filename.endsWith('.ivf')) {
+        const data = new ArrayBuffer(12 + frameData.byteLength)
+        const view = new DataView(data)
+        view.setUint32(0, frameData.byteLength, true)
+        view.setBigUint64(4, BigInt(pts), true)
+        new Uint8Array(data).set(new Uint8Array(frameData), 12)
+        ws.send(data)
+      } else {
+        ws.send(frameData)
+      }
+    },
+    close() {
+      ws.close()
+    },
+  }
+}
