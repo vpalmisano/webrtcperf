@@ -281,7 +281,7 @@ DEBUG_LEVEL=DEBUG:* yarn start \
         --vmaf-reference-path /data/1_send_89c58e0f-0307-4ab0-8eff-3ba86fb8ccf0.ivf \
         --vmaf-degraded-paths /data/1_recv_9e03aba3-5fa3-4fe3-9ee2-4166a2256c1d.ivf
   ```
-  The tool will generate a `.json` and a `.plotly` files in the `data` directory.
+  The tool will generate a `.vmaf.json` and a `.plotly` files in the `data` directory.
   Adding the `--vmaf-preview` option, a `.mp4` file containing the side-by-side
   video comparison will be generated.
 
