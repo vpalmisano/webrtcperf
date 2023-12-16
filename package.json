@@ -58,6 +58,7 @@
     "fast-stats": "^0.0.6",
     "fix-esm": "^1.0.1",
     "ipaddr.js": "^2.1.0",
+    "jimp": "^0.22.10",
     "json5": "^2.2.3",
     "lorem-ipsum": "^2.0.8",
     "moment": "^2.29.4",
@@ -75,8 +76,10 @@
     "sprintf-js": "^1.1.3",
     "tar-fs": "^2.1.1",
     "terser": "^5.22.0",
+    "tesseract.js": "^5.0.3",
     "uuid": "^9.0.1",
     "word-wrap": "^1.2.5",
+    "ws": "^8.14.2",
     "yaml": "^2.3.3"
   },
   "devDependencies": {
@@ -93,6 +96,7 @@
     "@types/sprintf-js": "^1.1.3",
     "@types/tar-fs": "^2.0.3",
     "@types/uuid": "^9.0.6",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.52.0",

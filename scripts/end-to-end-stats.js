@@ -1,4 +1,4 @@
-/* global log, MeasuredStats */
+/* global log, MeasuredStats, stringToBinary, streamWriter */
 
 /**
  * Video end-to-end delay stats.
@@ -41,32 +41,72 @@ function dumpFrame(encodedFrame, direction, offset = 0, end = 32) {
   )
 }
 
-function handleInsertableStreams(data, debug = false) {
-  const { operation, kind, readable, writable } = data
-  // console.log(`onmessage ${operation} ${kind}`)
-  if (kind !== 'video') {
+async function handleInsertableStreams(data, debug = false) {
+  const { operation, track, readable, writable } = data
+  // console.log(`onmessage ${operation} ${track.kind}`)
+  if (track.kind !== 'video') {
     readable.pipeTo(writable)
     return
   }
   let transformStream = null
-  const insertableStreamsHeader = ['w', 'p', '_', '_'].reduce(
-    (prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)),
-    0,
-  )
-  const headerSize = 12
+  const insertableStreamsHeader = stringToBinary('WP00')
+  const headerSize = 20
+  let writer = null
+
   if (operation === 'encode') {
+    const prevPts = {}
+    const {
+      width: trackWidth,
+      height: trackHeight,
+      frameRate,
+    } = track.getSettings()
+
+    if (window.PARAMS?.saveEncodedStreams) {
+      writer = await streamWriter(
+        `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
+        trackWidth,
+        trackHeight,
+        frameRate,
+      )
+    }
+
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
+        const timestamp = Date.now()
+        const { width, height, synchronizationSource } =
+          encodedFrame.getMetadata()
+        if (prevPts[synchronizationSource] === undefined) {
+          prevPts[synchronizationSource] = -1
+        }
+        let pts = prevPts[synchronizationSource] + 1
+        prevPts[synchronizationSource] = pts
+
+        if (writer && width === trackWidth && height === trackHeight) {
+          /* log(
+            'send',
+            encodedFrame.type,
+            temporalIndex,
+            pts,
+            pts / frameRate,
+            encodedFrame.timestamp / 90000,
+            encodedFrame.getMetadata(),
+          ) */
+          try {
+            writer.write(encodedFrame, pts)
+          } catch (err) {
+            log('writer error', err)
+          }
+        }
+
         const newData = new ArrayBuffer(
           encodedFrame.data.byteLength + headerSize,
         )
         const newView = new DataView(newData)
         new Uint8Array(newData).set(new Uint8Array(encodedFrame.data))
-        let pos = encodedFrame.data.byteLength
-        newView.setUint32(pos, insertableStreamsHeader, false)
-        pos += 4
-        newView.setBigUint64(pos, BigInt(Date.now()), false)
-        pos += 8
+        const pos = encodedFrame.data.byteLength
+        newView.setUint32(pos, insertableStreamsHeader, true)
+        newView.setBigUint64(pos + 4, BigInt(timestamp), true)
+        newView.setBigUint64(pos + 12, BigInt(pts), true)
         encodedFrame.data = newData
         if (debug) {
           dumpFrame(
@@ -80,6 +120,15 @@ function handleInsertableStreams(data, debug = false) {
       },
     })
   } else if (operation === 'decode') {
+    if (window.PARAMS?.saveEncodedStreams) {
+      writer = await streamWriter(
+        `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
+        window.VIDEO_WIDTH,
+        window.VIDEO_HEIGHT,
+        window.VIDEO_FRAMERATE,
+      )
+    }
+
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
         if (debug) {
@@ -91,18 +140,17 @@ function handleInsertableStreams(data, debug = false) {
           )
         }
         const view = new DataView(encodedFrame.data)
-        let pos = encodedFrame.data.byteLength - headerSize
-        const header = view.getUint32(pos, false)
-        pos += 4
+        const pos = encodedFrame.data.byteLength - headerSize
+        const header = view.getUint32(pos, true)
         if (header === insertableStreamsHeader) {
           const timestamp = Date.now()
+          const ts = Number(view.getBigUint64(pos + 4, true))
+          const pts = Number(view.getBigUint64(pos + 12, true))
           if (
             !transformStream._lastTimestamp ||
             timestamp - transformStream._lastTimestamp > 1000
           ) {
-            const t = view.getBigUint64(pos, false)
-            pos += 8
-            const delay = parseInt(BigInt(timestamp) - t)
+            const delay = timestamp - ts
             videoEndToEndNetworkDelayStats.push(timestamp, delay / 1000)
             transformStream._lastTimestamp = timestamp
             if (debug) {
@@ -114,6 +162,22 @@ function handleInsertableStreams(data, debug = false) {
             encodedFrame.data.byteLength - headerSize,
           )
           encodedFrame.data = newData
+
+          if (writer) {
+            /* log(
+              'recv',
+              encodedFrame.type,
+              pts,
+              encodedFrame.timestamp / 90000,
+              pts / window.VIDEO_FRAMERATE,
+              encodedFrame.getMetadata(),
+            ) */
+            try {
+              writer.write(encodedFrame, pts)
+            } catch (err) {
+              log('writer error', err)
+            }
+          }
         }
         controller.enqueue(encodedFrame)
       },
@@ -248,7 +312,9 @@ if (
  */
 // eslint-disable-next-line no-unused-vars
 const handleTransceiverForInsertableStreams = (id, transceiver) => {
-  // log(`RTCPeerConnection-${id} handleTransceiver ${transceiver.direction}`)
+  log(
+    `RTCPeerConnection-${id} handleTransceiverForInsertableStreams ${transceiver.direction}`,
+  )
   if (
     ['sendonly', 'sendrecv'].includes(transceiver.direction) &&
     transceiver.sender &&
@@ -263,7 +329,7 @@ const handleTransceiverForInsertableStreams = (id, transceiver) => {
     const { readable, writable } = transceiver.sender._encodedStreams
     const data = {
       operation: 'encode',
-      kind: transceiver.sender.track.kind,
+      track: transceiver.sender.track,
       readable,
       writable,
     }
@@ -287,7 +353,7 @@ const handleTransceiverForInsertableStreams = (id, transceiver) => {
     const { readable, writable } = transceiver.receiver._encodedStreams
     const data = {
       operation: 'decode',
-      kind: transceiver.receiver.track.kind,
+      track: transceiver.receiver.track,
       readable,
       writable,
     }

@@ -1,3 +1,61 @@
+FROM ubuntu:jammy as ffmpeg-build
+RUN \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ninja-build \
+		python3 \
+		python3-pip \
+        build-essential \
+        meson \
+        nasm \
+        yasm \
+        wget \
+        libfontconfig-dev \
+        libfribidi-dev \
+        libharfbuzz-dev \
+        libspeex-dev \
+        libtesseract-dev \
+        libvorbis-dev \
+        libvpx-dev \
+        libwebp-dev \
+        libx264-dev \
+        libzimg-dev \
+        libx265-dev \
+        libssl-dev
+
+ENV VMAF_VERSION=3.0.0
+ENV FFMPEG_VERSION=6.1
+
+RUN \
+    mkdir -p /src \
+    && cd /src \
+    && wget https://github.com/Netflix/vmaf/archive/refs/tags/v${VMAF_VERSION}.tar.gz \
+	&& tar -xzf v${VMAF_VERSION}.tar.gz \
+	&& cd vmaf-${VMAF_VERSION}/libvmaf \
+	&& meson build --prefix /usr \
+	&& ninja -vC build \
+	&& ninja -vC build install \
+	&& mkdir -p /usr/share/model \
+	&& cp -R ../model/* /usr/share/model
+
+RUN \
+    mkdir -p /src \
+    && cd /src \
+    && wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n${FFMPEG_VERSION}.tar.gz \
+	&& tar -xzf n${FFMPEG_VERSION}.tar.gz \
+	&& cd FFmpeg-n${FFMPEG_VERSION} \
+    && ./configure --prefix=/usr \
+        --enable-version3 --disable-shared --enable-gpl --enable-nonfree --enable-static \
+        --enable-pthreads --enable-filters --enable-openssl --enable-runtime-cpudetect \
+        --enable-libvpx --enable-libx264 --enable-libx265 --enable-libspeex \
+        --enable-libtesseract --enable-libfreetype --enable-fontconfig --enable-libzimg \
+        --enable-libvmaf --enable-libvorbis --enable-libwebp --enable-libfribidi --enable-libharfbuzz \
+    && make -j$(nproc) \
+    && make install
+
+RUN rm -rf /src
+
+#
 FROM ubuntu:jammy
 LABEL org.opencontainers.image.title webrtcperf
 LABEL org.opencontainers.image.description WebRTC performance and quality evaluation tool.
@@ -10,7 +68,6 @@ RUN \
         git \
         python3 \
         bash \
-        ffmpeg \
         curl \
         xvfb \
         unzip \
@@ -66,7 +123,22 @@ RUN \
         libegl1 \
         libegl1-mesa \
         fonts-noto-color-emoji \
-        libu2f-udev
+        libu2f-udev \
+        libfontconfig1 \
+        libfribidi0 \
+        libharfbuzz0b \
+        libspeex1 \
+        libtesseract4 \
+        libvorbis0a \
+        libvorbisenc2 \
+        libvorbisfile3 \
+        libogg0 \
+        libvpx7 \
+        libwebpdemux2 \
+        libx264-163 \
+        libzimg2 \
+        libx265-199 \
+        openssl
 
 RUN \
     mkdir -p /etc/apt/keyrings; \
@@ -96,6 +168,10 @@ RUN dpkg -i /chromium-browser-unstable.deb && rm chromium-browser-unstable.deb
 RUN apt-get clean \
     && rm -rf /var/cache/apt/* \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ffmpeg-build /usr/bin/ffmpeg /usr/bin/ffprobe /usr/bin/
+COPY --from=ffmpeg-build /usr/lib/x86_64-linux-gnu/libvmaf.so* /usr/lib/x86_64-linux-gnu/
+COPY --from=ffmpeg-build /usr/share/model/* /usr/share/model/
 
 RUN mkdir -p /app/
 RUN curl -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \

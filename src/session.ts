@@ -205,6 +205,9 @@ export type SessionParams = {
   maxVideoDecoders: number
   maxVideoDecodersAt: number
   incognito: boolean
+  serverPort: number
+  serverSecret: string
+  serverUseHttps: boolean
 }
 
 /**
@@ -270,6 +273,9 @@ export class Session extends EventEmitter {
   private readonly maxVideoDecoders: number
   private readonly maxVideoDecodersAt: number
   private readonly incognito: boolean
+  private readonly serverPort: number
+  private readonly serverSecret: string
+  private readonly serverUseHttps: boolean
 
   private running = false
   private browser?: Browser
@@ -385,6 +391,9 @@ export class Session extends EventEmitter {
     maxVideoDecoders,
     maxVideoDecodersAt,
     incognito,
+    serverPort,
+    serverSecret,
+    serverUseHttps,
   }: SessionParams) {
     super()
     log.debug('constructor', { id })
@@ -462,6 +471,9 @@ export class Session extends EventEmitter {
     this.maxVideoDecoders = maxVideoDecoders
     this.maxVideoDecodersAt = maxVideoDecodersAt
     this.incognito = incognito
+    this.serverPort = serverPort
+    this.serverSecret = serverSecret
+    this.serverUseHttps = serverUseHttps
 
     this.id = id
     this.evaluateAfter = evaluateAfter || []
@@ -684,7 +696,7 @@ export class Session extends EventEmitter {
         ).launch({
           headless: this.display
             ? false
-            : process.env.PUPPETEER_HEADLESS_NEW
+            : process.env.PUPPETEER_HEADLESS_NEW === 'true'
             ? 'new'
             : true,
           executablePath,
@@ -833,57 +845,65 @@ export class Session extends EventEmitter {
       ),
     )
 
-    await page.evaluateOnNewDocument(`\
-window.WEBRTC_STRESS_TEST_START_TIMESTAMP = ${this.startTimestamp}; \
-window.WEBRTC_STRESS_TEST_URL = "${hideAuth(url)}"; \
-window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1}; \
-window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1}; \
-window.WEBRTC_STRESS_TEST_INDEX = ${index + 1}; \
-window.STATS_INTERVAL = ${this.statsInterval}; \
+    // Export config to page.
+    let cmd = `\
+window.WEBRTC_STRESS_TEST_START_TIMESTAMP = ${this.startTimestamp};
+window.WEBRTC_STRESS_TEST_URL = "${hideAuth(url)}";
+window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};
+window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1};
+window.WEBRTC_STRESS_TEST_INDEX = ${index + 1};
+window.STATS_INTERVAL = ${this.statsInterval};
+window.VIDEO_WIDTH = ${this.videoWidth};
+window.VIDEO_HEIGHT = "${this.videoHeight}";
+window.VIDEO_FRAMERATE = ${this.videoFramerate};
 window.LOCAL_STORAGE = '${
       this.localStorage ? JSON.stringify(this.localStorage) : ''
-    }'; \
-window.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod}; \
+    }';
+window.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
 try {
-  window.PARAMS = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}'); \
-} catch (err) {} \
-`)
+  window.PARAMS = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
+} catch (err) {}
+`
+
+    if (this.serverPort) {
+      cmd += `\
+window.SERVER_PORT = ${this.serverPort};
+window.SERVER_SECRET = "${this.serverSecret}";
+window.SERVER_USE_HTTPS = ${this.serverUseHttps};
+`
+    }
 
     if (this.getUserMediaOverride) {
-      const override = this.getUserMediaOverride
-      log.debug('Using getUserMedia override:', override)
-      await page.evaluateOnNewDocument(`
-window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
-      `)
+      log.debug('Using getUserMedia override:', this.getUserMediaOverride)
+      cmd += `window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(
+        this.getUserMediaOverride,
+      )}');\n`
     }
 
     if (this.getDisplayMediaOverride) {
-      const override = this.getDisplayMediaOverride
-      log.debug('Using getDisplayMedia override:', override)
-      await page.evaluateOnNewDocument(`
-window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(override)}');
-      `)
+      log.debug('Using getDisplayMedia override:', this.getDisplayMediaOverride)
+      cmd += `window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(
+        this.getDisplayMediaOverride,
+      )}');\n`
     }
 
     if (this.getDisplayMediaCrop) {
-      const crop = this.getDisplayMediaCrop
-      log.debug('Using getDisplayMedia crop:', crop)
-      await page.evaluateOnNewDocument(`
-window.GET_DISPLAY_MEDIA_CROP = "${crop}";
-      `)
+      log.debug('Using getDisplayMedia crop:', this.getDisplayMediaCrop)
+      cmd += `window.GET_DISPLAY_MEDIA_CROP = "${this.getDisplayMediaCrop}";\n`
     }
 
     if (this.localStorage) {
       log.debug('Using localStorage:', this.localStorage)
-      let cmd = ''
       Object.entries(this.localStorage).map(([key, value]) => {
         cmd += `localStorage.setItem('${key}', JSON.parse('${JSON.stringify(
           value,
-        )}'));`
+        )}'));\n`
       })
-      await page.evaluateOnNewDocument(cmd)
     }
 
+    await page.evaluateOnNewDocument(cmd)
+
+    // Clear cookies.
     if (this.clearCookies) {
       try {
         const client = await page.target().createCDPSession()
@@ -895,17 +915,17 @@ window.GET_DISPLAY_MEDIA_CROP = "${crop}";
 
     // Load scripts.
     for (const name of [
-      'common',
-      'get-user-media',
-      'peer-connection-stats',
-      `peer-connection${
+      'scripts/common.js',
+      'scripts/get-user-media.js',
+      'scripts/peer-connection-stats.js',
+      `scripts/peer-connection${
         process.env.EXTERNAL_PEER_CONNECTION === 'true' ? '-external' : ''
-      }`,
-      'end-to-end-stats',
-      'playout-delay-hint',
-      'page-stats',
+      }.js`,
+      'scripts/end-to-end-stats.js',
+      'scripts/playout-delay-hint.js',
+      'scripts/page-stats.js',
     ]) {
-      const filePath = resolvePackagePath(`scripts/${name}.js`)
+      const filePath = resolvePackagePath(name)
       log.debug(`loading ${name} script from: ${filePath}`)
       await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
     }

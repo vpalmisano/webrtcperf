@@ -18,6 +18,7 @@ import {
   sleep,
   stopUpdateSystemStats,
 } from './utils'
+import { calculateVmafScore } from './vmaf'
 
 const log = logger('app')
 
@@ -56,6 +57,13 @@ async function main(): Promise<void> {
     config.startTimestamp = Date.now()
   }
 
+  // VMAF score.
+  if (config.vmafReferencePath && config.vmafDegradedPaths) {
+    await calculateVmafScore(config)
+    process.exit(0)
+  }
+
+  // Stats.
   const stats = new Stats(config)
   await stats.start()
 

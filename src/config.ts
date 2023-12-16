@@ -666,6 +666,30 @@ alert will be successful only when at least 95% of the checks pass.`,
     env: 'SERVER_DATA',
     arg: 'server-data',
   },
+  vmafReferencePath: {
+    doc: `The reference video path to use for VMAF calculation.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'VMAF_REFERENCE_PATH',
+    arg: 'vmaf-reference-path',
+  },
+  vmafDegradedPaths: {
+    doc: `The degraded video paths (comma-separated) to use for VMAF calculation.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'VMAF_DEGRADED_PATHS',
+    arg: 'vmaf-degraded-paths',
+  },
+  vmafPreview: {
+    doc: `If true, for each VMAF comparison it creates a side-by-side video with \
+the reference and degraded versions.`,
+    format: 'Boolean',
+    default: false,
+    env: 'VMAF_PREVIEW',
+    arg: 'vmaf-preview',
+  },
 })
 
 type ConfigDocs = Record<

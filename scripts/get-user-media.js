@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract */
+/* global log, loadScript, sleep, Tesseract, streamWriter */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -121,6 +121,73 @@ function collectMediaTracks(mediaStream) {
       return applyConstraintsNative(constraints)
     }
   }) */
+}
+
+/**
+ * Save the MediaStream video track to disk.
+ * @param {MediaStreamTrack} videoTrack
+ */
+window.saveMediaStreamTrack = async (videoTrack, tag, quality = 0.75) => {
+  const settings = videoTrack.getSettings()
+  const width = settings.width || window.VIDEO_WIDTH
+  const height = settings.height || window.VIDEO_HEIGHT
+  const frameRate = settings.frameRate || window.VIDEO_FRAMERATE
+  const fname = `${window.WEBRTC_STRESS_TEST_INDEX}_${tag}_${videoTrack.id}.ivf`
+  log(`saveMediaStreamTrack ${fname} ${width}x${height} ${frameRate}fps`)
+  const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
+
+  const canvas = new OffscreenCanvas(width, height)
+  const ctx = canvas.getContext('2d')
+  let startTimestamp = -1
+  const writableStream = new window.WritableStream(
+    {
+      async write(videoFrame) {
+        const { timestamp, codedWidth, codedHeight } = videoFrame
+        if (!codedWidth || !codedHeight) {
+          return
+        }
+        const bitmap = await createImageBitmap(videoFrame)
+        try {
+          canvas.width = codedWidth
+          canvas.height = codedHeight
+          ctx.drawImage(bitmap, 0, 0, codedWidth, codedHeight)
+          const blob = await canvas.convertToBlob({
+            type: 'image/jpeg',
+            quality,
+          })
+          const data = await blob.arrayBuffer()
+          if (startTimestamp < 0) {
+            startTimestamp = timestamp
+          }
+          const pts = Math.round(
+            (frameRate * (timestamp - startTimestamp)) / 1000000,
+          )
+          /* log(
+            `writer ${data.byteLength} bytes timestamp=${
+              videoFrame.timestamp / 1000000
+            } pts=${pts}`,
+          ) */
+          writer.write(data, pts)
+        } catch (err) {
+          log(`saveMediaStream error: ${err.message}`)
+        }
+        videoFrame.close()
+        bitmap.close()
+      },
+      close() {
+        writer.close()
+      },
+      abort(err) {
+        log('saveMediaStream error:', err)
+      },
+    },
+    new CountQueuingStrategy({ highWaterMark: frameRate * 2 }),
+  )
+
+  const trackProcessor = new window.MediaStreamTrackProcessor({
+    track: videoTrack,
+  })
+  trackProcessor.readable.pipeTo(writableStream)
 }
 
 /**
@@ -247,51 +314,71 @@ window.recognizeTimestampWatermark = async (
   measureInterval = 10,
 ) => {
   const { scheduler } = await loadTesseract()
-
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')
-  // document.body.appendChild(canvas)
-
-  const video = document.createElement('video')
-  video.muted = true
-
   let lastTimestamp = 0
-  const onTimeUpdate = async () => {
-    const { currentTime, videoWidth, videoHeight } = video
-    if (
-      currentTime - lastTimestamp < measureInterval ||
-      !videoWidth ||
-      !videoHeight
-    ) {
-      return
-    }
-    lastTimestamp = currentTime
-    const now = Date.now()
-    const fontSize = Math.ceil(videoHeight / 18) + 6
-    canvas.width = videoWidth
-    canvas.height = fontSize
-    ctx.drawImage(video, 0, 0, videoWidth, fontSize, 0, 0, videoWidth, fontSize)
-    const { data } = await scheduler.addJob('recognize', canvas)
-    const cleanText = data.text.trim()
-    if (cleanText && data.confidence > 90) {
-      const timestamp = parseInt(cleanText)
-      const delay = now - timestamp
-      if (delay > 0 && delay < 30000) {
-        cb({ timestamp, delay: delay / 1000 })
-      } /* else {
-        log(
-          `recognizeTimestampWatermark text=${cleanText} delay=${delay}ms confidence=${data.confidence}`,
-        )
-      } */
-    }
-  }
-  video.addEventListener('timeupdate', onTimeUpdate)
-  video.addEventListener('error', e => {
-    video.removeEventListener('timeupdate', onTimeUpdate)
-    throw e
+
+  const trackProcessor = new window.MediaStreamTrackProcessor({
+    track: videoTrack,
   })
-  video.srcObject = new MediaStream([videoTrack])
-  video.play()
+  const writableStream = new window.WritableStream(
+    {
+      async write(videoFrame) {
+        const { timestamp, codedWidth, codedHeight } = videoFrame
+        const bitmap = await createImageBitmap(videoFrame)
+
+        if (
+          timestamp - lastTimestamp > measureInterval * 1000000 &&
+          codedWidth &&
+          codedHeight
+        ) {
+          lastTimestamp = timestamp
+          const now = Date.now()
+          const fontHeight = Math.ceil(codedHeight / 18) + 6
+          canvas.width = codedWidth
+          canvas.height = fontHeight
+          ctx.drawImage(
+            bitmap,
+            0,
+            0,
+            codedWidth,
+            fontHeight,
+            0,
+            0,
+            codedWidth,
+            fontHeight,
+          )
+
+          try {
+            const { data } = await scheduler.addJob('recognize', canvas)
+            const cleanText = data.text.trim()
+            if (cleanText && data.confidence > 70) {
+              const recognizedTimestamp = parseInt(cleanText)
+              const delay = now - recognizedTimestamp
+              if (delay > 0 && delay < 30000) {
+                log(
+                  `recognizeTimestampWatermark text=${cleanText} delay=${delay}ms confidence=${
+                    data.confidence
+                  } elapsed=${Date.now() - now}ms`,
+                )
+                cb({ timestamp: now, delay: delay / 1000 })
+              }
+            }
+          } catch (err) {
+            log(`recognizeTimestampWatermark error: ${err.message}`)
+          }
+        }
+        videoFrame.close()
+        bitmap.close()
+      },
+      close() {},
+      abort(err) {
+        log('WritableStream error:', err)
+      },
+    },
+    new CountQueuingStrategy({ highWaterMark: 1 }),
+  )
+  trackProcessor.readable.pipeTo(writableStream)
 }
 
 // Overrides.
@@ -335,9 +422,19 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     } catch (err) {
       log(`collectMediaTracks error:`, err)
     }
-    return window.PARAMS?.timestampWatermark
-      ? applyTimestampWatermark(mediaStream)
-      : mediaStream
+
+    if (window.PARAMS?.timestampWatermark) {
+      mediaStream = applyTimestampWatermark(mediaStream)
+    }
+
+    if (window.PARAMS?.saveMediaStream) {
+      const videoTrack = mediaStream.getVideoTracks()[0]
+      if (videoTrack) {
+        await window.saveMediaStreamTrack(videoTrack, 'send')
+      }
+    }
+
+    return mediaStream
   }
 }
 

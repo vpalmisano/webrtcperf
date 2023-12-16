@@ -1,4 +1,5 @@
 import compression from 'compression'
+import { timingSafeEqual } from 'crypto'
 import express, { json } from 'express'
 import basicAuth from 'express-basic-auth'
 import fs from 'fs'
@@ -7,6 +8,7 @@ import { createServer as _createServer, Server as HttpsServer } from 'https'
 import os from 'os'
 import path from 'path'
 import tar from 'tar-fs'
+import { WebSocketServer } from 'ws'
 import zlib from 'zlib'
 
 import { loadConfig } from './config'
@@ -29,7 +31,7 @@ export class Server {
   /** If HTTPS protocol should be used. */
   readonly serverUseHttps: boolean
   /** An optional path that the HTTP server will expose with the /data endpoint. */
-  readonly serverData: string
+  serverData: string
   /** The file path that will be used to serve the \`/view/page.log\` requests. */
   pageLogPath: string
   /** A {@link Stats} class instance. */
@@ -37,6 +39,7 @@ export class Server {
 
   private app: express.Express
   private server: HttpServer | HttpsServer | null = null
+  private wss: WebSocketServer | null = null
 
   /**
    * Server instance.
@@ -98,8 +101,17 @@ export class Server {
     this.app.get('/download/alert-rules', this.getAlertRules.bind(this))
     this.app.get('/download/stats', this.getStatsFile.bind(this))
     this.app.get('/empty-page', this.getEmptyPage.bind(this))
+
     if (this.serverData) {
-      this.app.get('/data/*', this.getData.bind(this))
+      fs.promises
+        .mkdir(this.serverData, { recursive: true })
+        .then(() => {
+          this.app.get('/data/*', this.getData.bind(this))
+        })
+        .catch(err => {
+          log.error(`mkdir ${this.serverData} error: ${err.message}`)
+          this.serverData = ''
+        })
     }
 
     this.app.use(
@@ -113,17 +125,6 @@ export class Server {
         res.status(500).send(err.message)
       },
     )
-
-    // WS interface
-    /* this.io = new Server(this.server);
-    this.io.use((socket, next) => {
-      if (socket.handshake.auth.token === this.serverSecret) {
-        return next();
-      }
-      log.error(`invalid auth: ${socket.handshake.auth.token}`);
-      next(new Error('Authentication error'));
-    });
-    this.io.on('connection', this.onConnection.bind(this)); */
   }
 
   /*
@@ -549,6 +550,112 @@ export class Server {
     } else {
       this.server = createServer(this.app)
     }
+
+    // WebSocket endpoint.
+    const wss = new WebSocketServer({ noServer: true })
+    wss.on('connection', (ws, request) => {
+      try {
+        const query = new URLSearchParams(request.url?.split('?')[1] || '')
+        const action = query.get('action') || ''
+        log.debug(
+          `ws connection from ${request.socket.remoteAddress} action: ${action}`,
+        )
+        switch (action) {
+          case 'write-stream': {
+            if (!this.serverData) {
+              throw new Error('serverData option not set')
+            }
+            const filename = query.get('filename') || ''
+            if (!filename) {
+              throw new Error('filename not set')
+            }
+            const paramPath = path
+              .normalize(filename)
+              .replace(/^(\.\.(\/|\\|$))+/, '')
+
+            log.debug(`ws write-stream ${paramPath}`)
+            const fpath = path.resolve(this.serverData, paramPath)
+            const stream = fs.createWriteStream(fpath)
+
+            let headerWritten = false
+            let framesWritten = 0
+
+            const close = async () => {
+              stream.close()
+              ws.close()
+
+              try {
+                if (!framesWritten) {
+                  await fs.promises.unlink(fpath)
+                }
+              } catch (err) {
+                log.error(
+                  `ws write-stream close error: ${(err as Error).message}`,
+                )
+              }
+            }
+
+            stream.on('error', (err: Error) => {
+              log.error(`ws write-stream error: ${err.message}`)
+              void close()
+            })
+
+            ws.on('error', (err: Error) => {
+              log.error(`ws write-stream error: ${err.message}`)
+              void close()
+            })
+
+            ws.on('close', () => {
+              log.debug(`ws write-stream close`)
+              void close()
+            })
+
+            ws.on('message', (data: Uint8Array) => {
+              if (!data || !data.byteLength) return
+              if (!headerWritten) {
+                stream.write(data)
+                headerWritten = true
+                return
+              }
+              stream.write(data)
+              framesWritten++
+            })
+
+            break
+          }
+          default:
+            throw new Error(`invalid action: ${action}`)
+        }
+      } catch (err) {
+        log.error(`ws connection error: ${(err as Error).message}`)
+        ws.close()
+      }
+    })
+    this.wss = wss
+
+    this.server.on('upgrade', (request, socket, head) => {
+      log.debug(`ws upgrade ${request.url}`)
+      try {
+        const query = new URLSearchParams(request.url?.split('?')[1] || '')
+        const auth = query.get('auth')
+        if (
+          !auth ||
+          !timingSafeEqual(Buffer.from(auth), Buffer.from(this.serverSecret))
+        ) {
+          throw new Error('invalid auth')
+        }
+      } catch (err) {
+        log.error(`ws upgrade error: ${(err as Error).message}`)
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+        socket.destroy()
+        return
+      }
+
+      wss.handleUpgrade(request, socket, head, ws => {
+        wss.emit('connection', ws, request)
+      })
+    })
+
     this.server.listen(this.serverPort, () => {
       log.info(`HTTPS server listening on port ${this.serverPort}`)
     })
@@ -558,6 +665,10 @@ export class Server {
    * Stops the {@link Server} instance.
    */
   stop(): void {
+    if (this.wss) {
+      this.wss.close()
+      this.wss = null
+    }
     if (this.server) {
       log.info('stop')
       this.server.close()

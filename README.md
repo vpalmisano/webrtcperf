@@ -263,6 +263,28 @@ DEBUG_LEVEL=DEBUG:* yarn start \
     --tabs-per-session=10
 ```
 
+## Using the VMAF calculator
+1. Run the tool with the options:
+  ```sh
+  --script-params="{timestampWatermark:true,saveMediaStream:true}"
+  --server-port=5000
+  --server-use-https=true
+  --server-data=/data
+  ```
+2. The sent/received videos will be saved in the `/data` directory.
+3. Run the VMAF calculator comparing the sent (`<n>_send_<trackId>.ivf`) with the received video (`<n>_recv_<trackId>.ivf`):
+  ```sh
+  docker run --rm \
+    -e DEBUG_LEVEL=INFO \
+    -v $PWD/data:/data \
+    ghcr.io/vpalmisano/webrtcperf:devel \
+        --vmaf-reference-path /data/1_send_89c58e0f-0307-4ab0-8eff-3ba86fb8ccf0.ivf \
+        --vmaf-degraded-paths /data/1_recv_9e03aba3-5fa3-4fe3-9ee2-4166a2256c1d.ivf
+  ```
+  The tool will generate a `.json` and a `.plotly` files in the `data` directory.
+  Adding the `--vmaf-preview` option, a `.mp4` file containing the side-by-side
+  video comparison will be generated.
+
 ## Authors
 - Vittorio Palmisano [[github](https://github.com/vpalmisano)]
 

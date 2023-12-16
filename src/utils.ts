@@ -814,3 +814,73 @@ export type PeerConnectionExternalMethod =
 export function toTitleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
+
+export type VideoInfo = {
+  width: number
+  height: number
+  frameRate: number
+  start_pts: number
+  start_time: number
+  duration: number
+  keyFrames: { index: number; pkt_pts_time: number }[]
+}
+
+export async function ffprobe(fpath: string): Promise<VideoInfo> {
+  const { stdout } = await runShellCommand(
+    `ffprobe -v quiet -show_format -show_streams -show_frames -show_entries frame=key_frame,pkt_pts_time -print_format json ${fpath}`,
+  )
+  const data = JSON.parse(stdout) as {
+    format: { start_pts: number; duration: string }
+    streams: {
+      width: number
+      height: number
+      r_frame_rate: string
+      start_pts: number
+      start_time: string
+      duration: string
+    }[]
+    frames: { key_frame: number; pkt_pts_time: string }[]
+  }
+  const [den, num] = data.streams[0].r_frame_rate
+    .split('/')
+    .map(i => parseInt(i))
+  return {
+    width: data.streams[0].width,
+    height: data.streams[0].height,
+    start_pts: data.streams[0].start_pts,
+    start_time: parseFloat(data.streams[0].start_time),
+    duration: parseFloat(data.streams[0].duration),
+    frameRate: den / num,
+    keyFrames: data.frames
+      .map((f, index) => ({
+        index,
+        key: f.key_frame === 1,
+        pkt_pts_time: parseFloat(f.pkt_pts_time),
+      }))
+      .filter(f => f.key),
+  }
+}
+
+export async function ffprobeOcr(
+  fpath: string,
+): Promise<{ pts: number; t: number }[]> {
+  const { stdout } = await runShellCommand(
+    `\
+ffprobe -loglevel quiet -show_frames -show_entries frame=pts,pkt_pos,pkt_size:frame_tags=lavfi.ocr.text -print_format json \
+    -f lavfi -i 'movie="${fpath}",crop=in_w:6+in_h/18:0:0,ocr=whitelist="0123456789"' 2>/dev/null`,
+  )
+  const data = JSON.parse(stdout) as {
+    frames: {
+      pts: number
+      pkt_pos: number
+      pkt_size: number
+      tags: Record<string, string>
+    }[]
+  }
+  return data.frames.map(frame => ({
+    pts: frame.pts,
+    position: frame.pkt_pos,
+    size: frame.pkt_size,
+    t: parseInt(frame.tags['lavfi.ocr.text'].trim() || '0'),
+  }))
+}
