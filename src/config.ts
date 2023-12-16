@@ -682,6 +682,14 @@ alert will be successful only when at least 95% of the checks pass.`,
     env: 'VMAF_DEGRADED_PATHS',
     arg: 'vmaf-degraded-paths',
   },
+  vmafPreview: {
+    doc: `If true, for each VMAF comparison it creates a side-by-side video with \
+the reference and degraded versions.`,
+    format: 'Boolean',
+    default: false,
+    env: 'VMAF_PREVIEW',
+    arg: 'vmaf-preview',
+  },
 })
 
 type ConfigDocs = Record<

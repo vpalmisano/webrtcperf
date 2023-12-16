@@ -59,18 +59,7 @@ async function main(): Promise<void> {
 
   // VMAF score.
   if (config.vmafReferencePath && config.vmafDegradedPaths) {
-    if (!fs.existsSync(config.vmafReferencePath)) {
-      throw new Error(
-        `VMAF reference file ${config.vmafReferencePath} does not exist`,
-      )
-    }
-    const vmafDegradedPaths = config.vmafDegradedPaths.split(',')
-    vmafDegradedPaths.forEach(path => {
-      if (!fs.existsSync(path)) {
-        throw new Error(`VMAF degraded file ${path} does not exist`)
-      }
-    })
-    await calculateVmafScore(config.vmafReferencePath, vmafDegradedPaths)
+    await calculateVmafScore(config)
     process.exit(0)
   }
 
