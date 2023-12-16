@@ -696,7 +696,7 @@ export class Session extends EventEmitter {
         ).launch({
           headless: this.display
             ? false
-            : process.env.PUPPETEER_HEADLESS_NEW
+            : process.env.PUPPETEER_HEADLESS_NEW === 'true'
             ? 'new'
             : true,
           executablePath,

@@ -10,7 +10,6 @@ import { Session } from './session'
 import { Stats } from './stats'
 import { startThrottle, stopThrottle } from './throttle'
 import {
-  calculateVmafScore,
   checkChromiumExecutable,
   logger,
   randomActivateAudio,
@@ -19,6 +18,7 @@ import {
   sleep,
   stopUpdateSystemStats,
 } from './utils'
+import { calculateVmafScore } from './vmaf'
 
 const log = logger('app')
 

@@ -610,7 +610,8 @@ export class Server {
               void close()
             })
 
-            ws.on('message', (data: ArrayBuffer) => {
+            ws.on('message', (data: Uint8Array) => {
+              if (!data || !data.byteLength) return
               if (!headerWritten) {
                 stream.write(data)
                 headerWritten = true
