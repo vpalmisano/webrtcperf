@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, streamWriter */
+/* global log, loadScript, sleep, Tesseract, streamWriter, isDisplayTrack */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -127,12 +127,14 @@ function collectMediaTracks(mediaStream) {
  * Save the MediaStream video track to disk.
  * @param {MediaStreamTrack} videoTrack
  */
-window.saveMediaStreamTrack = async (videoTrack, tag, quality = 0.75) => {
+window.saveMediaStreamTrack = async (videoTrack, sendrecv, quality = 0.75) => {
   const settings = videoTrack.getSettings()
   const width = settings.width || window.VIDEO_WIDTH
   const height = settings.height || window.VIDEO_HEIGHT
   const frameRate = settings.frameRate || window.VIDEO_FRAMERATE
-  const fname = `${window.WEBRTC_STRESS_TEST_INDEX}_${tag}_${videoTrack.id}.ivf`
+  const fname = `${window.getParticipantName()}-${sendrecv}_${
+    videoTrack.id
+  }.ivf`
   log(`saveMediaStreamTrack ${fname} ${width}x${height} ${frameRate}fps`)
   const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
 
@@ -215,6 +217,8 @@ const applyTimestampWatermark = mediaStream => {
   const fontSize = Math.ceil(canvas.height / 18)
   ctx.font = `${fontSize}px Sans`
   const textHeight = fontSize + 6
+  const participantName =
+    window.getParticipantName() + (isDisplayTrack(videoTrack) ? ' -s' : '')
 
   const transformer = new window.TransformStream({
     async transform(videoFrame, controller) {
@@ -230,6 +234,11 @@ const applyTimestampWatermark = mediaStream => {
       ctx.fillRect(0, 0, width, textHeight)
       ctx.fillStyle = 'white'
       ctx.fillText(text, 0, fontSize)
+
+      ctx.fillStyle = 'black'
+      ctx.fillRect(0, height - textHeight, width, height)
+      ctx.fillStyle = 'white'
+      ctx.fillText(participantName, 0, height - 6)
 
       const newBitmap = await createImageBitmap(canvas)
       const newFrame = new VideoFrame(newBitmap, { timestamp })

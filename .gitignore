@@ -18,3 +18,4 @@ webrtcperf.exe
 webrtcperf_*.gz
 build
 _docs
+*.traineddata

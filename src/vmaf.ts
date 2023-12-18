@@ -8,7 +8,6 @@ import { logger, runShellCommand } from './utils'
 
 const log = logger('app:vmaf')
 
-// VMAF score methods.
 export type IvfFrame = {
   index: number
   position: number
@@ -21,6 +20,7 @@ export type IvfInfo = {
   frameRate: number
   ptsIndex: number[]
   frames: Map<number, IvfFrame>
+  participantDisplayName?: string
 }
 
 const chunkedPromiseAll = async <T, R>(
@@ -57,12 +57,13 @@ export async function parseIvf(
   const den = headerView.getUint32(16, true)
   const num = headerView.getUint32(20, true)
   const frameRate = den / num
+  let participantDisplayName = ''
 
   const frameHeaderView = new DataView(new ArrayBuffer(12))
   let index = 0
   let position = 32
   let bytesRead = 0
-  const frames = new Map<number, IvfFrame>()
+  let frames = new Map<number, IvfFrame>()
   do {
     const ret = await fd.read(
       frameHeaderView,
@@ -99,36 +100,33 @@ export async function parseIvf(
       })
       tesseractScheduler.addWorker(worker)
     }
+    const participantDisplayNameWorker = await createWorker('eng')
+    await participantDisplayNameWorker.setParameters({
+      tessedit_pageseg_mode: PSM.SINGLE_LINE,
+    })
+
+    const ptsToRecognized = new Map<number, number>()
+    const textHeight = Math.ceil(height / 18) + 6
 
     const recognizeFrame = async (pts: number, index: number) => {
       const frame = frames.get(pts)
       if (!frame) {
         log.warn(`IVF file ${fpath}: pts ${pts} not found, skipping`)
-        frames.delete(pts)
         return
       }
       const { size, position } = frame
 
       const frameView = new DataView(new ArrayBuffer(size))
       await fd.read(frameView, 0, size, position + 12)
+      const buffer = Buffer.from(frameView.buffer, 0, frameView.byteLength)
 
-      let image = await Jimp.read(
-        Buffer.from(frameView.buffer, 0, frameView.byteLength),
-      )
-      image = image.crop(0, 0, width / 2, Math.ceil(height / 18) + 6)
+      const image = (await Jimp.read(buffer)).crop(0, 0, width / 2, textHeight)
       const ret = await tesseractScheduler.addJob(
         'recognize',
         await image.getBufferAsync(Jimp.MIME_BMP),
       )
       const { data } = ret
       const recognizedTime = parseInt(data.text.trim() || '0')
-      log.debug(
-        `recognize pts=${index}/${
-          frames.size
-        } text=${data.text.trim()} confidence=${
-          data.confidence
-        } recognizedTime=${recognizedTime}`,
-      )
       if (data.confidence < 75 || !recognizedTime) {
         log.warn(
           `recognize pts=${index}/${
@@ -137,13 +135,45 @@ export async function parseIvf(
             data.confidence
           } recognizedTime=${recognizedTime}`,
         )
-        frames.delete(pts)
+        ptsToRecognized.set(pts, 0)
         return
+      } else {
+        log.debug(
+          `recognize pts=${index}/${
+            frames.size
+          } text=${data.text.trim()} confidence=${
+            data.confidence
+          } recognizedTime=${recognizedTime ? new Date(recognizedTime) : ''}`,
+        )
       }
       const recognizedPts = Math.round((frameRate * recognizedTime) / 1000)
-      if (recognizedPts !== pts) {
-        frames.delete(pts)
-        frames.set(recognizedPts, frame)
+      ptsToRecognized.set(pts, recognizedPts)
+
+      if (!participantDisplayName) {
+        participantDisplayName = '-'
+        const image = (await Jimp.read(buffer)).crop(
+          0,
+          height - textHeight,
+          width,
+          height,
+        )
+        const ret = await participantDisplayNameWorker.recognize(
+          await image.getBufferAsync(Jimp.MIME_BMP),
+        )
+        const { data } = ret
+        if (data.confidence > 75) {
+          participantDisplayName = data.text.trim()
+          log.debug(
+            `participantDisplayName="${participantDisplayName}" confidence=${data.confidence}`,
+          )
+        } else {
+          log.warn(
+            `participantDisplayName failed text="${data.text.trim()}" confidence=${
+              data.confidence
+            }`,
+          )
+          participantDisplayName = ''
+        }
       }
     }
 
@@ -156,31 +186,61 @@ export async function parseIvf(
     log.info(`parseIvf ${fpath} running recognizer done`)
 
     await tesseractScheduler.terminate()
+
+    const ptsIndex = Array.from(ptsToRecognized.keys()).sort((a, b) => a - b)
+    for (const [i, pts] of ptsIndex.entries()) {
+      const recognizedPts = ptsToRecognized.get(pts)
+      if (!recognizedPts && i) {
+        const prevRecognizedPts = ptsToRecognized.get(ptsIndex[i - 1])
+        if (prevRecognizedPts) {
+          ptsToRecognized.set(pts, prevRecognizedPts + pts - ptsIndex[i - 1])
+        } else {
+          ptsToRecognized.delete(pts)
+        }
+      }
+    }
+
+    const recognizedFrames = new Map<number, IvfFrame>()
+    for (const [pts, frame] of frames) {
+      const recognizedPts = ptsToRecognized.get(pts)
+      if (recognizedPts) {
+        recognizedFrames.set(recognizedPts, frame)
+      }
+    }
+    frames.clear()
+    frames = recognizedFrames
   }
 
   const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
 
   await fd.close()
-  return { width, height, frameRate, ptsIndex, frames }
+  return { width, height, frameRate, ptsIndex, frames, participantDisplayName }
 }
 
-export async function fixIvfFrames(fpath: string) {
-  const fixedPath = fpath.replace('.ivf', '.fixed.ivf')
-  if (fs.existsSync(fixedPath)) {
-    const { width, height, frameRate, ptsIndex } = await parseIvf(fixedPath)
-    return { width, height, frameRate, startPts: ptsIndex[0] }
+export async function fixIvfFrames(fpath: string, outDir: string) {
+  const { width, height, frameRate, frames, ptsIndex, participantDisplayName } =
+    await parseIvf(fpath, true)
+  if (!participantDisplayName) {
+    throw new Error(`IVF file ${fpath}: no participant name found`)
   }
-
-  const { width, height, frameRate, frames, ptsIndex } = await parseIvf(
-    fpath,
-    true,
-  )
   if (!ptsIndex.length) {
     throw new Error(`IVF file ${fpath}: no frames found`)
   }
   log.debug(`fixIvfFrames ${fpath}`, { width, height, frameRate })
   const fd = await fs.promises.open(fpath, 'r')
-  const fixedFd = await fs.promises.open(fixedPath, 'w')
+
+  const parts = path.basename(fpath).split('_')
+  const outFilePath = path.join(
+    outDir,
+    parts[0].endsWith('-send')
+      ? `${participantDisplayName}.ivf`
+      : `${participantDisplayName}_recv-by_${parts[0].replace(
+          '-recv',
+          '',
+        )}.ivf`,
+  )
+
+  const fixedFd = await fs.promises.open(outFilePath, 'w')
   const headerView = new DataView(new ArrayBuffer(32))
   await fd.read(headerView, 0, headerView.byteLength, 0)
 
@@ -198,18 +258,18 @@ export async function fixIvfFrames(fpath: string) {
       continue
     }
 
-    if (previousFrame && previousPts >= 0 && previousPts < pts - 1) {
-      const missing = pts - previousPts - 1
+    if (previousFrame && previousPts >= 0 && pts - 1 - previousPts > 0) {
+      const missing = pts - 1 - previousPts
       if (missing > frameRate * 60 * 60) {
         throw new Error(
           `IVF file ${fpath}: too many frames missing: ${missing}`,
         )
       }
-      log.debug(
+      /* log.debug(
         `IVF file ${fpath}: pts ${pts} missing ${missing} frames, copying previous`,
-      )
+      ) */
       while (pts - previousPts - 1 > 0) {
-        previousPts++
+        previousPts += 1
         previousFrame.setBigUint64(4, BigInt(previousPts), true)
         await fixedFd.write(
           new Uint8Array(previousFrame.buffer),
@@ -257,27 +317,7 @@ export async function fixIvfFrames(fpath: string) {
     `IVF file ${fpath}: frames written: ${writtenFrames} duplicated: ${duplicatedFrames}`,
   )
 
-  return { width, height, frameRate, startPts }
-}
-
-async function alignVideos(referencePath: string, degradedPath: string) {
-  if (!referencePath.endsWith('.ivf') || !degradedPath.endsWith('.ivf')) {
-    throw new Error('Only IVF files are supported')
-  }
-
-  log.debug(
-    `alignVideos referencePath: ${referencePath} degradedPath: ${degradedPath}`,
-  )
-  const {
-    width,
-    height,
-    frameRate,
-    startPts: referenceStartPts,
-  } = await fixIvfFrames(referencePath)
-  const { startPts: degradedFirstPts } = await fixIvfFrames(degradedPath)
-
-  const ptsDiff = degradedFirstPts - referenceStartPts
-  return { width, height, frameRate, ptsDiff }
+  return { participantDisplayName, outFilePath, startPts }
 }
 
 async function runVmaf(
@@ -286,24 +326,30 @@ async function runVmaf(
   preview: boolean,
 ) {
   log.info('runVmaf', { referencePath, degradedPath, preview })
-  const comparisonPath =
-    referencePath.replace(/\.[^.]+$/, '_compared-with_') +
-    path.basename(degradedPath.replace(/\.[^.]+$/, ''))
+  const comparisonPath = degradedPath.replace(/\.[^.]+$/, '')
   const vmafLogPath = comparisonPath + '.vmaf.json'
   const cpus = os.cpus().length
 
-  const { width, height, frameRate, ptsDiff } = await alignVideos(
+  const {
+    width,
+    height,
+    frameRate,
+    ptsIndex: referencePtsIndex,
+  } = await parseIvf(referencePath, false)
+  const { ptsIndex: degradedPtsIndex } = await parseIvf(degradedPath, false)
+  const ptsDiff = degradedPtsIndex[0] - referencePtsIndex[0]
+  log.debug('runVmaf', {
     referencePath,
     degradedPath,
-  )
-
-  const degradedPathFixed = degradedPath.replace('.ivf', '.fixed.ivf')
-  const referencePathFixed = referencePath.replace('.ivf', '.fixed.ivf')
+    referencePtsIndex: referencePtsIndex[0],
+    degradedPtsIndex: degradedPtsIndex[0],
+    ptsDiff,
+  })
 
   const cmd = preview
     ? `ffmpeg -loglevel warning -y -threads ${cpus} \
--i ${degradedPathFixed} \
--ss ${ptsDiff / frameRate} -i ${referencePathFixed} \
+-i ${degradedPath} \
+-ss ${ptsDiff / frameRate} -i ${referencePath} \
 -filter_complex "\
 [0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate},split[deg1][deg2];\
 [1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate},split[ref1][ref2];\
@@ -313,8 +359,8 @@ async function runVmaf(
 -map [stacked] -c:v libx264 -crf 20 -f mp4 ${comparisonPath + '.mp4'} \
 `
     : `ffmpeg -loglevel warning -y -threads ${cpus} \
--i ${degradedPathFixed} \
--ss ${ptsDiff / frameRate} -i ${referencePathFixed} \
+-i ${degradedPath} \
+-ss ${ptsDiff / frameRate} -i ${referencePath} \
 -filter_complex "\
 [0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate}[deg];\
 [1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate}[ref];\
@@ -328,9 +374,9 @@ async function runVmaf(
   log.debug('runVmaf', {
     stdout,
     stderr,
-    vmafLog: vmafLog['pooled_metrics']['vmaf'],
   })
-  log.info('VMAF metrics:', vmafLog['pooled_metrics']['vmaf'])
+  const metrics = vmafLog['pooled_metrics']['vmaf']
+  log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
   const plotlyPath = comparisonPath + '.plotly'
   const title = path.basename(comparisonPath)
@@ -372,33 +418,73 @@ async function runVmaf(
     frames: [],
   }
   await fs.promises.writeFile(plotlyPath, JSON.stringify(plotlyData))
+
+  return metrics
 }
 
 type VmafConfig = {
-  vmafReferencePath: string
-  vmafDegradedPaths: string
+  vmafPath: string
   vmafPreview: boolean
+  vmafKeepIntermediateFiles: boolean
 }
 
 export async function calculateVmafScore(config: VmafConfig): Promise<void> {
-  const { vmafReferencePath, vmafDegradedPaths, vmafPreview } = config
-  if (!fs.existsSync(config.vmafReferencePath)) {
-    throw new Error(
-      `VMAF reference file ${config.vmafReferencePath} does not exist`,
+  const { vmafPath, vmafPreview, vmafKeepIntermediateFiles } = config
+  if (!fs.existsSync(config.vmafPath)) {
+    throw new Error(`VMAF path ${config.vmafPath} does not exist`)
+  }
+  log.debug(`calculateVmafScore referencePath=${vmafPath}`)
+
+  const files = (
+    await fs.promises.readdir(vmafPath, { recursive: true })
+  ).filter(f => f.endsWith('.ivf') && !f.startsWith('vmaf/'))
+  log.debug(`calculateVmafScore files=${files}`)
+  const outPath = path.join(vmafPath, 'vmaf')
+  await fs.promises.mkdir(outPath, { recursive: true })
+
+  const reference = new Map<string, string>()
+  const degraded = new Map<string, string[]>()
+  for (const file of files) {
+    const filePath = path.join(vmafPath, file)
+    const { participantDisplayName, outFilePath } = await fixIvfFrames(
+      filePath,
+      outPath,
     )
-  }
-  const vmafDegradedPathsSplit = vmafDegradedPaths.split(',')
-  vmafDegradedPathsSplit.forEach(path => {
-    if (!fs.existsSync(path)) {
-      throw new Error(`VMAF degraded file ${path} does not exist`)
+    if (outFilePath.includes('recv-by')) {
+      if (!degraded.has(participantDisplayName)) {
+        degraded.set(participantDisplayName, [])
+      }
+      degraded.get(participantDisplayName)?.push(outFilePath)
+    } else {
+      reference.set(participantDisplayName, outFilePath)
     }
-  })
-
-  log.debug(
-    ` calculateVmafScore referencePath=${vmafReferencePath} degradedPaths=${vmafDegradedPathsSplit}`,
-  )
-
-  for (const degradedPath of vmafDegradedPathsSplit) {
-    await runVmaf(vmafReferencePath, degradedPath, vmafPreview)
   }
+
+  const ret: Record<string, unknown> = {}
+  for (const participantDisplayName of reference.keys()) {
+    const vmafReferencePath = reference.get(participantDisplayName)
+    if (!vmafReferencePath) continue
+    for (const degradedPath of degraded.get(participantDisplayName) || []) {
+      try {
+        const metrics = await runVmaf(
+          vmafReferencePath,
+          degradedPath,
+          vmafPreview,
+        )
+        ret[path.basename(degradedPath).replace('.ivf', '')] = metrics
+        if (!vmafKeepIntermediateFiles) {
+          await fs.promises.unlink(degradedPath)
+        }
+      } catch (err) {
+        log.error(`runVmaf error: ${(err as Error).message}`)
+      }
+    }
+    if (!vmafKeepIntermediateFiles) {
+      await fs.promises.unlink(vmafReferencePath)
+    }
+  }
+  await fs.promises.writeFile(
+    path.join(outPath, 'vmaf.json'),
+    JSON.stringify(ret, undefined, 2),
+  )
 }

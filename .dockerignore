@@ -4,3 +4,4 @@ tmp
 prometheus-stack/data
 webrtcperf*
 chromium
+*.traineddata

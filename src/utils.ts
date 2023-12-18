@@ -187,7 +187,7 @@ async function updateSystemStats(): Promise<void> {
   SystemStatsCache.set('default', stat)
 }
 
-let systemStatsInterval: NodeJS.Timer | null = null
+let systemStatsInterval: NodeJS.Timeout | null = null
 
 export function getSystemStats(): SystemStats | undefined {
   if (!systemStatsInterval) {

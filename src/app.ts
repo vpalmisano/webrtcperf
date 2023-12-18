@@ -58,7 +58,7 @@ async function main(): Promise<void> {
   }
 
   // VMAF score.
-  if (config.vmafReferencePath && config.vmafDegradedPaths) {
+  if (config.vmafPath) {
     await calculateVmafScore(config)
     process.exit(0)
   }
