@@ -128,11 +128,10 @@ function collectMediaTracks(mediaStream) {
  * @param {MediaStreamTrack} videoTrack
  */
 window.saveMediaStreamTrack = async (videoTrack, sendrecv, quality = 0.75) => {
-  const settings = videoTrack.getSettings()
-  const width = settings.width || window.VIDEO_WIDTH
-  const height = settings.height || window.VIDEO_HEIGHT
-  const frameRate = settings.frameRate || window.VIDEO_FRAMERATE
-  const fname = `${window.getParticipantName()}-${sendrecv}_${
+  const width = window.VIDEO_WIDTH
+  const height = window.VIDEO_HEIGHT
+  const frameRate = window.VIDEO_FRAMERATE
+  const fname = `${window.getParticipantName().split('_')[0]}-${sendrecv}_${
     videoTrack.id
   }.ivf`
   log(`saveMediaStreamTrack ${fname} ${width}x${height} ${frameRate}fps`)
@@ -150,9 +149,7 @@ window.saveMediaStreamTrack = async (videoTrack, sendrecv, quality = 0.75) => {
         }
         const bitmap = await createImageBitmap(videoFrame)
         try {
-          canvas.width = codedWidth
-          canvas.height = codedHeight
-          ctx.drawImage(bitmap, 0, 0, codedWidth, codedHeight)
+          ctx.drawImage(bitmap, 0, 0, width, height)
           const blob = await canvas.convertToBlob({
             type: 'image/jpeg',
             quality,
@@ -215,10 +212,11 @@ const applyTimestampWatermark = mediaStream => {
   const canvas = new OffscreenCanvas(width, height)
   const ctx = canvas.getContext('2d')
   const fontSize = Math.ceil(canvas.height / 18)
-  ctx.font = `${fontSize}px Sans`
+  ctx.font = `${fontSize}px Noto Mono`
   const textHeight = fontSize + 6
   const participantName =
-    window.getParticipantName() + (isDisplayTrack(videoTrack) ? ' -s' : '')
+    window.getParticipantName().split('_')[0] +
+    (isDisplayTrack(videoTrack) ? ' -s' : '')
 
   const transformer = new window.TransformStream({
     async transform(videoFrame, controller) {

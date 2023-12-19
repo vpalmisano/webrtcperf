@@ -1,5 +1,5 @@
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
 import fs from 'fs'
-import Jimp from 'jimp'
 import os from 'os'
 import path from 'path'
 import { createScheduler, createWorker, PSM } from 'tesseract.js'
@@ -103,6 +103,7 @@ export async function parseIvf(
     const participantDisplayNameWorker = await createWorker('eng')
     await participantDisplayNameWorker.setParameters({
       tessedit_pageseg_mode: PSM.SINGLE_LINE,
+      tessedit_char_whitelist: 'Participant-0123456789s',
     })
 
     const ptsToRecognized = new Map<number, number>()
@@ -120,11 +121,9 @@ export async function parseIvf(
       await fd.read(frameView, 0, size, position + 12)
       const buffer = Buffer.from(frameView.buffer, 0, frameView.byteLength)
 
-      const image = (await Jimp.read(buffer)).crop(0, 0, width / 2, textHeight)
-      const ret = await tesseractScheduler.addJob(
-        'recognize',
-        await image.getBufferAsync(Jimp.MIME_BMP),
-      )
+      const ret = await tesseractScheduler.addJob('recognize', buffer, {
+        rectangle: { top: 0, left: 0, width: width / 2, height: textHeight },
+      })
       const { data } = ret
       const recognizedTime = parseInt(data.text.trim() || '0')
       if (data.confidence < 75 || !recognizedTime) {
@@ -151,17 +150,16 @@ export async function parseIvf(
 
       if (!participantDisplayName) {
         participantDisplayName = '-'
-        const image = (await Jimp.read(buffer)).crop(
-          0,
-          height - textHeight,
-          width,
-          height,
-        )
-        const ret = await participantDisplayNameWorker.recognize(
-          await image.getBufferAsync(Jimp.MIME_BMP),
-        )
+        const ret = await participantDisplayNameWorker.recognize(buffer, {
+          rectangle: {
+            top: height - textHeight,
+            left: 0,
+            width,
+            height: textHeight,
+          },
+        })
         const { data } = ret
-        if (data.confidence > 75) {
+        if (data.confidence > 75 && data.text.trim()) {
           participantDisplayName = data.text.trim()
           log.debug(
             `participantDisplayName="${participantDisplayName}" confidence=${data.confidence}`,
@@ -378,48 +376,70 @@ async function runVmaf(
   const metrics = vmafLog['pooled_metrics']['vmaf']
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
-  const plotlyPath = comparisonPath + '.plotly'
-  const title = path.basename(comparisonPath)
-  const plotlyData = {
-    data: [
-      {
-        uid: 'id',
-        fill: 'none',
-        mode: 'lines',
-        name: 'VMAF score',
-        type: 'scatter',
-        x: vmafLog.frames.map(({ frameNum }: { frameNum: number }) => frameNum),
-        y: vmafLog.frames.map(
-          ({ metrics }: { metrics: { vmaf: number } }) => metrics.vmaf,
-        ),
-      },
-    ],
-    layout: {
-      title,
-      width: 1280,
-      height: 720,
-      xaxis: {
-        type: 'linear',
-        range: [0, vmafLog.frames.length],
-        dtick: frameRate,
-        title: 'Frame',
-        showgrid: true,
-        autorange: false,
-      },
-      yaxis: {
-        type: 'linear',
-        range: [0, 100],
-        title: 'Score',
-        showgrid: true,
-        autorange: false,
-      },
-      autosize: false,
-    },
-    frames: [],
-  }
-  await fs.promises.writeFile(plotlyPath, JSON.stringify(plotlyData))
+  await writeGraph(vmafLogPath, frameRate)
 
   return metrics
+}
+
+async function writeGraph(vmafLogPath: string, frameRate = 24) {
+  const vmafLog = JSON.parse(
+    await fs.promises.readFile(vmafLogPath, 'utf-8'),
+  ) as {
+    frames: Array<{
+      frameNum: number
+      metrics: { vmaf: number }
+    }>
+    pooled_metrics: {
+      vmaf: { min: number; max: number; mean: number; harmonic_mean: number }
+    }
+  }
+  const { min, max, mean } = vmafLog.pooled_metrics.vmaf
+
+  const fpath = vmafLogPath.replace('.json', '.png')
+
+  const data = vmafLog.frames.reduce((prev, cur) => {
+    if (cur.frameNum % frameRate === 0) {
+      prev.push({ x: cur.frameNum, y: cur.metrics.vmaf / frameRate })
+    } else {
+      prev[prev.length - 1].y += cur.metrics.vmaf / frameRate
+    }
+    return prev
+  }, [] as { x: number; y: number }[])
+
+  const chartJSNodeCanvas = new ChartJSNodeCanvas({
+    width: 1280,
+    height: 720,
+    backgroundColour: 'white',
+  })
+
+  const buffer = await chartJSNodeCanvas.renderToBuffer({
+    type: 'line',
+    data: {
+      labels: data.map(d => d.x),
+      datasets: [
+        {
+          label: `VMAF score (min: ${min.toFixed(2)}, max: ${max.toFixed(
+            2,
+          )}, mean: ${mean.toFixed(2)})`,
+          data: data.map(d => d.y),
+          fill: false,
+          borderColor: '#417fcc',
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: path
+            .basename(vmafLogPath)
+            .replace('.vmaf.json', '')
+            .replace(/_/g, ' '),
+        },
+      },
+    },
+  })
+  await fs.promises.writeFile(fpath, buffer)
 }
 
 type VmafConfig = {
@@ -446,17 +466,21 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
   const degraded = new Map<string, string[]>()
   for (const file of files) {
     const filePath = path.join(vmafPath, file)
-    const { participantDisplayName, outFilePath } = await fixIvfFrames(
-      filePath,
-      outPath,
-    )
-    if (outFilePath.includes('recv-by')) {
-      if (!degraded.has(participantDisplayName)) {
-        degraded.set(participantDisplayName, [])
+    try {
+      const { participantDisplayName, outFilePath } = await fixIvfFrames(
+        filePath,
+        outPath,
+      )
+      if (outFilePath.includes('recv-by')) {
+        if (!degraded.has(participantDisplayName)) {
+          degraded.set(participantDisplayName, [])
+        }
+        degraded.get(participantDisplayName)?.push(outFilePath)
+      } else {
+        reference.set(participantDisplayName, outFilePath)
       }
-      degraded.get(participantDisplayName)?.push(outFilePath)
-    } else {
-      reference.set(participantDisplayName, outFilePath)
+    } catch (err) {
+      log.error(`fixIvfFrames error: ${(err as Error).message}`)
     }
   }
 
@@ -472,11 +496,12 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
           vmafPreview,
         )
         ret[path.basename(degradedPath).replace('.ivf', '')] = metrics
+      } catch (err) {
+        log.error(`runVmaf error: ${(err as Error).message}`)
+      } finally {
         if (!vmafKeepIntermediateFiles) {
           await fs.promises.unlink(degradedPath)
         }
-      } catch (err) {
-        log.error(`runVmaf error: ${(err as Error).message}`)
       }
     }
     if (!vmafKeepIntermediateFiles) {
@@ -487,4 +512,10 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
     path.join(outPath, 'vmaf.json'),
     JSON.stringify(ret, undefined, 2),
   )
+}
+
+if (require.main === module) {
+  ;(async (): Promise<void> => {
+    await writeGraph(process.argv[2])
+  })().catch(err => console.error(err))
 }

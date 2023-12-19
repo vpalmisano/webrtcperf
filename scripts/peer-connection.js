@@ -127,7 +127,10 @@ window.RTCPeerConnection = function (conf, options) {
           )
         }
 
-        if (window.PARAMS?.saveMediaStream) {
+        if (
+          window.PARAMS?.saveMediaStream &&
+          window.WEBRTC_STRESS_TEST_INDEX <= window.PARAMS?.saveMediaStream
+        ) {
           await window.saveMediaStreamTrack(receiver.track, 'recv')
         }
       }

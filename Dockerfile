@@ -82,6 +82,8 @@ RUN \
         apt-transport-https \
         ca-certificates \
         fonts-liberation \
+        fonts-lato \
+        fonts-noto-mono \
         libasound2 \
         libatk-bridge2.0-0 \
         libatk1.0-0 \
