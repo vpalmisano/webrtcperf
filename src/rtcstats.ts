@@ -60,9 +60,10 @@ export enum RtcStatsMetricNames {
   audioSentCodec = 'audioSentCodec',
   /** The total sent audio bytes. */
   audioSentBytes = 'audioSentBytes',
+  /** The sent audio packets. */
+  audioSentPackets = 'audioSentPackets',
   /** The sent audio bitrates. */
   audioSentBitrates = 'audioSentBitrates',
-  //'audioSentPackets',
   /** The send audio lost packets. */
   audioSentPacketsLost = 'audioSentPacketsLost',
   //'audioSentPacketsLostCount',
@@ -94,6 +95,8 @@ export enum RtcStatsMetricNames {
   videoSentBitrates = 'videoSentBitrates',
   /** The sent video bytes. */
   videoSentBytes = 'videoSentBytes',
+  /** The sent video packets. */
+  videoSentPackets = 'videoSentPackets',
   /** The sent video framerate. */
   videoSentFps = 'videoSentFps',
   /** The sent video width. */
@@ -134,6 +137,8 @@ export enum RtcStatsMetricNames {
   screenSentBitrates = 'screenSentBitrates',
   /** The sent screen bytes. */
   screenSentBytes = 'screenSentBytes',
+  /** The sent screen packets. */
+  screenSentPackets = 'screenSentPackets',
   /** The sent screen framerate. */
   screenSentFps = 'screenSentFps',
   /** The sent screen width. */
@@ -460,7 +465,12 @@ export function updateRtcStats(
         key,
         outboundRtp.bytesSent + outboundRtp.headerBytesSent,
       )
-      //setStats(stats, prefix + 'SentPackets', key, outboundRtp.packetsSent)
+      setStats(
+        stats,
+        (prefix + 'SentPackets') as RtcStatsMetricNames,
+        key,
+        outboundRtp.packetsSent,
+      )
       setStats(
         stats,
         (prefix + 'SentPacketsLost') as RtcStatsMetricNames,
