@@ -63,6 +63,9 @@ window.RTCPeerConnection = function (conf, options) {
       )
       transceiver.sender.setParameters = parameters => {
         log(`RTCPeerConnection-${id} transceiver.setParameters`, parameters)
+        if (window.overrideSetParameters) {
+          parameters = window.overrideSetParameters(parameters)
+        }
         return setParametersNative(parameters)
       }
 
