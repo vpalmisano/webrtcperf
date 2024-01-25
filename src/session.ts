@@ -694,11 +694,7 @@ export class Session extends EventEmitter {
           ? puppeteerExtra
           : puppeteer
         ).launch({
-          headless: this.display
-            ? false
-            : process.env.PUPPETEER_HEADLESS_NEW === 'true'
-            ? 'new'
-            : true,
+          headless: this.display ? false : true,
           executablePath,
           handleSIGINT: false,
           env,
@@ -716,6 +712,7 @@ export class Session extends EventEmitter {
           ignoreDefaultArgs: [
             '--disable-dev-shm-usage',
             '--remote-debugging-port',
+            '--hide-scrollbars',
           ],
           args,
         })) as Browser
