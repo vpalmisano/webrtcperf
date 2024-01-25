@@ -6,7 +6,7 @@ export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
 export PATH="$PATH:${BUILDDIR}/depot_tools"
 
-export DEFAULT_BRANCH="tags/121.0.6113.2"
+export DEFAULT_BRANCH="tags/123.0.6264.0"
 
 function setup() {
     which gperf || sudo apt install -y gperf
@@ -59,6 +59,11 @@ use_unofficial_version_number=false
 use_kerberos=false
 
 cc_wrapper="CCACHE_SLOPPINESS=time_macros ccache"
+
+rtc_use_h264 = true
+rtc_include_ilbc = true
+rtc_build_examples = false
+rtc_enable_avx2 = true
 EOF
 }
 
