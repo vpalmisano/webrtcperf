@@ -448,6 +448,19 @@ type VmafConfig = {
   vmafKeepIntermediateFiles: boolean
 }
 
+async function getFiles(dir: string): Promise<string[]> {
+  const dirs = await fs.promises.readdir(dir, { withFileTypes: true })
+  const files = await Promise.all(
+    dirs.map(entry => {
+      const res = path.resolve(dir, entry.name)
+      return entry.isDirectory() ? getFiles(res) : res
+    }),
+  )
+  return Array.prototype
+    .concat(...files)
+    .filter(f => f.endsWith('.ivf') && !path.dirname(f).startsWith('vmaf/'))
+}
+
 export async function calculateVmafScore(config: VmafConfig): Promise<void> {
   const { vmafPath, vmafPreview, vmafKeepIntermediateFiles } = config
   if (!fs.existsSync(config.vmafPath)) {
@@ -455,17 +468,14 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
   }
   log.debug(`calculateVmafScore referencePath=${vmafPath}`)
 
-  const files = (
-    await fs.promises.readdir(vmafPath, { recursive: true })
-  ).filter(f => f.endsWith('.ivf') && !f.startsWith('vmaf/'))
+  const files = await getFiles(vmafPath)
   log.debug(`calculateVmafScore files=${files}`)
   const outPath = path.join(vmafPath, 'vmaf')
   await fs.promises.mkdir(outPath, { recursive: true })
 
   const reference = new Map<string, string>()
   const degraded = new Map<string, string[]>()
-  for (const file of files) {
-    const filePath = path.join(vmafPath, file)
+  for (const filePath of files) {
     try {
       const { participantDisplayName, outFilePath } = await fixIvfFrames(
         filePath,

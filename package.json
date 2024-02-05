@@ -23,7 +23,7 @@
     "webrtcperf": "app.min.js"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=16.0.0"
   },
   "scripts": {
     "prepare": "yarn lint && tsc -b && webpack",
