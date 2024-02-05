@@ -309,6 +309,10 @@ export type AlertRuleValue = {
   $lte?: number
   $after?: number
   $before?: number
+  $skip_lt?: number
+  $skip_lte?: number
+  $skip_gt?: number
+  $skip_gte?: number
 }
 
 const calculateFailAmount = (checkValue: number, ruleValue: number): number => {
@@ -1459,6 +1463,20 @@ export class Stats extends events.EventEmitter {
           const ruleDesc = this.getAlertRuleDesc(ruleKey, ruleValue)
           let failed = false
           let failAmount = 0
+
+          if (
+            (ruleValue.$skip_lt !== undefined &&
+              checkValue < ruleValue.$skip_lt) ||
+            (ruleValue.$skip_lte !== undefined &&
+              checkValue <= ruleValue.$skip_lte) ||
+            (ruleValue.$skip_gt !== undefined &&
+              checkValue > ruleValue.$skip_gt) ||
+            (ruleValue.$skip_gte !== undefined &&
+              checkValue >= ruleValue.$skip_gte)
+          ) {
+            continue
+          }
+
           if (ruleValue.$eq !== undefined) {
             if (checkValue !== ruleValue.$eq) {
               failed = true
