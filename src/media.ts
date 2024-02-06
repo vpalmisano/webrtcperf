@@ -65,46 +65,41 @@ export async function prepareFakeMedia({
   await promises.mkdir(videoCachePath, { recursive: true })
   const name = md5(videoPath)
 
-  const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
   const destVideoPath = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.${videoFormat}`
-  if (!existsSync(destVideoPath) || !videoCacheRaw) {
-    log.info(`Converting ${videoPath} to ${destVideoPath}`)
+  const destAudioPath = `${videoCachePath}/${name}.wav`
+
+  if (
+    !existsSync(destVideoPath) ||
+    !existsSync(destAudioPath) ||
+    !videoCacheRaw
+  ) {
+    log.info(`Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}`)
+    const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
+    const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
+
     try {
       let source = `-i "${videoPath}"`
+      const videoMap = `-map 0:v`
+      const audioMap = videoPath.startsWith('generate:')
+        ? '-map 1:a'
+        : '-map 0:a'
       if (videoPath === 'generate:null') {
-        source = `-f lavfi -i color=size=${videoWidth}x${videoHeight}:rate=${videoFramerate}:color=black`
+        source = `-f lavfi -i color=size=${videoWidth}x${videoHeight}:rate=${videoFramerate}:color=black -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000`
       } else if (videoPath === 'generate:test') {
-        source = `-f lavfi -i testsrc=size=${videoWidth}x${videoHeight}:rate=${videoFramerate} -pix_fmt yuv420p`
+        source = `-f lavfi -i testsrc=size=${videoWidth}x${videoHeight}:rate=${videoFramerate} -pix_fmt yuv420p -f lavfi -i sine=frequency=220:beep_factor=4:sample_rate=48000`
       }
       await runShellCommand(
-        `ffmpeg -y ${source} -s ${videoWidth}:${videoHeight} ` +
-          `-r ${videoFramerate}` +
-          ` -ss ${videoSeek} -t ${videoDuration} -an ` +
-          `${destVideoPathTmp} && mv ${destVideoPathTmp} ${destVideoPath}`,
+        `ffmpeg -y ${source}` +
+          ` -s ${videoWidth}:${videoHeight}` +
+          ` -r ${videoFramerate}` +
+          ` -ss ${videoSeek} -t ${videoDuration} -shortest -af apad` +
+          ` ${videoMap} ${destVideoPathTmp}` +
+          ` ${audioMap} ${destAudioPathTmp}` +
+          ` && mv ${destVideoPathTmp} ${destVideoPath}` +
+          ` && mv ${destAudioPathTmp} ${destAudioPath}`,
       )
     } catch (err) {
       promises.unlink(destVideoPathTmp).catch(e => log.debug(e.message))
-      throw err
-    }
-  }
-
-  const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
-  const destAudioPath = `${videoCachePath}/${name}.wav`
-  if (!existsSync(destAudioPath) || !videoCacheRaw) {
-    log.info(`Converting ${videoPath} to ${destAudioPath}`)
-    try {
-      let source = `-i "${videoPath}"`
-      if (videoPath === 'generate:null') {
-        source = `-f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000`
-      } else if (videoPath === 'generate:test') {
-        source = `-f lavfi -i sine=frequency=220:beep_factor=4:sample_rate=48000`
-      }
-      await runShellCommand(
-        `ffmpeg -y ${source} ` +
-          `-ss ${videoSeek} -t ${videoDuration} -vn ` +
-          `${destAudioPathTmp} && mv ${destAudioPathTmp} ${destAudioPath}`,
-      )
-    } catch (err) {
       promises.unlink(destAudioPathTmp).catch(e => log.debug(e.message))
       throw err
     }
