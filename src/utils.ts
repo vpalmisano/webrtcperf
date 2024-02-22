@@ -70,27 +70,25 @@ export class LoggerInterface {
 
 const log = logger('app:utils')
 
-let tsNode = false
-try {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  tsNode = !!(process as any)[Symbol.for('ts-node.register.instance')]
-} catch (_err) {
-  // ignore
-}
-
 /**
  * Resolves the absolute path from the package installation directory.
  * @param relativePath The relative path.
  * @returns The absolute path.
  */
 export function resolvePackagePath(relativePath: string): string {
-  return '__nexe' in process
-    ? relativePath
-    : process.env.WEBPACK
-    ? path.join(path.dirname(__filename), relativePath)
-    : tsNode
-    ? require.resolve(path.join(__dirname, '..', relativePath))
-    : require.resolve(path.join(__dirname, '../..', relativePath))
+  if ('__nexe' in process) {
+    return relativePath
+  }
+  if (process.env.WEBPACK) {
+    return path.join(path.dirname(__filename), relativePath)
+  }
+  for (const d of ['..', '../..']) {
+    const p = path.join(__dirname, d, relativePath)
+    if (fs.existsSync(p)) {
+      return require.resolve(p)
+    }
+  }
+  throw new Error(`resolvePackagePath: ${relativePath} not found`)
 }
 
 /**

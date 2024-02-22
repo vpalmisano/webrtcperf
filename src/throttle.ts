@@ -130,7 +130,7 @@ async function applyRules(
 }
 
 async function start(config: ThrottleConfig): Promise<void> {
-  // https://rotadev.com/using-tc-to-delay-packets-to-only-a-single-ip-address-server-fault/
+  // https://serverfault.com/questions/389290/using-tc-to-delay-packets-to-only-a-single-ip-address
   const device = await getDefaultInterface()
   await runShellCommand(`\
 sudo modprobe ifb; \
