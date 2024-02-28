@@ -525,7 +525,11 @@ export class Session extends EventEmitter {
           )
         })
       } catch (err) {
-        log.error(`error parsing responseModifiers: ${(err as Error).stack}`)
+        log.error(
+          `error parsing responseModifiers "${responseModifiers}": ${
+            (err as Error).stack
+          }`,
+        )
       }
     }
 
@@ -1028,7 +1032,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           if (body) {
             log.debug(
               `using responseModifiers in: ${event.request.url}`,
-              replacements,
+              replacements.map(
+                ({ search, replace }) => `${search.toString()} => ${replace}`,
+              ),
             )
             replacements.forEach(({ search, replace }) => {
               body = body?.replace(search, replace)
