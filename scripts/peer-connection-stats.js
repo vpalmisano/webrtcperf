@@ -4,6 +4,10 @@ const PeerConnections = new Map()
 const TrackStats = new Map()
 const TrackStatsKeys = []
 
+window.isRecvTrackEnabled = track => {
+  return track.enabled
+}
+
 const filterUndefined = o =>
   Object.fromEntries(
     // eslint-disable-next-line no-unused-vars
@@ -308,7 +312,7 @@ async function getPeerConnectionStats(
         const trackId = `${id}-${track.kind[0]}r-${track.id}`
         const stats = await pc.getStats(track)
         const values = {
-          enabled: track.enabled,
+          enabled: window.isRecvTrackEnabled(track),
           inboundRtp: {},
         }
         if (track.kind === 'video') {
