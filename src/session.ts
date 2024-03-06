@@ -190,6 +190,7 @@ export type SessionParams = {
   pageLogPath: string
   userAgent: string
   id: number
+  throttleId: number
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluateAfter?: any[]
   exposedFunctions?: string
@@ -283,6 +284,8 @@ export class Session extends EventEmitter {
 
   /** The numeric id assigned to the session. */
   readonly id: number
+  /** The throttle id assigned to the session. */
+  readonly throttleId: number
   /** The test page url. */
   readonly url: string
   /** The url query. */
@@ -377,6 +380,7 @@ export class Session extends EventEmitter {
     pageLogPath,
     userAgent,
     id,
+    throttleId,
     evaluateAfter,
     exposedFunctions,
     scriptParams,
@@ -476,6 +480,7 @@ export class Session extends EventEmitter {
     this.serverUseHttps = serverUseHttps
 
     this.id = id
+    this.throttleId = throttleId
     this.evaluateAfter = evaluateAfter || []
     this.exposedFunctions = exposedFunctions || {}
     if (scriptParams) {
@@ -678,6 +683,32 @@ export class Session extends EventEmitter {
       if (!executablePath || !fs.existsSync(executablePath)) {
         executablePath = await checkChromiumExecutable()
         log.debug(`using executablePath=${executablePath}`)
+      }
+
+      // Create process wrapper.
+      if (this.throttleId) {
+        const mark = this.throttleId
+        const executableWrapperPath = `/tmp/webrtcperf-launcher-${mark}`
+        const group = `webrtcperf${mark}`
+        await fs.promises.writeFile(
+          executableWrapperPath,
+          `#!/bin/bash
+getent group ${group} || sudo addgroup --system ${group}
+sudo adduser $USER ${group}
+sudo iptables -t mangle --list OUTPUT | grep -q "owner GID match ${group}" || sudo iptables -t mangle -A OUTPUT -m owner --gid-owner ${group} -j MARK --set-mark ${mark}
+sudo iptables -t mangle --list PREROUTING | grep -q "CONNMARK restore" || sudo iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark
+sudo iptables -t mangle --list POSTROUTING | grep -q "CONNMARK save" || sudo iptables -t mangle -A POSTROUTING -j CONNMARK --save-mark
+
+cat <<EOF > /tmp/webrtcperf-launcher-${mark}-browser
+#!/bin/bash
+exec ${executablePath} $@
+EOF
+chmod +x /tmp/webrtcperf-launcher-${mark}-browser
+
+exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
+        )
+        await fs.promises.chmod(executableWrapperPath, 0o755)
+        executablePath = executableWrapperPath
       }
 
       const env = { ...process.env }

@@ -4,6 +4,8 @@ import { logger, runShellCommand } from './utils'
 
 const log = logger('app:throttle')
 
+let throttleConfig: ThrottleConfig[] | null = null
+
 async function getDefaultInterface(): Promise<string> {
   const { stdout } = await runShellCommand(
     `ip route | awk '/default/ {print $5; exit}' | tr -d ''`,
@@ -11,12 +13,20 @@ async function getDefaultInterface(): Promise<string> {
   return stdout.trim()
 }
 
-async function stop(): Promise<void> {
-  const device = await getDefaultInterface()
+async function cleanup(): Promise<void> {
+  let device = throttleConfig?.length ? throttleConfig[0].device : ''
+  if (!device) {
+    device = await getDefaultInterface()
+  }
   await runShellCommand(`\
-sudo tc qdisc del dev ${device} root; \
-sudo tc qdisc del dev ${device} ingress; \
-sudo tc qdisc del dev ifb0 root; \
+sudo tc qdisc del dev ${device} root || true;
+sudo tc class del dev ${device} || true;
+sudo tc filter del dev ${device} || true;
+sudo tc qdisc del dev ${device} ingress || true;
+
+sudo tc qdisc del dev ifb0 root || true;
+sudo tc class del dev ifb0 root || true;
+sudo tc filter del dev ifb0 root || true;
 `)
 }
 
@@ -39,8 +49,6 @@ export type ThrottleRule = {
   loss?: string
   /** Additional packet queue size. */
   queue?: number
-  /** If the rule should be applied only to UDP or TCP flows. */
-  protocol?: 'udp' | 'tcp'
   /** If set, the rule will be applied after the specified number of seconds. */
   at?: number
 }
@@ -52,15 +60,21 @@ export type ThrottleRule = {
  *
  * ```javascript
  * {
+    device: "eth0",
+    sessions: "0-1",
+    protocol: "udp",
     down: [
-      { protocol: "udp", rate: 1000000, delay: 50, loss: "0%", queue: 5 },
-      { protocol: "udp", rate: 200000, delay: 100, loss: "5%", queue: 5, at: 60},
+      { rate: 1000000, delay: 50, loss: "0%", queue: 5 },
+      { rate: 200000, delay: 100, loss: "5%", queue: 5, at: 60},
     ],
     up: { rate: 100000, delay: 50, queue: 5 },
   }
  * ```
  */
 export type ThrottleConfig = {
+  device?: string
+  sessions?: string
+  protocol?: 'udp' | 'tcp'
   up?: ThrottleRule | ThrottleRule[]
   down?: ThrottleRule | ThrottleRule[]
 }
@@ -68,7 +82,14 @@ export type ThrottleConfig = {
 async function applyRules(
   rules: ThrottleRule | ThrottleRule[],
   device: string,
+  index: number,
+  protocol?: 'udp' | 'tcp',
 ): Promise<void> {
+  log.debug(
+    `applyRules device=${device} index=${index} protocol=${protocol} ${JSON.stringify(
+      rules,
+    )}`,
+  )
   if (!Array.isArray(rules)) {
     rules = [rules]
   }
@@ -77,32 +98,42 @@ async function applyRules(
   })
 
   for (const [i, rule] of rules.entries()) {
-    const { rate, rtt, delay: delay_, loss, queue, protocol, at } = rule
-    const action = i === 0 ? 'add' : 'change'
+    const { rate, rtt, delay: delay_, loss, queue, at } = rule
     const delay = delay_ || (rtt || 0) / 2
     const lossString = loss ? loss.split(',').join(' ') : '0%'
     const limit = calculateBufferedPackets(rate || 0, delay) + (queue || 0)
+    const handle = index + 2
 
     if (i === 0) {
-      const filterMatch =
+      const matchProtocol =
         protocol === 'udp'
-          ? 'ip protocol 0x11 0xff'
+          ? 'match ip protocol 0x11 0xff'
           : protocol === 'tcp'
-          ? 'ip protocol 0x6 0xff'
-          : 'u32 0 0'
+          ? 'match ip protocol 0x6 0xff'
+          : ''
       const cmd = `\
-        sudo tc filter add dev ${device} \
-          protocol ip \
-          parent 1:0 \
-          prio 1 \
-          u32 \
-          match ${filterMatch} \
-          flowid 1:1; \
-      `
+set -e;
+
+sudo tc class add dev ${device} parent 1: classid 1:${handle} htb rate 1Gbit ceil 1Gbit;
+
+sudo tc qdisc add dev ${device} \
+  parent 1:${handle} \
+  handle ${handle}: \
+  netem; \
+
+sudo tc filter add dev ${device} \
+  parent 1: \
+  protocol ip \
+  u32 \
+  match mark ${index + 1} 0xffffffff \
+  ${matchProtocol} \
+  flowid 1:${handle};
+`
       try {
         await runShellCommand(cmd)
       } catch (err) {
         log.error(`error running "${cmd}": ${(err as Error).stack}`)
+        throw err
       }
     }
 
@@ -111,9 +142,9 @@ async function applyRules(
         `applying rules on ${device}: rate ${rate}kbit, delay ${delay}ms, loss ${lossString}, limit ${limit}`,
       )
       const cmd = `\
-        sudo tc qdisc ${action} dev ${device} \
-          parent 1:1 \
-          handle 10: \
+        sudo tc qdisc change dev ${device} \
+          parent 1:${handle} \
+          handle ${handle}: \
           netem \
           delay ${delay}ms \
           rate ${rate}kbit \
@@ -129,33 +160,47 @@ async function applyRules(
   }
 }
 
-async function start(config: ThrottleConfig): Promise<void> {
-  // https://serverfault.com/questions/389290/using-tc-to-delay-packets-to-only-a-single-ip-address
-  const device = await getDefaultInterface()
+async function start(): Promise<void> {
+  if (!throttleConfig || !throttleConfig.length) return
+
+  let device = throttleConfig[0].device
+  if (!device) {
+    device = await getDefaultInterface()
+  }
+
   await runShellCommand(`\
-sudo modprobe ifb; \
-sudo ip link add ifb0 type ifb; \
-sudo ip link set dev ifb0 up; \
-sudo tc qdisc add dev ${device} root handle 1: prio priomap 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2; \
-sudo tc qdisc add dev ifb0      root handle 1: prio priomap 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2; \
-sudo tc qdisc add dev ${device} ingress; \
+set -e;
+
+sudo -n true;
+sudo modprobe ifb;
+sudo ip link add ifb0 type ifb || true;
+sudo ip link set dev ifb0 up;
+
+sudo tc qdisc add dev ${device} root handle 1: htb default 1;
+sudo tc class add dev ${device} parent 1: classid 1:1 htb rate 1Gbit ceil 1Gbit;
+
+sudo tc qdisc add dev ifb0 root handle 1: htb default 1;
+sudo tc class add dev ifb0 parent 1: classid 1:1 htb rate 1Gbit ceil 1Gbit;
+
+sudo tc qdisc add dev ${device} ingress handle ffff: || true;
 sudo tc filter add dev ${device} \
   parent ffff: \
   protocol ip \
-  priority 1 \
   u32 \
   match u32 0 0 \
-  flowid 1:1 \
-  action mirred egress \
-  redirect dev ifb0; \
+  action mirred egress redirect dev ifb0 \
+  flowid 1:1;
 `)
 
-  if (config.up) {
-    await applyRules(config.up, device)
-  }
-
-  if (config.down) {
-    await applyRules(config.down, 'ifb0')
+  let index = 0
+  for (const config of throttleConfig) {
+    if (config.up) {
+      await applyRules(config.up, device, index, config.protocol)
+    }
+    if (config.down) {
+      await applyRules(config.down, 'ifb0', index, config.protocol)
+    }
+    index++
   }
 }
 
@@ -165,9 +210,10 @@ sudo tc filter add dev ${device} \
  */
 export async function startThrottle(config: string): Promise<void> {
   try {
-    const throttleConfig = JSON5.parse(config) as ThrottleConfig
+    throttleConfig = JSON5.parse(config) as ThrottleConfig[]
     log.info('Starting throttle with config:', throttleConfig)
-    await start(throttleConfig)
+    await cleanup()
+    await start()
   } catch (err) {
     log.error(`startThrottle "${config}" error: ${(err as Error).stack}`)
     await stopThrottle()
@@ -181,8 +227,39 @@ export async function startThrottle(config: string): Promise<void> {
 export async function stopThrottle(): Promise<void> {
   try {
     log.info('Stopping throttle')
-    await stop()
+    await cleanup()
+    throttleConfig = null
   } catch (err) {
     log.error(`Stop throttle error: ${(err as Error).stack}`)
   }
+}
+
+export function getSessionThrottleId(sessionId: number): number {
+  if (!throttleConfig) return 0
+
+  for (const config of throttleConfig) {
+    if (!config.sessions) {
+      continue
+    }
+    const id = throttleConfig.indexOf(config) + 1
+    try {
+      if (config.sessions.includes('-')) {
+        const [start, end] = config.sessions.split('-').map(Number)
+        if (sessionId >= start && sessionId <= end) {
+          return id
+        }
+      } else if (config.sessions.includes(',')) {
+        const sessions = config.sessions.split(',').map(Number)
+        if (sessions.includes(sessionId)) {
+          return id
+        }
+      } else if (sessionId === Number(config.sessions)) {
+        return id
+      }
+    } catch (err) {
+      log.error(`getSessionThrottleId error: ${(err as Error).stack}`)
+    }
+  }
+
+  return 0
 }
