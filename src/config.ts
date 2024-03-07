@@ -147,17 +147,17 @@ Example: \
     device: 'eth0',
     protocol: 'udp',
     up: {
-      rate: 1000
-      rtt: 50
-      loss: '5%'
-      queue: 10
+      rate: 1000,
+      rtt: 50,
+      loss: 5,
+      queue: 10,
       at: 60
     },
     down: {
-      rate: 2000
-      rtt: 50
-      loss: '5%'
-      queue: 20
+      rate: 2000,
+      rtt: 50,
+      loss: 5,
+      queue: 20,
       at: 60
     }
   }]

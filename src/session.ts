@@ -50,6 +50,7 @@ require('puppeteer-extra-plugin-user-preferences')
 //
 
 import { rtcStatKey, RtcStats, updateRtcStats } from './rtcstats'
+import { getSessionThrottleValues } from './throttle'
 import {
   checkChromiumExecutable,
   downloadUrl,
@@ -190,7 +191,7 @@ export type SessionParams = {
   pageLogPath: string
   userAgent: string
   id: number
-  throttleId: number
+  throttleIndex: number
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluateAfter?: any[]
   exposedFunctions?: string
@@ -284,8 +285,8 @@ export class Session extends EventEmitter {
 
   /** The numeric id assigned to the session. */
   readonly id: number
-  /** The throttle id assigned to the session. */
-  readonly throttleId: number
+  /** The throttle configuration index assigned to the session. */
+  readonly throttleIndex: number
   /** The test page url. */
   readonly url: string
   /** The url query. */
@@ -380,7 +381,7 @@ export class Session extends EventEmitter {
     pageLogPath,
     userAgent,
     id,
-    throttleId,
+    throttleIndex,
     evaluateAfter,
     exposedFunctions,
     scriptParams,
@@ -480,7 +481,7 @@ export class Session extends EventEmitter {
     this.serverUseHttps = serverUseHttps
 
     this.id = id
-    this.throttleId = throttleId
+    this.throttleIndex = throttleIndex
     this.evaluateAfter = evaluateAfter || []
     this.exposedFunctions = exposedFunctions || {}
     if (scriptParams) {
@@ -686,8 +687,8 @@ export class Session extends EventEmitter {
       }
 
       // Create process wrapper.
-      if (this.throttleId) {
-        const mark = this.throttleId
+      if (this.throttleIndex) {
+        const mark = this.throttleIndex + 1
         const executableWrapperPath = `/tmp/webrtcperf-launcher-${mark}`
         const group = `webrtcperf${mark}`
         await fs.promises.writeFile(
@@ -1507,6 +1508,15 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     const pageCpu: Record<string, number> = {}
     const pageMemory: Record<string, number> = {}
 
+    const throttleUpValuesRate: Record<string, number> = {}
+    const throttleUpValuesDelay: Record<string, number> = {}
+    const throttleUpValuesLoss: Record<string, number> = {}
+    const throttleUpValuesQueue: Record<string, number> = {}
+    const throttleDownValuesRate: Record<string, number> = {}
+    const throttleDownValuesDelay: Record<string, number> = {}
+    const throttleDownValuesLoss: Record<string, number> = {}
+    const throttleDownValuesQueue: Record<string, number> = {}
+
     const customStats: Record<string, Record<string, number | string>> = {}
 
     for (const [pageIndex, page] of this.pages.entries()) {
@@ -1633,6 +1643,41 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             this.pagesMetrics.set(pageIndex, metrics)
           }
         }
+
+        // Collect throttle metrics
+        const throttleUpValues = getSessionThrottleValues(
+          this.throttleIndex,
+          'up',
+        )
+        if (throttleUpValues.rate !== undefined) {
+          throttleUpValuesRate[pageKey] = throttleUpValues.rate
+        }
+        if (throttleUpValues.delay !== undefined) {
+          throttleUpValuesDelay[pageKey] = throttleUpValues.delay
+        }
+        if (throttleUpValues.loss !== undefined) {
+          throttleUpValuesLoss[pageKey] = throttleUpValues.loss
+        }
+        if (throttleUpValues.queue !== undefined) {
+          throttleUpValuesQueue[pageKey] = throttleUpValues.queue
+        }
+
+        const throttleDownValues = getSessionThrottleValues(
+          this.throttleIndex,
+          'down',
+        )
+        if (throttleDownValues.rate !== undefined) {
+          throttleDownValuesRate[pageKey] = throttleDownValues.rate
+        }
+        if (throttleDownValues.delay !== undefined) {
+          throttleDownValuesDelay[pageKey] = throttleDownValues.delay
+        }
+        if (throttleDownValues.loss !== undefined) {
+          throttleDownValuesLoss[pageKey] = throttleDownValues.loss
+        }
+        if (throttleDownValues.queue !== undefined) {
+          throttleDownValuesQueue[pageKey] = throttleDownValues.queue
+        }
       } catch (err) {
         log.error(`collectPeerConnectionStats error: ${(err as Error).stack}`)
       }
@@ -1648,6 +1693,14 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     collectedStats.httpRecvLatency = httpRecvLatencyStats
     collectedStats.pageCpu = pageCpu
     collectedStats.pageMemory = pageMemory
+    collectedStats.throttleUpRate = throttleUpValuesRate
+    collectedStats.throttleUpDelay = throttleUpValuesDelay
+    collectedStats.throttleUpLoss = throttleUpValuesLoss
+    collectedStats.throttleUpQueue = throttleUpValuesQueue
+    collectedStats.throttleDownRate = throttleDownValuesRate
+    collectedStats.throttleDownDelay = throttleDownValuesDelay
+    collectedStats.throttleDownLoss = throttleDownValuesLoss
+    collectedStats.throttleDownQueue = throttleDownValuesQueue
 
     Object.assign(collectedStats, customStats)
 

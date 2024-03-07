@@ -49,6 +49,24 @@ export enum PageStatsNames {
    * It does't include the video encode/decode time and the jitter buffer time.
    */
   videoEndToEndNetworkDelay = 'videoEndToEndNetworkDelay',
+
+  /** The throttle upload rate limitation. */
+  throttleUpRate = 'throttleUpRate',
+  /** The throttle upload delay. */
+  throttleUpDelay = 'throttleUpDelay',
+  /** The throttle upload packet loss. */
+  throttleUpLoss = 'throttleUpLoss',
+  /** The throttle upload packet queue. */
+  throttleUpQueue = 'throttleUpQueue',
+
+  /** The throttle download rate limitation. */
+  throttleDownRate = 'throttleDownRate',
+  /** The throttle download delay. */
+  throttleDownDelay = 'throttleDownDelay',
+  /** The throttle download packet loss. */
+  throttleDownLoss = 'throttleDownLoss',
+  /** The throttle download packet queue. */
+  throttleDownQueue = 'throttleDownQueue',
 }
 
 /**
@@ -76,7 +94,8 @@ export enum RtcStatsMetricNames {
 
   /** The sent video codec. */
   videoSentCodec = 'videoSentCodec',
-  //'videoFirCountReceived',
+  /** The FIR requests received by the video sender. */
+  videoFirCountReceived = 'videoFirCountReceived',
   /** The PLI requests received by the video sender. */
   videoPliCountReceived = 'videoPliCountReceived',
   /** The sent video encode latency. */
@@ -118,7 +137,8 @@ export enum RtcStatsMetricNames {
 
   /** The sent screen codec. */
   screenSentCodec = 'screenSentCodec',
-  //'screenFirCountReceived',
+  /** The received FIR from screen sender. */
+  screenFirCountReceived = 'screenFirCountReceived',
   /** The received PLI from screen sender. */
   screenPliCountReceived = 'screenPliCountReceived',
   /** The sent screen encode latency. */
@@ -178,7 +198,7 @@ export enum RtcStatsMetricNames {
   audioRecvRemovedSamplesForAcceleration = 'audioRecvRemovedSamplesForAcceleration',
   // inbound video,
   videoRecvCodec = 'videoRecvCodec',
-  //'videoFirCountSent',
+  videoFirCountSent = 'videoFirCountSent',
   videoPliCountSent = 'videoPliCountSent',
   videoDecodeLatency = 'videoDecodeLatency',
   //'videoFramesDecoded',
@@ -200,7 +220,7 @@ export enum RtcStatsMetricNames {
   videoTotalFreezesDuration = 'videoTotalFreezesDuration',
   // inbound screen,
   screenRecvCodec = 'screenRecvCodec',
-  //'screenFirCountSent',
+  screenFirCountSent = 'screenFirCountSent',
   screenPliCountSent = 'screenPliCountSent',
   screenDecodeLatency = 'screenDecodeLatency',
   //'screenFramesDecoded',
@@ -443,7 +463,12 @@ export function updateRtcStats(
           inboundRtp.frameWidth,
         )
         //setStats(stats, prefix + 'TotalDecodeTime', key, inboundRtp.totalDecodeTime)
-        //setStats(stats, prefix + 'FirCountSent', key, inboundRtp.firCount)
+        setStats(
+          stats,
+          (prefix + 'FirCountSent') as RtcStatsMetricNames,
+          key,
+          inboundRtp.firCount,
+        )
         setStats(
           stats,
           (prefix + 'PliCountSent') as RtcStatsMetricNames,
@@ -571,7 +596,12 @@ export function updateRtcStats(
           key,
           outboundRtp.framesPerSecond,
         )
-        //setStats(stats, prefix + 'FirCountReceived', key, outboundRtp.firCountReceived)
+        setStats(
+          stats,
+          (prefix + 'FirCountReceived') as RtcStatsMetricNames,
+          key,
+          outboundRtp.firCountReceived,
+        )
         setStats(
           stats,
           (prefix + 'PliCountReceived') as RtcStatsMetricNames,

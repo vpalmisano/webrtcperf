@@ -6,6 +6,17 @@ const log = logger('app:throttle')
 
 let throttleConfig: ThrottleConfig[] | null = null
 
+const throttleCurrentValues = {
+  up: new Map<
+    number,
+    { rate?: number; delay?: number; loss?: number; queue?: number }
+  >(),
+  down: new Map<
+    number,
+    { rate?: number; delay?: number; loss?: number; queue?: number }
+  >(),
+}
+
 async function getDefaultInterface(): Promise<string> {
   const { stdout } = await runShellCommand(
     `ip route | awk '/default/ {print $5; exit}' | tr -d ''`,
@@ -14,6 +25,8 @@ async function getDefaultInterface(): Promise<string> {
 }
 
 async function cleanup(): Promise<void> {
+  throttleCurrentValues.up.clear()
+  throttleCurrentValues.down.clear()
   let device = throttleConfig?.length ? throttleConfig[0].device : ''
   if (!device) {
     device = await getDefaultInterface()
@@ -41,12 +54,8 @@ export type ThrottleRule = {
   rate?: number
   /** The one-way delay (ms). */
   delay?: number
-  /** The RTT (ms). Deprecated, use `delay` instead. */
-  rtt?: number
-  /** The packet loss percentage with optional correlation (e.g. \`"5% 25%"\`).
-   * Refer to [netem documentation](https://wiki.linuxfoundation.org/networking/netem#packet_loss) for additional string options.
-   */
-  loss?: string
+  /** The packet loss percentage. */
+  loss?: number
   /** Additional packet queue size. */
   queue?: number
   /** If set, the rule will be applied after the specified number of seconds. */
@@ -80,11 +89,14 @@ export type ThrottleConfig = {
 }
 
 async function applyRules(
-  rules: ThrottleRule | ThrottleRule[],
+  config: ThrottleConfig,
+  direction: 'up' | 'down',
   device: string,
   index: number,
   protocol?: 'udp' | 'tcp',
 ): Promise<void> {
+  let rules = config[direction]
+  if (!rules) return
   log.debug(
     `applyRules device=${device} index=${index} protocol=${protocol} ${JSON.stringify(
       rules,
@@ -98,10 +110,9 @@ async function applyRules(
   })
 
   for (const [i, rule] of rules.entries()) {
-    const { rate, rtt, delay: delay_, loss, queue, at } = rule
-    const delay = delay_ || (rtt || 0) / 2
-    const lossString = loss ? loss.split(',').join(' ') : '0%'
-    const limit = calculateBufferedPackets(rate || 0, delay) + (queue || 0)
+    const { rate, delay, loss, queue, at } = rule
+    const limit = calculateBufferedPackets(rate || 0, delay || 0) + (queue || 0)
+    const mark = index + 1
     const handle = index + 2
 
     if (i === 0) {
@@ -125,7 +136,7 @@ sudo tc filter add dev ${device} \
   parent 1: \
   protocol ip \
   u32 \
-  match mark ${index + 1} 0xffffffff \
+  match mark ${mark} 0xffffffff \
   ${matchProtocol} \
   flowid 1:${handle};
 `
@@ -139,20 +150,27 @@ sudo tc filter add dev ${device} \
 
     setTimeout(async () => {
       log.info(
-        `applying rules on ${device}: rate ${rate}kbit, delay ${delay}ms, loss ${lossString}, limit ${limit}`,
+        `applying rules on ${device}: rate ${rate}kbit, delay ${delay}ms, loss ${loss}%, limit ${limit}`,
       )
       const cmd = `\
         sudo tc qdisc change dev ${device} \
           parent 1:${handle} \
           handle ${handle}: \
           netem \
-          delay ${delay}ms \
-          rate ${rate}kbit \
-          loss ${lossString} \
+          ${rate && rate > 0 ? `rate ${rate}kbit` : ''} \
+          ${delay && delay > 0 ? `delay ${delay}ms` : ''} \
+          loss ${loss}% \
           limit ${limit}; \
       `
       try {
         await runShellCommand(cmd)
+
+        throttleCurrentValues[direction].set(index, {
+          rate: rate ? 1000 * rate : undefined,
+          delay: delay || undefined,
+          loss: loss || undefined,
+          queue: limit || undefined,
+        })
       } catch (err) {
         log.error(`error running "${cmd}": ${(err as Error).stack}`)
       }
@@ -195,10 +213,10 @@ sudo tc filter add dev ${device} \
   let index = 0
   for (const config of throttleConfig) {
     if (config.up) {
-      await applyRules(config.up, device, index, config.protocol)
+      await applyRules(config, 'up', device, index, config.protocol)
     }
     if (config.down) {
-      await applyRules(config.down, 'ifb0', index, config.protocol)
+      await applyRules(config, 'down', 'ifb0', index, config.protocol)
     }
     index++
   }
@@ -234,32 +252,47 @@ export async function stopThrottle(): Promise<void> {
   }
 }
 
-export function getSessionThrottleId(sessionId: number): number {
-  if (!throttleConfig) return 0
+export function getSessionThrottleIndex(sessionId: number): number {
+  if (!throttleConfig) return -1
 
   for (const config of throttleConfig) {
     if (!config.sessions) {
       continue
     }
-    const id = throttleConfig.indexOf(config) + 1
+    const index = throttleConfig.indexOf(config)
     try {
       if (config.sessions.includes('-')) {
         const [start, end] = config.sessions.split('-').map(Number)
         if (sessionId >= start && sessionId <= end) {
-          return id
+          return index
         }
       } else if (config.sessions.includes(',')) {
         const sessions = config.sessions.split(',').map(Number)
         if (sessions.includes(sessionId)) {
-          return id
+          return index
         }
       } else if (sessionId === Number(config.sessions)) {
-        return id
+        return index
       }
     } catch (err) {
       log.error(`getSessionThrottleId error: ${(err as Error).stack}`)
     }
   }
 
-  return 0
+  return -1
+}
+
+export function getSessionThrottleValues(
+  index: number,
+  direction: 'up' | 'down',
+): {
+  rate?: number
+  delay?: number
+  loss?: number
+  queue?: number
+} {
+  if (index < 0) {
+    return {}
+  }
+  return throttleCurrentValues[direction].get(index) || {}
 }
