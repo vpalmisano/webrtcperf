@@ -687,7 +687,7 @@ export class Session extends EventEmitter {
       }
 
       // Create process wrapper.
-      if (this.throttleIndex) {
+      if (this.throttleIndex > -1) {
         const mark = this.throttleIndex + 1
         const executableWrapperPath = `/tmp/webrtcperf-launcher-${mark}`
         const group = `webrtcperf${mark}`
