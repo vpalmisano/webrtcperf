@@ -163,10 +163,11 @@ the rule, e.g.: "0-10", "2,4" or simply "2". \
 The device, protocol, up, down fields are optional. When device is not set, the \
 default route device will be used. If protocol is specified ('udp' or 'tcp'), \
 only the packets with the specified protocol will be affected by the shaping rules. \
-When running as regular user, add the following sudo configuration: \
-\`\`\`
+When running as regular user, add the following sudo configuration:
+  \`\`\`
 %sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe
-\`\`\`
+  \`\`\`
+\
 `,
     format: String,
     nullable: true,

@@ -104,29 +104,29 @@ If greater than 0, the test will stop after the provided number of seconds.
 *Default*: `0`
 
 ## throttleConfig
-A JSON5 string with a valid network throttling configuration, e.g.: 
+A JSON5 string with a valid network throttling configuration. Example: 
   ```javascript
-  {
+  [{
+    sessions: '0-1',
+    device: 'eth0',
+    protocol: 'udp',
     up: {
-      rate: 1000
-      rtt: 50
-      loss: '5%'
-      queue: 10
-      protocol: 'udp'
-      at: 60
+      rate: 1000,
+      delay: 50,
+      loss: 5,
+      queue: 10,
     },
-    down: {
-      rate: 2000
-      rtt: 50
-      loss: '5%'
-      queue: 20
-      protocol: 'udp'
-      at: 60
-    }
-  }
+    down: [
+      { rate: 2000, delay: 50, loss: 2, queue: 20 },
+      { rate: 1000, delay: 50, loss: 2, queue: 20, at: 60 },
+    ]
+  }]
+  ```
+The sessions field represents the sessions IDs range that will be affected by the rule, e.g.: "0-10", "2,4" or simply "2". The device, protocol, up, down fields are optional. When device is not set, the default route device will be used. If protocol is specified ('udp' or 'tcp'), only the packets with the specified protocol will be affected by the shaping rules. When running as regular user, add the following sudo configuration:
+  ```
+%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe
   ```
 
-When used with docker, run `sudo modprobe ifb numifbs=1` first and add the `--cap-add=NET_ADMIN` docker option.
 
 *Type*: `string`
 
@@ -384,7 +384,14 @@ A comma-separated list of request URLs that will be automatically blocked.
 *Default*: `""`
 
 ## extraHeaders
-A dictionary of headers keyed by the url in JSON format (e.g. `{ "https://url.com": { "header-name": "value" } }`).
+A dictionary of headers keyed by the url in JSON5 format (e.g. `{ "https://url.com/*": { "header-name": "value" } }`).
+
+*Type*: `string`
+
+*Default*: `""`
+
+## responseModifiers
+A dictionary of content replacements keyed by the url in JSON5 format (e.g. `{ "https://url.com/*": [{ search: "searchString": replace: "anotherString" }] }`).The search string should be a valid regular expression.
 
 *Type*: `string`
 
@@ -543,6 +550,27 @@ An optional path that the HTTP server will expose with the /data endpoint.
 *Type*: `string`
 
 *Default*: `""`
+
+## vmafPath
+When set, it runs the VMAF calculator for the videos saved under the provided directory path.
+
+*Type*: `string`
+
+*Default*: `""`
+
+## vmafPreview
+If true, for each VMAF comparison it creates a side-by-side video with the reference and degraded versions.
+
+*Type*: `boolean`
+
+*Default*: `false`
+
+## vmafKeepIntermediateFiles
+If true, the VMAF intermediate files will not be deleted.
+
+*Type*: `boolean`
+
+*Default*: `false`
 
 
 
