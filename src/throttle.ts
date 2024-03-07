@@ -158,8 +158,8 @@ sudo tc filter add dev ${device} \
           handle ${handle}: \
           netem \
           ${rate && rate > 0 ? `rate ${rate}kbit` : ''} \
-          ${delay && delay > 0 ? `delay ${delay}ms` : ''} \
-          loss ${loss}% \
+          ${delay && delay >= 0 ? `delay ${delay}ms` : ''} \
+          ${loss && loss >= 0 ? `loss ${delay}%` : ''} \
           limit ${limit}; \
       `
       try {
