@@ -148,27 +148,21 @@ Example: \
     protocol: 'udp',
     up: {
       rate: 1000,
-      rtt: 50,
+      delay: 50,
       loss: 5,
       queue: 10,
-      at: 60
     },
-    down: {
-      rate: 2000,
-      rtt: 50,
-      loss: 5,
-      queue: 20,
-      at: 60
-    }
+    down: [
+      { rate: 2000, delay: 50, loss: 2, queue: 20 },
+      { rate: 1000, delay: 50, loss: 2, queue: 20, at: 60 },
+    ]
   }]
   \`\`\`
 The sessions field represents the sessions IDs range that will be affected by \
 the rule, e.g.: "0-10", "2,4" or simply "2". \
-The device, protocol, up, down fields are optional. When device is not net, the \
+The device, protocol, up, down fields are optional. When device is not set, the \
 default route device will be used. If protocol is specified ('udp' or 'tcp'), \
 only the packets with the specified protocol will be affected by the shaping rules. \
-When used with docker, run \`sudo modprobe ifb numifbs=1\` first and add the \
-\`--cap-add=NET_ADMIN\` docker option.
 When running as regular user, add the following sudo configuration: \
 \`\`\`
 %sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe
