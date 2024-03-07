@@ -76,6 +76,7 @@ RUN \
         sudo \
         net-tools \
         iproute2 \
+        iptables \
         mesa-va-drivers \
         gnupg \
         apt-utils \

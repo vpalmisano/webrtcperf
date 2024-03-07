@@ -557,8 +557,9 @@ export function clampMinMax(value: number, min: number, max: number): number {
 /** Runs the shell command asynchronously. */
 export async function runShellCommand(
   cmd: string,
+  verbose = false,
 ): Promise<{ stdout: string; stderr: string }> {
-  //log.debug(`runShellCommand cmd:\n${cmd}`)
+  if (verbose) log.debug(`runShellCommand cmd: ${cmd}`)
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
@@ -659,7 +660,7 @@ export async function systemGpuStats(): Promise<{ gpu: number; mem: number }> {
       return { gpu, mem: 0 }
     }
   } catch (err) {
-    log.debug(`systemGpuStats error: ${(err as Error).stack}`)
+    // log.debug(`systemGpuStats error: ${(err as Error).stack}`)
   }
   return { gpu: 0, mem: 0 }
 }

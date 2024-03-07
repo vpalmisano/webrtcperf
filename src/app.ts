@@ -8,7 +8,11 @@ import { prepareFakeMedia } from './media'
 import { Server } from './server'
 import { Session } from './session'
 import { Stats } from './stats'
-import { startThrottle, stopThrottle } from './throttle'
+import {
+  getSessionThrottleIndex,
+  startThrottle,
+  stopThrottle,
+} from './throttle'
 import {
   checkChromiumExecutable,
   logger,
@@ -138,7 +142,8 @@ async function main(): Promise<void> {
     id: number,
     spawnPeriod: number,
   ): Promise<void> => {
-    const session = new Session({ ...config, spawnPeriod, id })
+    const throttleIndex = getSessionThrottleIndex(id)
+    const session = new Session({ ...config, spawnPeriod, id, throttleIndex })
     session.once('stop', () => {
       console.warn(`Session ${id} stopped, reloading...`)
       setTimeout(startLocalSession, spawnPeriod, id)

@@ -138,31 +138,42 @@ seconds.`,
     arg: 'run-duration',
   },
   throttleConfig: {
-    doc: `A JSON5 string with a valid network throttling configuration, e.g.: \
+    doc: `A JSON5 string with a valid network throttling configuration. \
+Example: \
 
   \`\`\`javascript
-  {
+  [{
+    sessions: '0-1',
+    device: 'eth0',
+    protocol: 'udp',
     up: {
-      rate: 1000
-      rtt: 50
-      loss: '5%'
-      queue: 10
-      protocol: 'udp'
+      rate: 1000,
+      rtt: 50,
+      loss: 5,
+      queue: 10,
       at: 60
     },
     down: {
-      rate: 2000
-      rtt: 50
-      loss: '5%'
-      queue: 20
-      protocol: 'udp'
+      rate: 2000,
+      rtt: 50,
+      loss: 5,
+      queue: 20,
       at: 60
     }
-  }
+  }]
   \`\`\`
-
+The sessions field represents the sessions IDs range that will be affected by \
+the rule, e.g.: "0-10", "2,4" or simply "2". \
+The device, protocol, up, down fields are optional. When device is not net, the \
+default route device will be used. If protocol is specified ('udp' or 'tcp'), \
+only the packets with the specified protocol will be affected by the shaping rules. \
 When used with docker, run \`sudo modprobe ifb numifbs=1\` first and add the \
-\`--cap-add=NET_ADMIN\` docker option.`,
+\`--cap-add=NET_ADMIN\` docker option.
+When running as regular user, add the following sudo configuration: \
+\`\`\`
+%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe
+\`\`\`
+`,
     format: String,
     nullable: true,
     default: '',
