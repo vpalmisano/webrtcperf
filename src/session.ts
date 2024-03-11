@@ -694,11 +694,11 @@ export class Session extends EventEmitter {
         await fs.promises.writeFile(
           executableWrapperPath,
           `#!/bin/bash
-getent group ${group} || sudo addgroup --system ${group}
-sudo adduser $USER ${group}
-sudo iptables -t mangle --list OUTPUT | grep -q "owner GID match ${group}" || sudo iptables -t mangle -A OUTPUT -m owner --gid-owner ${group} -j MARK --set-mark ${mark}
-sudo iptables -t mangle --list PREROUTING | grep -q "CONNMARK restore" || sudo iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark
-sudo iptables -t mangle --list POSTROUTING | grep -q "CONNMARK save" || sudo iptables -t mangle -A POSTROUTING -j CONNMARK --save-mark
+getent group ${group} || sudo -n addgroup --system ${group}
+sudo -n adduser $USER ${group}
+sudo -n iptables -t mangle --list OUTPUT | grep -q "owner GID match ${group}" || sudo -n iptables -t mangle -A OUTPUT -m owner --gid-owner ${group} -j MARK --set-mark ${mark}
+sudo -n iptables -t mangle --list PREROUTING | grep -q "CONNMARK restore" || sudo -n iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark
+sudo -n iptables -t mangle --list POSTROUTING | grep -q "CONNMARK save" || sudo -n iptables -t mangle -A POSTROUTING -j CONNMARK --save-mark
 
 cat <<EOF > /tmp/webrtcperf-launcher-${mark}-browser
 #!/bin/bash

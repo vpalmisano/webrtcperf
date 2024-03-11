@@ -32,14 +32,14 @@ async function cleanup(): Promise<void> {
     device = await getDefaultInterface()
   }
   await runShellCommand(`\
-sudo tc qdisc del dev ${device} root || true;
-sudo tc class del dev ${device} || true;
-sudo tc filter del dev ${device} || true;
-sudo tc qdisc del dev ${device} ingress || true;
+sudo -n tc qdisc del dev ${device} root || true;
+sudo -n tc class del dev ${device} || true;
+sudo -n tc filter del dev ${device} || true;
+sudo -n tc qdisc del dev ${device} ingress || true;
 
-sudo tc qdisc del dev ifb0 root || true;
-sudo tc class del dev ifb0 root || true;
-sudo tc filter del dev ifb0 root || true;
+sudo -n tc qdisc del dev ifb0 root || true;
+sudo -n tc class del dev ifb0 root || true;
+sudo -n tc filter del dev ifb0 root || true;
 `)
 }
 
@@ -125,14 +125,14 @@ async function applyRules(
       const cmd = `\
 set -e;
 
-sudo tc class add dev ${device} parent 1: classid 1:${handle} htb rate 1Gbit ceil 1Gbit;
+sudo -n tc class add dev ${device} parent 1: classid 1:${handle} htb rate 1Gbit ceil 1Gbit;
 
-sudo tc qdisc add dev ${device} \
+sudo -n tc qdisc add dev ${device} \
   parent 1:${handle} \
   handle ${handle}: \
   netem; \
 
-sudo tc filter add dev ${device} \
+sudo -n tc filter add dev ${device} \
   parent 1: \
   protocol ip \
   u32 \
@@ -153,7 +153,7 @@ sudo tc filter add dev ${device} \
         `applying rules on ${device}: rate ${rate}kbit, delay ${delay}ms, loss ${loss}%, limit ${limit}`,
       )
       const cmd = `\
-        sudo tc qdisc change dev ${device} \
+        sudo -n tc qdisc change dev ${device} \
           parent 1:${handle} \
           handle ${handle}: \
           netem \
@@ -189,19 +189,18 @@ async function start(): Promise<void> {
   await runShellCommand(`\
 set -e;
 
-sudo -n true;
-sudo modprobe ifb;
-sudo ip link add ifb0 type ifb || true;
-sudo ip link set dev ifb0 up;
+sudo -n modprobe ifb;
+sudo -n ip link add ifb0 type ifb || true;
+sudo -n ip link set dev ifb0 up;
 
-sudo tc qdisc add dev ${device} root handle 1: htb default 1;
-sudo tc class add dev ${device} parent 1: classid 1:1 htb rate 1Gbit ceil 1Gbit;
+sudo -n tc qdisc add dev ${device} root handle 1: htb default 1;
+sudo -n tc class add dev ${device} parent 1: classid 1:1 htb rate 1Gbit ceil 1Gbit;
 
-sudo tc qdisc add dev ifb0 root handle 1: htb default 1;
-sudo tc class add dev ifb0 parent 1: classid 1:1 htb rate 1Gbit ceil 1Gbit;
+sudo -n tc qdisc add dev ifb0 root handle 1: htb default 1;
+sudo -n tc class add dev ifb0 parent 1: classid 1:1 htb rate 1Gbit ceil 1Gbit;
 
-sudo tc qdisc add dev ${device} ingress handle ffff: || true;
-sudo tc filter add dev ${device} \
+sudo -n tc qdisc add dev ${device} ingress handle ffff: || true;
+sudo -n tc filter add dev ${device} \
   parent ffff: \
   protocol ip \
   u32 \

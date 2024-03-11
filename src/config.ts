@@ -165,7 +165,7 @@ default route device will be used. If protocol is specified ('udp' or 'tcp'), \
 only the packets with the specified protocol will be affected by the shaping rules. \
 When running as regular user, add the following sudo configuration:
   \`\`\`
-%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe
+%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe,/usr/sbin/ip
   \`\`\`
 \
 `,
