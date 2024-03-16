@@ -43,9 +43,13 @@ sudo -n tc filter del dev ifb0 root || true;
 `)
 }
 
-function calculateBufferedPackets(rate: number, delay: number): number {
+function calculateBufferedPackets(
+  rate: number,
+  delay: number,
+  mtu = 1500,
+): number {
   // https://lists.linuxfoundation.org/pipermail/netem/2007-March/001094.html
-  return Math.ceil((((1.5 * rate * 1000) / 8) * (delay / 1000)) / 1500)
+  return Math.ceil((((1.5 * rate * 1000) / 8) * (delay / 1000)) / mtu)
 }
 
 /** The network throttle rules to be applied to uplink or downlink. */
@@ -56,7 +60,7 @@ export type ThrottleRule = {
   delay?: number
   /** The packet loss percentage. */
   loss?: number
-  /** Additional packet queue size. */
+  /** The packet queue size. */
   queue?: number
   /** If set, the rule will be applied after the specified number of seconds. */
   at?: number
@@ -111,7 +115,7 @@ async function applyRules(
 
   for (const [i, rule] of rules.entries()) {
     const { rate, delay, loss, queue, at } = rule
-    const limit = calculateBufferedPackets(rate || 0, delay || 0) + (queue || 0)
+    const limit = queue ?? calculateBufferedPackets(rate || 0, delay || 0)
     const mark = index + 1
     const handle = index + 2
 
@@ -160,7 +164,7 @@ sudo -n tc filter add dev ${device} \
           ${rate && rate > 0 ? `rate ${rate}kbit` : ''} \
           ${delay && delay >= 0 ? `delay ${delay}ms` : ''} \
           ${loss && loss >= 0 ? `loss ${delay}%` : ''} \
-          limit ${limit}; \
+          ${limit && limit >= 0 ? `limit ${limit}` : ''} \
       `
       try {
         await runShellCommand(cmd)
