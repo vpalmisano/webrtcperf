@@ -310,23 +310,25 @@ export class Session extends EventEmitter {
   /**
    * Imported custom URL handler function.
    * @typedef {Object} CustomUrlHandler
-   * @property {string} id - The identifier for the URL.
-   * @property {string} sessions - The number of sessions.
-   * @property {string} tabIndex - The index of the current tab.
-   * @property {string} tabsPerSession - The number of tabs per session.
-   * @property {string} index - The index for the URL.
-   * @property {string} pid - The process identifier for the URL.
+   * @property {number} id - The identifier for the URL.
+   * @property {number} sessions - The number of sessions.
+   * @property {number} tabIndex - The index of the current tab.
+   * @property {number} tabsPerSession - The number of tabs per session.
+   * @property {number} index - The index for the URL.
+   * @property {number} pid - The process identifier for the URL.
+   * @property {Record<string, string>} env - The process environment.
    *
    * @type {string} path - The path to the JavaScript file containing the function:
    *   (params: CustomUrlHandler) => Promise<string>
    */
   private customUrlHandlerFn?: (params: {
-    id: string
-    sessions: string
-    tabIndex: string
-    tabsPerSession: string
-    index: string
-    pid: string
+    id: number
+    sessions: number
+    tabIndex: number
+    tabsPerSession: number
+    index: number
+    pid: number
+    env: Record<string, string>
   }) => Promise<string>
   /** The latest stats extracted from page. */
   stats: SessionStats = {}
@@ -828,12 +830,13 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
       ).default
       if (this.customUrlHandlerFn) {
         url = await this.customUrlHandlerFn({
-          id: this.id.toString(10),
-          sessions: this.sessions.toString(10),
-          tabIndex: tabIndex.toString(10),
-          tabsPerSession: this.tabsPerSession.toString(10),
-          index: index.toString(10),
-          pid: process.pid.toString(),
+          id: this.id,
+          sessions: this.sessions,
+          tabIndex,
+          tabsPerSession: this.tabsPerSession,
+          index,
+          pid: process.pid,
+          env: { ...process.env } as Record<string, string>,
         })
       }
     }
