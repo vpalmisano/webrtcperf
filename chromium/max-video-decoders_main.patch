@@ -1,10 +1,10 @@
 diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
-index 6c1df7d874..1cea587cdc 100644
+index 7d307c6d2c..5fa1e4d7b1 100644
 --- a/video/video_receive_stream2.cc
 +++ b/video/video_receive_stream2.cc
-@@ -124,6 +124,31 @@ RenderResolution InitialDecoderResolution(const FieldTrialsView& field_trials) {
-   return RenderResolution(320, 180);
- }
+@@ -66,6 +66,31 @@ namespace {
+ constexpr TimeDelta kMinBaseMinimumDelay = TimeDelta::Zero();
+ constexpr TimeDelta kMaxBaseMinimumDelay = TimeDelta::Seconds(10);
  
 +uint getTotalVideoDecoders() {
 +  FileWrapper file_wrapper = FileWrapper::OpenReadOnly("/dev/shm/chromium-video-decoders");
@@ -31,9 +31,9 @@ index 6c1df7d874..1cea587cdc 100644
 +  file_wrapper.Close();
 +}
 +
- // Video decoder class to be used for unknown codecs. Doesn't support decoding
- // but logs messages to LS_ERROR.
- class NullVideoDecoder : public webrtc::VideoDecoder {
+ // Concrete instance of RecordableEncodedFrame wrapping needed content
+ // from EncodedFrame.
+ class WebRtcRecordableEncodedFrame : public RecordableEncodedFrame {
 @@ -135,7 +160,7 @@ class NullVideoDecoder : public webrtc::VideoDecoder {
  
    int32_t Decode(const webrtc::EncodedImage& input_image,
@@ -43,7 +43,7 @@ index 6c1df7d874..1cea587cdc 100644
      return WEBRTC_VIDEO_CODEC_OK;
    }
  
-@@ -351,6 +376,20 @@ void VideoReceiveStream2::Start() {
+@@ -349,6 +374,20 @@ void VideoReceiveStream2::Start() {
      renderer = this;
    }
  
@@ -64,7 +64,7 @@ index 6c1df7d874..1cea587cdc 100644
    for (const Decoder& decoder : config_.decoders) {
      VideoDecoder::Settings settings;
      settings.set_codec_type(
-@@ -429,6 +468,9 @@ void VideoReceiveStream2::Stop() {
+@@ -427,6 +466,9 @@ void VideoReceiveStream2::Stop() {
      stats_proxy_.DecoderThreadStopped();
  
      UpdateHistograms();
@@ -74,23 +74,23 @@ index 6c1df7d874..1cea587cdc 100644
    }
  
    // TODO(bugs.webrtc.org/11993): Make these calls on the network thread.
-@@ -520,8 +562,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+@@ -518,8 +560,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
      const Decoder& decoder) {
    TRACE_EVENT0("webrtc",
                 "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
 -  std::unique_ptr<VideoDecoder> video_decoder =
--      config_.decoder_factory->CreateVideoDecoder(decoder.video_format);
+-      config_.decoder_factory->Create(env_, decoder.video_format);
 +  std::unique_ptr<VideoDecoder> video_decoder = enable_video_decoders_ ?
-+    config_.decoder_factory->CreateVideoDecoder(decoder.video_format) :
++    config_.decoder_factory->Create(env_, decoder.video_format) :
 +    nullptr;
    // If we still have no valid decoder, we have to create a "Null" decoder
    // that ignores all calls. The reason we can get into this state is that the
    // old decoder factory interface doesn't have a way to query supported
 diff --git a/video/video_receive_stream2.h b/video/video_receive_stream2.h
-index 31b9a7eb7c..fea951ac42 100644
+index 05e719c39c..80e151bed3 100644
 --- a/video/video_receive_stream2.h
 +++ b/video/video_receive_stream2.h
-@@ -280,6 +280,7 @@ class VideoReceiveStream2
+@@ -278,6 +278,7 @@ class VideoReceiveStream2
    RtpStreamsSynchronizer rtp_stream_sync_;
  
    std::unique_ptr<VideoStreamBufferController> buffer_;
