@@ -27,6 +27,9 @@ const calculateBitrate = (cur, old, timeDiff, fallback = 0) =>
     ? Math.round((8000 * (cur - old)) / timeDiff)
     : fallback
 
+const calculateRate = (diff, timeDiff, fallback = 0) =>
+  diff > 0 ? Math.round((1000 * diff) / timeDiff) : fallback
+
 const positiveDiff = (cur, old) => Math.max(0, (cur || 0) - (old || 0))
 
 const calculateLossRate = (lost, total) =>
@@ -145,6 +148,7 @@ async function getPeerConnectionStats(
               bytesSent,
               headerBytesSent,
               packetsSent,
+              framesSent,
               frameWidth,
               frameHeight,
               framesPerSecond,
@@ -166,6 +170,7 @@ async function getPeerConnectionStats(
               packetsSent,
               packetsLost,
               nackCount,
+              framesSent,
               frameWidth,
               frameHeight,
               framesPerSecond,
@@ -204,6 +209,7 @@ async function getPeerConnectionStats(
               sumOptional(values.outboundRtp, outboundRtp, prop),
             )
             ;[
+              'framesSent',
               'frameWidth',
               'frameHeight',
               'framesPerSecond',
@@ -345,9 +351,9 @@ async function getPeerConnectionStats(
               decoderImplementation,
               framesDecoded,
               totalDecodeTime,
+              framesReceived,
               frameWidth,
               frameHeight,
-              framesPerSecond,
               firCount,
               pliCount,
               nackCount,
@@ -375,9 +381,9 @@ async function getPeerConnectionStats(
               decoderImplementation,
               framesDecoded,
               totalDecodeTime,
+              framesReceived,
               frameWidth,
               frameHeight,
-              framesPerSecond,
               firCount,
               pliCount,
               nackCount,
@@ -419,6 +425,17 @@ async function getPeerConnectionStats(
                 prevStats.values.inboundRtp.headerBytesReceived,
               now - prevStats.t,
             )
+            // Update video framesPerSecond.
+            if (values.inboundRtp.kind === 'video') {
+              const frames = positiveDiff(
+                values.inboundRtp.framesReceived,
+                prevStats.values.inboundRtp.framesReceived,
+              )
+              values.inboundRtp.framesPerSecond = calculateRate(
+                frames,
+                now - prevStats.t,
+              )
+            }
             // Update packet loss rate.
             const lost = positiveDiff(
               values.inboundRtp.packetsLost,
