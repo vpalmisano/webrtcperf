@@ -265,9 +265,10 @@ function setStats(
   stats: RtcStats,
   name: RtcStatsMetricNames,
   key: string,
-  value: number | string,
+  value?: number | string,
 ): void {
   assert(RtcStatsMetrics.includes(name), `Unknown stat name: ${name}`)
+  if (value === undefined) return
   if (!stats[name]) {
     stats[name] = {}
   }

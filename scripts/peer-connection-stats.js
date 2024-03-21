@@ -108,7 +108,7 @@ async function getPeerConnectionStats(
           outboundRtp: {},
         }
         if (track.kind === 'video') {
-          values.isDisplay = isDisplayTrack(track)
+          values.isDisplay = isSenderDisplayTrack(track)
           values.videoSentActiveEncodings = encodings.length
           values.videoSentMaxBitrate = encodings.reduce((prev, encoding) => {
             prev += encoding.maxBitrate || 0
@@ -322,7 +322,7 @@ async function getPeerConnectionStats(
           inboundRtp: {},
         }
         if (track.kind === 'video') {
-          values.isDisplay = isDisplayTrack(track)
+          values.isDisplay = window.isReceiverDisplayTrack(track)
         }
         for (const s of stats.values()) {
           if (raw) {
@@ -526,11 +526,11 @@ setInterval(() => {
 }, TRACK_STATS_TIMEOUT)
 
 /**
- * isDisplayTrack
+ * isSenderDisplayTrack
  * @param {MediaStreamTrack} videoTrack
  * @return {Boolean}
  */
-const isDisplayTrack = videoTrack => {
+const isSenderDisplayTrack = videoTrack => {
   if (['detail', 'text'].indexOf(videoTrack.contentHint) !== -1) {
     return true
   }
@@ -557,6 +557,10 @@ const isDisplayTrack = videoTrack => {
   } else {
     return !trackSettings.deviceId
   }
+}
+
+window.isReceiverDisplayTrack = track => {
+  return isSenderDisplayTrack(track)
 }
 
 /**
