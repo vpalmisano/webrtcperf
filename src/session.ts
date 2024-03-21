@@ -750,7 +750,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           ignoreDefaultArgs: [
             '--disable-dev-shm-usage',
             '--remote-debugging-port',
-            '--hide-scrollbars',
+            //'--hide-scrollbars',
           ],
           args,
         })) as Browser

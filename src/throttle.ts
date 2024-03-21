@@ -163,7 +163,7 @@ sudo -n tc filter add dev ${device} \
           netem \
           ${rate && rate > 0 ? `rate ${rate}kbit` : ''} \
           ${delay && delay >= 0 ? `delay ${delay}ms` : ''} \
-          ${loss && loss >= 0 ? `loss ${delay}%` : ''} \
+          ${loss && loss >= 0 ? `loss ${loss}%` : ''} \
           ${limit && limit >= 0 ? `limit ${limit}` : ''} \
       `
       try {
