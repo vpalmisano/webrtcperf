@@ -116,6 +116,8 @@ export enum RtcStatsMetricNames {
   videoSentBytes = 'videoSentBytes',
   /** The sent video packets. */
   videoSentPackets = 'videoSentPackets',
+  /** The sent video frames. */
+  videoSentFrames = 'videoSentFrames',
   /** The sent video framerate. */
   videoSentFps = 'videoSentFps',
   /** The sent video width. */
@@ -159,6 +161,8 @@ export enum RtcStatsMetricNames {
   screenSentBytes = 'screenSentBytes',
   /** The sent screen packets. */
   screenSentPackets = 'screenSentPackets',
+  /** The sent screen frames. */
+  screenSentFrames = 'screenSentFrames',
   /** The sent screen framerate. */
   screenSentFps = 'screenSentFps',
   /** The sent screen width. */
@@ -202,6 +206,7 @@ export enum RtcStatsMetricNames {
   videoPliCountSent = 'videoPliCountSent',
   videoDecodeLatency = 'videoDecodeLatency',
   //'videoFramesDecoded',
+  videoRecvFrames = 'videoRecvFrames',
   videoRecvFps = 'videoRecvFps',
   videoRecvAvgJitterBufferDelay = 'videoRecvAvgJitterBufferDelay',
   videoRecvBitrates = 'videoRecvBitrates',
@@ -224,6 +229,7 @@ export enum RtcStatsMetricNames {
   screenPliCountSent = 'screenPliCountSent',
   screenDecodeLatency = 'screenDecodeLatency',
   //'screenFramesDecoded',
+  screenRecvFrames = 'screenRecvFrames',
   screenRecvFps = 'screenRecvFps',
   screenRecvAvgJitterBufferDelay = 'screenRecvAvgJitterBufferDelay',
   screenRecvBitrates = 'screenRecvBitrates',
@@ -447,6 +453,12 @@ export function updateRtcStats(
         //setStats(stats, prefix + 'FramesDecoded', key, inboundRtp.framesDecoded
         setStats(
           stats,
+          (prefix + 'RecvFrames') as RtcStatsMetricNames,
+          key,
+          inboundRtp.framesReceived,
+        )
+        setStats(
+          stats,
           (prefix + 'RecvFps') as RtcStatsMetricNames,
           key,
           inboundRtp.framesPerSecond,
@@ -590,6 +602,12 @@ export function updateRtcStats(
           (prefix + 'SentHeight') as RtcStatsMetricNames,
           key,
           outboundRtp.frameHeight,
+        )
+        setStats(
+          stats,
+          (prefix + 'SentFrames') as RtcStatsMetricNames,
+          key,
+          outboundRtp.framesSent,
         )
         setStats(
           stats,
