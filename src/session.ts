@@ -722,6 +722,14 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
       }
 
       const args = this.getBrowserArgs()
+      const ignoreDefaultArgs = [
+        '--disable-dev-shm-usage',
+        '--remote-debugging-port',
+        //'--hide-scrollbars',
+      ]
+      if (this.debuggingPort) {
+        ignoreDefaultArgs.push('--enable-automation')
+      }
 
       log.debug(`Using args:\n  ${args.join('\n  ')}`)
       log.debug(`Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`)
@@ -747,11 +755,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
             hasTouch: false,
             isLandscape: false,
           },
-          ignoreDefaultArgs: [
-            '--disable-dev-shm-usage',
-            '--remote-debugging-port',
-            //'--hide-scrollbars',
-          ],
+          ignoreDefaultArgs,
           args,
         })) as Browser
         // const version = await this.browser.version();

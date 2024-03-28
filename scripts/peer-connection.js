@@ -12,12 +12,12 @@ window.RTCPeerConnection = function (conf, options) {
   log(`RTCPeerConnection-${id}`, { conf, options })
 
   const encodedInsertableStreams =
-    conf.encodedInsertableStreams ||
+    conf?.encodedInsertableStreams ||
     (timestampInsertableStreams && conf?.sdpSemantics === 'unified-plan')
 
   const pc = new NativeRTCPeerConnection(
     {
-      ...conf,
+      ...(conf || {}),
       encodedInsertableStreams,
     },
     options,
