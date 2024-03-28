@@ -657,9 +657,12 @@ export class Stats extends events.EventEmitter {
         register,
         'elapsedTime',
         '',
-        [],
+        ['datetime'],
         () =>
           this.elapsedTimeMetric?.set(
+            {
+              datetime: this.startTimestampString,
+            },
             (Date.now() - this.startTimestamp) / 1000,
           ),
       )
