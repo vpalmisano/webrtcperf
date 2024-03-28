@@ -329,6 +329,7 @@ export class Session extends EventEmitter {
     index: number
     pid: number
     env: Record<string, string>
+    params: Record<string, unknown>
   }) => Promise<string>
   /** The latest stats extracted from page. */
   stats: SessionStats = {}
@@ -841,6 +842,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           index,
           pid: process.pid,
           env: { ...process.env } as Record<string, string>,
+          params: this.scriptParams,
         })
       }
     }
