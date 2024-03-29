@@ -3,7 +3,7 @@ import fs from 'fs'
 import json5 from 'json5'
 import wrap from 'word-wrap'
 
-import { getConfigDocs, loadConfig } from './config'
+import { Config, getConfigDocs, loadConfig } from './config'
 import { prepareFakeMedia } from './media'
 import { Server } from './server'
 import { Session } from './session'
@@ -50,23 +50,9 @@ ${wrap(value.doc, { width: 72, indent: '        ' })}
   }
 }
 
-/**
- * Main function
- */
-async function main(): Promise<void> {
-  showHelpOrVersion()
-
-  const config = loadConfig(process.argv[2])
-  if (!config.startTimestamp) {
-    config.startTimestamp = Date.now()
-  }
-
-  // VMAF score.
-  if (config.vmafPath) {
-    await calculateVmafScore(config)
-    process.exit(0)
-  }
-
+export async function setupApplication(
+  config: Config,
+): Promise<() => Promise<void>> {
   // Stats.
   const stats = new Stats(config)
   await stats.start()
@@ -93,48 +79,6 @@ async function main(): Promise<void> {
   // Download chromium if necessary.
   if (!config.chromiumUrl && !config.chromiumPath) {
     await checkChromiumExecutable()
-  }
-
-  // stop function
-  const stop = async (): Promise<void> => {
-    console.log('Exiting...')
-
-    if (server) {
-      server.stop()
-    }
-
-    // This will stop the added sessions.
-    await stats.stop()
-
-    if (config.throttleConfig) {
-      await stopThrottle()
-    }
-
-    stopUpdateSystemStats()
-
-    process.exit(0)
-  }
-
-  // Stop handlers.
-  registerExitHandler(() => stop())
-
-  if (process.stdin && process.stdin.setRawMode) {
-    console.log('Press [q] to quit')
-    process.stdin.setRawMode(true)
-    process.stdin.resume()
-    process.stdin.on('data', async data => {
-      log.debug('[stdin]', data[0])
-      if (data[0] === 'q'.charCodeAt(0)) {
-        try {
-          await stop()
-        } catch (err: unknown) {
-          log.error(`stop error: ${(err as Error).stack}`)
-          process.exit(1)
-        }
-      } else if (data[0] === 'x'.charCodeAt(0)) {
-        process.exit(1)
-      }
-    })
   }
 
   // Start session function.
@@ -184,13 +128,76 @@ async function main(): Promise<void> {
     )
   }
 
+  return async (): Promise<void> => {
+    log.debug('Stopping')
+
+    if (server) {
+      server.stop()
+    }
+
+    await stats.stop()
+
+    if (config.throttleConfig) {
+      await stopThrottle()
+    }
+
+    stopUpdateSystemStats()
+  }
+}
+
+/**
+ * Main function
+ */
+async function main(): Promise<void> {
+  showHelpOrVersion()
+
+  const config = loadConfig(process.argv[2])
+
+  // VMAF score.
+  if (config.vmafPath) {
+    await calculateVmafScore(config)
+    process.exit(0)
+  }
+
+  const stopApplication = await setupApplication(config)
+
+  const stop = async (): Promise<void> => {
+    console.log('Exiting...')
+
+    await stopApplication()
+    process.exit(0)
+  }
+  registerExitHandler(() => stop())
+
   // Stop after a configured duration.
   if (config.runDuration > 0) {
     setTimeout(stop, config.runDuration * 1000)
   }
+
+  // Command line interface.
+  if (process.stdin && process.stdin.setRawMode) {
+    console.log('Press [q] to quit')
+    process.stdin.setRawMode(true)
+    process.stdin.resume()
+    process.stdin.on('data', async data => {
+      log.debug('[stdin]', data[0])
+      if (data[0] === 'q'.charCodeAt(0)) {
+        try {
+          await stop()
+        } catch (err: unknown) {
+          log.error(`stop error: ${(err as Error).stack}`)
+          process.exit(1)
+        }
+      } else if (data[0] === 'x'.charCodeAt(0)) {
+        process.exit(1)
+      }
+    })
+  }
 }
 
-main().catch(err => {
-  console.error(err)
-  process.exit(-1)
-})
+if (require.main === module) {
+  main().catch(err => {
+    console.error(err)
+    process.exit(-1)
+  })
+}

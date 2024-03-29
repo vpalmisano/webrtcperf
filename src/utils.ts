@@ -469,6 +469,17 @@ export function registerExitHandler(exitHandler: ExitHandler): void {
   exitHandlers.push(exitHandler)
 }
 
+/**
+ * Un-registers the {@link ExitHandler} callback.
+ * @param exitHandler
+ */
+export function unregisterExitHandler(exitHandler: ExitHandler): void {
+  const index = exitHandlers.indexOf(exitHandler)
+  if (index !== -1) {
+    exitHandlers.splice(index, 1)
+  }
+}
+
 const runExitHandlers = async (signal: string): Promise<void> => {
   for (const [i, exitHandler] of exitHandlers.entries()) {
     const id = `${i + 1}/${exitHandlers.length}`

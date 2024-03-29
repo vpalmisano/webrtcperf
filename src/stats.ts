@@ -483,7 +483,7 @@ export class Stats extends events.EventEmitter {
     this.collectedStats = this.initCollectedStats()
     this.sessions = new Map()
     this.nextSessionId = startSessionId
-    this.startTimestamp = startTimestamp
+    this.startTimestamp = startTimestamp || Date.now()
     this.startTimestampString = new Date(this.startTimestamp).toISOString()
     this.enableDetailedStats = enableDetailedStats
 

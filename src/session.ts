@@ -1407,10 +1407,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     }
 
     // If not using a real display, select the first blank page.
-    if (!this.display) {
+    /* if (!this.display) {
       const pages = await this.browser.pages()
       await pages[0].bringToFront()
-    }
+    } */
   }
 
   private async getNewPage(_tabIndex: number): Promise<Page> {

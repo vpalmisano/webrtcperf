@@ -145,7 +145,7 @@ sudo -n tc filter add dev ${device} \
   flowid 1:${handle};
 `
       try {
-        await runShellCommand(cmd)
+        await runShellCommand(cmd, true)
       } catch (err) {
         log.error(`error running "${cmd}": ${(err as Error).stack}`)
         throw err
@@ -190,7 +190,8 @@ async function start(): Promise<void> {
     device = await getDefaultInterface()
   }
 
-  await runShellCommand(`\
+  await runShellCommand(
+    `\
 set -e;
 
 sudo -n modprobe ifb;
@@ -209,9 +210,13 @@ sudo -n tc filter add dev ${device} \
   protocol ip \
   u32 \
   match u32 0 0 \
-  action mirred egress redirect dev ifb0 \
+  action connmark \
+  action mirred egress \
+  redirect dev ifb0 \
   flowid 1:1;
-`)
+`,
+    true,
+  )
 
   let index = 0
   for (const config of throttleConfig) {
