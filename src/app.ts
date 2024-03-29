@@ -16,10 +16,11 @@ import {
 import {
   checkChromiumExecutable,
   logger,
-  randomActivateAudio,
   registerExitHandler,
   resolvePackagePath,
   sleep,
+  startRandomActivateAudio,
+  stopRandomActivateAudio,
   stopUpdateSystemStats,
 } from './utils'
 import { calculateVmafScore } from './vmaf'
@@ -99,7 +100,7 @@ export async function setupApplication(
   // Start the local sessions.
   if ((config.url || config.customUrlHandler) && config.sessions) {
     if (config.randomAudioPeriod) {
-      await randomActivateAudio(
+      startRandomActivateAudio(
         stats.sessions,
         config.randomAudioPeriod,
         config.randomAudioProbability,
@@ -130,6 +131,8 @@ export async function setupApplication(
 
   return async (): Promise<void> => {
     log.debug('Stopping')
+
+    stopRandomActivateAudio()
 
     if (server) {
       server.stop()

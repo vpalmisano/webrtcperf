@@ -223,6 +223,28 @@ declare global {
 }
 
 let randomActivateAudioTimeoutId: NodeJS.Timeout | null = null
+let randomActivateAudioRunning = false
+
+export function startRandomActivateAudio(
+  sessions: Map<number, Session>,
+  randomAudioPeriod: number,
+  randomAudioProbability: number,
+  randomAudioRange: number,
+): void {
+  if (randomActivateAudioRunning) return
+  randomActivateAudioRunning = true
+  void randomActivateAudio(
+    sessions,
+    randomAudioPeriod,
+    randomAudioProbability,
+    randomAudioRange,
+  )
+}
+
+export function stopRandomActivateAudio(): void {
+  randomActivateAudioRunning = false
+  randomActivateAudioTimeoutId && clearTimeout(randomActivateAudioTimeoutId)
+}
 
 /**
  * Randomly activate audio from one tab at time.
@@ -237,7 +259,7 @@ export async function randomActivateAudio(
   randomAudioProbability: number,
   randomAudioRange: number,
 ): Promise<void> {
-  if (!randomAudioPeriod) {
+  if (!randomAudioPeriod || !randomActivateAudioRunning) {
     return
   }
   try {
@@ -620,8 +642,8 @@ export async function resolveIP(
             return ip
           }
         })
-        .catch(err => {
-          log.error(`resolveIP error: ${(err as Error).stack}`)
+        .catch(_err => {
+          // log.error(`resolveIP error: ${(err as Error).stack}`)
           ipCache.set(ip, { host: ip, timestamp })
         }),
     ])
