@@ -741,7 +741,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           ? puppeteerExtra
           : puppeteer
         ).launch({
-          headless: this.display ? false : true,
+          headless: this.display ? false : 'new',
           executablePath,
           handleSIGINT: false,
           env,
