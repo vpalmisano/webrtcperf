@@ -340,16 +340,18 @@ export async function randomActivateAudio(
   } catch (err) {
     log.error(`randomActivateAudio error: ${(err as Error).stack}`)
   } finally {
-    const nextTime = randomAudioPeriod * (1 + Math.random())
-    randomActivateAudioTimeoutId && clearTimeout(randomActivateAudioTimeoutId)
-    randomActivateAudioTimeoutId = setTimeout(
-      randomActivateAudio,
-      nextTime * 1000,
-      sessions,
-      randomAudioPeriod,
-      randomAudioProbability,
-      randomAudioRange,
-    )
+    if (randomActivateAudioRunning) {
+      const nextTime = randomAudioPeriod * (1 + Math.random())
+      randomActivateAudioTimeoutId && clearTimeout(randomActivateAudioTimeoutId)
+      randomActivateAudioTimeoutId = setTimeout(
+        randomActivateAudio,
+        nextTime * 1000,
+        sessions,
+        randomAudioPeriod,
+        randomAudioProbability,
+        randomAudioRange,
+      )
+    }
   }
 }
 
