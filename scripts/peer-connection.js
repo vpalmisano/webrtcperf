@@ -26,8 +26,8 @@ window.RTCPeerConnection = function (conf, options) {
   PeerConnections.set(id, pc)
 
   pc.addEventListener('connectionstatechange', () => {
+    log(`RTCPeerConnection-${id} changed to: ${pc.connectionState}`)
     if (pc.connectionState === 'closed') {
-      log(`RTCPeerConnection closed (connectionState: ${pc.connectionState})`)
       PeerConnections.delete(id)
     }
   })

@@ -586,7 +586,7 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
         stats.push(ret)
       }
     } catch (err) {
-      console.error(`getPeerConnectionStats error: ${err.message}`, err)
+      log(`getPeerConnectionStats error: ${err.message}`, err)
     }
   }
 
