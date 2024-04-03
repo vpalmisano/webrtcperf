@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, streamWriter, isDisplayTrack */
+/* global log, loadScript, sleep, Tesseract, streamWriter, isSenderDisplayTrack */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -216,7 +216,7 @@ const applyTimestampWatermark = mediaStream => {
   const textHeight = fontSize + 6
   const participantName =
     window.getParticipantName().split('_')[0] +
-    (isDisplayTrack(videoTrack) ? ' -s' : '')
+    (isSenderDisplayTrack(videoTrack) ? ' -s' : '')
 
   const transformer = new window.TransformStream({
     async transform(videoFrame, controller) {
