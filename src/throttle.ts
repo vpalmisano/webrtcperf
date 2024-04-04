@@ -1,4 +1,5 @@
 import JSON5 from 'json5'
+import os from 'os'
 
 import { logger, runShellCommand } from './utils'
 
@@ -235,6 +236,7 @@ sudo -n tc filter add dev ${device} \
  * @param config A JSON5 configuration parsed as {@link ThrottleConfig}.
  */
 export async function startThrottle(config: string): Promise<void> {
+  if (os.platform() !== 'linux') return
   try {
     throttleConfig = JSON5.parse(config) as ThrottleConfig[]
     log.info('Starting throttle with config:', throttleConfig)
@@ -251,6 +253,7 @@ export async function startThrottle(config: string): Promise<void> {
  * Stops the network throttle.
  */
 export async function stopThrottle(): Promise<void> {
+  if (os.platform() !== 'linux') return
   try {
     log.info('Stopping throttle')
     await cleanup()

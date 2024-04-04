@@ -440,7 +440,7 @@ window.streamWriter = async (
   }
 
   return {
-    write(frameData, pts) {
+    write(frameData, pts = 0) {
       //log('write', filename, frameData.byteLength, pts)
       if (filename.endsWith('.ivf')) {
         const data = new ArrayBuffer(12 + frameData.byteLength)

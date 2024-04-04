@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats, saveVideoTrack, saveAudioTrack */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -131,10 +131,17 @@ window.RTCPeerConnection = function (conf, options) {
         }
 
         if (
-          window.PARAMS?.saveMediaStream &&
-          window.WEBRTC_STRESS_TEST_INDEX <= window.PARAMS?.saveMediaStream
+          window.PARAMS?.saveVideoTrack &&
+          window.WEBRTC_STRESS_TEST_INDEX <= window.PARAMS?.saveVideoTrack + 1
         ) {
-          await window.saveMediaStreamTrack(receiver.track, 'recv')
+          await saveVideoTrack(receiver.track, 'recv')
+        }
+      } else if (receiver.track.kind === 'audio') {
+        if (
+          window.PARAMS?.saveAudioTrack &&
+          window.WEBRTC_STRESS_TEST_INDEX <= window.PARAMS?.saveAudioTrack + 1
+        ) {
+          await saveAudioTrack(receiver.track, 'recv')
         }
       }
     }

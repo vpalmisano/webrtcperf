@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, streamWriter, isSenderDisplayTrack */
+/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, saveVideoTrack */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -121,72 +121,6 @@ function collectMediaTracks(mediaStream) {
       return applyConstraintsNative(constraints)
     }
   }) */
-}
-
-/**
- * Save the MediaStream video track to disk.
- * @param {MediaStreamTrack} videoTrack
- */
-window.saveMediaStreamTrack = async (videoTrack, sendrecv, quality = 0.75) => {
-  const width = window.VIDEO_WIDTH
-  const height = window.VIDEO_HEIGHT
-  const frameRate = window.VIDEO_FRAMERATE
-  const fname = `${window.getParticipantName().split('_')[0]}-${sendrecv}_${
-    videoTrack.id
-  }.ivf`
-  log(`saveMediaStreamTrack ${fname} ${width}x${height} ${frameRate}fps`)
-  const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
-
-  const canvas = new OffscreenCanvas(width, height)
-  const ctx = canvas.getContext('2d')
-  let startTimestamp = -1
-  const writableStream = new window.WritableStream(
-    {
-      async write(videoFrame) {
-        const { timestamp, codedWidth, codedHeight } = videoFrame
-        if (!codedWidth || !codedHeight) {
-          return
-        }
-        const bitmap = await createImageBitmap(videoFrame)
-        try {
-          ctx.drawImage(bitmap, 0, 0, width, height)
-          const blob = await canvas.convertToBlob({
-            type: 'image/jpeg',
-            quality,
-          })
-          const data = await blob.arrayBuffer()
-          if (startTimestamp < 0) {
-            startTimestamp = timestamp
-          }
-          const pts = Math.round(
-            (frameRate * (timestamp - startTimestamp)) / 1000000,
-          )
-          /* log(
-            `writer ${data.byteLength} bytes timestamp=${
-              videoFrame.timestamp / 1000000
-            } pts=${pts}`,
-          ) */
-          writer.write(data, pts)
-        } catch (err) {
-          log(`saveMediaStream error: ${err.message}`)
-        }
-        videoFrame.close()
-        bitmap.close()
-      },
-      close() {
-        writer.close()
-      },
-      abort(err) {
-        log('saveMediaStream error:', err)
-      },
-    },
-    new CountQueuingStrategy({ highWaterMark: frameRate * 2 }),
-  )
-
-  const trackProcessor = new window.MediaStreamTrackProcessor({
-    track: videoTrack,
-  })
-  trackProcessor.readable.pipeTo(writableStream)
 }
 
 /**
@@ -437,7 +371,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     if (window.PARAMS?.saveMediaStream) {
       const videoTrack = mediaStream.getVideoTracks()[0]
       if (videoTrack) {
-        await window.saveMediaStreamTrack(videoTrack, 'send')
+        await saveVideoTrack(videoTrack, 'send')
       }
     }
 

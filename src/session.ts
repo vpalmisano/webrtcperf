@@ -8,7 +8,6 @@ import { LoremIpsum } from 'lorem-ipsum'
 import NodeCache from 'node-cache'
 import os from 'os'
 import path from 'path'
-import * as vanillaPuppeteer from 'puppeteer'
 import puppeteer, {
   Browser,
   BrowserContext,
@@ -18,14 +17,9 @@ import puppeteer, {
   Metrics,
   Page,
 } from 'puppeteer-core'
-import { addExtra } from 'puppeteer-extra'
-import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import type { Interception } from 'puppeteer-intercept-and-modify-requests'
 import { RequestInterceptionManager } from 'puppeteer-intercept-and-modify-requests'
 import { gunzipSync } from 'zlib'
-
-const puppeteerExtra = addExtra(vanillaPuppeteer)
-puppeteerExtra.use(StealthPlugin())
 
 // For nexe bundler.
 require('puppeteer-extra-plugin-stealth/evasions/chrome.app')
@@ -690,7 +684,7 @@ export class Session extends EventEmitter {
       }
 
       // Create process wrapper.
-      if (this.throttleIndex > -1) {
+      if (this.throttleIndex > -1 && os.platform() === 'linux') {
         const mark = this.throttleIndex + 1
         const executableWrapperPath = `/tmp/webrtcperf-launcher-${mark}`
         const group = `webrtcperf${mark}`
@@ -737,10 +731,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
 
       try {
         // log.debug('defaultArgs:', puppeteer.defaultArgs());
-        this.browser = (await (process.env.USE_PUPPETEER_EXTRA === 'true'
-          ? puppeteerExtra
-          : puppeteer
-        ).launch({
+        this.browser = (await puppeteer.launch({
           headless: this.display ? false : 'new',
           executablePath,
           handleSIGINT: false,
@@ -966,6 +957,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       'scripts/end-to-end-stats.js',
       'scripts/playout-delay-hint.js',
       'scripts/page-stats.js',
+      'scripts/save-tracks.js',
     ]) {
       const filePath = resolvePackagePath(name)
       log.debug(`loading ${name} script from: ${filePath}`)
