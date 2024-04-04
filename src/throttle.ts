@@ -155,7 +155,11 @@ sudo -n tc filter add dev ${device} \
 
     setTimeout(async () => {
       log.info(
-        `applying rules on ${device} (${mark}): rate ${rate}kbit, delay ${delay}ms, loss ${loss}%, limit ${limit}`,
+        `applying rules on ${device} (${mark}):${
+          rate && rate > 0 ? ` rate ${rate}kbit` : ''
+        }${delay && delay > 0 ? ` delay ${delay}ms` : ''}${
+          loss && loss > 0 ? ` loss ${loss}%` : ''
+        }${limit && limit > 0 ? ` limit ${limit}` : ''}`,
       )
       const cmd = `\
         sudo -n tc qdisc change dev ${device} \

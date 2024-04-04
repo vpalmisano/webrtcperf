@@ -152,6 +152,7 @@ export type SessionParams = {
   spawnPeriod: number
   statsInterval: number
   getUserMediaOverride: string
+  disabledVideoCodecs: string
   getDisplayMediaOverride: string
   getDisplayMediaType: string
   getDisplayMediaCrop: string
@@ -211,6 +212,7 @@ export class Session extends EventEmitter {
   private readonly statsInterval: number
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly getUserMediaOverride: any | null
+  private readonly disabledVideoCodecs: string[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly getDisplayMediaOverride: any | null
   private readonly getDisplayMediaType: string
@@ -345,6 +347,7 @@ export class Session extends EventEmitter {
     spawnPeriod,
     statsInterval,
     getUserMediaOverride,
+    disabledVideoCodecs,
     getDisplayMediaOverride,
     getDisplayMediaType,
     getDisplayMediaCrop,
@@ -430,6 +433,14 @@ export class Session extends EventEmitter {
         )
         this.getDisplayMediaOverride = null
       }
+    }
+    if (disabledVideoCodecs) {
+      this.disabledVideoCodecs = disabledVideoCodecs
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length)
+    } else {
+      this.disabledVideoCodecs = []
     }
     this.getDisplayMediaType = getDisplayMediaType
     this.getDisplayMediaCrop = getDisplayMediaCrop
@@ -895,6 +906,13 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       log.debug('Using getDisplayMedia override:', this.getDisplayMediaOverride)
       cmd += `window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(
         this.getDisplayMediaOverride,
+      )}');\n`
+    }
+
+    if (this.disabledVideoCodecs.length) {
+      log.debug('Using disabledVideoCodecs:', this.disabledVideoCodecs)
+      cmd += `window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS = JSON.parse('${JSON.stringify(
+        this.disabledVideoCodecs,
       )}');\n`
     }
 
