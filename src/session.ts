@@ -814,18 +814,18 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
 
     if (this.urlQuery) {
       url += `?${this.urlQuery
-        .replace(/\$s/g, String(this.id + 1))
+        .replace(/\$s/g, String(this.id))
         .replace(/\$S/g, String(this.sessions))
-        .replace(/\$t/g, String(tabIndex + 1))
+        .replace(/\$t/g, String(tabIndex))
         .replace(/\$T/g, String(this.tabsPerSession))
-        .replace(/\$i/g, String(index + 1))
+        .replace(/\$i/g, String(index))
         .replace(/\$p/g, String(process.pid))}`
     }
 
     log.info(
-      `opening page ${index} (session: ${this.id + 1} tab: ${
-        tabIndex + 1
-      }): ${hideAuth(url)}`,
+      `opening page ${index} (session: ${this.id} tab: ${tabIndex}): ${hideAuth(
+        url,
+      )}`,
     )
 
     if (this.incognito) {
