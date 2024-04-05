@@ -172,12 +172,15 @@ for (const key of Object.keys(NativeRTCPeerConnection)) {
 }
 window.RTCPeerConnection.prototype = NativeRTCPeerConnection.prototype
 
-// Override codecs
+// Override codecs.
 const NativeRTCRtpSenderGetCapabilities = window.RTCRtpSender.getCapabilities
 
 window.RTCRtpSender.getCapabilities = kind => {
   const capabilities = NativeRTCRtpSenderGetCapabilities(kind)
-  if (!window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS || kind !== 'video') {
+  if (
+    !window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS?.length ||
+    kind !== 'video'
+  ) {
     return capabilities
   }
   capabilities.codecs = capabilities.codecs.filter(codec => {
@@ -190,6 +193,6 @@ window.RTCRtpSender.getCapabilities = kind => {
     }
     return true
   })
-  log(`RTCRtpSender.getCapabilities custom:`, capabilities)
+  log(`RTCRtpSender getCapabilities custom:`, capabilities)
   return capabilities
 }

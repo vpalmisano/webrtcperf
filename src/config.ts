@@ -417,7 +417,7 @@ e.g. \`{"video": {"width": 360, "height": 640}}\``,
     arg: 'get-display-media-override',
   },
   disabledVideoCodecs: {
-    doc: `A string with the video codecs to disable (comma-separated).`,
+    doc: `A string with the video codecs to disable (comma-separated); e.g. \`vp9,av1\``,
     format: String,
     nullable: true,
     default: '',
