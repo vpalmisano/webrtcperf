@@ -266,13 +266,14 @@ DEBUG_LEVEL=DEBUG:* yarn start \
 ## Using the VMAF calculator
 1. Run the tool adding the following options:
   ```sh
-  --script-params="{timestampWatermark:true,saveMediaStream:2}"
+  --script-params="{timestampWatermark:true,saveVideoTrack:1}"
   --server-port=5000
   --server-use-https=true
   --server-data=/data
   ```
-  With `saveMediaStream` you can specify the sessions that will be saved at
-  receiver side (in this example `2` will save all the streams received in the first 2 sessions).
+  With `saveVideoTrack` you can specify the sessions that will be saved at
+  receiver side (in this example `1` will save all the streams received in the 
+  sessions with index `0` and `1`).
 2. The sent/received videos will be saved in the `/data` directory.
 3. Run the VMAF calculator comparing the sent/received videos:
   ```sh
