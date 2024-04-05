@@ -18,7 +18,7 @@ function sleep(ms) {
 /**
  * getParticipantName
  */
-window.getParticipantName = (index = window.WEBRTC_STRESS_TEST_INDEX || 1) => {
+window.getParticipantName = (index = window.WEBRTC_PERF_INDEX || 0) => {
   return `Participant-${index.toString().padStart(6, '0')}`
 }
 
@@ -306,8 +306,7 @@ window.setupActions = async () => {
   }
   actionsStarted = true
 
-  const relativeTime = () =>
-    Date.now() - window.WEBRTC_STRESS_TEST_START_TIMESTAMP
+  const relativeTime = () => Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
 
   /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, param: any }> */
   let actions = window.PARAMS.actions
@@ -325,19 +324,19 @@ window.setupActions = async () => {
         if (typeof index === 'string') {
           if (index.indexOf('-') !== -1) {
             const [start, end] = index.split('-').map(s => parseInt(s))
-            if (isFinite(start) && window.WEBRTC_STRESS_TEST_INDEX < start) {
+            if (isFinite(start) && window.WEBRTC_PERF_INDEX < start) {
               return
             }
-            if (isFinite(end) && window.WEBRTC_STRESS_TEST_INDEX > end) {
+            if (isFinite(end) && window.WEBRTC_PERF_INDEX > end) {
               return
             }
           } else {
             const indexes = index.split(',').map(s => parseInt(s))
-            if (!indexes.includes(window.WEBRTC_STRESS_TEST_INDEX)) {
+            if (!indexes.includes(window.WEBRTC_PERF_INDEX)) {
               return
             }
           }
-        } else if (window.WEBRTC_STRESS_TEST_INDEX !== index) {
+        } else if (window.WEBRTC_PERF_INDEX !== index) {
           return
         }
       }
@@ -347,19 +346,17 @@ window.setupActions = async () => {
         const ts = (relativeTime() / 1000).toFixed(0)
         log(
           `run action [${ts}s] [${
-            window.WEBRTC_STRESS_TEST_INDEX
+            window.WEBRTC_PERF_INDEX
           }] ${name}(${param}) at ${at}s${every ? ` every ${every}s` : ''}${
             times ? ` (${remainingTimes}/${times} times remaining)` : ''
           }`,
         )
         try {
           await fn(param)
-          log(
-            `run action [${ts}s] [${window.WEBRTC_STRESS_TEST_INDEX}] ${name} done`,
-          )
+          log(`run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} done`)
         } catch (err) {
           log(
-            `run action [${ts}s] [${window.WEBRTC_STRESS_TEST_INDEX}] ${name} error: ${err.message}`,
+            `run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} error: ${err.message}`,
           )
         } finally {
           if (every > 0 && (!times || remainingTimes > 0)) {

@@ -63,7 +63,7 @@ async function handleInsertableStreams(data, debug = false) {
 
     if (window.PARAMS?.saveEncodedStreams) {
       writer = await streamWriter(
-        `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
+        `${window.WEBRTC_PERF_INDEX}_${operation}_${track.id}.ivf`,
         trackWidth,
         trackHeight,
         frameRate,
@@ -122,7 +122,7 @@ async function handleInsertableStreams(data, debug = false) {
   } else if (operation === 'decode') {
     if (window.PARAMS?.saveEncodedStreams) {
       writer = await streamWriter(
-        `${window.WEBRTC_STRESS_TEST_INDEX}_${operation}_${track.id}.ivf`,
+        `${window.WEBRTC_PERF_INDEX}_${operation}_${track.id}.ivf`,
         window.VIDEO_WIDTH,
         window.VIDEO_HEIGHT,
         window.VIDEO_FRAMERATE,

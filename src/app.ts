@@ -53,7 +53,7 @@ ${wrap(value.doc, { width: 72, indent: '        ' })}
 
 export async function setupApplication(
   config: Config,
-): Promise<() => Promise<void>> {
+): Promise<{ stats: Stats; stop: () => Promise<void> }> {
   // Stats.
   const stats = new Stats(config)
   await stats.start()
@@ -90,9 +90,12 @@ export async function setupApplication(
     spawnPeriod: number,
   ): Promise<void> => {
     const throttleIndex = getSessionThrottleIndex(id)
+    const videoPath = videoPaths.length
+      ? videoPaths[id % videoPaths.length]
+      : undefined
     const session = new Session({
       ...config,
-      videoPaths,
+      videoPath,
       spawnPeriod,
       id,
       throttleIndex,
@@ -137,22 +140,25 @@ export async function setupApplication(
     )
   }
 
-  return async (): Promise<void> => {
-    log.debug('Stopping')
+  return {
+    stats,
+    stop: async (): Promise<void> => {
+      log.debug('Stopping')
 
-    stopRandomActivateAudio()
+      stopRandomActivateAudio()
 
-    if (server) {
-      server.stop()
-    }
+      if (server) {
+        server.stop()
+      }
 
-    await stats.stop()
+      await stats.stop()
 
-    if (config.throttleConfig) {
-      await stopThrottle()
-    }
+      if (config.throttleConfig) {
+        await stopThrottle()
+      }
 
-    stopUpdateSystemStats()
+      stopUpdateSystemStats()
+    },
   }
 }
 
@@ -170,7 +176,7 @@ async function main(): Promise<void> {
     process.exit(0)
   }
 
-  const stopApplication = await setupApplication(config)
+  const { stop: stopApplication } = await setupApplication(config)
 
   const stop = async (): Promise<void> => {
     console.log('Exiting...')

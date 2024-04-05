@@ -4,7 +4,7 @@ import os from 'os'
 import path from 'path'
 import { createScheduler, createWorker, PSM } from 'tesseract.js'
 
-import { logger, runShellCommand } from './utils'
+import { getFiles, logger, runShellCommand } from './utils'
 
 const log = logger('app:vmaf')
 
@@ -448,17 +448,9 @@ type VmafConfig = {
   vmafKeepIntermediateFiles: boolean
 }
 
-async function getFiles(dir: string): Promise<string[]> {
-  const dirs = await fs.promises.readdir(dir, { withFileTypes: true })
-  const files = await Promise.all(
-    dirs.map(entry => {
-      const res = path.resolve(dir, entry.name)
-      return entry.isDirectory() ? getFiles(res) : res
-    }),
-  )
-  return Array.prototype
-    .concat(...files)
-    .filter(f => f.endsWith('.ivf') && !path.dirname(f).startsWith('vmaf/'))
+async function getVmafFiles(dir: string): Promise<string[]> {
+  const files = await getFiles(dir, '.ivf')
+  return files.filter(f => !path.dirname(f).startsWith('vmaf/'))
 }
 
 export async function calculateVmafScore(config: VmafConfig): Promise<void> {
@@ -468,7 +460,7 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
   }
   log.debug(`calculateVmafScore referencePath=${vmafPath}`)
 
-  const files = await getFiles(vmafPath)
+  const files = await getVmafFiles(vmafPath)
   log.debug(`calculateVmafScore files=${files}`)
   const outPath = path.join(vmafPath, 'vmaf')
   await fs.promises.mkdir(outPath, { recursive: true })

@@ -51,6 +51,25 @@ window.RTCPeerConnection = function (conf, options) {
     return setRemoteDescriptionNative(description)
   } */
 
+  const checkSaveStream = transceiver => {
+    if (!transceiver?.sender?.track) return
+    if (
+      transceiver.sender.track.kind === 'video' &&
+      window.PARAMS?.saveVideoTrack >= 0
+    ) {
+      saveVideoTrack(transceiver.sender.track, 'send').catch(err =>
+        log(`saveVideoTrack error: ${err.message}`),
+      )
+    } else if (
+      transceiver.sender.track.kind === 'audio' &&
+      window.PARAMS?.saveAudioTrack >= 0
+    ) {
+      saveAudioTrack(transceiver.sender.track, 'send').catch(err =>
+        log(`saveAudioTrack error: ${err.message}`),
+      )
+    }
+  }
+
   const addTransceiverNative = pc.addTransceiver.bind(pc)
   pc.addTransceiver = (...args) => {
     //log(`RTCPeerConnection addTransceiver`, args)
@@ -74,7 +93,9 @@ window.RTCPeerConnection = function (conf, options) {
       )
       transceiver.sender.setStreams = (...streams) => {
         log(`RTCPeerConnection-${id} transceiver.setStreams`, streams)
-        return setStreamsNative(...streams)
+        setStreamsNative(...streams)
+
+        checkSaveStream(transceiver)
       }
 
       const replaceTrackNative = transceiver.sender.replaceTrack.bind(
@@ -87,6 +108,8 @@ window.RTCPeerConnection = function (conf, options) {
         if (encodedInsertableStreams) {
           handleTransceiverForInsertableStreams(id, transceiver)
         }
+
+        checkSaveStream(transceiver)
       }
     }
 
@@ -108,6 +131,8 @@ window.RTCPeerConnection = function (conf, options) {
           handleTransceiverForInsertableStreams(id, transceiver)
         }
         handleTransceiverForPlayoutDelayHint(id, transceiver, 'addStream')
+
+        checkSaveStream(transceiver)
       }
     }
   }
@@ -132,14 +157,14 @@ window.RTCPeerConnection = function (conf, options) {
 
         if (
           window.PARAMS?.saveVideoTrack &&
-          window.WEBRTC_STRESS_TEST_INDEX <= window.PARAMS?.saveVideoTrack + 1
+          window.WEBRTC_PERF_INDEX <= window.PARAMS?.saveVideoTrack
         ) {
           await saveVideoTrack(receiver.track, 'recv')
         }
       } else if (receiver.track.kind === 'audio') {
         if (
           window.PARAMS?.saveAudioTrack &&
-          window.WEBRTC_STRESS_TEST_INDEX <= window.PARAMS?.saveAudioTrack + 1
+          window.WEBRTC_PERF_INDEX <= window.PARAMS?.saveAudioTrack
         ) {
           await saveAudioTrack(receiver.track, 'recv')
         }

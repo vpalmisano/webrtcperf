@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, saveVideoTrack */
+/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -366,13 +366,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
     if (window.PARAMS?.timestampWatermark) {
       mediaStream = applyTimestampWatermark(mediaStream)
-    }
-
-    if (window.PARAMS?.saveMediaStream) {
-      const videoTrack = mediaStream.getVideoTracks()[0]
-      if (videoTrack) {
-        await saveVideoTrack(videoTrack, 'send')
-      }
     }
 
     return mediaStream

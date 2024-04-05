@@ -341,7 +341,7 @@ export class Stats extends events.EventEmitter {
   readonly enableDetailedStats: boolean
   private readonly startTimestampString: string
 
-  sessions = new Map<number, Session>()
+  readonly sessions = new Map<number, Session>()
   nextSessionId: number
   statsWriter: StatsWriter | null
   private scheduler?: Scheduler

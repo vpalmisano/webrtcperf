@@ -2,6 +2,7 @@ import axios from 'axios'
 import { exec, spawn } from 'child_process'
 import { createHash } from 'crypto'
 import * as dns from 'dns'
+import FormData from 'form-data'
 import fs, { createWriteStream, WriteStream } from 'fs'
 import { Agent } from 'https'
 import * as ipaddrJs from 'ipaddr.js'
@@ -466,6 +467,35 @@ export async function downloadUrl(
   }
 }
 
+export async function uploadUrl(
+  filePath: string,
+  url: string,
+  auth?: string,
+): Promise<string> {
+  log.debug(`uploadUrl ${filePath} to ${url}`)
+  const authParts = auth && auth.split(':')
+  const formData = new FormData()
+  formData.append('file', fs.createReadStream(filePath))
+  const response = await axios({
+    method: 'post',
+    url,
+    auth: authParts
+      ? {
+          username: authParts[0],
+          password: authParts[1],
+        }
+      : undefined,
+    headers: formData.getHeaders(),
+    timeout: 3600 * 1000,
+    httpsAgent: new Agent({
+      rejectUnauthorized: false,
+    }),
+    responseType: 'text',
+    data: formData,
+  })
+  return response.data as string
+}
+
 const HideAuthRegExp = new RegExp('(http[s]{0,1}://)(.+?:.+?@)', 'g')
 
 /**
@@ -917,4 +947,15 @@ ffprobe -loglevel quiet -show_frames -show_entries frame=pts,pkt_pos,pkt_size:fr
     size: frame.pkt_size,
     t: parseInt(frame.tags['lavfi.ocr.text'].trim() || '0'),
   }))
+}
+
+export async function getFiles(dir: string, ext: string): Promise<string[]> {
+  const dirs = await fs.promises.readdir(dir, { withFileTypes: true })
+  const files = await Promise.all(
+    dirs.map(entry => {
+      const res = path.resolve(dir, entry.name)
+      return entry.isDirectory() ? getFiles(res, ext) : res
+    }),
+  )
+  return Array.prototype.concat(...files).filter(f => f.endsWith(ext))
 }

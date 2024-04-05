@@ -138,11 +138,10 @@ export type SessionParams = {
   urlQuery: string
   /** Custom URL handler. */
   customUrlHandler: string
-  videoPaths: { video: string; audio: string }[]
+  videoPath?: { video: string; audio: string }
   videoWidth: number
   videoHeight: number
   videoFramerate: number
-  videoFormat: string
   enableGpu: string
   enableBrowserLogging: boolean
   startTimestamp: number
@@ -196,11 +195,10 @@ export class Session extends EventEmitter {
   private readonly deviceScaleFactor: number
   private readonly display: string
   /* private readonly audioRedForOpus: boolean */
-  private readonly videoPaths: { video: string; audio: string }[]
+  public readonly videoPath?: { video: string; audio: string }
   private readonly videoWidth: number
   private readonly videoHeight: number
   private readonly videoFramerate: number
-  private readonly videoFormat: string
   private readonly enableGpu: string
   private readonly enableBrowserLogging: boolean
   private readonly startTimestamp: number
@@ -331,11 +329,10 @@ export class Session extends EventEmitter {
     url,
     urlQuery,
     customUrlHandler,
-    videoPaths,
+    videoPath,
     videoWidth,
     videoHeight,
     videoFramerate,
-    videoFormat,
     enableGpu,
     enableBrowserLogging,
     startTimestamp,
@@ -399,11 +396,10 @@ export class Session extends EventEmitter {
     }
     this.customUrlHandler = customUrlHandler
     this.customUrlHandlerFn = undefined
-    this.videoPaths = videoPaths
+    this.videoPath = videoPath
     this.videoWidth = videoWidth
     this.videoHeight = videoHeight
     this.videoFramerate = videoFramerate
-    this.videoFormat = videoFormat || 'y4m'
     this.enableGpu = enableGpu
     this.enableBrowserLogging = enableBrowserLogging
     this.startTimestamp = startTimestamp || Date.now()
@@ -585,11 +581,10 @@ export class Session extends EventEmitter {
       args.push(`--force-fieldtrials=${fieldTrials.join('/')}`)
     }
 
-    if (this.videoPaths.length) {
-      const videoPath = this.videoPaths[this.id % this.videoPaths.length]
-      log.debug(`${this.id} using ${videoPath} as fake source`)
-      args.push(`--use-file-for-fake-video-capture=${videoPath.video}`)
-      args.push(`--use-file-for-fake-audio-capture=${videoPath.audio}`)
+    if (this.videoPath) {
+      log.debug(`${this.id} using ${this.videoPath} as fake source`)
+      args.push(`--use-file-for-fake-video-capture=${this.videoPath.video}`)
+      args.push(`--use-file-for-fake-audio-capture=${this.videoPath.audio}`)
     }
 
     if (this.enableGpu) {
@@ -859,11 +854,11 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
 
     // Export config to page.
     let cmd = `\
-window.WEBRTC_STRESS_TEST_START_TIMESTAMP = ${this.startTimestamp};
-window.WEBRTC_STRESS_TEST_URL = "${hideAuth(url)}";
-window.WEBRTC_STRESS_TEST_SESSION = ${this.id + 1};
-window.WEBRTC_STRESS_TEST_TAB_INDEX = ${tabIndex + 1};
-window.WEBRTC_STRESS_TEST_INDEX = ${index + 1};
+window.WEBRTC_PERF_START_TIMESTAMP = ${this.startTimestamp};
+window.WEBRTC_PERF_URL = "${hideAuth(url)}";
+window.WEBRTC_PERF_SESSION = ${this.id};
+window.WEBRTC_PERF_TAB_INDEX = ${tabIndex};
+window.WEBRTC_PERF_INDEX = ${index};
 window.STATS_INTERVAL = ${this.statsInterval};
 window.VIDEO_WIDTH = ${this.videoWidth};
 window.VIDEO_HEIGHT = "${this.videoHeight}";

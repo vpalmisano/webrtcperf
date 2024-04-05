@@ -306,7 +306,7 @@ The user agent override.
 *Default*: `""`
 
 ## scriptPath
-One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_STRESS_TEST_SESSION` the session number (1-indexed); `WEBRTC_STRESS_TEST_TAB` the tab number inside the same session (1-indexed); `WEBRTC_STRESS_TEST_INDEX` the page absolute index (1-indexed). 
+One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_PERF_SESSION` the session number (0-indexed); ``WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); ``WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
 
 *Type*: `string`
 

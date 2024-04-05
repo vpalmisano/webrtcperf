@@ -1,18 +1,22 @@
 /* global log, streamWriter */
 
+const savingVideoTracks = new Map()
+
 /**
  * Save the video track to disk.
  * @param {MediaStreamTrack} videoTrack
  */
 window.saveVideoTrack = async (videoTrack, sendrecv, quality = 0.75) => {
+  if (savingVideoTracks.has(videoTrack.id)) {
+    return
+  }
   const width = window.VIDEO_WIDTH
   const height = window.VIDEO_HEIGHT
   const frameRate = window.VIDEO_FRAMERATE
-  const fname = `${window.getParticipantName().split('_')[0]}-${sendrecv}_${
-    videoTrack.id
-  }.ivf`
+  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${videoTrack.id}.ivf`
   log(`saveVideoTrack ${fname} ${width}x${height} ${frameRate}fps`)
   const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
+  savingVideoTracks.set(videoTrack.id, writer)
 
   const canvas = new OffscreenCanvas(width, height)
   const ctx = canvas.getContext('2d')
@@ -52,9 +56,11 @@ window.saveVideoTrack = async (videoTrack, sendrecv, quality = 0.75) => {
       },
       close() {
         writer.close()
+        savingVideoTracks.delete(videoTrack.id)
       },
       abort(err) {
         log('saveVideoTrack error:', err)
+        savingVideoTracks.delete(videoTrack.id)
       },
     },
     new CountQueuingStrategy({ highWaterMark: frameRate * 2 }),
@@ -66,16 +72,20 @@ window.saveVideoTrack = async (videoTrack, sendrecv, quality = 0.75) => {
   trackProcessor.readable.pipeTo(writableStream)
 }
 
+const savingAudioTracks = new Map()
+
 /**
  * Save the audio track to disk.
  * @param {MediaStreamTrack} audioTrack
  */
 window.saveAudioTrack = async (audioTrack, sendrecv) => {
-  const fname = `${window.getParticipantName().split('_')[0]}-${sendrecv}_${
-    audioTrack.id
-  }.f32le.raw`
+  if (savingAudioTracks.has(audioTrack.id)) {
+    return
+  }
+  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${audioTrack.id}.f32le.raw`
   log(`saveAudioTrack ${fname}`)
   const writer = await streamWriter(fname)
+  savingAudioTracks.set(audioTrack.id, writer)
 
   const writableStream = new window.WritableStream(
     {
@@ -92,9 +102,11 @@ window.saveAudioTrack = async (audioTrack, sendrecv) => {
       },
       close() {
         writer.close()
+        savingAudioTracks.delete(audioTrack.id)
       },
       abort(err) {
         log('saveAudioTrack error:', err)
+        savingAudioTracks.delete(audioTrack.id)
       },
     },
     new CountQueuingStrategy({ highWaterMark: 100 }),
