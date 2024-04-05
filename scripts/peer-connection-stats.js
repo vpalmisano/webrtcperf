@@ -131,6 +131,7 @@ async function getPeerConnectionStats(
             })
           } else if (
             s.type === 'outbound-rtp' &&
+            s.active &&
             s.kind === track.kind &&
             s.bytesSent + s.headerBytesSent > 0
           ) {

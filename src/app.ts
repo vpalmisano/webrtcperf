@@ -66,9 +66,11 @@ export async function setupApplication(
   }
 
   // Prepare fake video and audio.
+  const videoPaths: { video: string; audio: string }[] = []
   if (config.videoPath) {
     for (const videoPath of config.videoPath.split(',')) {
-      await prepareFakeMedia({ ...config, videoPath })
+      const ret = await prepareFakeMedia({ ...config, videoPath })
+      videoPaths.push(ret)
     }
   }
 
@@ -88,7 +90,13 @@ export async function setupApplication(
     spawnPeriod: number,
   ): Promise<void> => {
     const throttleIndex = getSessionThrottleIndex(id)
-    const session = new Session({ ...config, spawnPeriod, id, throttleIndex })
+    const session = new Session({
+      ...config,
+      videoPaths,
+      spawnPeriod,
+      id,
+      throttleIndex,
+    })
     session.once('stop', () => {
       console.warn(`Session ${id} stopped, reloading...`)
       setTimeout(startLocalSession, spawnPeriod, id)

@@ -138,8 +138,7 @@ export type SessionParams = {
   urlQuery: string
   /** Custom URL handler. */
   customUrlHandler: string
-  videoPath: string
-  videoCachePath: string
+  videoPaths: { video: string; audio: string }[]
   videoWidth: number
   videoHeight: number
   videoFramerate: number
@@ -197,8 +196,7 @@ export class Session extends EventEmitter {
   private readonly deviceScaleFactor: number
   private readonly display: string
   /* private readonly audioRedForOpus: boolean */
-  private readonly videoPath: string
-  private readonly videoCachePath: string
+  private readonly videoPaths: { video: string; audio: string }[]
   private readonly videoWidth: number
   private readonly videoHeight: number
   private readonly videoFramerate: number
@@ -333,8 +331,7 @@ export class Session extends EventEmitter {
     url,
     urlQuery,
     customUrlHandler,
-    videoPath,
-    videoCachePath,
+    videoPaths,
     videoWidth,
     videoHeight,
     videoFramerate,
@@ -402,8 +399,7 @@ export class Session extends EventEmitter {
     }
     this.customUrlHandler = customUrlHandler
     this.customUrlHandlerFn = undefined
-    this.videoPath = videoPath
-    this.videoCachePath = videoCachePath
+    this.videoPaths = videoPaths
     this.videoWidth = videoWidth
     this.videoHeight = videoHeight
     this.videoFramerate = videoFramerate
@@ -589,17 +585,11 @@ export class Session extends EventEmitter {
       args.push(`--force-fieldtrials=${fieldTrials.join('/')}`)
     }
 
-    if (this.videoPath) {
-      const videoPaths = this.videoPath.split(',')
-      const videoPath = videoPaths[this.id % videoPaths.length]
+    if (this.videoPaths.length) {
+      const videoPath = this.videoPaths[this.id % this.videoPaths.length]
       log.debug(`${this.id} using ${videoPath} as fake source`)
-      const name = md5(videoPath)
-      args.push(
-        `--use-file-for-fake-video-capture=${this.videoCachePath}/${name}_${this.videoWidth}x${this.videoHeight}_${this.videoFramerate}fps.${this.videoFormat}`,
-      )
-      args.push(
-        `--use-file-for-fake-audio-capture=${this.videoCachePath}/${name}.wav`,
-      )
+      args.push(`--use-file-for-fake-video-capture=${videoPath.video}`)
+      args.push(`--use-file-for-fake-audio-capture=${videoPath.audio}`)
     }
 
     if (this.enableGpu) {

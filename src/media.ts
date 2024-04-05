@@ -4,6 +4,9 @@ import { logger, md5, runShellCommand } from './utils'
 
 const log = logger('app:media')
 
+const DEFAULT_VIDEO_PATH =
+  'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4'
+
 /**
  * Converts the video file into raw audio and video files.
  * @param {*} config
@@ -39,7 +42,7 @@ export async function prepareFakeMedia({
   videoCacheRaw: boolean
   videoCachePath: string
   videoFormat: string
-}): Promise<void> {
+}): Promise<{ video: string; audio: string }> {
   log.debug('prepareFakeMedia', {
     videoPath,
     videoWidth,
@@ -59,7 +62,8 @@ export async function prepareFakeMedia({
     !videoPath.startsWith('generate:') &&
     !existsSync(videoPath)
   ) {
-    throw new Error(`video not found: ${videoPath}`)
+    log.warn(`video not found: ${videoPath}, using default test video`)
+    videoPath = DEFAULT_VIDEO_PATH
   }
 
   await promises.mkdir(videoCachePath, { recursive: true })
@@ -103,5 +107,10 @@ export async function prepareFakeMedia({
       promises.unlink(destAudioPathTmp).catch(e => log.debug(e.message))
       throw err
     }
+  }
+
+  return {
+    video: destVideoPath,
+    audio: destAudioPath,
   }
 }
