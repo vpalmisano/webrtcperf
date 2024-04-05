@@ -320,7 +320,7 @@ window.setupActions = async () => {
         return
       }
 
-      if (index) {
+      if (index !== undefined) {
         if (typeof index === 'string') {
           if (index.indexOf('-') !== -1) {
             const [start, end] = index.split('-').map(s => parseInt(s))
@@ -331,7 +331,10 @@ window.setupActions = async () => {
               return
             }
           } else {
-            const indexes = index.split(',').map(s => parseInt(s))
+            const indexes = index
+              .split(',')
+              .filter(s => s.length)
+              .map(s => parseInt(s))
             if (!indexes.includes(window.WEBRTC_PERF_INDEX)) {
               return
             }
