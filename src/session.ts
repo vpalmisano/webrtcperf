@@ -138,6 +138,7 @@ export type SessionParams = {
   urlQuery: string
   /** Custom URL handler. */
   customUrlHandler: string
+  customUrlHandlerFn?: CustomUrlHandlerFn
   videoPath?: { video: string; audio: string }
   videoWidth: number
   videoHeight: number
@@ -182,6 +183,17 @@ export type SessionParams = {
   serverSecret: string
   serverUseHttps: boolean
 }
+
+export type CustomUrlHandlerFn = (params: {
+  id: number
+  sessions: number
+  tabIndex: number
+  tabsPerSession: number
+  index: number
+  pid: number
+  env: Record<string, string>
+  params: Record<string, unknown>
+}) => Promise<string>
 
 /**
  * Implements a test session instance running on a browser instance.
@@ -291,16 +303,7 @@ export class Session extends EventEmitter {
    * @type {string} path - The path to the JavaScript file containing the function:
    *   (params: CustomUrlHandler) => Promise<string>
    */
-  private customUrlHandlerFn?: (params: {
-    id: number
-    sessions: number
-    tabIndex: number
-    tabsPerSession: number
-    index: number
-    pid: number
-    env: Record<string, string>
-    params: Record<string, unknown>
-  }) => Promise<string>
+  public customUrlHandlerFn?: CustomUrlHandlerFn
   /** The latest stats extracted from page. */
   stats: SessionStats = {}
   /** The browser opened pages. */
@@ -329,6 +332,7 @@ export class Session extends EventEmitter {
     url,
     urlQuery,
     customUrlHandler,
+    customUrlHandlerFn,
     videoPath,
     videoWidth,
     videoHeight,
@@ -385,9 +389,6 @@ export class Session extends EventEmitter {
     this.display = display
     /* this.audioRedForOpus = !!audioRedForOpus */
     this.url = url
-    if (!customUrlHandler) {
-      assert(this.url, 'url is required')
-    }
     this.urlQuery = urlQuery
     if (!this.urlQuery && url.indexOf('?') !== -1) {
       const parts = url.split('?', 2)
@@ -395,7 +396,7 @@ export class Session extends EventEmitter {
       this.urlQuery = parts[1]
     }
     this.customUrlHandler = customUrlHandler
-    this.customUrlHandlerFn = undefined
+    this.customUrlHandlerFn = customUrlHandlerFn
     this.videoPath = videoPath
     this.videoWidth = videoWidth
     this.videoHeight = videoHeight
@@ -784,32 +785,38 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
 
     let url = this.url
 
-    if (this.customUrlHandler && !this.url) {
-      const customUrlHandlerPath = path.resolve(
-        process.cwd(),
-        this.customUrlHandler,
-      )
-      if (!fs.existsSync(customUrlHandlerPath)) {
-        log.error(`Custom error handler not found: "${customUrlHandlerPath}"`)
-        throw new Error(
-          `Custom error handler not found: "${customUrlHandlerPath}"`,
+    if (!url) {
+      if (this.customUrlHandler && !this.customUrlHandlerFn) {
+        const customUrlHandlerPath = path.resolve(
+          process.cwd(),
+          this.customUrlHandler,
         )
+        if (!fs.existsSync(customUrlHandlerPath)) {
+          throw new Error(
+            `Custom url handler script not found: "${customUrlHandlerPath}"`,
+          )
+        }
+        this.customUrlHandlerFn = (
+          await import(/* webpackIgnore: true */ customUrlHandlerPath)
+        ).default
       }
-      this.customUrlHandlerFn = (
-        await import(/* webpackIgnore: true */ customUrlHandlerPath)
-      ).default
-      if (this.customUrlHandlerFn) {
-        url = await this.customUrlHandlerFn({
-          id: this.id,
-          sessions: this.sessions,
-          tabIndex,
-          tabsPerSession: this.tabsPerSession,
-          index,
-          pid: process.pid,
-          env: { ...process.env } as Record<string, string>,
-          params: this.scriptParams,
-        })
+      if (!this.customUrlHandlerFn) {
+        throw new Error(`Custom url handler function not set`)
       }
+      url = await this.customUrlHandlerFn({
+        id: this.id,
+        sessions: this.sessions,
+        tabIndex,
+        tabsPerSession: this.tabsPerSession,
+        index,
+        pid: process.pid,
+        env: { ...process.env } as Record<string, string>,
+        params: this.scriptParams,
+      })
+    }
+
+    if (!url) {
+      throw new Error(`Page URL not set`)
     }
 
     if (this.urlQuery) {

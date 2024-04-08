@@ -109,7 +109,7 @@ export async function setupApplication(
   }
 
   // Start the local sessions.
-  if ((config.url || config.customUrlHandler) && config.sessions) {
+  if (config.sessions > 0) {
     if (config.randomAudioPeriod) {
       startRandomActivateAudio(
         stats.sessions,
