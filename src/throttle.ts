@@ -7,14 +7,28 @@ const log = logger('app:throttle')
 
 let throttleConfig: ThrottleConfig[] | null = null
 
+const ruleTimeouts = new Set<NodeJS.Timeout>()
+
 const throttleCurrentValues = {
   up: new Map<
     number,
-    { rate?: number; delay?: number; loss?: number; queue?: number }
+    {
+      rate?: number
+      delay?: number
+      loss?: number
+      lossDesc?: string
+      queue?: number
+    }
   >(),
   down: new Map<
     number,
-    { rate?: number; delay?: number; loss?: number; queue?: number }
+    {
+      rate?: number
+      delay?: number
+      loss?: number
+      lossDesc?: string
+      queue?: number
+    }
   >(),
 }
 
@@ -26,6 +40,8 @@ async function getDefaultInterface(): Promise<string> {
 }
 
 async function cleanup(): Promise<void> {
+  ruleTimeouts.forEach(timeoutId => clearTimeout(timeoutId))
+  ruleTimeouts.clear()
   throttleCurrentValues.up.clear()
   throttleCurrentValues.down.clear()
   let device = throttleConfig?.length ? throttleConfig[0].device : ''
@@ -61,6 +77,8 @@ export type ThrottleRule = {
   delay?: number
   /** The packet loss percentage. */
   loss?: number
+  /** The packet loss netem string. */
+  lossDesc?: string
   /** The packet queue size. */
   queue?: number
   /** If set, the rule will be applied after the specified number of seconds. */
@@ -115,7 +133,7 @@ async function applyRules(
   })
 
   for (const [i, rule] of rules.entries()) {
-    const { rate, delay, loss, queue, at } = rule
+    const { rate, delay, loss, lossDesc, queue, at } = rule
     const limit = queue ?? calculateBufferedPackets(rate || 0, delay || 0)
     const mark = index + 1
     const handle = index + 2
@@ -153,25 +171,23 @@ sudo -n tc filter add dev ${device} \
       }
     }
 
-    setTimeout(async () => {
-      log.info(
-        `applying rules on ${device} (${mark}):${
-          rate && rate > 0 ? ` rate ${rate}kbit` : ''
-        }${delay && delay > 0 ? ` delay ${delay}ms` : ''}${
-          loss && loss > 0 ? ` loss ${loss}%` : ''
-        }${limit && limit > 0 ? ` limit ${limit}` : ''}`,
-      )
+    const timeoutId = setTimeout(async () => {
+      const desc = `\
+${rate && rate > 0 ? `rate ${rate}kbit` : ''}\
+${delay && delay >= 0 ? ` delay ${delay}ms` : ''}\
+${loss && loss >= 0 && !lossDesc ? ` loss ${loss}%` : ''}\
+${lossDesc ? ` loss ${lossDesc}` : ''}\
+${limit && limit >= 0 ? ` limit ${limit}` : ''}`
+
+      log.info(`applying rules on ${device} (${mark}):${desc}`)
       const cmd = `\
-        sudo -n tc qdisc change dev ${device} \
-          parent 1:${handle} \
-          handle ${handle}: \
-          netem \
-          ${rate && rate > 0 ? `rate ${rate}kbit` : ''} \
-          ${delay && delay >= 0 ? `delay ${delay}ms` : ''} \
-          ${loss && loss >= 0 ? `loss ${loss}%` : ''} \
-          ${limit && limit >= 0 ? `limit ${limit}` : ''} \
-      `
+sudo -n tc qdisc change dev ${device} \
+  parent 1:${handle} \
+  handle ${handle}: \
+  netem ${desc}`
       try {
+        ruleTimeouts.delete(timeoutId)
+
         await runShellCommand(cmd)
 
         throttleCurrentValues[direction].set(index, {
@@ -184,6 +200,8 @@ sudo -n tc filter add dev ${device} \
         log.error(`error running "${cmd}": ${(err as Error).stack}`)
       }
     }, (at || 0) * 1000)
+
+    ruleTimeouts.add(timeoutId)
   }
 }
 
