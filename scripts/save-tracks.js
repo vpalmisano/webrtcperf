@@ -6,9 +6,20 @@ const savingVideoTracks = new Map()
  * Save the video track to disk.
  * @param {MediaStreamTrack} videoTrack
  */
-window.saveVideoTrack = async (videoTrack, sendrecv, quality = 0.75) => {
+window.saveVideoTrack = async (
+  videoTrack,
+  sendrecv,
+  enableDelay = 0,
+  quality = 0.75,
+) => {
   if (savingVideoTracks.has(videoTrack.id)) {
     return
+  }
+  if (enableDelay > 0) {
+    videoTrack.enabled = false
+    setTimeout(() => {
+      videoTrack.enabled = true
+    }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
   }
   const width = window.VIDEO_WIDTH
   const height = window.VIDEO_HEIGHT
@@ -78,9 +89,15 @@ const savingAudioTracks = new Map()
  * Save the audio track to disk.
  * @param {MediaStreamTrack} audioTrack
  */
-window.saveAudioTrack = async (audioTrack, sendrecv) => {
+window.saveAudioTrack = async (audioTrack, sendrecv, enableDelay = 0) => {
   if (savingAudioTracks.has(audioTrack.id)) {
     return
+  }
+  if (enableDelay > 0) {
+    audioTrack.enabled = false
+    setTimeout(() => {
+      audioTrack.enabled = true
+    }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
   }
   const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${audioTrack.id}.f32le.raw`
   log(`saveAudioTrack ${fname}`)

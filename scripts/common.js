@@ -300,13 +300,14 @@ window.MeasuredStats = class {
 let actionsStarted = false
 const actionsQueue = []
 
+window.webrtcPerfElapsedTime = () =>
+  Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
+
 window.setupActions = async () => {
   if (!window.PARAMS?.actions || actionsStarted) {
     return
   }
   actionsStarted = true
-
-  const relativeTime = () => Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
 
   /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, param: any }> */
   let actions = window.PARAMS.actions
@@ -346,7 +347,7 @@ window.setupActions = async () => {
 
       let remainingTimes = (times || 1) - 1
       const cb = async () => {
-        const ts = (relativeTime() / 1000).toFixed(0)
+        const ts = (window.webrtcPerfElapsedTime() / 1000).toFixed(0)
         log(
           `run action [${ts}s] [${
             window.WEBRTC_PERF_INDEX
@@ -363,7 +364,10 @@ window.setupActions = async () => {
           )
         } finally {
           if (every > 0 && (!times || remainingTimes > 0)) {
-            actionsQueue.push({ cb, at: every + relativeTime() / 1000 })
+            actionsQueue.push({
+              cb,
+              at: every + window.webrtcPerfElapsedTime() / 1000,
+            })
             remainingTimes -= 1
           }
           runNext()
@@ -373,7 +377,7 @@ window.setupActions = async () => {
       const runNext = () => {
         if (actionsQueue.length) {
           const { cb, at } = actionsQueue.splice(0, 1)[0]
-          const scheduledTime = Math.max((at || 0) * 1000 - relativeTime(), 0)
+          const scheduledTime = window.webrtcPerfSecondsFromStart(at)
           setTimeout(cb, scheduledTime)
         }
       }

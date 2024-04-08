@@ -353,7 +353,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     let mediaStream = await nativeGetUserMedia(constraints, ...args)
     if (window.overrideGetUserMediaStream !== undefined) {
       try {
-        mediaStream = window.overrideGetUserMediaStream(mediaStream)
+        mediaStream = await window.overrideGetUserMediaStream(mediaStream)
       } catch (err) {
         log(`overrideGetUserMediaStream error:`, err)
       }

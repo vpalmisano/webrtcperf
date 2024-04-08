@@ -57,16 +57,20 @@ window.RTCPeerConnection = function (conf, options) {
       transceiver.sender.track.kind === 'video' &&
       window.PARAMS?.saveVideoTrack >= 0
     ) {
-      saveVideoTrack(transceiver.sender.track, 'send').catch(err =>
-        log(`saveVideoTrack error: ${err.message}`),
-      )
+      saveVideoTrack(
+        transceiver.sender.track,
+        'send',
+        window.PARAMS?.saveVideoTrackEnableDelay,
+      ).catch(err => log(`saveVideoTrack error: ${err.message}`))
     } else if (
       transceiver.sender.track.kind === 'audio' &&
       window.PARAMS?.saveAudioTrack >= 0
     ) {
-      saveAudioTrack(transceiver.sender.track, 'send').catch(err =>
-        log(`saveAudioTrack error: ${err.message}`),
-      )
+      saveAudioTrack(
+        transceiver.sender.track,
+        'send',
+        window.PARAMS?.saveAudioTrackEnableDelay,
+      ).catch(err => log(`saveAudioTrack error: ${err.message}`))
     }
   }
 
