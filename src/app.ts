@@ -120,7 +120,7 @@ export async function setupApplication(
     }
     const spawnPeriod = 1000 / config.spawnRate
     log.info(
-      `Starting ${config.sessions} sessions started in (spawnPeriod: ${spawnPeriod}ms)`,
+      `  ${config.sessions} sessions started in (spawnPeriod: ${spawnPeriod}ms)`,
     )
     const startTime = Date.now()
     for (let i = 0; i < config.sessions; i += 1) {

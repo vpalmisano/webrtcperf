@@ -378,12 +378,14 @@ export type DownloadData = {
  * @param outputLocationPath The file output. If not specified, the download
  * content will be returned as {@link DownloadData} instance.
  * @param range The HTTP byte range to download (e.g. `10-100`).
+ * @param timeout The download timeout in milliseconds.
  */
 export async function downloadUrl(
   url: string,
   auth?: string,
   outputLocationPath?: string,
   range?: string,
+  timeout = 60000,
 ): Promise<void | DownloadData> {
   log.debug(`downloadUrl url=${url} ${outputLocationPath}`)
   const authParts = auth && auth.split(':')
@@ -408,7 +410,7 @@ export async function downloadUrl(
           Range: `bytes=${range}`,
         }
       : undefined,
-    timeout: 60000,
+    timeout,
     onDownloadProgress: event => {
       log.debug(`downloadUrl fileUrl=${url} progress=${event}`)
     },
@@ -467,6 +469,12 @@ export async function downloadUrl(
   }
 }
 
+/**
+ * Uploads the file to the specified `url`.
+ * @param filePath The file path to upload.
+ * @param url The remote url to upload.
+ * @param auth The basic authentication (`user:password`).
+ */
 export async function uploadUrl(
   filePath: string,
   url: string,
@@ -510,9 +518,9 @@ export function hideAuth(data: string): string {
 }
 
 /** Exit handler callback. */
-export type ExitHandler = (signal: string) => Promise<void>
+export type ExitHandler = (signal?: string) => Promise<void>
 
-const exitHandlers: ExitHandler[] = []
+const exitHandlers = new Set<ExitHandler>()
 
 /**
  * Register an {@link ExitHandler} callback that will be executed at the
@@ -520,7 +528,7 @@ const exitHandlers: ExitHandler[] = []
  * @param exitHandler
  */
 export function registerExitHandler(exitHandler: ExitHandler): void {
-  exitHandlers.push(exitHandler)
+  exitHandlers.add(exitHandler)
 }
 
 /**
@@ -528,15 +536,13 @@ export function registerExitHandler(exitHandler: ExitHandler): void {
  * @param exitHandler
  */
 export function unregisterExitHandler(exitHandler: ExitHandler): void {
-  const index = exitHandlers.indexOf(exitHandler)
-  if (index !== -1) {
-    exitHandlers.splice(index, 1)
-  }
+  exitHandlers.delete(exitHandler)
 }
 
-const runExitHandlers = async (signal: string): Promise<void> => {
-  for (const [i, exitHandler] of exitHandlers.entries()) {
-    const id = `${i + 1}/${exitHandlers.length}`
+const runExitHandlers = async (signal?: string): Promise<void> => {
+  let i = 0
+  for (const exitHandler of exitHandlers.values()) {
+    const id = `${i + 1}/${exitHandlers.size}`
     log.debug(`running exitHandler ${id}`)
     try {
       await exitHandler(signal)
@@ -544,10 +550,24 @@ const runExitHandlers = async (signal: string): Promise<void> => {
     } catch (err) {
       log.error(`exitHandler ${id} error: ${err}`)
     }
+    i++
   }
+  exitHandlers.clear()
 }
 
 let runExitHandlersPromise: Promise<void> | null = null
+
+/**
+ * Runs the registered exit handlers immediately.
+ * @param signal The process exit signal.
+ */
+export async function runExitHandlersNow(signal?: string): Promise<void> {
+  if (!runExitHandlersPromise) {
+    runExitHandlersPromise = runExitHandlers(signal)
+  }
+  await runExitHandlersPromise
+  stopUpdateSystemStats()
+}
 
 const SIGNALS = [
   'beforeExit',
@@ -574,11 +594,7 @@ SIGNALS.forEach(event =>
     } else {
       log.debug(`Exit on signal: ${signal}`)
     }
-    if (!runExitHandlersPromise) {
-      runExitHandlersPromise = runExitHandlers(signal)
-    }
-    await runExitHandlersPromise
-    stopUpdateSystemStats()
+    await runExitHandlersNow(signal)
     process.exit(0)
   }),
 )
