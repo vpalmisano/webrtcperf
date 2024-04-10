@@ -1,33 +1,34 @@
 /* global log, streamWriter */
 
-const savingVideoTracks = new Map()
+const savingVideoTracks = new Set()
 
 /**
  * Save the video track to disk.
- * @param {MediaStreamTrack} videoTrack
+ * @param {MediaStreamTrack} track
  */
 window.saveVideoTrack = async (
-  videoTrack,
+  track,
   sendrecv,
   enableDelay = 0,
   quality = 0.75,
 ) => {
-  if (savingVideoTracks.has(videoTrack.id)) {
+  if (savingVideoTracks.has(track.id)) {
     return
   }
+  savingVideoTracks.add(track.id)
   if (enableDelay > 0) {
-    videoTrack.enabled = false
+    track.enabled = false
     setTimeout(() => {
-      videoTrack.enabled = true
+      track.enabled = true
     }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
   }
+
   const width = window.VIDEO_WIDTH
   const height = window.VIDEO_HEIGHT
   const frameRate = window.VIDEO_FRAMERATE
-  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${videoTrack.id}.ivf`
+  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${track.id}.ivf`
   log(`saveVideoTrack ${fname} ${width}x${height} ${frameRate}fps`)
   const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
-  savingVideoTracks.set(videoTrack.id, writer)
 
   const canvas = new OffscreenCanvas(width, height)
   const ctx = canvas.getContext('2d')
@@ -66,43 +67,43 @@ window.saveVideoTrack = async (
         bitmap.close()
       },
       close() {
+        log(`saveVideoTrack ${fname} close`)
         writer.close()
-        savingVideoTracks.delete(videoTrack.id)
+        savingVideoTracks.delete(track.id)
       },
       abort(err) {
-        log('saveVideoTrack error:', err)
-        savingVideoTracks.delete(videoTrack.id)
+        log(`saveVideoTrack ${fname} error`, err)
+        savingVideoTracks.delete(track.id)
       },
     },
-    new CountQueuingStrategy({ highWaterMark: frameRate * 2 }),
+    new CountQueuingStrategy({ highWaterMark: frameRate * 5 }),
   )
 
-  const trackProcessor = new window.MediaStreamTrackProcessor({
-    track: videoTrack,
-  })
+  const trackProcessor = new window.MediaStreamTrackProcessor({ track })
   trackProcessor.readable.pipeTo(writableStream)
 }
 
-const savingAudioTracks = new Map()
+const savingAudioTracks = new Set()
 
 /**
  * Save the audio track to disk.
  * @param {MediaStreamTrack} audioTrack
  */
-window.saveAudioTrack = async (audioTrack, sendrecv, enableDelay = 0) => {
-  if (savingAudioTracks.has(audioTrack.id)) {
+window.saveAudioTrack = async (track, sendrecv, enableDelay = 0) => {
+  if (savingAudioTracks.has(track.id)) {
     return
   }
+  savingAudioTracks.add(track.id)
   if (enableDelay > 0) {
-    audioTrack.enabled = false
+    track.enabled = false
     setTimeout(() => {
-      audioTrack.enabled = true
+      track.enabled = true
     }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
   }
-  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${audioTrack.id}.f32le.raw`
+
+  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${track.id}.f32le.raw`
   log(`saveAudioTrack ${fname}`)
   const writer = await streamWriter(fname)
-  savingAudioTracks.set(audioTrack.id, writer)
 
   const writableStream = new window.WritableStream(
     {
@@ -118,19 +119,18 @@ window.saveAudioTrack = async (audioTrack, sendrecv, enableDelay = 0) => {
         frame.close()
       },
       close() {
+        log(`saveAudioTrack ${fname} close`)
         writer.close()
-        savingAudioTracks.delete(audioTrack.id)
+        savingAudioTracks.delete(track.id)
       },
       abort(err) {
-        log('saveAudioTrack error:', err)
-        savingAudioTracks.delete(audioTrack.id)
+        log(`saveAudioTrack ${fname} error`, err)
+        savingAudioTracks.delete(track.id)
       },
     },
     new CountQueuingStrategy({ highWaterMark: 100 }),
   )
 
-  const trackProcessor = new window.MediaStreamTrackProcessor({
-    track: audioTrack,
-  })
+  const trackProcessor = new window.MediaStreamTrackProcessor({ track })
   trackProcessor.readable.pipeTo(writableStream)
 }

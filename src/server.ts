@@ -575,6 +575,9 @@ export class Server {
 
             log.debug(`ws write-stream ${paramPath}`)
             const fpath = path.resolve(this.serverData, paramPath)
+            if (fs.existsSync(fpath)) {
+              throw new Error(`file already exists: ${fpath}`)
+            }
             const stream = fs.createWriteStream(fpath)
 
             let headerWritten = false

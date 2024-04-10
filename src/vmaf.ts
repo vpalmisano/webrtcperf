@@ -127,7 +127,7 @@ export async function parseIvf(
       const { data } = ret
       const recognizedTime = parseInt(data.text.trim() || '0')
       if (data.confidence < 75 || !recognizedTime) {
-        log.warn(
+        log.debug(
           `recognize pts=${index}/${
             frames.size
           } failed: text=${data.text.trim()} confidence=${
@@ -318,6 +318,13 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
   return { participantDisplayName, outFilePath, startPts }
 }
 
+export type VmafScore = {
+  min: number
+  max: number
+  mean: number
+  harmonic_mean: number
+}
+
 async function runVmaf(
   referencePath: string,
   degradedPath: string,
@@ -351,10 +358,12 @@ async function runVmaf(
 -filter_complex "\
 [0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate},split[deg1][deg2];\
 [1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate},split[ref1][ref2];\
-[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1[vmaf];\
-[ref2][deg2]hstack=shortest=1[stacked]" \
+[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf];\
+[ref2][deg2]hstack[stacked]" \
 -map [vmaf] -f null - \
--map [stacked] -c:v libx264 -crf 20 -f mp4 ${comparisonPath + '.mp4'} \
+-map [stacked] -c:v libx264 -crf 20 -f mp4 -movflags +faststart ${
+        comparisonPath + '.mp4'
+      } \
 `
     : `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
@@ -362,7 +371,7 @@ async function runVmaf(
 -filter_complex "\
 [0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate}[deg];\
 [1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate}[ref];\
-[deg][ref]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1[vmaf]" \
+[deg][ref]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf]" \
 -map [vmaf] -f null - \
 `
 
@@ -373,7 +382,7 @@ async function runVmaf(
     stdout,
     stderr,
   })
-  const metrics = vmafLog['pooled_metrics']['vmaf']
+  const metrics = vmafLog['pooled_metrics']['vmaf'] as VmafScore
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
   await writeGraph(vmafLogPath, frameRate)
@@ -446,6 +455,7 @@ type VmafConfig = {
   vmafPath: string
   vmafPreview: boolean
   vmafKeepIntermediateFiles: boolean
+  vmafKeepSourceFiles: boolean
 }
 
 async function getVmafFiles(dir: string): Promise<string[]> {
@@ -453,8 +463,15 @@ async function getVmafFiles(dir: string): Promise<string[]> {
   return files.filter(f => !path.dirname(f).startsWith('vmaf/'))
 }
 
-export async function calculateVmafScore(config: VmafConfig): Promise<void> {
-  const { vmafPath, vmafPreview, vmafKeepIntermediateFiles } = config
+export async function calculateVmafScore(
+  config: VmafConfig,
+): Promise<Record<string, VmafScore>> {
+  const {
+    vmafPath,
+    vmafPreview,
+    vmafKeepIntermediateFiles,
+    vmafKeepSourceFiles,
+  } = config
   if (!fs.existsSync(config.vmafPath)) {
     throw new Error(`VMAF path ${config.vmafPath} does not exist`)
   }
@@ -473,7 +490,7 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
         filePath,
         outPath,
       )
-      if (outFilePath.includes('recv-by')) {
+      if (outFilePath.includes('recv')) {
         if (!degraded.has(participantDisplayName)) {
           degraded.set(participantDisplayName, [])
         }
@@ -481,12 +498,15 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
       } else {
         reference.set(participantDisplayName, outFilePath)
       }
+      if (!vmafKeepSourceFiles) {
+        await fs.promises.unlink(filePath)
+      }
     } catch (err) {
       log.error(`fixIvfFrames error: ${(err as Error).message}`)
     }
   }
 
-  const ret: Record<string, unknown> = {}
+  const ret: Record<string, VmafScore> = {}
   for (const participantDisplayName of reference.keys()) {
     const vmafReferencePath = reference.get(participantDisplayName)
     if (!vmafReferencePath) continue
@@ -514,6 +534,8 @@ export async function calculateVmafScore(config: VmafConfig): Promise<void> {
     path.join(outPath, 'vmaf.json'),
     JSON.stringify(ret, undefined, 2),
   )
+
+  return ret
 }
 
 if (require.main === module) {

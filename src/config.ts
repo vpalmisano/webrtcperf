@@ -703,6 +703,13 @@ the reference and degraded versions.`,
     env: 'VMAF_KEEP_INTERMEDIATE_FILES',
     arg: 'vmaf-keep-intermediate-files',
   },
+  vmafKeepSourceFiles: {
+    doc: `If true, the VMAF source files will not be deleted.`,
+    format: 'Boolean',
+    default: true,
+    env: 'VMAF_KEEP_SOURCE_FILES',
+    arg: 'vmaf-keep-source-files',
+  },
 })
 
 type ConfigDocs = Record<
