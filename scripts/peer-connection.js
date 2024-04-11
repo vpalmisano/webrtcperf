@@ -150,7 +150,7 @@ window.RTCPeerConnection = function (conf, options) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
       if (receiver.track.kind === 'video') {
-        if (window.PARAMS?.timestampWatermark) {
+        if (enabledForSession(window.PARAMS?.timestampWatermark)) {
           window.recognizeTimestampWatermark(
             receiver.track,
             ({ timestamp, delay }) => {

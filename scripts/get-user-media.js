@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack */
+/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, enabledForSession */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -364,7 +364,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       log(`collectMediaTracks error:`, err)
     }
 
-    if (window.PARAMS?.timestampWatermark) {
+    if (enabledForSession(window.PARAMS?.timestampWatermark)) {
       mediaStream = applyTimestampWatermark(mediaStream)
     }
 
