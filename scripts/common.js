@@ -296,6 +296,34 @@ window.MeasuredStats = class {
   }
 }
 
+window.enabledForSession = value => {
+  if (value === true) {
+    return true
+  } else if (value === false || value === undefined) {
+    return false
+  } else if (typeof value === 'string') {
+    if (value.indexOf('-') !== -1) {
+      const [start, end] = value.split('-').map(s => parseInt(s))
+      if (isFinite(start) && window.WEBRTC_PERF_INDEX < start) {
+        return false
+      }
+      if (isFinite(end) && window.WEBRTC_PERF_INDEX > end) {
+        return false
+      }
+      return true
+    } else {
+      const indexes = value
+        .split(',')
+        .filter(s => s.length)
+        .map(s => parseInt(s))
+      return indexes.includes(window.WEBRTC_PERF_INDEX)
+    }
+  } else if (window.WEBRTC_PERF_INDEX === value) {
+    return true
+  }
+  return false
+}
+
 // Common page actions
 let actionsStarted = false
 const actionsQueue = []
@@ -322,25 +350,7 @@ window.setupActions = async () => {
       }
 
       if (index !== undefined) {
-        if (typeof index === 'string') {
-          if (index.indexOf('-') !== -1) {
-            const [start, end] = index.split('-').map(s => parseInt(s))
-            if (isFinite(start) && window.WEBRTC_PERF_INDEX < start) {
-              return
-            }
-            if (isFinite(end) && window.WEBRTC_PERF_INDEX > end) {
-              return
-            }
-          } else {
-            const indexes = index
-              .split(',')
-              .filter(s => s.length)
-              .map(s => parseInt(s))
-            if (!indexes.includes(window.WEBRTC_PERF_INDEX)) {
-              return
-            }
-          }
-        } else if (window.WEBRTC_PERF_INDEX !== index) {
+        if (!window.enabledForSession(index)) {
           return
         }
       }

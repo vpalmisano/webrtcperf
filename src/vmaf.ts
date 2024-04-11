@@ -453,6 +453,7 @@ async function writeGraph(vmafLogPath: string, frameRate = 24) {
 
 type VmafConfig = {
   vmafPath: string
+  vmafFilterDegraded: string
   vmafPreview: boolean
   vmafKeepIntermediateFiles: boolean
   vmafKeepSourceFiles: boolean
@@ -468,6 +469,7 @@ export async function calculateVmafScore(
 ): Promise<Record<string, VmafScore>> {
   const {
     vmafPath,
+    vmafFilterDegraded,
     vmafPreview,
     vmafKeepIntermediateFiles,
     vmafKeepSourceFiles,
@@ -490,7 +492,7 @@ export async function calculateVmafScore(
         filePath,
         outPath,
       )
-      if (outFilePath.includes('recv')) {
+      if (outFilePath.includes(vmafFilterDegraded)) {
         if (!degraded.has(participantDisplayName)) {
           degraded.set(participantDisplayName, [])
         }

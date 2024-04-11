@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats, saveVideoTrack, saveAudioTrack */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats, saveVideoTrack, saveAudioTrack, enabledForSession */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -55,7 +55,7 @@ window.RTCPeerConnection = function (conf, options) {
     if (!transceiver?.sender?.track) return
     if (
       transceiver.sender.track.kind === 'video' &&
-      window.PARAMS?.saveVideoTrack >= 0
+      enabledForSession(window.PARAMS?.saveSendVideoTrack)
     ) {
       saveVideoTrack(
         transceiver.sender.track,
@@ -64,7 +64,7 @@ window.RTCPeerConnection = function (conf, options) {
       ).catch(err => log(`saveVideoTrack error: ${err.message}`))
     } else if (
       transceiver.sender.track.kind === 'audio' &&
-      window.PARAMS?.saveAudioTrack >= 0
+      enabledForSession(window.PARAMS?.saveSendAudioTrack)
     ) {
       saveAudioTrack(
         transceiver.sender.track,
@@ -159,17 +159,11 @@ window.RTCPeerConnection = function (conf, options) {
           )
         }
 
-        if (
-          window.PARAMS?.saveVideoTrack &&
-          window.WEBRTC_PERF_INDEX <= window.PARAMS?.saveVideoTrack
-        ) {
+        if (enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
           await saveVideoTrack(receiver.track, 'recv')
         }
       } else if (receiver.track.kind === 'audio') {
-        if (
-          window.PARAMS?.saveAudioTrack &&
-          window.WEBRTC_PERF_INDEX <= window.PARAMS?.saveAudioTrack
-        ) {
+        if (enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
           await saveAudioTrack(receiver.track, 'recv')
         }
       }
