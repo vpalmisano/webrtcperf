@@ -16,6 +16,8 @@ import { PageStatsNames, parseRtStatKey, RtcStatsMetricNames } from './rtcstats'
 import { Session } from './session'
 import { hideAuth, logger, Scheduler } from './utils'
 
+export { FastStats }
+
 const log = logger('app:stats')
 
 function calculateFailAmountPercentile(
@@ -111,14 +113,14 @@ type StatsData = {
 
 type StatsDataKey = keyof StatsData
 
-type CollectedStats = {
+export type CollectedStats = {
   all: FastStats
   byHost: Record<string, FastStats>
   byCodec: Record<string, FastStats>
   byParticipantAndTrack: Record<string, number>
 }
 
-type CollectedStatsRaw = {
+export type CollectedStatsRaw = {
   all: number[]
   byHost: Record<string, number[]>
   byCodec: Record<string, number[]>
