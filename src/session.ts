@@ -668,9 +668,11 @@ export class Session extends EventEmitter {
           `#!/bin/bash
 getent group ${group} || sudo -n addgroup --system ${group}
 sudo -n adduser $USER ${group}
-sudo -n iptables -t mangle --list OUTPUT | grep -q "owner GID match ${group}" || sudo -n iptables -t mangle -A OUTPUT -m owner --gid-owner ${group} -j MARK --set-mark ${mark}
-sudo -n iptables -t mangle --list PREROUTING | grep -q "CONNMARK restore" || sudo -n iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark
-sudo -n iptables -t mangle --list POSTROUTING | grep -q "CONNMARK save" || sudo -n iptables -t mangle -A POSTROUTING -j CONNMARK --save-mark
+alias ipt='sudo -n iptables -t mangle'
+
+ipt -L OUTPUT | grep -q "owner GID match ${group}" || ipt -A OUTPUT -p udp ! --dport 443 ! --sport 443 -m owner --gid-owner ${group} -j MARK --set-mark ${mark}
+ipt -L PREROUTING | grep -q "CONNMARK restore" || ipt -A PREROUTING -j CONNMARK --restore-mark
+ipt -L POSTROUTING | grep -q "CONNMARK save" || ipt -A POSTROUTING -j CONNMARK --save-mark
 
 cat <<EOF > /tmp/webrtcperf-launcher-${mark}-browser
 #!/bin/bash
