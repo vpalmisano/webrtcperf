@@ -1,4 +1,4 @@
-/* global log, streamWriter */
+/* global log, streamWriter, getParticipantNameForSave */
 
 const savingVideoTracks = new Set()
 
@@ -26,7 +26,7 @@ window.saveVideoTrack = async (
   const width = window.VIDEO_WIDTH
   const height = window.VIDEO_HEIGHT
   const frameRate = window.VIDEO_FRAMERATE
-  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${track.id}.ivf`
+  const fname = `${getParticipantNameForSave()}_${sendrecv}_${track.id}.ivf`
   log(`saveVideoTrack ${fname} ${width}x${height} ${frameRate}fps`)
   const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
 
@@ -101,7 +101,9 @@ window.saveAudioTrack = async (track, sendrecv, enableDelay = 0) => {
     }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
   }
 
-  const fname = `${window.WEBRTC_PERF_INDEX}-${sendrecv}_${track.id}.f32le.raw`
+  const fname = `${getParticipantNameForSave()}-${sendrecv}_${
+    track.id
+  }.f32le.raw`
   log(`saveAudioTrack ${fname}`)
   const writer = await streamWriter(fname)
 

@@ -688,14 +688,6 @@ alert will be successful only when at least 95% of the checks pass.`,
     env: 'VMAF_PATH',
     arg: 'vmaf-path',
   },
-  vmafFilterDegraded: {
-    doc: `Filters the degraded intermediate video files that should be used by the VMAF calculator.`,
-    format: String,
-    nullable: false,
-    default: 'recv-by',
-    env: 'VMAF_FILTER_DEGRADED',
-    arg: 'vmaf-filter-degraded',
-  },
   vmafPreview: {
     doc: `If true, for each VMAF comparison it creates a side-by-side video with \
 the reference and degraded versions.`,

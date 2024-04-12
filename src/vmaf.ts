@@ -230,12 +230,9 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
   const parts = path.basename(fpath).split('_')
   const outFilePath = path.join(
     outDir,
-    parts[0].endsWith('-send')
+    parts[1] === 'send'
       ? `${participantDisplayName}.ivf`
-      : `${participantDisplayName}_recv-by_${parts[0].replace(
-          '-recv',
-          '',
-        )}.ivf`,
+      : `${participantDisplayName}_recv-by_${parts[0]}.ivf`,
   )
 
   const fixedFd = await fs.promises.open(outFilePath, 'w')
@@ -319,6 +316,8 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
 }
 
 export type VmafScore = {
+  sender: string
+  receiver: string
   min: number
   max: number
   mean: number
@@ -382,7 +381,17 @@ async function runVmaf(
     stdout,
     stderr,
   })
-  const metrics = vmafLog['pooled_metrics']['vmaf'] as VmafScore
+  const sender = path.basename(referencePath).replace('.ivf', '')
+  const receiver = path
+    .basename(degradedPath)
+    .replace('.ivf', '')
+    .split('_recv-by_')[1]
+  const metrics = {
+    sender,
+    receiver,
+    ...vmafLog['pooled_metrics']['vmaf'],
+  } as VmafScore
+
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
   await writeGraph(vmafLogPath, frameRate)
@@ -453,7 +462,6 @@ async function writeGraph(vmafLogPath: string, frameRate = 24) {
 
 type VmafConfig = {
   vmafPath: string
-  vmafFilterDegraded: string
   vmafPreview: boolean
   vmafKeepIntermediateFiles: boolean
   vmafKeepSourceFiles: boolean
@@ -466,10 +474,9 @@ async function getVmafFiles(dir: string): Promise<string[]> {
 
 export async function calculateVmafScore(
   config: VmafConfig,
-): Promise<Record<string, VmafScore>> {
+): Promise<VmafScore[]> {
   const {
     vmafPath,
-    vmafFilterDegraded,
     vmafPreview,
     vmafKeepIntermediateFiles,
     vmafKeepSourceFiles,
@@ -492,7 +499,7 @@ export async function calculateVmafScore(
         filePath,
         outPath,
       )
-      if (outFilePath.includes(vmafFilterDegraded)) {
+      if (outFilePath.includes('_recv-by_')) {
         if (!degraded.has(participantDisplayName)) {
           degraded.set(participantDisplayName, [])
         }
@@ -508,7 +515,7 @@ export async function calculateVmafScore(
     }
   }
 
-  const ret: Record<string, VmafScore> = {}
+  const ret: VmafScore[] = []
   for (const participantDisplayName of reference.keys()) {
     const vmafReferencePath = reference.get(participantDisplayName)
     if (!vmafReferencePath) continue
@@ -519,7 +526,7 @@ export async function calculateVmafScore(
           degradedPath,
           vmafPreview,
         )
-        ret[path.basename(degradedPath).replace('.ivf', '')] = metrics
+        ret.push(metrics)
       } catch (err) {
         log.error(`runVmaf error: ${(err as Error).message}`)
       } finally {

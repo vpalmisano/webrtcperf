@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, enabledForSession */
+/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, enabledForSession, getParticipantNameForSave */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -149,7 +149,7 @@ const applyTimestampWatermark = mediaStream => {
   ctx.font = `${fontSize}px Noto Mono`
   const textHeight = fontSize + 6
   const participantName =
-    window.getParticipantName().split('_')[0] +
+    getParticipantNameForSave() +
     (isSenderDisplayTrack(videoTrack) ? ' -s' : '')
 
   const transformer = new window.TransformStream({

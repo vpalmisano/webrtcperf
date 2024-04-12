@@ -22,6 +22,10 @@ window.getParticipantName = (index = window.WEBRTC_PERF_INDEX || 0) => {
   return `Participant-${index.toString().padStart(6, '0')}`
 }
 
+window.getParticipantNameForSave = () => {
+  return window.getParticipantName().split('_')[0]
+}
+
 /**
  * getElement
  * @param {string} selector
