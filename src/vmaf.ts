@@ -50,6 +50,7 @@ export async function parseIvf(
   const headerView = new DataView(headerData)
   const ret = await fd.read(headerView, 0, 32, 0)
   if (ret.bytesRead !== 32) {
+    await fd.close()
     throw new Error('Invalid IVF file')
   }
   const width = headerView.getUint16(12, true)
@@ -209,9 +210,9 @@ export async function parseIvf(
     frames = recognizedFrames
   }
 
-  const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
-
   await fd.close()
+
+  const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
   return { width, height, frameRate, ptsIndex, frames, participantDisplayName }
 }
 
