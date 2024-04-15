@@ -107,6 +107,7 @@ export type ThrottleConfig = {
   device?: string
   sessions?: string
   protocol?: 'udp' | 'tcp'
+  match?: string
   up?: ThrottleRule | ThrottleRule[]
   down?: ThrottleRule | ThrottleRule[]
 }
@@ -117,11 +118,12 @@ async function applyRules(
   device: string,
   index: number,
   protocol?: 'udp' | 'tcp',
+  match?: string,
 ): Promise<void> {
   let rules = config[direction]
   if (!rules) return
   log.debug(
-    `applyRules device=${device} index=${index} protocol=${protocol} ${JSON.stringify(
+    `applyRules device=${device} index=${index} protocol=${protocol} match=${match} ${JSON.stringify(
       rules,
     )}`,
   )
@@ -139,12 +141,15 @@ async function applyRules(
     const handle = index + 2
 
     if (i === 0) {
-      const matchProtocol =
-        protocol === 'udp'
-          ? 'match ip protocol 0x11 0xff'
-          : protocol === 'tcp'
-          ? 'match ip protocol 0x6 0xff'
-          : ''
+      const matches = [`'meta(nf_mark eq ${mark})'`]
+      if (protocol === 'udp') {
+        matches.push("'cmp(u8 at 9 layer network eq 0x11)'")
+      } else if (protocol === 'tcp') {
+        matches.push("'cmp(u8 at 9 layer network eq 0x6)'")
+      }
+      if (match) {
+        matches.push(match)
+      }
       const cmd = `\
 set -e;
 
@@ -158,9 +163,7 @@ sudo -n tc qdisc add dev ${device} \
 sudo -n tc filter add dev ${device} \
   parent 1: \
   protocol ip \
-  u32 \
-  match mark ${mark} 0xffffffff \
-  ${matchProtocol} \
+  basic match ${matches.join(' and ')} \
   flowid 1:${handle};
 `
       try {
@@ -244,10 +247,24 @@ sudo -n tc filter add dev ${device} \
   let index = 0
   for (const config of throttleConfig) {
     if (config.up) {
-      await applyRules(config, 'up', device, index, config.protocol)
+      await applyRules(
+        config,
+        'up',
+        device,
+        index,
+        config.protocol,
+        config.match,
+      )
     }
     if (config.down) {
-      await applyRules(config, 'down', 'ifb0', index, config.protocol)
+      await applyRules(
+        config,
+        'down',
+        'ifb0',
+        index,
+        config.protocol,
+        config.match,
+      )
     }
     index++
   }
