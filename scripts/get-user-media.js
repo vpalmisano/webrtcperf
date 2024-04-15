@@ -364,7 +364,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       log(`collectMediaTracks error:`, err)
     }
 
-    if (enabledForSession(window.PARAMS?.timestampWatermark)) {
+    if (enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
       mediaStream = applyTimestampWatermark(mediaStream)
     }
 

@@ -316,6 +316,40 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
   return { participantDisplayName, outFilePath, startPts }
 }
 
+export async function fixIvfFiles(
+  vmafPath: string,
+  vmafKeepSourceFiles = true,
+) {
+  const files = await await getFiles(vmafPath, '.ivf.raw')
+  log.debug(`fixIvfFiles files=${files}`)
+
+  const reference = new Map<string, string>()
+  const degraded = new Map<string, string[]>()
+  for (const filePath of files) {
+    try {
+      const { participantDisplayName, outFilePath } = await fixIvfFrames(
+        filePath,
+        vmafPath,
+      )
+      if (outFilePath.includes('_recv-by_')) {
+        if (!degraded.has(participantDisplayName)) {
+          degraded.set(participantDisplayName, [])
+        }
+        degraded.get(participantDisplayName)?.push(outFilePath)
+      } else {
+        reference.set(participantDisplayName, outFilePath)
+      }
+      if (!vmafKeepSourceFiles) {
+        await fs.promises.unlink(filePath)
+      }
+    } catch (err) {
+      log.error(`fixIvfFrames error: ${(err as Error).message}`)
+    }
+  }
+
+  return { reference, degraded }
+}
+
 export type VmafScore = {
   sender: string
   receiver: string
@@ -325,7 +359,7 @@ export type VmafScore = {
   harmonic_mean: number
 }
 
-async function runVmaf(
+export async function runVmaf(
   referencePath: string,
   degradedPath: string,
   preview: boolean,
@@ -351,15 +385,21 @@ async function runVmaf(
     ptsDiff,
   })
 
+  const textHeight = Math.ceil(height / 18) + 6
+  const filter = `\
+[0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,crop=${width}:${
+    height - textHeight * 2
+  }:0:${textHeight},fps=fps=${frameRate},split[deg1][deg2];\
+[1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,crop=${width}:${
+    height - textHeight * 2
+  }:0:${textHeight},fps=fps=${frameRate},split[ref1][ref2];\
+[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf]`
+
   const cmd = preview
     ? `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
 -ss ${ptsDiff / frameRate} -i ${referencePath} \
--filter_complex "\
-[0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate},split[deg1][deg2];\
-[1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate},split[ref1][ref2];\
-[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf];\
-[ref2][deg2]hstack[stacked]" \
+-filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
 -map [vmaf] -f null - \
 -map [stacked] -c:v libx264 -crf 20 -f mp4 -movflags +faststart ${
         comparisonPath + '.mp4'
@@ -368,10 +408,7 @@ async function runVmaf(
     : `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
 -ss ${ptsDiff / frameRate} -i ${referencePath} \
--filter_complex "\
-[0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate}[deg];\
-[1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,fps=fps=${frameRate}[ref];\
-[deg][ref]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf]" \
+-filter_complex "${filter}" \
 -map [vmaf] -f null - \
 `
 
@@ -468,11 +505,6 @@ type VmafConfig = {
   vmafKeepSourceFiles: boolean
 }
 
-async function getVmafFiles(dir: string): Promise<string[]> {
-  const files = await getFiles(dir, '.ivf')
-  return files.filter(f => !path.dirname(f).startsWith('vmaf/'))
-}
-
 export async function calculateVmafScore(
   config: VmafConfig,
 ): Promise<VmafScore[]> {
@@ -487,34 +519,10 @@ export async function calculateVmafScore(
   }
   log.debug(`calculateVmafScore referencePath=${vmafPath}`)
 
-  const files = await getVmafFiles(vmafPath)
-  log.debug(`calculateVmafScore files=${files}`)
-  const outPath = path.join(vmafPath, 'vmaf')
-  await fs.promises.mkdir(outPath, { recursive: true })
-
-  const reference = new Map<string, string>()
-  const degraded = new Map<string, string[]>()
-  for (const filePath of files) {
-    try {
-      const { participantDisplayName, outFilePath } = await fixIvfFrames(
-        filePath,
-        outPath,
-      )
-      if (outFilePath.includes('_recv-by_')) {
-        if (!degraded.has(participantDisplayName)) {
-          degraded.set(participantDisplayName, [])
-        }
-        degraded.get(participantDisplayName)?.push(outFilePath)
-      } else {
-        reference.set(participantDisplayName, outFilePath)
-      }
-      if (!vmafKeepSourceFiles) {
-        await fs.promises.unlink(filePath)
-      }
-    } catch (err) {
-      log.error(`fixIvfFrames error: ${(err as Error).message}`)
-    }
-  }
+  const { reference, degraded } = await fixIvfFiles(
+    vmafPath,
+    vmafKeepSourceFiles,
+  )
 
   const ret: VmafScore[] = []
   for (const participantDisplayName of reference.keys()) {
@@ -541,7 +549,7 @@ export async function calculateVmafScore(
     }
   }
   await fs.promises.writeFile(
-    path.join(outPath, 'vmaf.json'),
+    path.join(vmafPath, 'vmaf.json'),
     JSON.stringify(ret, undefined, 2),
   )
 

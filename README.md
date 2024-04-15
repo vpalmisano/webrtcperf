@@ -266,12 +266,12 @@ DEBUG_LEVEL=DEBUG:* yarn start \
 ## Using the VMAF calculator
 1. Run the tool adding the following options:
   ```sh
-  --script-params="{timestampWatermark:true,saveVideoTrack:1}"
+  --script-params="{timestampWatermarkVideo:true,saveRecvVideoTrack:1}"
   --server-port=5000
   --server-use-https=true
   --server-data=/data
   ```
-  With `saveVideoTrack` you can specify the sessions that will be saved at
+  With `saveRecvVideoTrack` you can specify the sessions that will be saved at
   receiver side (in this example `1` will save all the streams received in the 
   sessions with index `0` and `1`).
 2. The sent/received videos will be saved in the `/data` directory.

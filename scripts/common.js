@@ -453,14 +453,14 @@ window.streamWriter = async (
     }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`,
   )
 
-  if (filename.endsWith('.ivf')) {
+  if (filename.endsWith('.ivf.raw')) {
     writeIvfHeader(ws, width, height, frameRate, fourcc)
   }
 
   return {
     write(frameData, pts = 0) {
       //log('write', filename, frameData.byteLength, pts)
-      if (filename.endsWith('.ivf')) {
+      if (filename.endsWith('.ivf.raw')) {
         const data = new ArrayBuffer(12 + frameData.byteLength)
         const view = new DataView(data)
         view.setUint32(0, frameData.byteLength, true)

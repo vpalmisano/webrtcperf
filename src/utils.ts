@@ -666,6 +666,7 @@ export async function resolveIP(
   ip: string,
   cacheTime = 60000,
 ): Promise<string> {
+  if (!ip) return ''
   if (ipaddrJs.parse(ip).range() === 'private') {
     return ip
   }
