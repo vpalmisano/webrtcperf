@@ -1,4 +1,4 @@
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
+/* import { ChartJSNodeCanvas } from 'chartjs-node-canvas' */
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -432,11 +432,12 @@ export async function runVmaf(
 
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
-  await writeGraph(vmafLogPath, frameRate)
+  /* await writeGraph(vmafLogPath, frameRate) */
 
   return metrics
 }
 
+/* 
 async function writeGraph(vmafLogPath: string, frameRate = 24) {
   const vmafLog = JSON.parse(
     await fs.promises.readFile(vmafLogPath, 'utf-8'),
@@ -497,6 +498,7 @@ async function writeGraph(vmafLogPath: string, frameRate = 24) {
   })
   await fs.promises.writeFile(fpath, buffer)
 }
+*/
 
 type VmafConfig = {
   vmafPath: string
@@ -558,6 +560,6 @@ export async function calculateVmafScore(
 
 if (require.main === module) {
   ;(async (): Promise<void> => {
-    await writeGraph(process.argv[2])
+    /* await writeGraph(process.argv[2]) */
   })().catch(err => console.error(err))
 }

@@ -51,8 +51,6 @@
     "camel-case": "^4.1.2",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
-    "chart.js": "^3.5.1",
-    "chartjs-node-canvas": "^4.1.6",
     "compression": "^1.7.4",
     "convict": "^6.2.4",
     "convict-format-with-validator": "^6.2.0",
