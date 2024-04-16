@@ -183,10 +183,6 @@ async function main(): Promise<void> {
 
     await stopApplication()
 
-    if (config.postProcessVideoRecordings && config.serverData) {
-      await fixIvfFiles(config.serverData, config.vmafKeepSourceFiles)
-    }
-
     process.exit(0)
   }
   registerExitHandler(() => stop())

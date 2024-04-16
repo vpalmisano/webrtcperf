@@ -100,6 +100,10 @@ export class Server {
     this.app.get('/view/docker.log', this.getDockerLog.bind(this))
     this.app.get('/download/alert-rules', this.getAlertRules.bind(this))
     this.app.get('/download/stats', this.getStatsFile.bind(this))
+    this.app.get(
+      '/download/detailed-stats',
+      this.getDetailedStatsFile.bind(this),
+    )
     this.app.get('/empty-page', this.getEmptyPage.bind(this))
 
     if (this.serverData) {
@@ -179,7 +183,24 @@ export class Server {
     if (!this.stats.statsWriter) {
       return next(new Error('statsPath not set'))
     }
-    res.download(this.stats.statsWriter.fname)
+    res.download(this.stats.statsPath)
+  }
+
+  /**
+   * GET /download/detailed-stats endpoint.
+   *
+   * Returns the {@link Stats.detailedStatsWriter} file content.
+   */
+  private getDetailedStatsFile(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction,
+  ): void {
+    log.debug(`/download/detailed-stats`, req.query)
+    if (!this.stats.detailedStatsWriter) {
+      return next(new Error('detailedStatsPath not set'))
+    }
+    res.download(this.stats.detailedStatsPath)
   }
 
   /**

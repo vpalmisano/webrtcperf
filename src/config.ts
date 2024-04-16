@@ -542,13 +542,20 @@ is provided.`,
     arg: 'show-stats',
   },
   statsPath: {
-    doc: `The log file directory path; if set, the log data will be written in \
-a .csv file inside this directory; if the directory path does not exist, it \
-will be created.`,
+    doc: `The log file path; if set, the stats will be written in \
+a .csv file inside that file.`,
     format: String,
     default: '',
     env: 'STATS_PATH',
     arg: 'stats-path',
+  },
+  detailedStatsPath: {
+    doc: `The log file path; if set, the detailed stats will be written in \
+a .csv file inside that file.`,
+    format: String,
+    default: '',
+    env: 'DETAILED_STATS_PATH',
+    arg: 'detailed-stats-path',
   },
   statsInterval: {
     doc: `The stats collect interval in seconds. It should be lower than the \
@@ -679,13 +686,6 @@ alert will be successful only when at least 95% of the checks pass.`,
     default: '',
     env: 'SERVER_DATA',
     arg: 'server-data',
-  },
-  postProcessVideoRecordings: {
-    doc: `When true, it post-processes the video recordings stored into the \`serverData\` directory.`,
-    format: 'Boolean',
-    default: false,
-    env: 'POST_PROCESS_VIDEO_RECORDINGS',
-    arg: 'post-process-video-recordings',
   },
   vmafPath: {
     doc: `When set, it runs the VMAF calculator for the videos saved under the provided directory path.`,

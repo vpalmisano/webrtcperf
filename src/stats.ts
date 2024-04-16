@@ -324,6 +324,7 @@ const calculateFailAmount = (checkValue: number, ruleValue: number): number => {
  */
 export class Stats extends events.EventEmitter {
   readonly statsPath: string
+  readonly detailedStatsPath: string
   readonly prometheusPushgateway: string
   readonly prometheusPushgatewayJobName: string
   readonly prometheusPushgatewayAuth?: string
@@ -340,6 +341,7 @@ export class Stats extends events.EventEmitter {
   readonly sessions = new Map<number, Session>()
   nextSessionId: number
   statsWriter: StatsWriter | null
+  detailedStatsWriter: StatsWriter | null
   private scheduler?: Scheduler
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -414,6 +416,7 @@ export class Stats extends events.EventEmitter {
    */
   constructor({
     statsPath,
+    detailedStatsPath,
     prometheusPushgateway,
     prometheusPushgatewayJobName,
     prometheusPushgatewayAuth,
@@ -434,6 +437,7 @@ export class Stats extends events.EventEmitter {
     enableDetailedStats,
   }: {
     statsPath: string
+    detailedStatsPath: string
     prometheusPushgateway: string
     prometheusPushgatewayJobName: string
     prometheusPushgatewayAuth: string
@@ -455,6 +459,7 @@ export class Stats extends events.EventEmitter {
   }) {
     super()
     this.statsPath = statsPath
+    this.detailedStatsPath = detailedStatsPath
     this.prometheusPushgateway = prometheusPushgateway
     this.prometheusPushgatewayJobName =
       prometheusPushgatewayJobName || 'default'
@@ -483,6 +488,7 @@ export class Stats extends events.EventEmitter {
     this.enableDetailedStats = enableDetailedStats
 
     this.statsWriter = null
+    this.detailedStatsWriter = null
     if (alertRules.trim()) {
       this.alertRules = json5.parse(alertRules)
       log.debug(
@@ -595,16 +601,20 @@ export class Stats extends events.EventEmitter {
     this.running = true
 
     if (this.statsPath) {
-      const logPath = path.join(
-        this.statsPath,
-        `${moment().format('YYYY-MM-DD_HH.mm.ss')}.csv`,
-      )
-      log.info(`Logging into ${logPath}`)
-      const headers: string[] = this.statsNames.reduce(
+      log.info(`Logging stats into ${this.statsPath}`)
+      const headers = this.statsNames.reduce(
         (v: string[], name) => v.concat(formatStatsColumns(name)),
         [],
       )
-      this.statsWriter = new StatsWriter(logPath, headers)
+      this.statsWriter = new StatsWriter(this.statsPath, headers)
+    }
+
+    if (this.detailedStatsPath) {
+      log.info(`Logging stats into ${this.statsPath}`)
+      this.detailedStatsWriter = new StatsWriter(this.detailedStatsPath, [
+        'participantName',
+        ...this.statsNames,
+      ])
     }
 
     if (this.prometheusPushgateway) {
@@ -935,7 +945,7 @@ export class Stats extends events.EventEmitter {
     this.consoleShowStats()
     // Write stats to file.
     if (this.statsWriter) {
-      const values: string[] = this.statsNames.reduce(
+      const values = this.statsNames.reduce(
         (v: string[], name) =>
           v.concat(
             formatStats(this.collectedStats[name].all, true) as string[],
@@ -943,6 +953,34 @@ export class Stats extends events.EventEmitter {
         [],
       )
       await this.statsWriter.push(values)
+    }
+    if (this.detailedStatsWriter) {
+      const participants = new Map<string, Record<string, FastStats>>()
+      Object.entries(this.collectedStats).forEach(([name, stats]) => {
+        Object.entries(stats.byParticipantAndTrack).forEach(
+          ([label, value]) => {
+            const [participantName] = label.split(':', 2)
+            let participant = participants.get(participantName)
+            if (!participant) {
+              participant = {}
+              participants.set(participantName, participant)
+            }
+            if (!participant[name]) {
+              participant[name] = new FastStats({ store_data: false })
+            }
+            participant[name].push(value)
+          },
+        )
+      })
+      for (const [participantName, participant] of participants.entries()) {
+        const values = [participantName]
+        for (const name of this.statsNames) {
+          values.push(
+            participant[name] ? toPrecision(participant[name].amean()) : '',
+          )
+        }
+        await this.detailedStatsWriter.push(values)
+      }
     }
     // Send to pushgateway.
     await this.sendToPushGateway()

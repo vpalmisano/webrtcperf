@@ -316,11 +316,8 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
   return { participantDisplayName, outFilePath, startPts }
 }
 
-export async function fixIvfFiles(
-  vmafPath: string,
-  vmafKeepSourceFiles = true,
-) {
-  const files = await await getFiles(vmafPath, '.ivf.raw')
+export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
+  const files = await await getFiles(directory, '.ivf.raw')
   log.info(`fixIvfFiles files=${files}`)
 
   const reference = new Map<string, string>()
@@ -329,7 +326,7 @@ export async function fixIvfFiles(
     try {
       const { participantDisplayName, outFilePath } = await fixIvfFrames(
         filePath,
-        vmafPath,
+        directory,
       )
       if (outFilePath.includes('_recv-by_')) {
         if (!degraded.has(participantDisplayName)) {
@@ -339,7 +336,7 @@ export async function fixIvfFiles(
       } else {
         reference.set(participantDisplayName, outFilePath)
       }
-      if (!vmafKeepSourceFiles) {
+      if (!keepSourceFiles) {
         await fs.promises.unlink(filePath)
       }
     } catch (err) {
