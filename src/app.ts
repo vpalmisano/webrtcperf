@@ -23,7 +23,7 @@ import {
   stopRandomActivateAudio,
   stopUpdateSystemStats,
 } from './utils'
-import { calculateVmafScore } from './vmaf'
+import { calculateVmafScore, fixIvfFiles } from './vmaf'
 
 const log = logger('app')
 
@@ -182,6 +182,11 @@ async function main(): Promise<void> {
     console.log('Exiting...')
 
     await stopApplication()
+
+    if (config.postProcessVideoRecordings && config.serverData) {
+      await fixIvfFiles(config.serverData, config.vmafKeepSourceFiles)
+    }
+
     process.exit(0)
   }
   registerExitHandler(() => stop())

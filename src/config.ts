@@ -680,6 +680,13 @@ alert will be successful only when at least 95% of the checks pass.`,
     env: 'SERVER_DATA',
     arg: 'server-data',
   },
+  postProcessVideoRecordings: {
+    doc: `When true, it post-processes the video recordings stored into the \`serverData\` directory.`,
+    format: 'Boolean',
+    default: false,
+    env: 'POST_PROCESS_VIDEO_RECORDINGS',
+    arg: 'post-process-video-recordings',
+  },
   vmafPath: {
     doc: `When set, it runs the VMAF calculator for the videos saved under the provided directory path.`,
     format: String,

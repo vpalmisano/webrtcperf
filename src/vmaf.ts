@@ -321,7 +321,7 @@ export async function fixIvfFiles(
   vmafKeepSourceFiles = true,
 ) {
   const files = await await getFiles(vmafPath, '.ivf.raw')
-  log.debug(`fixIvfFiles files=${files}`)
+  log.info(`fixIvfFiles files=${files}`)
 
   const reference = new Map<string, string>()
   const degraded = new Map<string, string[]>()
@@ -346,6 +346,7 @@ export async function fixIvfFiles(
       log.error(`fixIvfFrames error: ${(err as Error).message}`)
     }
   }
+  log.info(`fixIvfFiles done`)
 
   return { reference, degraded }
 }
