@@ -22,7 +22,7 @@ const log = logger('app:stats')
 
 function calculateFailAmountPercentile(
   stat: FastStats,
-  percentile = 75,
+  percentile = 95,
 ): number {
   return Math.round(stat.percentile(percentile))
 }
@@ -46,20 +46,14 @@ class StatsWriter {
    */
   async push(dataColumns: string[]): Promise<void> {
     if (!this._header_written) {
-      let data = 'datetime'
-      this.columns.forEach(column => {
-        data += `,${column}`
-      })
+      const data = ['datetime', ...this.columns].join(',') + '\n'
       await fs.promises.mkdir(path.dirname(this.fname), { recursive: true })
-      await fs.promises.writeFile(this.fname, `${data}\n`)
+      await fs.promises.writeFile(this.fname, data)
       this._header_written = true
     }
     //
-    let data = `${moment().format('YYYY/MM/DD HH:mm:ss')}`
-    this.columns.forEach((_column, i) => {
-      data += `,${dataColumns[i]}`
-    })
-    return fs.promises.appendFile(this.fname, `${data}\n`)
+    const data = [Date.now(), ...dataColumns].join(',') + '\n'
+    return fs.promises.appendFile(this.fname, data)
   }
 }
 
@@ -363,10 +357,9 @@ export class Stats extends events.EventEmitter {
       {
         totalFails: number
         totalFailsTime: number
-        totalFailsPerc: number
+        totalFailsTimePerc: number
         lastFailed: number
         valueStats: FastStats
-        valueAverage: number
         failAmountStats: FastStats
         failAmountPercentile: number
       }
@@ -1310,7 +1303,7 @@ export class Stats extends events.EventEmitter {
                 const labels = { rule: ruleDesc, datetime }
                 if (!remove) {
                   ruleObj.report.set(labels, ruleReport.failAmountPercentile)
-                  ruleObj.mean.set(labels, ruleReport.valueAverage)
+                  ruleObj.mean.set(labels, ruleReport.valueStats.amean())
                 } else {
                   ruleObj.report.remove(labels)
                   ruleObj.mean.remove(labels)
@@ -1557,10 +1550,9 @@ export class Stats extends events.EventEmitter {
       reportValue = {
         totalFails: 0,
         totalFailsTime: 0,
-        totalFailsPerc: 0,
+        totalFailsTimePerc: 0,
         lastFailed: 0,
         valueStats: new FastStats(),
-        valueAverage: 0,
         failAmountStats: new FastStats(),
         failAmountPercentile: 0,
       }
@@ -1575,11 +1567,10 @@ export class Stats extends events.EventEmitter {
     } else {
       reportValue.lastFailed = 0
     }
-    reportValue.totalFailsPerc = Math.round(
+    reportValue.totalFailsTimePerc = Math.round(
       (100 * reportValue.totalFailsTime) / elapsedSeconds,
     )
     reportValue.valueStats.push(checkValue)
-    reportValue.valueAverage = reportValue.valueStats.amean()
     reportValue.failAmountStats.push(failAmount)
     reportValue.failAmountPercentile = calculateFailAmountPercentile(
       reportValue.failAmountStats,
@@ -1635,10 +1626,10 @@ export class Stats extends events.EventEmitter {
           {
             totalFails: number
             totalFailsTime: number
-            valueAverage: number
-            totalFailsPerc: number
+            totalFailsTimePerc: number
             failAmount: number
             count: number
+            valueAverage: number
             // failAmountStats: number[]
           }
         >,
@@ -1648,17 +1639,17 @@ export class Stats extends events.EventEmitter {
           const {
             totalFails,
             totalFailsTime,
-            valueAverage,
-            totalFailsPerc,
+            valueStats,
+            totalFailsTimePerc,
             failAmountStats,
             failAmountPercentile,
           } = reportValue
-          if (totalFails && totalFailsPerc > 0) {
+          if (totalFails) {
             out.reports[`${key} ${reportDesc}`] = {
               totalFails,
               totalFailsTime: Math.round(totalFailsTime),
-              valueAverage,
-              totalFailsPerc,
+              valueAverage: valueStats.amean(),
+              totalFailsTimePerc,
               failAmount: failAmountPercentile,
               count: failAmountStats.length,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1681,8 +1672,8 @@ export class Stats extends events.EventEmitter {
     let colSize = 20
     for (const [key, report] of this.alertRulesReport.entries()) {
       for (const [reportDesc, reportValue] of report.entries()) {
-        const { totalFails, totalFailsPerc } = reportValue
-        if (totalFails && totalFailsPerc > 0) {
+        const { totalFails, totalFailsTimePerc } = reportValue
+        if (totalFails && totalFailsTimePerc > 0) {
           const check = `${key} ${reportDesc}`
           colSize = Math.max(colSize, check.length)
         }
@@ -1690,21 +1681,21 @@ export class Stats extends events.EventEmitter {
     }
     if (ext) {
       // eslint-disable-next-line
-      out += sprintf(`| %(check)-${colSize}s | %(total)-10s | %(totalFailsTime)-15s | %(totalFailsPerc)-15s | %(failAmount)-15s |\n`, {
+      out += sprintf(`| %(check)-${colSize}s | %(total)-10s | %(totalFailsTime)-15s | %(totalFailsTimePerc)-15s | %(failAmount)-15s |\n`, {
           check: 'Condition',
           total: 'Fails',
           totalFailsTime: 'Fail time (s)',
-          totalFailsPerc: 'Fail time (%)',
+          totalFailsTimePerc: 'Fail time (%)',
           failAmount: 'Fail amount %',
         },
       )
     } else {
       // eslint-disable-next-line
-      out += sprintf(chalk`{bold %(check)-${colSize}s} {bold %(total)-10s} {bold %(totalFailsTime)-15s} {bold %(totalFailsPerc)-15s} {bold %(failAmount)-15s}\n`, {
+      out += sprintf(chalk`{bold %(check)-${colSize}s} {bold %(total)-10s} {bold %(totalFailsTime)-15s} {bold %(totalFailsTimePerc)-15s} {bold %(failAmount)-15s}\n`, {
           check: 'Condition',
           total: 'Fails',
           totalFailsTime: 'Fail time (s)',
-          totalFailsPerc: 'Fail time (%)',
+          totalFailsTimePerc: 'Fail time (%)',
           failAmount: 'Fail amount %',
         },
       )
@@ -1715,26 +1706,26 @@ export class Stats extends events.EventEmitter {
           totalFails,
           totalFailsTime,
           failAmountPercentile,
-          totalFailsPerc,
+          totalFailsTimePerc,
         } = reportValue
-        if (totalFails && totalFailsPerc > 0) {
+        if (totalFails && totalFailsTimePerc > 0) {
           if (ext) {
             // eslint-disable-next-line
-            out += sprintf(`| %(check)-${colSize}s | %(totalFails)-10s | %(totalFailsTime)-15s | %(totalFailsPerc)-15s | %(failAmountPercentile)-15s |\n`, {
+            out += sprintf(`| %(check)-${colSize}s | %(totalFails)-10s | %(totalFailsTime)-15s | %(totalFailsTimePerc)-15s | %(failAmountPercentile)-15s |\n`, {
                 check: `${key} ${reportDesc}`,
                 totalFails,
                 totalFailsTime: Math.round(totalFailsTime),
-                totalFailsPerc,
+                totalFailsTimePerc,
                 failAmountPercentile,
               },
             )
           } else {
             // eslint-disable-next-line
-            out += sprintf(chalk`{red {bold %(check)-${colSize}s}} {bold %(totalFails)-10s} {bold %(totalFailsTime)-15s} {bold %(totalFailsPerc)-15s} {bold %(failAmountPercentile)-15s}\n`, {
+            out += sprintf(chalk`{red {bold %(check)-${colSize}s}} {bold %(totalFails)-10s} {bold %(totalFailsTime)-15s} {bold %(totalFailsTimePerc)-15s} {bold %(failAmountPercentile)-15s}\n`, {
                 check: `${key} ${reportDesc}`,
                 totalFails,
                 totalFailsTime: Math.round(totalFailsTime),
-                totalFailsPerc,
+                totalFailsTimePerc,
                 failAmountPercentile,
               },
             )
