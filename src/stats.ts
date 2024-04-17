@@ -613,6 +613,7 @@ export class Stats extends events.EventEmitter {
       log.info(`Logging stats into ${this.statsPath}`)
       this.detailedStatsWriter = new StatsWriter(this.detailedStatsPath, [
         'participantName',
+        'trackId',
         ...this.statsNames,
       ])
     }
@@ -955,29 +956,24 @@ export class Stats extends events.EventEmitter {
       await this.statsWriter.push(values)
     }
     if (this.detailedStatsWriter) {
-      const participants = new Map<string, Record<string, FastStats>>()
+      const participants = new Map<string, Record<string, string>>()
       Object.entries(this.collectedStats).forEach(([name, stats]) => {
         Object.entries(stats.byParticipantAndTrack).forEach(
           ([label, value]) => {
-            const [participantName] = label.split(':', 2)
-            let participant = participants.get(participantName)
+            let participant = participants.get(label)
             if (!participant) {
               participant = {}
-              participants.set(participantName, participant)
+              participants.set(label, participant)
             }
-            if (!participant[name]) {
-              participant[name] = new FastStats({ store_data: false })
-            }
-            participant[name].push(value)
+            participant[name] = toPrecision(value, 6)
           },
         )
       })
-      for (const [participantName, participant] of participants.entries()) {
-        const values = [participantName]
+      for (const [label, participant] of participants.entries()) {
+        const [participantName, trackId] = label.split(':', 2)
+        const values = [participantName, trackId]
         for (const name of this.statsNames) {
-          values.push(
-            participant[name] ? toPrecision(participant[name].amean()) : '',
-          )
+          values.push(participant[name] !== undefined ? participant[name] : '')
         }
         await this.detailedStatsWriter.push(values)
       }

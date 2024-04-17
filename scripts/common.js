@@ -27,6 +27,14 @@ window.getParticipantNameForSave = () => {
 }
 
 /**
+ * Returns the name of the sender participant for a given track.
+ * @param {MediaStreamTrack} track
+ */
+window.getReceiverParticipantName = track => {
+  return track.id
+}
+
+/**
  * getElement
  * @param {string} selector
  * @param {number} timeout

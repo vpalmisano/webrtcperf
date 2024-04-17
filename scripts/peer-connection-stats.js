@@ -100,7 +100,7 @@ async function getPeerConnectionStats(
         .getParameters()
         .encodings.filter(encoding => encoding.active)
       if (track) {
-        const trackId = `${id}-${track.kind[0]}s-${track.id}`
+        const trackId = track.id
         const stats = await pc.getStats(track)
         const values = {
           enabled:
@@ -316,7 +316,7 @@ async function getPeerConnectionStats(
     if (t.receiver && t.receiver.track) {
       const track = t.receiver.track
       if (track) {
-        const trackId = `${id}-${track.kind[0]}r-${track.id}`
+        const trackId = window.getReceiverParticipantName(track)
         const stats = await pc.getStats(track)
         const values = {
           enabled: window.isRecvTrackEnabled(track),
@@ -598,5 +598,6 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
     stats,
     activePeerConnections,
     signalingHost,
+    participantName: window.getParticipantName(),
   }
 }

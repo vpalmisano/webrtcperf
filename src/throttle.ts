@@ -220,7 +220,7 @@ async function start(): Promise<void> {
     `\
 set -e;
 
-sudo -n modprobe ifb;
+sudo -n modprobe ifb || true;
 sudo -n ip link add ifb0 type ifb || true;
 sudo -n ip link set dev ifb0 up;
 

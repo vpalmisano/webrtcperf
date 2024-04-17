@@ -85,6 +85,7 @@ declare global {
     stats: RtcStats[]
     activePeerConnections: number
     signalingHost?: string
+    participantName?: string
   }>
   let collectVideoEndToEndDelayStats: () => {
     videoEndToEndDelay: number
@@ -1519,7 +1520,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             videoEndToEndStats: collectVideoEndToEndDelayStats(),
             httpResourcesStats: collectHttpResourcesStats(),
           }))
-        const participantName = await page.evaluate(() => getParticipantName())
+        const { participantName } = peerConnectionStats
 
         // Get host from the first collected remote address.
         if (
