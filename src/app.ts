@@ -23,7 +23,7 @@ import {
   stopRandomActivateAudio,
   stopUpdateSystemStats,
 } from './utils'
-import { calculateVmafScore, fixIvfFiles } from './vmaf'
+import { calculateVmafScore } from './vmaf'
 
 const log = logger('app')
 
