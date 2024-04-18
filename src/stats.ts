@@ -6,7 +6,6 @@ import * as fs from 'fs'
 import * as http from 'http'
 import * as https from 'https'
 import json5 from 'json5'
-import moment from 'moment'
 import * as path from 'path'
 import * as promClient from 'prom-client'
 import { sprintf } from 'sprintf-js'
@@ -1852,7 +1851,7 @@ export class Stats extends events.EventEmitter {
       let out
       if (ext === 'log') {
         const lines = report.split('\n').filter(line => line.length)
-        const name = `Alert rules report (${moment().format()})`
+        const name = `Alert rules report (${new Date().toISOString()})`
         out = sprintf(`-- %(name)s %(fill)s\n`, {
           name,
           fill: '-'.repeat(Math.max(4, lines[0].length - name.length - 4)),
