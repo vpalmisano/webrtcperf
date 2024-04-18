@@ -8,6 +8,7 @@ import * as https from 'https'
 import json5 from 'json5'
 import * as path from 'path'
 import * as promClient from 'prom-client'
+import { PrometheusContentType } from 'prom-client'
 import { sprintf } from 'sprintf-js'
 import * as zlib from 'zlib'
 
@@ -366,8 +367,9 @@ export class Stats extends events.EventEmitter {
       }
     >
   >()
-  private gateway: promClient.Pushgateway | null = null
-  private gatewayForDelete: promClient.Pushgateway | null = null
+  private gateway: promClient.Pushgateway<PrometheusContentType> | null = null
+  private gatewayForDelete: promClient.Pushgateway<PrometheusContentType> | null =
+    null
 
   /* metricConfigGauge: promClient.Gauge<string> | null = null */
   private elapsedTimeMetric: promClient.Gauge<string> | null = null
