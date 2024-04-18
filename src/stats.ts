@@ -368,8 +368,6 @@ export class Stats extends events.EventEmitter {
     >
   >()
   private gateway: promClient.Pushgateway<PrometheusContentType> | null = null
-  private gatewayForDelete: promClient.Pushgateway<PrometheusContentType> | null =
-    null
 
   /* metricConfigGauge: promClient.Gauge<string> | null = null */
   private elapsedTimeMetric: promClient.Gauge<string> | null = null
@@ -647,16 +645,6 @@ export class Stats extends events.EventEmitter {
         },
         register,
       )
-      this.gatewayForDelete = new promClient.Pushgateway(
-        this.prometheusPushgateway,
-        {
-          timeout: 5000,
-          auth: this.prometheusPushgatewayAuth,
-          rejectUnauthorized: false,
-          agent,
-        },
-        register,
-      )
 
       // promClient.collectDefaultMetrics({ prefix: promPrefix, register })
 
@@ -769,11 +757,11 @@ export class Stats extends events.EventEmitter {
   }
 
   async deletePushgatewayStats(): Promise<void> {
-    if (!this.gatewayForDelete) {
+    if (!this.gateway) {
       return
     }
     try {
-      const { resp, body } = await this.gatewayForDelete.delete({
+      const { resp, body } = await this.gateway.delete({
         jobName: this.prometheusPushgatewayJobName,
       })
       if ((body as string).length) {
@@ -1904,7 +1892,6 @@ export class Stats extends events.EventEmitter {
     if (this.gateway) {
       await this.deletePushgatewayStats()
       this.gateway = null
-      this.gatewayForDelete = null
       this.metrics = {}
     }
 
