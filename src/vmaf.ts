@@ -400,7 +400,7 @@ export async function runVmaf(
 -filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
 -map [vmaf] -f null - \
 -map [stacked] -c:v libx264 -crf 20 -f mp4 -movflags +faststart ${
-        comparisonPath + '.mp4'
+        comparisonPath + '_comparison.mp4'
       } \
 `
     : `ffmpeg -loglevel warning -y -threads ${cpus} \
