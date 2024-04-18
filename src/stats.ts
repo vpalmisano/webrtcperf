@@ -944,44 +944,64 @@ export class Stats extends events.EventEmitter {
     this.checkAlertRules()
     // Show to console.
     this.consoleShowStats()
-    // Write stats to file.
-    if (this.statsWriter) {
-      const values = this.statsNames.reduce(
-        (v: string[], name) =>
-          v.concat(
-            formatStats(this.collectedStats[name].all, true) as string[],
-          ),
-        [],
-      )
-      await this.statsWriter.push(values)
-    }
-    if (this.detailedStatsWriter) {
-      const participants = new Map<string, Record<string, string>>()
-      Object.entries(this.collectedStats).forEach(([name, stats]) => {
-        Object.entries(stats.byParticipantAndTrack).forEach(
-          ([label, value]) => {
-            let participant = participants.get(label)
-            if (!participant) {
-              participant = {}
-              participants.set(label, participant)
-            }
-            participant[name] = toPrecision(value, 6)
-          },
-        )
-      })
-      for (const [label, participant] of participants.entries()) {
+
+    await Promise.allSettled([
+      this.writeStats(),
+      this.writeDetailedStats(),
+      this.sendToPushGateway(),
+      this.writeAlertRulesReport(),
+    ])
+  }
+
+  async writeStats() {
+    if (!this.statsWriter) return
+    const values = this.statsNames.reduce(
+      (v: string[], name) =>
+        v.concat(formatStats(this.collectedStats[name].all, true) as string[]),
+      [],
+    )
+    await this.statsWriter.push(values)
+  }
+
+  async writeDetailedStats() {
+    if (!this.detailedStatsWriter) return
+    const participantStats = new Map<string, Record<string, string>>()
+    const participantTrackStats = new Map<string, Record<string, string>>()
+    Object.entries(this.collectedStats).forEach(([name, stats]) => {
+      Object.entries(stats.byParticipantAndTrack).forEach(([label, value]) => {
         const [participantName, trackId] = label.split(':', 2)
-        const values = [participantName, trackId]
-        for (const name of this.statsNames) {
-          values.push(participant[name] !== undefined ? participant[name] : '')
+        if (!trackId) {
+          let stats = participantStats.get(participantName)
+          if (!stats) {
+            stats = {}
+            participantStats.set(participantName, stats)
+          }
+          stats[name] = toPrecision(value, 6)
+        } else {
+          let stats = participantTrackStats.get(label)
+          if (!stats) {
+            stats = {}
+            participantTrackStats.set(label, stats)
+          }
+          stats[name] = toPrecision(value, 6)
         }
-        await this.detailedStatsWriter.push(values)
+      })
+    })
+    for (const [label, trackStats] of participantTrackStats.entries()) {
+      const [participantName, trackId] = label.split(':', 2)
+      const stats = participantStats.get(participantName) || {}
+      const values = [participantName, trackId]
+      for (const name of this.statsNames) {
+        if (trackStats[name] !== undefined) {
+          values.push(trackStats[name])
+        } else if (stats[name] !== undefined) {
+          values.push(stats[name])
+        } else {
+          values.push('')
+        }
       }
+      await this.detailedStatsWriter.push(values)
     }
-    // Send to pushgateway.
-    await this.sendToPushGateway()
-    // Write alert rules
-    await this.writeAlertRulesReport()
   }
 
   /**
