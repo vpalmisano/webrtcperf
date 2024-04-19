@@ -1181,12 +1181,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     )
 
     // Simulate mouse clicks
-    await page.exposeFunction(
-      'mouseClick',
-      async (selector: string) => {
-        await page.click(selector)
-      },
-    )
+    await page.exposeFunction('mouseClick', async (selector: string) => {
+      await page.click(selector)
+    })
 
     const lorem = new LoremIpsum({
       sentencesPerParagraph: {
