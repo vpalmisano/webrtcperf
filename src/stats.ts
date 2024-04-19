@@ -18,7 +18,7 @@ import { hideAuth, logger, Scheduler } from './utils'
 
 export { FastStats }
 
-const log = logger('app:stats')
+const log = logger('webrtcperf:stats')
 
 function calculateFailAmountPercentile(
   stat: FastStats,

@@ -2,7 +2,7 @@ import { existsSync, promises } from 'fs'
 
 import { logger, md5, runShellCommand } from './utils'
 
-const log = logger('app:media')
+const log = logger('webrtcperf:media')
 
 const DEFAULT_VIDEO_PATH =
   'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4'

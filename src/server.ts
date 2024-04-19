@@ -16,7 +16,7 @@ import { Session, SessionParams } from './session'
 import { Stats } from './stats'
 import { logger, runShellCommand } from './utils'
 
-const log = logger('app:server')
+const log = logger('webrtcperf:server')
 
 /**
  * An HTTP server instance that allows to control the tool using a REST

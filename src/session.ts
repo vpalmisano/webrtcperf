@@ -38,7 +38,7 @@ import {
   sleep,
 } from './utils'
 
-const log = logger('app:session')
+const log = logger('webrtcperf:session')
 
 const describeJsHandle = async (jsHandle: JSHandle): Promise<string> => {
   try {

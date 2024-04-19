@@ -69,7 +69,7 @@ export class LoggerInterface {
   }
 }
 
-const log = logger('app:utils')
+const log = logger('webrtcperf:utils')
 
 /**
  * Resolves the absolute path from the package installation directory.
@@ -647,6 +647,8 @@ export async function runShellCommand(
         reject(error)
         return
       }
+      if (verbose)
+        log.debug(`runShellCommand cmd: ${cmd} done`, { stdout, stderr })
       resolve({ stdout, stderr })
     })
   })

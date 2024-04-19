@@ -25,7 +25,7 @@ import {
 } from './utils'
 import { calculateVmafScore } from './vmaf'
 
-const log = logger('app')
+const log = logger('webrtcperf')
 
 function showHelpOrVersion(): void {
   if (process.argv.findIndex(a => a.localeCompare('--help') === 0) !== -1) {
@@ -158,6 +158,7 @@ export async function setupApplication(
       }
 
       stopUpdateSystemStats()
+      log.debug('Stopped')
     },
   }
 }

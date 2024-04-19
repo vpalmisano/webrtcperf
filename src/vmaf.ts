@@ -6,7 +6,7 @@ import { createScheduler, createWorker, PSM } from 'tesseract.js'
 
 import { getFiles, logger, runShellCommand } from './utils'
 
-const log = logger('app:vmaf')
+const log = logger('webrtcperf:vmaf')
 
 export type IvfFrame = {
   index: number

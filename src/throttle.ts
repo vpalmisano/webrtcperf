@@ -3,7 +3,7 @@ import os from 'os'
 
 import { logger, runShellCommand } from './utils'
 
-const log = logger('app:throttle')
+const log = logger('webrtcperf:throttle')
 
 let throttleConfig: ThrottleConfig[] | null = null
 
@@ -182,7 +182,7 @@ ${loss && loss >= 0 && !lossDesc ? ` loss ${loss}%` : ''}\
 ${lossDesc ? ` loss ${lossDesc}` : ''}\
 ${limit && limit >= 0 ? ` limit ${limit}` : ''}`
 
-      log.info(`applying rules on ${device} (${mark}):${desc}`)
+      log.info(`applying rules on ${device} (${mark}): ${desc}`)
       const cmd = `\
 sudo -n tc qdisc change dev ${device} \
   parent 1:${handle} \

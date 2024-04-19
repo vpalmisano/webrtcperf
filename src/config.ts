@@ -8,7 +8,7 @@ import { join } from 'path'
 const puppeteer = require('puppeteer-core')
 
 import { logger } from './utils'
-const log = logger('app:config')
+const log = logger('webrtcperf:config')
 
 const float = {
   name: 'float',
