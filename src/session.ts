@@ -13,7 +13,6 @@ import puppeteer, {
   BrowserContext,
   CDPSession,
   ElementHandle,
-  JSHandle,
   Metrics,
   Page,
 } from 'puppeteer-core'
@@ -39,37 +38,6 @@ import {
 } from './utils'
 
 const log = logger('webrtcperf:session')
-
-const describeJsHandle = async (jsHandle: JSHandle): Promise<string> => {
-  try {
-    let value = await jsHandle.jsonValue()
-
-    // Value is unserializable (or an empty oject).
-    if (JSON.stringify(value) === JSON.stringify({})) {
-      const {
-        type,
-        subtype,
-        description,
-        value: objValue,
-      } = jsHandle.remoteObject()
-      value = `type: ${type} subtype: ${subtype} description: ${description} value: ${JSON.stringify(
-        objValue,
-      )}`
-    }
-
-    if (typeof value === 'string') {
-      if (value.match(/^color: /)) {
-        return ''
-      }
-      return value.replace(/%c/g, '')
-    } else {
-      return JSON.stringify(value)
-    }
-  } catch (err) {
-    log.debug(`describeJsHandle ${jsHandle} error: ${(err as Error).message}`)
-  }
-  return ''
-}
 
 const metricsTotalDuration = (metrics: Metrics): number => {
   return (
@@ -102,13 +70,20 @@ declare global {
 
 const PageLogColors = {
   error: 'red',
-  warning: 'yellow',
+  warn: 'yellow',
   info: 'cyan',
-  debug: 'grey',
+  log: 'grey',
+  debug: 'white',
   requestfailed: 'magenta',
 }
 
-type PageLogColorsKey = 'error' | 'warning' | 'info' | 'debug' | 'requestfailed'
+type PageLogColorsKey =
+  | 'error'
+  | 'warn'
+  | 'info'
+  | 'log'
+  | 'debug'
+  | 'requestfailed'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SessionStats = Record<string, number | any>
@@ -784,7 +759,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
       return
     }
     const index = this.id + tabIndex
-
+    let saveFile: fs.promises.FileHandle | undefined = undefined
     let url = this.url
 
     if (!url) {
@@ -995,10 +970,17 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       }
     })
 
-    page.on('close', () => {
+    page.once('close', () => {
       log.info(`page ${index + 1} closed`)
       this.pages.delete(index)
       this.pagesMetrics.delete(index)
+
+      if (saveFile) {
+        saveFile.close().catch(err => {
+          log.error(`saveFile close error: ${(err as Error).stack}`)
+        })
+        saveFile = undefined
+      }
 
       if (this.browser && this.running) {
         setTimeout(() => this.openPage(index), 1000)
@@ -1300,7 +1282,6 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     }
 
     // Page logs and errors.
-    let saveFile: fs.promises.FileHandle | undefined = undefined
     if (this.pageLogPath) {
       try {
         await fs.promises.mkdir(path.dirname(this.pageLogPath), {
@@ -1315,6 +1296,19 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         )
       }
     }
+
+    await page.exposeFunction(
+      'serializedConsoleLog',
+      async (type: PageLogColorsKey, text: string) => {
+        if (this.showPageLog || saveFile) {
+          try {
+            await this.onPageMessage(index, type, text, saveFile)
+          } catch (err) {
+            log.error(`serializedConsoleLog error: ${(err as Error).stack}`)
+          }
+        }
+      },
+    )
 
     if (this.showPageLog || saveFile) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1332,25 +1326,6 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         }
         const text = `${request.method()} ${request.url()}: ${err}`
         await this.onPageMessage(index, 'requestfailed', text, saveFile)
-      })
-
-      page.on('console', async message => {
-        if (!this.running) {
-          return
-        }
-        const type = message.type()
-        let text = ''
-        const args = await Promise.all(
-          message.args().map(arg => describeJsHandle(arg)),
-        )
-        text = args
-          .filter(res => res?.length)
-          .join(' ')
-          .trim()
-        if (!text || text === '{}') {
-          text = message.text()
-        }
-        await this.onPageMessage(index, type, text, saveFile)
       })
     }
 
@@ -1402,7 +1377,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
   private async onPageMessage(
     index: number,
-    type: string,
+    type: PageLogColorsKey,
     text: string,
     saveFile?: fs.promises.FileHandle,
   ): Promise<void> {
@@ -1417,7 +1392,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (isBlocked) {
       return
     }
-    const color = PageLogColors[type as PageLogColorsKey] || 'grey'
+    const color = PageLogColors[type] || 'grey'
     const filter = this.pageLogFilter
       ? new RegExp(this.pageLogFilter, 'ig')
       : null
@@ -1442,7 +1417,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       }
       if (type === 'error') {
         this.pageErrors += 1
-      } else if (type === 'warning') {
+      } else if (type === 'warn') {
         this.pageWarnings += 1
       }
     }

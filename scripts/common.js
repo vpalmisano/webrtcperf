@@ -1,3 +1,47 @@
+// Capture console messages in a serialized format.
+const safeStringify = obj => {
+  const values = new Set()
+  try {
+    const ret = JSON.stringify(obj, (_, v) => {
+      if (typeof v !== 'object' || v === null || v === undefined) return v
+      if (values.has(v)) return
+      values.add(v)
+      return v
+    })
+    if (ret === '{}') {
+      return obj.toString()
+    }
+    return ret
+  } catch (err) {
+    return obj.toString()
+  } finally {
+    values.clear()
+  }
+}
+
+;['error', 'warn', 'info', 'log', 'debug'].forEach(method => {
+  const nativeFn = console[method].bind(console)
+  console[method] = function (...args) {
+    const customArgs = args
+      .map(arg => {
+        if (typeof arg === 'object') {
+          return safeStringify(arg)
+        } else if (typeof arg === 'string') {
+          if (arg.match(/^color: /)) {
+            return ''
+          }
+          return arg.replace(/%c/g, '')
+        }
+        return arg.toString()
+      })
+      .filter(arg => arg.length > 0)
+      .join(' ')
+    void window.serializedConsoleLog(method, customArgs)
+
+    return nativeFn(...args)
+  }
+})
+
 /**
  * log
  * @param  {...any} args args
