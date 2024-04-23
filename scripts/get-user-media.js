@@ -1,4 +1,4 @@
-/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, enabledForSession, getParticipantNameForSave */
+/* global log, loadScript, sleep, Tesseract, isSenderDisplayTrack, enabledForSession */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -148,9 +148,11 @@ const applyTimestampWatermark = mediaStream => {
   const fontSize = Math.ceil(canvas.height / 18)
   ctx.font = `${fontSize}px Noto Mono`
   const textHeight = fontSize + 6
-  const participantName =
-    getParticipantNameForSave() +
-    (isSenderDisplayTrack(videoTrack) ? ' -s' : '')
+  const isDisplay = isSenderDisplayTrack(videoTrack)
+  let participantName = window.getParticipantName()
+  if (participantName && isDisplay) {
+    participantName += '-d'
+  }
 
   const transformer = new window.TransformStream({
     async transform(videoFrame, controller) {
@@ -170,6 +172,13 @@ const applyTimestampWatermark = mediaStream => {
       ctx.fillStyle = 'black'
       ctx.fillRect(0, height - textHeight, width, height)
       ctx.fillStyle = 'white'
+
+      if (!participantName) {
+        participantName = window.getParticipantName()
+        if (participantName && isDisplay) {
+          participantName += '-d'
+        }
+      }
       ctx.fillText(participantName, 0, height - 6)
 
       const newBitmap = await createImageBitmap(canvas)

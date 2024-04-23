@@ -104,7 +104,6 @@ export async function parseIvf(
     const participantDisplayNameWorker = await createWorker('eng')
     await participantDisplayNameWorker.setParameters({
       tessedit_pageseg_mode: PSM.SINGLE_LINE,
-      tessedit_char_whitelist: 'Participant-0123456789s',
     })
 
     const ptsToRecognized = new Map<number, number>()
