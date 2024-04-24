@@ -1,21 +1,187 @@
-/* global log, streamWriter, getParticipantNameForSave */
+/* global log, getParticipantNameForSave */
 
-const savingVideoTracks = new Set()
+function createWorker(fn) {
+  const blob = new Blob(
+    [
+      fn
+        .toString()
+        .replace(/^[^{]*{\s*/, '')
+        .replace(/\s*}[^}]*$/, ''),
+    ],
+    {
+      type: 'text/javascript',
+    },
+  )
+  const url = URL.createObjectURL(blob)
+  return new Worker(url)
+}
 
-/**
- * Save the video track to disk.
- * @param {MediaStreamTrack} track
- */
-window.saveVideoTrack = async (
+const saveFileWorker = createWorker(() => {
+  function log(...args) {
+    console.log.apply(null, ['[webrtcperf-savefileworker]', ...args])
+  }
+
+  const wsClient = async url => {
+    const client = new WebSocket(url, [])
+    await new Promise((resolve, reject) => {
+      if (client.readyState === WebSocket.OPEN) {
+        resolve()
+      } else if (client.readyState === WebSocket.CLOSED) {
+        reject(new Error('WebSocket closed'))
+      }
+      client.addEventListener('open', resolve, { once: true })
+      client.addEventListener('error', reject, { once: true })
+    })
+    return client
+  }
+
+  const stringToBinary = str => {
+    return str
+      .split('')
+      .reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
+  }
+
+  const writeIvfHeader = (ws, width, height, frameRate, fourcc) => {
+    const data = new ArrayBuffer(32)
+    const view = new DataView(data)
+    view.setUint32(0, stringToBinary('DKIF'), true)
+    view.setUint16(4, 0, true) // version
+    view.setUint16(6, 32, true) // header size
+    view.setUint32(8, stringToBinary(fourcc), true) // fourcc
+    view.setUint16(12, width, true) // width
+    view.setUint16(14, height, true) // header
+    view.setUint32(16, frameRate, true) // framerate denominator
+    view.setUint32(20, 1, true) // framerate numerator
+    view.setUint32(24, 0, true) // frame count
+    view.setUint32(28, 0, true) // unused
+    ws.send(data)
+  }
+
+  onmessage = async ({ data }) => {
+    const { id, url, readable, kind, quality, width, height, frameRate } = data
+    log(`saveTrack id=${id} kind=${kind} url=${url}`)
+
+    const ws = await wsClient(url)
+    if (kind === 'video') {
+      writeIvfHeader(ws, width, height, frameRate, 'MJPG')
+
+      const canvas = new OffscreenCanvas(width, height)
+      const ctx = canvas.getContext('2d')
+      let startTimestamp = -1
+      let lastPts = -1
+      const writableStream = new WritableStream(
+        {
+          async write(frame) {
+            const { timestamp, codedWidth, codedHeight } = frame
+            if (!codedWidth || !codedHeight) {
+              return
+            }
+            const bitmap = await createImageBitmap(frame)
+            try {
+              ctx.drawImage(bitmap, 0, 0, width, height)
+              const blob = await canvas.convertToBlob({
+                type: 'image/jpeg',
+                quality,
+              })
+              const data = await blob.arrayBuffer()
+              if (startTimestamp < 0) {
+                startTimestamp = timestamp
+              }
+              const pts = Math.round(
+                (frameRate * (timestamp - startTimestamp)) / 1000000,
+              )
+              if (pts <= lastPts) {
+                log(`warning: pts=${pts} <= lastPts=${lastPts}`)
+              }
+              lastPts = pts
+              /* log(
+                `writer ${data.byteLength} bytes timestamp=${
+                  videoFrame.timestamp / 1000000
+                } pts=${pts}`,
+              ) */
+              const header = new ArrayBuffer(12)
+              const view = new DataView(header)
+              view.setUint32(0, data.byteLength, true)
+              view.setBigUint64(4, BigInt(pts), true)
+              ws.send(header)
+              ws.send(data)
+            } catch (err) {
+              log(`saveMediaTrack ${url} error=${err.message}`)
+            }
+            frame.close()
+            bitmap.close()
+          },
+          close() {
+            log(`saveTrack ${url} close`)
+            ws.close()
+            postMessage({ name: 'close', id, kind })
+          },
+          abort(error) {
+            log(`saveTrack ${url} error`, error)
+            ws.close()
+            postMessage({ name: 'close', error, id, kind })
+          },
+        },
+        new CountQueuingStrategy({ highWaterMark: frameRate * 10 }),
+      )
+      readable.pipeTo(writableStream)
+    } else {
+      const writableStream = new WritableStream(
+        {
+          async write(frame) {
+            const { numberOfFrames } = frame
+            try {
+              const data = new Float32Array(numberOfFrames)
+              frame.copyTo(data, { planeIndex: 0 })
+              ws.send(data)
+            } catch (err) {
+              log(`saveMediaTrack ${url} error=${err.message}`)
+            }
+            frame.close()
+          },
+          close() {
+            log(`saveTrack ${url} close`)
+            ws.close()
+            postMessage({ name: 'close', id, kind })
+          },
+          abort(error) {
+            log(`saveTrack ${url} error`, error)
+            ws.close()
+            postMessage({ name: 'close', error, id, kind })
+          },
+        },
+        new CountQueuingStrategy({ highWaterMark: 100 }),
+      )
+      readable.pipeTo(writableStream)
+    }
+  }
+})
+
+const savingTracks = {
+  audio: new Set(),
+  video: new Set(),
+}
+
+saveFileWorker.onmessage = event => {
+  const { name, error, kind, id } = event.data
+  log(`saveFileWorker name=${name} kind=${kind} id=${id} error=${error}`)
+  savingTracks[kind].delete(id)
+}
+
+window.saveMediaTrack = async (
   track,
   sendrecv,
   enableDelay = 0,
   quality = 0.75,
+  width = window.VIDEO_WIDTH,
+  height = window.VIDEO_HEIGHT,
+  frameRate = window.VIDEO_FRAMERATE,
 ) => {
-  if (savingVideoTracks.has(track.id)) {
+  const { id, kind } = track
+  if (savingTracks[kind].has(id)) {
     return
   }
-  savingVideoTracks.add(track.id)
+  savingTracks[kind].add(id)
   if (enableDelay > 0) {
     track.enabled = false
     setTimeout(() => {
@@ -23,114 +189,26 @@ window.saveVideoTrack = async (
     }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
   }
 
-  const width = window.VIDEO_WIDTH
-  const height = window.VIDEO_HEIGHT
-  const frameRate = window.VIDEO_FRAMERATE
-  const fname = `${getParticipantNameForSave(sendrecv, track)}.ivf.raw`
-  log(`saveVideoTrack ${fname} ${width}x${height} ${frameRate}fps`)
-  const writer = await streamWriter(fname, width, height, frameRate, 'MJPG')
+  const filename = `${getParticipantNameForSave(sendrecv, track)}${
+    kind === 'audio' ? '.f32le.raw' : '.ivf.raw'
+  }`
+  const url = `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
+    window.SERVER_PORT
+  }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`
+  const { readable } = new window.MediaStreamTrackProcessor({ track })
 
-  const canvas = new OffscreenCanvas(width, height)
-  const ctx = canvas.getContext('2d')
-  let startTimestamp = -1
-  const writableStream = new window.WritableStream(
+  log(`saveMediaTrack ${filename}`)
+  saveFileWorker.postMessage(
     {
-      async write(videoFrame) {
-        const { timestamp, codedWidth, codedHeight } = videoFrame
-        if (!codedWidth || !codedHeight) {
-          return
-        }
-        const bitmap = await createImageBitmap(videoFrame)
-        try {
-          ctx.drawImage(bitmap, 0, 0, width, height)
-          const blob = await canvas.convertToBlob({
-            type: 'image/jpeg',
-            quality,
-          })
-          const data = await blob.arrayBuffer()
-          if (startTimestamp < 0) {
-            startTimestamp = timestamp
-          }
-          const pts = Math.round(
-            (frameRate * (timestamp - startTimestamp)) / 1000000,
-          )
-          /* log(
-              `writer ${data.byteLength} bytes timestamp=${
-                videoFrame.timestamp / 1000000
-              } pts=${pts}`,
-            ) */
-          writer.write(data, pts)
-        } catch (err) {
-          log(`saveVideoTrack error: ${err.message}`)
-        }
-        videoFrame.close()
-        bitmap.close()
-      },
-      close() {
-        log(`saveVideoTrack ${fname} close`)
-        writer.close()
-        savingVideoTracks.delete(track.id)
-      },
-      abort(err) {
-        log(`saveVideoTrack ${fname} error`, err)
-        savingVideoTracks.delete(track.id)
-      },
+      id,
+      url,
+      readable,
+      kind,
+      quality,
+      width,
+      height,
+      frameRate,
     },
-    new CountQueuingStrategy({ highWaterMark: frameRate * 5 }),
+    [readable],
   )
-
-  const trackProcessor = new window.MediaStreamTrackProcessor({ track })
-  trackProcessor.readable.pipeTo(writableStream)
-}
-
-const savingAudioTracks = new Set()
-
-/**
- * Save the audio track to disk.
- * @param {MediaStreamTrack} audioTrack
- */
-window.saveAudioTrack = async (track, sendrecv, enableDelay = 0) => {
-  if (savingAudioTracks.has(track.id)) {
-    return
-  }
-  savingAudioTracks.add(track.id)
-  if (enableDelay > 0) {
-    track.enabled = false
-    setTimeout(() => {
-      track.enabled = true
-    }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
-  }
-
-  const fname = `${getParticipantNameForSave(sendrecv, track)}.f32le.raw`
-  log(`saveAudioTrack ${fname}`)
-  const writer = await streamWriter(fname)
-
-  const writableStream = new window.WritableStream(
-    {
-      async write(frame) {
-        const { numberOfFrames } = frame
-        try {
-          const data = new Float32Array(numberOfFrames)
-          frame.copyTo(data, { planeIndex: 0 })
-          writer.write(data)
-        } catch (err) {
-          log(`saveAudioTrack error: ${err.message}`)
-        }
-        frame.close()
-      },
-      close() {
-        log(`saveAudioTrack ${fname} close`)
-        writer.close()
-        savingAudioTracks.delete(track.id)
-      },
-      abort(err) {
-        log(`saveAudioTrack ${fname} error`, err)
-        savingAudioTracks.delete(track.id)
-      },
-    },
-    new CountQueuingStrategy({ highWaterMark: 100 }),
-  )
-
-  const trackProcessor = new window.MediaStreamTrackProcessor({ track })
-  trackProcessor.readable.pipeTo(writableStream)
 }

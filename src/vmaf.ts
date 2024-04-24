@@ -1,4 +1,4 @@
-/* import { ChartJSNodeCanvas } from 'chartjs-node-canvas' */
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -365,6 +365,8 @@ export async function runVmaf(
   const comparisonPath = degradedPath.replace(/\.[^.]+$/, '')
   const vmafLogPath = comparisonPath + '.vmaf.json'
   const cpus = os.cpus().length
+  const referencePathMp4 = `${referencePath.replace(/\.ivf$/, '.mp4')}`
+  const degradedPathMp4 = `${degradedPath.replace(/\.ivf$/, '.mp4')}`
 
   const {
     width,
@@ -383,13 +385,16 @@ export async function runVmaf(
   })
 
   const textHeight = Math.ceil(height / 18) + 6
+  const referencePathMp4Exists = fs.existsSync(referencePathMp4)
   const filter = `\
 [0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,crop=${width}:${
     height - textHeight * 2
-  }:0:${textHeight},fps=fps=${frameRate},split[deg1][deg2];\
+  }:0:${textHeight},fps=fps=${frameRate},split=3[deg1][deg2][deg3];\
 [1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,crop=${width}:${
     height - textHeight * 2
-  }:0:${textHeight},fps=fps=${frameRate},split[ref1][ref2];\
+  }:0:${textHeight},fps=fps=${frameRate},split=3[ref1][ref2]${
+    referencePathMp4Exists ? '' : '[ref3]'
+  };\
 [deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf]`
 
   const cmd = preview
@@ -398,9 +403,15 @@ export async function runVmaf(
 -ss ${ptsDiff / frameRate} -i ${referencePath} \
 -filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
 -map [vmaf] -f null - \
--map [stacked] -c:v libx264 -crf 20 -f mp4 -movflags +faststart ${
+-map [stacked] -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${
         comparisonPath + '_comparison.mp4'
       } \
+${
+  referencePathMp4Exists
+    ? ''
+    : `-map [ref3] -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${referencePathMp4}`
+} \
+-map [deg3] -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${degradedPathMp4} \
 `
     : `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
@@ -429,12 +440,11 @@ export async function runVmaf(
 
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
-  /* await writeGraph(vmafLogPath, frameRate) */
+  await writeGraph(vmafLogPath, frameRate)
 
   return metrics
 }
 
-/* 
 async function writeGraph(vmafLogPath: string, frameRate = 24) {
   const vmafLog = JSON.parse(
     await fs.promises.readFile(vmafLogPath, 'utf-8'),
@@ -495,7 +505,6 @@ async function writeGraph(vmafLogPath: string, frameRate = 24) {
   })
   await fs.promises.writeFile(fpath, buffer)
 }
-*/
 
 type VmafConfig = {
   vmafPath: string

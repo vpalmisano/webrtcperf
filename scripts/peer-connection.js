@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats, saveVideoTrack, saveAudioTrack, enabledForSession */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats, saveMediaTrack, enabledForSession */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -57,20 +57,20 @@ window.RTCPeerConnection = function (conf, options) {
       transceiver.sender.track.kind === 'video' &&
       enabledForSession(window.PARAMS?.saveSendVideoTrack)
     ) {
-      saveVideoTrack(
+      saveMediaTrack(
         transceiver.sender.track,
         'send',
         window.PARAMS?.saveVideoTrackEnableDelay,
-      ).catch(err => log(`saveVideoTrack error: ${err.message}`))
+      ).catch(err => log(`saveMediaTrack error: ${err.message}`))
     } else if (
       transceiver.sender.track.kind === 'audio' &&
       enabledForSession(window.PARAMS?.saveSendAudioTrack)
     ) {
-      saveAudioTrack(
+      saveMediaTrack(
         transceiver.sender.track,
         'send',
         window.PARAMS?.saveAudioTrackEnableDelay,
-      ).catch(err => log(`saveAudioTrack error: ${err.message}`))
+      ).catch(err => log(`saveMediaTrack error: ${err.message}`))
     }
   }
 
@@ -160,11 +160,11 @@ window.RTCPeerConnection = function (conf, options) {
         }
 
         if (enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
-          await saveVideoTrack(receiver.track, 'recv')
+          await saveMediaTrack(receiver.track, 'recv')
         }
       } else if (receiver.track.kind === 'audio') {
         if (enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
-          await saveAudioTrack(receiver.track, 'recv')
+          await saveMediaTrack(receiver.track, 'recv')
         }
       }
     }

@@ -1,4 +1,4 @@
-/* global log, MeasuredStats, stringToBinary, streamWriter */
+/* global log, MeasuredStats, stringToBinary */
 
 /**
  * Video end-to-end delay stats.
@@ -55,20 +55,7 @@ async function handleInsertableStreams(data, debug = false) {
 
   if (operation === 'encode') {
     const prevPts = {}
-    const {
-      width: trackWidth,
-      height: trackHeight,
-      frameRate,
-    } = track.getSettings()
-
-    if (window.PARAMS?.saveEncodedStreams) {
-      writer = await streamWriter(
-        `${window.WEBRTC_PERF_INDEX}_${operation}_${track.id}.ivf`,
-        trackWidth,
-        trackHeight,
-        frameRate,
-      )
-    }
+    const { width: trackWidth, height: trackHeight } = track.getSettings()
 
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
@@ -120,15 +107,6 @@ async function handleInsertableStreams(data, debug = false) {
       },
     })
   } else if (operation === 'decode') {
-    if (window.PARAMS?.saveEncodedStreams) {
-      writer = await streamWriter(
-        `${window.WEBRTC_PERF_INDEX}_${operation}_${track.id}.ivf`,
-        window.VIDEO_WIDTH,
-        window.VIDEO_HEIGHT,
-        window.VIDEO_FRAMERATE,
-      )
-    }
-
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
         if (debug) {
