@@ -87,12 +87,11 @@ const saveFileWorker = createWorker(() => {
               if (startTimestamp < 0) {
                 startTimestamp = timestamp
               }
-              let pts = Math.round(
+              const pts = Math.round(
                 (frameRate * (timestamp - startTimestamp)) / 1000000,
               )
               if (pts <= lastPts) {
                 log(`warning: pts=${pts} <= lastPts=${lastPts}`)
-                pts++
               }
               lastPts = pts
               /* log(

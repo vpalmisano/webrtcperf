@@ -104,6 +104,7 @@ export async function parseIvf(
     const participantDisplayNameWorker = await createWorker('eng')
     await participantDisplayNameWorker.setParameters({
       tessedit_pageseg_mode: PSM.SINGLE_LINE,
+      tessedit_char_whitelist: 'Participant-0123456789d',
     })
 
     const ptsToRecognized = new Map<number, number>()
@@ -316,7 +317,7 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
 }
 
 export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
-  const files = await await getFiles(directory, '.ivf.raw')
+  const files = await getFiles(directory, '.ivf.raw')
   log.info(`fixIvfFiles files=${files}`)
 
   const reference = new Map<string, string>()
