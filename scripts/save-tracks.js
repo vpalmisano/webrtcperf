@@ -17,7 +17,7 @@ function createWorker(fn) {
 }
 
 const saveFileWorker = createWorker(() => {
-  function log(...args) {
+  const log = (...args) => {
     console.log.apply(null, ['[webrtcperf-savefileworker]', ...args])
   }
 
@@ -87,11 +87,12 @@ const saveFileWorker = createWorker(() => {
               if (startTimestamp < 0) {
                 startTimestamp = timestamp
               }
-              const pts = Math.round(
+              let pts = Math.round(
                 (frameRate * (timestamp - startTimestamp)) / 1000000,
               )
               if (pts <= lastPts) {
                 log(`warning: pts=${pts} <= lastPts=${lastPts}`)
+                pts++
               }
               lastPts = pts
               /* log(
