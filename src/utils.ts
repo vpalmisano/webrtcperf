@@ -412,7 +412,9 @@ export async function downloadUrl(
       : undefined,
     timeout,
     onDownloadProgress: event => {
-      log.debug(`downloadUrl fileUrl=${url} progress=${event}`)
+      log.debug(
+        `downloadUrl fileUrl=${url} progress=${event.progress || event.bytes}`,
+      )
     },
     httpsAgent: new Agent({
       rejectUnauthorized: false,
