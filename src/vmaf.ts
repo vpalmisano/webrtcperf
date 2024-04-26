@@ -318,7 +318,7 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
 
 export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
   const files = await getFiles(directory, '.ivf.raw')
-  log.info(`fixIvfFiles files=${files}`)
+  log.info(`fixIvfFiles directory=${directory} files=${files}`)
 
   const reference = new Map<string, string>()
   const degraded = new Map<string, string[]>()
@@ -400,8 +400,8 @@ export async function runVmaf(
 
   const cmd = preview
     ? `ffmpeg -loglevel warning -y -threads ${cpus} \
--i ${degradedPath} \
--ss ${ptsDiff / frameRate} -i ${referencePath} \
+-ss ${-ptsDiff / frameRate} -i ${degradedPath} \
+-i ${referencePath} \
 -filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
 -map [vmaf] -f null - \
 -map [stacked] -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${
