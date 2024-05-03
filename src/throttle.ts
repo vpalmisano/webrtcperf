@@ -16,7 +16,7 @@ const throttleCurrentValues = {
       rate?: number
       delay?: number
       loss?: number
-      lossDesc?: string
+      lossBurst?: number
       queue?: number
     }
   >(),
@@ -26,7 +26,7 @@ const throttleCurrentValues = {
       rate?: number
       delay?: number
       loss?: number
-      lossDesc?: string
+      lossBurst?: number
       queue?: number
     }
   >(),
@@ -77,8 +77,8 @@ export type ThrottleRule = {
   delay?: number
   /** The packet loss percentage. */
   loss?: number
-  /** The packet loss netem string. */
-  lossDesc?: string
+  /** The packet loss burst. */
+  lossBurst?: number
   /** The packet queue size. */
   queue?: number
   /** If set, the rule will be applied after the specified number of seconds. */
@@ -135,7 +135,7 @@ async function applyRules(
   })
 
   for (const [i, rule] of rules.entries()) {
-    const { rate, delay, loss, lossDesc, queue, at } = rule
+    const { rate, delay, loss, lossBurst, queue, at } = rule
     const limit = queue ?? calculateBufferedPackets(rate || 0, delay || 0)
     const mark = index + 1
     const handle = index + 2
@@ -175,11 +175,21 @@ sudo -n tc filter add dev ${device} \
     }
 
     const timeoutId = setTimeout(async () => {
+      let lossDesc = ''
+      if (loss && loss > 0) {
+        if (lossBurst && lossBurst > 0) {
+          const p = (100 * loss) / (lossBurst * (100 - loss))
+          const r = 100 / lossBurst
+          lossDesc = ` loss gemodel ${Math.round(p)} ${Math.round(r)}`
+        } else {
+          lossDesc = ` loss ${Math.round(loss)}%`
+        }
+      }
+
       const desc = `\
 ${rate && rate > 0 ? `rate ${rate}kbit` : ''}\
 ${delay && delay >= 0 ? ` delay ${delay}ms` : ''}\
-${loss && loss >= 0 && !lossDesc ? ` loss ${loss}%` : ''}\
-${lossDesc ? ` loss ${lossDesc}` : ''}\
+${lossDesc}\
 ${limit && limit >= 0 ? ` limit ${limit}` : ''}`
 
       log.info(`applying rules on ${device} (${mark}): ${desc}`)
