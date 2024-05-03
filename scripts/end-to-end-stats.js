@@ -5,13 +5,13 @@
  * @type MeasuredStats
  */
 const videoEndToEndDelayStats = (window.videoEndToEndDelayStats =
-  new MeasuredStats(60))
+  new MeasuredStats(30))
 
 /**
  * Video end-to-end network delay stats.
  * @type MeasuredStats
  */
-const videoEndToEndNetworkDelayStats = new MeasuredStats(60)
+const videoEndToEndNetworkDelayStats = new MeasuredStats(30)
 
 window.collectVideoEndToEndDelayStats = () => {
   return {
