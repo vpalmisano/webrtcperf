@@ -186,7 +186,7 @@ window.saveMediaTrack = async (
     track.enabled = false
     setTimeout(() => {
       track.enabled = true
-    }, Math.max(enableDelay - window.webrtcPerfElapsedTime(), 0))
+    }, enableDelay)
   }
 
   const filename = `${getParticipantNameForSave(sendrecv, track)}${

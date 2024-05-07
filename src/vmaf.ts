@@ -396,10 +396,14 @@ export async function runVmaf(
   const filter = `\
 [0:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,crop=${width}:${
     height - textHeight * 2
-  }:0:${textHeight},fps=fps=${frameRate},split=3[deg1][deg2][deg3];\
+  }:0:${textHeight},fps=fps=${frameRate}${
+    preview ? ',split=3[deg1][deg2][deg3]' : '[deg1]'
+  };\
 [1:v]scale=w=${width}:h=${height}:flags=bicubic:eval=frame,crop=${width}:${
     height - textHeight * 2
-  }:0:${textHeight},fps=fps=${frameRate},split=3[ref1][ref2][ref3];\
+  }:0:${textHeight},fps=fps=${frameRate}${
+    preview ? ',split=3[ref1][ref2][ref3]' : '[ref1]'
+  };\
 [deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf]`
 
   const cmd = preview

@@ -980,3 +980,14 @@ export async function getFiles(dir: string, ext: string): Promise<string[]> {
   )
   return Array.prototype.concat(...files).filter(f => f.endsWith(ext))
 }
+
+/**
+ * Format number to the specified precision.
+ * @param value value to format
+ * @param precision precision
+ */
+export function toPrecision(value: number, precision = 3): string {
+  return (Math.round(value * 10 ** precision) / 10 ** precision).toFixed(
+    precision,
+  )
+}

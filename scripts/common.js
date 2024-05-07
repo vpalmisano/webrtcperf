@@ -47,7 +47,7 @@ const safeStringify = obj => {
  * @param  {...any} args args
  */
 function log(...args) {
-  console.log.apply(null, ['[webrtcperf]', ...args])
+  console.log.apply(null, [`[webrtcperf-${window.WEBRTC_PERF_INDEX}]`, ...args])
 }
 
 /**
@@ -382,7 +382,6 @@ window.enabledForSession = value => {
 
 // Common page actions
 let actionsStarted = false
-const actionsQueue = []
 
 window.webrtcPerfElapsedTime = () =>
   Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
@@ -392,16 +391,17 @@ window.setupActions = async () => {
     return
   }
   actionsStarted = true
+  const setupTime = window.webrtcPerfElapsedTime()
 
   /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, param: any }> */
-  let actions = window.PARAMS.actions
+  const actions = window.PARAMS.actions
   actions
     .sort((a, b) => (a.at || 0) - (b.at || 0))
     .forEach(action => {
       const { name, at, every, times, index, param } = action
       const fn = window[name]
       if (!fn) {
-        log(`setupActions unknown action name: "${name}"`)
+        log(`setupActions undefined action: "${name}"`)
         return
       }
 
@@ -411,14 +411,32 @@ window.setupActions = async () => {
         }
       }
 
-      let remainingTimes = (times || 1) - 1
+      const startTime = at * 1000 - setupTime
+      if (startTime < 0) {
+        log(
+          `setupActions action "${name}" already passed (setupTime: ${
+            setupTime / 1000
+          } at: ${at})`,
+        )
+        return
+      }
+      log(
+        `scheduling action ${name}(${param}) at ${at}s${
+          every ? ` every ${every}s` : ''
+        }${
+          times ? ` ${times} times` : ''
+        } with startTime: ${startTime}ms setupTime: ${setupTime}ms`,
+      )
+      let currentIteration = 0
       const cb = async () => {
         const ts = (window.webrtcPerfElapsedTime() / 1000).toFixed(0)
         log(
-          `run action [${ts}s] [${
-            window.WEBRTC_PERF_INDEX
-          }] ${name}(${param}) at ${at}s${every ? ` every ${every}s` : ''}${
-            times ? ` (${remainingTimes}/${times} times remaining)` : ''
+          `run action [${ts}s] ${name}(${param}) at ${at}s${
+            every ? ` every ${every}s` : ''
+          }${
+            times
+              ? ` (${times - currentIteration}/${times} times remaining)`
+              : ''
           }`,
         )
         try {
@@ -429,27 +447,14 @@ window.setupActions = async () => {
             `run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} error: ${err.message}`,
           )
         } finally {
-          if (every > 0 && (!times || remainingTimes > 0)) {
-            actionsQueue.push({
-              cb,
-              at: every + window.webrtcPerfElapsedTime() / 1000,
-            })
-            remainingTimes -= 1
+          currentIteration += 1
+          if (every > 0 && currentIteration < (times || Infinity)) {
+            setTimeout(cb, startTime + every * 1000 * currentIteration)
           }
-          runNext()
         }
       }
 
-      const runNext = () => {
-        if (actionsQueue.length) {
-          const { cb, at } = actionsQueue.splice(0, 1)[0]
-          const scheduledTime = window.webrtcPerfSecondsFromStart(at)
-          setTimeout(cb, scheduledTime)
-        }
-      }
-
-      actionsQueue.push({ cb, at })
-      runNext()
+      setTimeout(cb, startTime)
     })
 }
 

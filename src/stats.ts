@@ -14,7 +14,7 @@ import * as zlib from 'zlib'
 
 import { PageStatsNames, parseRtStatKey, RtcStatsMetricNames } from './rtcstats'
 import { Session } from './session'
-import { hideAuth, logger, Scheduler } from './utils'
+import { hideAuth, logger, Scheduler, toPrecision } from './utils'
 
 export { FastStats }
 
@@ -72,17 +72,6 @@ function formatStatsColumns(column: string): string[] {
     `${column}_min`,
     `${column}_max`,
   ]
-}
-
-/**
- * Format number to the specified precision.
- * @param value value to format
- * @param precision precision
- */
-function toPrecision(value: number, precision = 3): string {
-  return (Math.round(value * 10 ** precision) / 10 ** precision).toFixed(
-    precision,
-  )
 }
 
 /** The Stats data collected for each metric. */

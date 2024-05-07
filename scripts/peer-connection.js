@@ -219,3 +219,31 @@ window.RTCRtpSender.getCapabilities = kind => {
   log(`RTCRtpSender getCapabilities custom:`, capabilities)
   return capabilities
 }
+
+async function saveTransceiversTracks(direction, kind, enableDelay = 0) {
+  for (const pc of PeerConnections.values()) {
+    const tranceivers = pc
+      .getTransceivers()
+      .filter(
+        t =>
+          t[direction]?.track?.kind === kind &&
+          t[direction]?.track?.label !== 'probator',
+      )
+    for (const tranceiver of tranceivers) {
+      await saveMediaTrack(
+        tranceiver[direction].track,
+        direction === 'sender' ? 'send' : 'recv',
+        enableDelay,
+      )
+    }
+  }
+}
+
+window.saveSendAudioTracks = enableDelay =>
+  saveTransceiversTracks('sender', 'audio', enableDelay)
+window.saveSendVideoTracks = enableDelay =>
+  saveTransceiversTracks('sender', 'video', enableDelay)
+window.saveRecvAudioTracks = enableDelay =>
+  saveTransceiversTracks('receiver', 'audio', enableDelay)
+window.saveRecvVideoTracks = enableDelay =>
+  saveTransceiversTracks('receiver', 'video', enableDelay)

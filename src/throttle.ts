@@ -1,7 +1,7 @@
 import JSON5 from 'json5'
 import os from 'os'
 
-import { logger, runShellCommand } from './utils'
+import { logger, runShellCommand, toPrecision } from './utils'
 
 const log = logger('webrtcperf:throttle')
 
@@ -180,9 +180,9 @@ sudo -n tc filter add dev ${device} \
         if (lossBurst && lossBurst > 0) {
           const p = (100 * loss) / (lossBurst * (100 - loss))
           const r = 100 / lossBurst
-          lossDesc = ` loss gemodel ${Math.round(p)} ${Math.round(r)}`
+          lossDesc = ` loss gemodel ${toPrecision(p, 2)} ${toPrecision(r, 2)}`
         } else {
-          lossDesc = ` loss ${Math.round(loss)}%`
+          lossDesc = ` loss ${toPrecision(loss, 2)}%`
         }
       }
 
