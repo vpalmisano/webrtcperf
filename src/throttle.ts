@@ -15,6 +15,7 @@ const throttleCurrentValues = {
     {
       rate?: number
       delay?: number
+      delayJitter?: number
       loss?: number
       lossBurst?: number
       queue?: number
@@ -25,6 +26,7 @@ const throttleCurrentValues = {
     {
       rate?: number
       delay?: number
+      delayJitter?: number
       loss?: number
       lossBurst?: number
       queue?: number
@@ -75,6 +77,8 @@ export type ThrottleRule = {
   rate?: number
   /** The one-way delay (ms). */
   delay?: number
+  /** The one-way delay jitter (ms). */
+  delayJitter?: number
   /** The packet loss percentage. */
   loss?: number
   /** The packet loss burst. */
@@ -135,7 +139,7 @@ async function applyRules(
   })
 
   for (const [i, rule] of rules.entries()) {
-    const { rate, delay, loss, lossBurst, queue, at } = rule
+    const { rate, delay, delayJitter, loss, lossBurst, queue, at } = rule
     const limit = queue ?? calculateBufferedPackets(rate || 0, delay || 0)
     const mark = index + 1
     const handle = index + 2
@@ -175,6 +179,14 @@ sudo -n tc filter add dev ${device} \
     }
 
     const timeoutId = setTimeout(async () => {
+      let delayDesc = ''
+      if (delay && delay > 0) {
+        delayDesc = ` delay ${delay}ms`
+        if (delayJitter && delayJitter > 0) {
+          delayDesc += ` ${delayJitter}ms`
+        }
+      }
+
       let lossDesc = ''
       if (loss && loss > 0) {
         if (lossBurst && lossBurst > 0) {
@@ -188,7 +200,7 @@ sudo -n tc filter add dev ${device} \
 
       const desc = `\
 ${rate && rate > 0 ? `rate ${rate}kbit` : ''}\
-${delay && delay >= 0 ? ` delay ${delay}ms` : ''}\
+${delayDesc}\
 ${lossDesc}\
 ${limit && limit >= 0 ? ` limit ${limit}` : ''}`
 
