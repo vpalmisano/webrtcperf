@@ -1,23 +1,13 @@
 /* global log, MeasuredStats, stringToBinary */
 
 /**
- * Video end-to-end delay stats.
- * @type MeasuredStats
- */
-const videoEndToEndDelayStats = (window.videoEndToEndDelayStats =
-  new MeasuredStats(30))
-
-/**
  * Video end-to-end network delay stats.
  * @type MeasuredStats
  */
 const videoEndToEndNetworkDelayStats = new MeasuredStats(30)
 
-window.collectVideoEndToEndDelayStats = () => {
-  return {
-    videoEndToEndDelay: videoEndToEndDelayStats.mean(),
-    videoEndToEndNetworkDelay: videoEndToEndNetworkDelayStats.mean(),
-  }
+window.collectVideoEndToEndNetworkDelayStats = () => {
+  return videoEndToEndNetworkDelayStats.mean()
 }
 
 // eslint-disable-next-line no-unused-vars

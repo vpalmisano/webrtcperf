@@ -55,10 +55,8 @@ declare global {
     signalingHost?: string
     participantName?: string
   }>
-  let collectVideoEndToEndDelayStats: () => {
-    videoEndToEndDelay: number
-    videoEndToEndNetworkDelay: number
-  }
+  let collectVideoEndToEndDelayStats: () => number
+  let collectVideoEndToEndNetworkDelayStats: () => number
   let collectHttpResourcesStats: () => {
     recvBytes: number
     recvBitrate: number
@@ -919,7 +917,8 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       `scripts/peer-connection${
         process.env.EXTERNAL_PEER_CONNECTION === 'true' ? '-external' : ''
       }.js`,
-      'scripts/end-to-end-stats.js',
+      'scripts/e2e-network-stats.js',
+      'scripts/e2e-video-stats.js',
       'scripts/playout-delay-hint.js',
       'scripts/page-stats.js',
       'scripts/save-tracks.js',
@@ -1494,12 +1493,17 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     for (const [pageIndex, page] of this.pages.entries()) {
       try {
         // Collect stats from page.
-        const { peerConnectionStats, videoEndToEndStats, httpResourcesStats } =
-          await page.evaluate(async () => ({
-            peerConnectionStats: await collectPeerConnectionStats(),
-            videoEndToEndStats: collectVideoEndToEndDelayStats(),
-            httpResourcesStats: collectHttpResourcesStats(),
-          }))
+        const {
+          peerConnectionStats,
+          videoEndToEndDelay,
+          videoEndToEndNetworkDelay,
+          httpResourcesStats,
+        } = await page.evaluate(async () => ({
+          peerConnectionStats: await collectPeerConnectionStats(),
+          videoEndToEndDelay: collectVideoEndToEndDelayStats(),
+          videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
+          httpResourcesStats: collectHttpResourcesStats(),
+        }))
         const { participantName } = peerConnectionStats
 
         // Get host from the first collected remote address.
@@ -1538,10 +1542,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         peerConnections[hostKey] += activePeerConnections
 
         // E2E stats.
-        if (videoEndToEndStats) {
-          const { videoEndToEndDelay, videoEndToEndNetworkDelay } =
-            videoEndToEndStats
+        if (videoEndToEndDelay) {
           videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
+        }
+        if (videoEndToEndNetworkDelay) {
           videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
         }
 

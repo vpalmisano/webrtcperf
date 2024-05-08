@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, videoEndToEndDelayStats, saveMediaTrack, enabledForSession */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeTimestampWatermark, saveMediaTrack, enabledForSession */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -151,12 +151,7 @@ window.RTCPeerConnection = function (conf, options) {
       }
       if (receiver.track.kind === 'video') {
         if (enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
-          window.recognizeTimestampWatermark(
-            receiver.track,
-            ({ timestamp, delay }) => {
-              videoEndToEndDelayStats.push(timestamp, delay)
-            },
-          )
+          recognizeTimestampWatermark(receiver.track)
         }
 
         if (enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
