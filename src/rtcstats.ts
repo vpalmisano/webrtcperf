@@ -91,6 +91,8 @@ export enum RtcStatsMetricNames {
   audioSentRoundTripTime = 'audioSentRoundTripTime',
   /** The audio RTC transport round trip time. */
   audioSentTransportRoundTripTime = 'audioSentTransportRoundTripTime',
+  /** The sent audio encoding max bitrate. */
+  audioSentMaxBitrate = 'audioSentMaxBitrate',
 
   /** The sent video codec. */
   videoSentCodec = 'videoSentCodec',
@@ -341,7 +343,7 @@ export function updateRtcStats(
     outboundRtp,
     remoteAddress,
     videoSentActiveEncodings,
-    videoSentMaxBitrate,
+    sentMaxBitrate,
     isDisplay,
     codec,
     availableOutgoingBitrate,
@@ -559,18 +561,18 @@ export function updateRtcStats(
         key,
         availableOutgoingBitrate,
       )
+      setStats(
+        stats,
+        (prefix + 'SentMaxBitrate') as RtcStatsMetricNames,
+        key,
+        sentMaxBitrate,
+      )
       if (outboundRtp.kind === 'video') {
         setStats(
           stats,
           (prefix + 'SentActiveEncodings') as RtcStatsMetricNames,
           key,
           videoSentActiveEncodings,
-        )
-        setStats(
-          stats,
-          (prefix + 'SentMaxBitrate') as RtcStatsMetricNames,
-          key,
-          videoSentMaxBitrate,
         )
         setStats(
           stats,

@@ -110,11 +110,13 @@ async function getPeerConnectionStats(
         if (track.kind === 'video') {
           values.isDisplay = isSenderDisplayTrack(track)
           values.videoSentActiveEncodings = encodings.length
-          values.videoSentMaxBitrate = encodings.reduce((prev, encoding) => {
-            prev += encoding.maxBitrate || 0
-            return prev
-          }, 0)
         }
+        values.sentMaxBitrate = encodings.length
+          ? encodings.reduce((prev, encoding) => {
+              prev += encoding.maxBitrate || 0
+              return prev
+            }, 0)
+          : undefined
         for (const s of stats.values()) {
           if (raw) {
             if (!values.raw) {
