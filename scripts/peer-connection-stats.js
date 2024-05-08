@@ -437,6 +437,7 @@ async function getPeerConnectionStats(
               values.inboundRtp.framesPerSecond = calculateRate(
                 frames,
                 now - prevStats.t,
+                values.inboundRtp.framesReceived !== 0 ? 0 : undefined,
               )
             }
             // Update packet loss rate.
