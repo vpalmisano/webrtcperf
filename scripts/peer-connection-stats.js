@@ -372,6 +372,7 @@ async function getPeerConnectionStats(
               concealmentEvents,
               insertedSamplesForDeceleration,
               removedSamplesForAcceleration,
+              keyFramesDecoded,
             } = s
             Object.assign(values.inboundRtp, {
               kind,
@@ -402,6 +403,7 @@ async function getPeerConnectionStats(
               concealmentEvents,
               insertedSamplesForDeceleration,
               removedSamplesForAcceleration,
+              keyFramesDecoded,
             })
           } else if (s.type === 'remote-candidate') {
             values.remoteAddress = s.address
@@ -431,7 +433,7 @@ async function getPeerConnectionStats(
             // Update video framesPerSecond.
             if (
               values.inboundRtp.kind === 'video' &&
-              values.inboundRtp.decoderImplementation !== 'NullVideoDecoder'
+              values.inboundRtp.keyFramesDecoded > 0
             ) {
               const frames = positiveDiff(
                 values.inboundRtp.framesReceived,

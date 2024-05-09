@@ -448,10 +448,7 @@ export function updateRtcStats(
           )
         })
       }
-      if (
-        inboundRtp.kind === 'video' &&
-        inboundRtp.decoderImplementation !== 'unknown'
-      ) {
+      if (inboundRtp.kind === 'video' && inboundRtp.keyFramesDecoded > 0) {
         //setStats(stats, prefix + 'FramesDecoded', key, inboundRtp.framesDecoded
         setStats(
           stats,
