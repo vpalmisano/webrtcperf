@@ -429,7 +429,10 @@ async function getPeerConnectionStats(
               now - prevStats.t,
             )
             // Update video framesPerSecond.
-            if (values.inboundRtp.kind === 'video') {
+            if (
+              values.inboundRtp.kind === 'video' &&
+              values.inboundRtp.decoderImplementation !== 'NullVideoDecoder'
+            ) {
               const frames = positiveDiff(
                 values.inboundRtp.framesReceived,
                 prevStats.values.inboundRtp.framesReceived,
@@ -437,7 +440,6 @@ async function getPeerConnectionStats(
               values.inboundRtp.framesPerSecond = calculateRate(
                 frames,
                 now - prevStats.t,
-                values.inboundRtp.frameWidth > 0 ? 0 : undefined,
               )
             }
             // Update packet loss rate.
