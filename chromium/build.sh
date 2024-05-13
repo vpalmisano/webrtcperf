@@ -6,7 +6,7 @@ export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
 export PATH="$PATH:${BUILDDIR}/depot_tools"
 
-export DEFAULT_BRANCH="tags/123.0.6264.0"
+export DEFAULT_BRANCH="tags/125.0.6397.1"
 
 function setup() {
     which gperf || sudo apt install -y gperf
@@ -87,6 +87,9 @@ function remove_patch() {
 function update() {
     local branch=${1:-${DEFAULT_BRANCH}}
     remove_patch
+    cd ${BUILDDIR}/depot_tools
+    git checkout main
+    git pull
     cd ${CHROMIUM_SRC}
     git checkout main
     git pull
