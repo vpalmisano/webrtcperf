@@ -4,7 +4,7 @@
  * Video end-to-end network delay stats.
  * @type MeasuredStats
  */
-const videoEndToEndNetworkDelayStats = new MeasuredStats(30)
+const videoEndToEndNetworkDelayStats = new MeasuredStats({ ttl: 30 })
 
 window.collectVideoEndToEndNetworkDelayStats = () => {
   return videoEndToEndNetworkDelayStats.mean()

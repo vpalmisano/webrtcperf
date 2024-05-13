@@ -5,7 +5,7 @@
  * @type MeasuredStats
  */
 const videoEndToEndDelayStats = (window.videoEndToEndDelayStats =
-  new MeasuredStats(30))
+  new MeasuredStats({ ttl: 30 }))
 
 window.collectVideoEndToEndDelayStats = () => {
   return videoEndToEndDelayStats.mean()

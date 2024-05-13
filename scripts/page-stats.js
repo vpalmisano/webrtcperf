@@ -1,8 +1,8 @@
 /* global MeasuredStats */
 
 // Page performance
-const httpBitrateStats = new MeasuredStats(60)
-const httpLatencyStats = new MeasuredStats(60)
+const httpBitrateStats = new MeasuredStats({ ttl: 60 })
+const httpLatencyStats = new MeasuredStats({ ttl: 60 })
 
 const httpResourcesStats = {
   recvBytes: 0,
