@@ -943,14 +943,23 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           if (!filePath.trim()) {
             continue
           }
-          if (!fs.existsSync(filePath)) {
-            log.warn(`custom script not found: ${filePath}`)
-            continue
+          if (filePath.startsWith('http')) {
+            log.debug(`loading custom script from url: ${filePath}`)
+            const res = await downloadUrl(filePath)
+            if (!res?.data) {
+              throw new Error(`Failed to download script from: ${filePath}`)
+            }
+            await page.evaluateOnNewDocument(res.data)
+          } else {
+            if (!fs.existsSync(filePath)) {
+              log.warn(`custom script not found: ${filePath}`)
+              continue
+            }
+            log.debug(`loading custom script from file: ${filePath}`)
+            await page.evaluateOnNewDocument(
+              await fs.readFileSync(filePath, 'utf8'),
+            )
           }
-          log.debug(`loading custom script: ${filePath}`)
-          await page.evaluateOnNewDocument(
-            await fs.readFileSync(filePath, 'utf8'),
-          )
         }
       }
     }
