@@ -543,17 +543,16 @@ export class Session extends EventEmitter {
     // 'AutomaticTabDiscarding/Disabled',
     // 'WebRTC-Vp9DependencyDescriptor/Enabled',
     // 'WebRTC-DependencyDescriptorAdvertised/Enabled',
-    const fieldTrials = (this.chromiumFieldTrials || '')
-      .split(',')
-      .filter(s => !!s)
+    let fieldTrials = this.chromiumFieldTrials || ''
     /* if (this.audioRedForOpus) {
       fieldTrials.push('WebRTC-Audio-Red-For-Opus/Enabled')
     } */
     if (this.maxVideoDecoders !== -1 && this.id >= this.maxVideoDecodersAt) {
-      fieldTrials.push(`WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}`)
+      fieldTrials =
+        `WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}/` + fieldTrials
     }
     if (fieldTrials.length) {
-      args.push(`--force-fieldtrials=${fieldTrials.join('/')}`)
+      args.push(`--force-fieldtrials=${fieldTrials}`)
     }
 
     if (this.videoPath) {

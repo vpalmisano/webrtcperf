@@ -229,7 +229,7 @@ chromium process.`,
     arg: 'chromium-url',
   },
   chromiumFieldTrials: {
-    doc: `Chromium additional field trials (comma-separated).`,
+    doc: `Chromium additional field trials.`,
     format: String,
     nullable: true,
     default: '',
