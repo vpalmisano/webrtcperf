@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeTimestampWatermark, saveMediaTrack, enabledForSession */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeTimestampWatermark, saveMediaTrack, enabledForSession, watchObjectProperty */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -115,6 +115,32 @@ window.RTCPeerConnection = function (conf, options) {
 
         checkSaveStream(transceiver)
       }
+    }
+
+    if (transceiver.receiver) {
+      watchObjectProperty(
+        transceiver.receiver,
+        'playoutDelayHint',
+        (value, oldValue) => {
+          log(
+            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} playoutDelayHint`,
+            {
+              value,
+              oldValue,
+            },
+          )
+        },
+      )
+      watchObjectProperty(
+        transceiver.receiver,
+        'jitterBufferTarget',
+        (value, oldValue) => {
+          log(
+            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} jitterBufferTarget`,
+            { value, oldValue },
+          )
+        },
+      )
     }
 
     if (encodedInsertableStreams && timestampInsertableStreams) {
