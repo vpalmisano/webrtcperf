@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { exec, spawn } from 'child_process'
+import { spawn } from 'child_process'
 import { createHash } from 'crypto'
 import * as dns from 'dns'
 import FormData from 'form-data'
@@ -644,14 +644,26 @@ export async function runShellCommand(
 ): Promise<{ stdout: string; stderr: string }> {
   if (verbose) log.debug(`runShellCommand cmd: ${cmd}`)
   return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        reject(error)
-        return
+    const p = spawn(cmd, { shell: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    let stdout = ''
+    let stderr = ''
+    p.stdout.on('data', data => {
+      stdout += data
+    })
+    p.stderr.on('data', data => {
+      stderr += data
+    })
+    p.once('error', err => reject(err))
+    p.once('close', code => {
+      if (code !== 0) {
+        reject(
+          new Error(`runShellCommand cmd: ${cmd} failed with code ${code}`),
+        )
+      } else {
+        if (verbose)
+          log.debug(`runShellCommand cmd: ${cmd} done`, { stdout, stderr })
+        resolve({ stdout, stderr })
       }
-      if (verbose)
-        log.debug(`runShellCommand cmd: ${cmd} done`, { stdout, stderr })
-      resolve({ stdout, stderr })
     })
   })
 }

@@ -1344,12 +1344,12 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       })
     }
 
-    page.on('workercreated', worker =>
+    /* page.on('workercreated', worker =>
       log.debug(`Worker created: ${worker.url()}`),
     )
     page.on('workerdestroyed', worker =>
       log.debug(`Worker created: ${worker.url()}`),
-    )
+    ) */
 
     // open the page url
     try {
