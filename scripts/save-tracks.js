@@ -16,7 +16,7 @@ function createWorker(fn) {
   return new Worker(url)
 }
 
-const saveFileWorker = createWorker(() => {
+const saveFileWorkerFn = () => {
   const log = (...args) => {
     console.log.apply(null, ['[webrtcperf-savefileworker]', ...args])
   }
@@ -155,17 +155,24 @@ const saveFileWorker = createWorker(() => {
       readable.pipeTo(writableStream)
     }
   }
-})
+}
 
+let saveFileWorker = null
 const savingTracks = {
   audio: new Set(),
   video: new Set(),
 }
 
-saveFileWorker.onmessage = event => {
-  const { name, error, kind, id } = event.data
-  log(`saveFileWorker name=${name} kind=${kind} id=${id} error=${error}`)
-  savingTracks[kind].delete(id)
+const getSaveFileWorker = () => {
+  if (!saveFileWorker) {
+    saveFileWorker = createWorker(saveFileWorkerFn)
+    saveFileWorker.onmessage = event => {
+      const { name, error, kind, id } = event.data
+      log(`saveFileWorker name=${name} kind=${kind} id=${id} error=${error}`)
+      savingTracks[kind].delete(id)
+    }
+  }
+  return saveFileWorker
 }
 
 window.saveMediaTrack = async (
@@ -198,7 +205,7 @@ window.saveMediaTrack = async (
   const { readable } = new window.MediaStreamTrackProcessor({ track })
 
   log(`saveMediaTrack ${filename}`)
-  saveFileWorker.postMessage(
+  getSaveFileWorker().postMessage(
     {
       id,
       url,

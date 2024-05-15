@@ -119,7 +119,7 @@ export type SessionParams = {
   videoHeight: number
   videoFramerate: number
   enableGpu: string
-  enableBrowserLogging: boolean
+  enableBrowserLogging: string
   startTimestamp: number
   sessions: number
   tabsPerSession: number
@@ -187,7 +187,7 @@ export class Session extends EventEmitter {
   private readonly videoHeight: number
   private readonly videoFramerate: number
   private readonly enableGpu: string
-  private readonly enableBrowserLogging: boolean
+  private readonly enableBrowserLogging: string
   private readonly startTimestamp: number
   private readonly sessions: number
   private readonly tabsPerSession: number
@@ -585,7 +585,7 @@ export class Session extends EventEmitter {
     }
 
     if (this.enableBrowserLogging) {
-      args = args.concat(['--enable-logging=stderr', '--vmodule=*/webrtc/*=1'])
+      args = args.concat(['--enable-logging=stderr', this.enableBrowserLogging])
     }
 
     return args
@@ -686,7 +686,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           executablePath,
           handleSIGINT: false,
           env,
-          dumpio: this.enableBrowserLogging,
+          dumpio: !!this.enableBrowserLogging,
           // devtools: true,
           ignoreHTTPSErrors: true,
           defaultViewport: {
