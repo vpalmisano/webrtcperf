@@ -6,9 +6,10 @@ import FormData from 'form-data'
 import fs, { createWriteStream, WriteStream } from 'fs'
 import { Agent } from 'https'
 import * as ipaddrJs from 'ipaddr.js'
+import net from 'net'
 import NodeCache from 'node-cache'
 import * as OSUtils from 'node-os-utils'
-import os from 'os'
+import os, { networkInterfaces } from 'os'
 import path, { dirname } from 'path'
 import pidtree from 'pidtree'
 import pidusage from 'pidusage'
@@ -1007,4 +1008,54 @@ export function toPrecision(value: number, precision = 3): string {
   return (Math.round(value * 10 ** precision) / 10 ** precision).toFixed(
     precision,
   )
+}
+
+export async function getDefaultNetworkInterface(): Promise<string> {
+  const { stdout } = await runShellCommand(
+    `ip route | awk '/default/ {print $5; exit}' | tr -d ''`,
+  )
+  return stdout.trim()
+}
+
+export async function portForwarder(port: number, listenInterface?: string) {
+  if (!listenInterface) {
+    listenInterface = await getDefaultNetworkInterface()
+  }
+  const controller = new AbortController()
+  Object.entries(networkInterfaces()).forEach(([iface, nets]) => {
+    if (listenInterface !== '0.0.0.0' && iface !== listenInterface) return
+    if (!nets) return
+    for (const n of nets) {
+      if (n.internal || n.address === '127.0.0.1' || n.family !== 'IPv4') {
+        continue
+      }
+      const msg = `portForwarder on ${iface} (${n.address}:${port})`
+      const server = net
+        .createServer(from => {
+          const to = net.createConnection({ host: '127.0.0.1', port })
+          from.once('error', err => {
+            log.error(`${msg} error: ${(err as Error).stack}`)
+            to.destroy()
+          })
+          to.once('error', err => {
+            log.error(`${msg} error: ${(err as Error).stack}`)
+            from.destroy()
+          })
+          from.pipe(to)
+          to.pipe(from)
+        })
+        .listen({ port, host: n.address, signal: controller.signal })
+      server.on('listening', () => {
+        log.debug(`${msg} listening`)
+      })
+      server.once('error', err => {
+        log.error(`${msg} error: ${(err as Error).stack}`)
+      })
+    }
+  })
+
+  return () => {
+    log.debug(`portForwarder on port ${port} stop`)
+    controller.abort()
+  }
 }

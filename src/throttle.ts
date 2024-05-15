@@ -1,7 +1,12 @@
 import JSON5 from 'json5'
 import os from 'os'
 
-import { logger, runShellCommand, toPrecision } from './utils'
+import {
+  getDefaultNetworkInterface,
+  logger,
+  runShellCommand,
+  toPrecision,
+} from './utils'
 
 const log = logger('webrtcperf:throttle')
 
@@ -35,13 +40,6 @@ const throttleCurrentValues = {
   >(),
 }
 
-async function getDefaultInterface(): Promise<string> {
-  const { stdout } = await runShellCommand(
-    `ip route | awk '/default/ {print $5; exit}' | tr -d ''`,
-  )
-  return stdout.trim()
-}
-
 async function cleanup(): Promise<void> {
   ruleTimeouts.forEach(timeoutId => clearTimeout(timeoutId))
   ruleTimeouts.clear()
@@ -49,7 +47,7 @@ async function cleanup(): Promise<void> {
   throttleCurrentValues.down.clear()
   let device = throttleConfig?.length ? throttleConfig[0].device : ''
   if (!device) {
-    device = await getDefaultInterface()
+    device = await getDefaultNetworkInterface()
   }
   await runShellCommand(`\
 sudo -n tc qdisc del dev ${device} root || true;
@@ -253,7 +251,7 @@ async function start(): Promise<void> {
 
   let device = throttleConfig[0].device
   if (!device) {
-    device = await getDefaultInterface()
+    device = await getDefaultNetworkInterface()
   }
 
   await runShellCommand(

@@ -525,8 +525,7 @@ will listen on the provided port + the start-session-id value.`,
     arg: 'debugging-port',
   },
   debuggingAddress: {
-    doc: `The chrome debugging listen address. Valid only if \`debugging-port\` \
-is provided.`,
+    doc: `The chrome debugging listening address. If unset, the network default interface address will be used.`,
     format: String,
     nullable: true,
     default: '127.0.0.1',

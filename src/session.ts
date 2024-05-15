@@ -31,6 +31,7 @@ import {
   logger,
   PeerConnectionExternal,
   PeerConnectionExternalMethod,
+  portForwarder,
   resolveIP,
   resolvePackagePath,
   sha256,
@@ -238,6 +239,7 @@ export class Session extends EventEmitter {
   private running = false
   private browser?: Browser
   private context?: BrowserContext
+  private stopPortForwarder?: () => void
 
   /** The numeric id assigned to the session. */
   readonly id: number
@@ -359,7 +361,7 @@ export class Session extends EventEmitter {
     this.windowHeight = windowHeight || 1080
     this.deviceScaleFactor = deviceScaleFactor || 1
     this.debuggingPort = debuggingPort || 0
-    this.debuggingAddress = debuggingAddress || '127.0.0.1'
+    this.debuggingAddress = debuggingAddress || ''
     this.display = display
     /* this.audioRedForOpus = !!audioRedForOpus */
     this.url = url
@@ -536,7 +538,6 @@ export class Session extends EventEmitter {
       `--remote-debugging-port=${
         this.debuggingPort ? this.debuggingPort + this.id : 0
       }`,
-      `--remote-debugging-address=${this.debuggingAddress}`,
     ]
 
     // 'WebRTC-VP8ConferenceTemporalLayers/2',
@@ -680,7 +681,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
 
       try {
         // log.debug('defaultArgs:', puppeteer.defaultArgs());
-        this.browser = (await puppeteer.launch({
+        this.browser = await puppeteer.launch({
           headless: this.display ? false : 'new',
           executablePath,
           handleSIGINT: false,
@@ -698,7 +699,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           },
           ignoreDefaultArgs,
           args,
-        })) as Browser
+        })
         // const version = await this.browser.version();
         // console.log(`[session ${this.id}] Using chrome version: ${version}`);
       } catch (err) {
@@ -710,6 +711,14 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
     }
 
     assert(this.browser, 'BrowserNotCreated')
+
+    if (this.debuggingPort && this.debuggingAddress !== '127.0.0.1') {
+      this.stopPortForwarder = await portForwarder(
+        this.debuggingPort + this.id,
+        this.debuggingAddress,
+      )
+    }
+
     this.browser.once('disconnected', () => {
       log.warn('browser disconnected')
       return this.stop()
@@ -1708,6 +1717,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     }
     this.running = false
     log.info(`${this.id} stop`)
+
+    if (this.stopPortForwarder) {
+      this.stopPortForwarder()
+    }
 
     if (this.browser) {
       // close the opened tabs
