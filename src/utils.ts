@@ -648,9 +648,11 @@ export async function runShellCommand(
     let stdout = ''
     let stderr = ''
     p.stdout.on('data', data => {
+      if (stdout.length > 10 * 1024) return
       stdout += data
     })
     p.stderr.on('data', data => {
+      if (stderr.length > 10 * 1024) return
       stderr += data
     })
     p.once('error', err => reject(err))
