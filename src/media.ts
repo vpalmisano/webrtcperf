@@ -1,6 +1,6 @@
 import { existsSync, promises } from 'fs'
 
-import { logger, md5, runShellCommand } from './utils'
+import { logger, runShellCommand, sha256 } from './utils'
 
 const log = logger('webrtcperf:media')
 
@@ -67,7 +67,7 @@ export async function prepareFakeMedia({
   }
 
   await promises.mkdir(videoCachePath, { recursive: true })
-  const name = md5(videoPath)
+  const name = sha256(videoPath)
 
   const destVideoPath = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.${videoFormat}`
   const destAudioPath = `${videoCachePath}/${name}.wav`

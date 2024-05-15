@@ -29,11 +29,11 @@ import {
   getSystemStats,
   hideAuth,
   logger,
-  md5,
   PeerConnectionExternal,
   PeerConnectionExternalMethod,
   resolveIP,
   resolvePackagePath,
+  sha256,
   sleep,
 } from './utils'
 
@@ -1227,7 +1227,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     await page.exposeFunction(
       'uploadFileFromUrl',
       async (fileUrl: string, selector: string) => {
-        const filename = md5(fileUrl) + '.' + fileUrl.split('.').slice(-1)[0]
+        const filename = sha256(fileUrl) + '.' + fileUrl.split('.').slice(-1)[0]
         const filePath = path.join(
           os.homedir(),
           '.webrtcperf/uploads',

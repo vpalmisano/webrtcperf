@@ -93,11 +93,11 @@ export function resolvePackagePath(relativePath: string): string {
 }
 
 /**
- * Calculates the md5 sum.
+ * Calculates the sha256 sum.
  * @param data The string input
  */
-export function md5(data: string): string {
-  return createHash('md5').update(data).digest('hex')
+export function sha256(data: string): string {
+  return createHash('sha256').update(data).digest('hex')
 }
 
 const ProcessStatsCache = new NodeCache({ stdTTL: 5, checkperiod: 10 })
