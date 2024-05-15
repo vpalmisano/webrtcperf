@@ -109,7 +109,7 @@ window.RTCPeerConnection = function (conf, options) {
         log(`RTCPeerConnection-${id} transceiver.replaceTrack`, track)
         await replaceTrackNative(track)
 
-        if (encodedInsertableStreams) {
+        if (encodedInsertableStreams && timestampInsertableStreams) {
           handleTransceiverForInsertableStreams(id, transceiver)
         }
 
@@ -117,7 +117,7 @@ window.RTCPeerConnection = function (conf, options) {
       }
     }
 
-    if (encodedInsertableStreams) {
+    if (encodedInsertableStreams && timestampInsertableStreams) {
       handleTransceiverForInsertableStreams(id, transceiver)
     }
 
@@ -131,7 +131,7 @@ window.RTCPeerConnection = function (conf, options) {
     addStreamNative(...args)
     for (const transceiver of pc.getTransceivers()) {
       if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
-        if (encodedInsertableStreams) {
+        if (encodedInsertableStreams && timestampInsertableStreams) {
           handleTransceiverForInsertableStreams(id, transceiver)
         }
         handleTransceiverForPlayoutDelayHint(id, transceiver, 'addStream')
@@ -142,11 +142,10 @@ window.RTCPeerConnection = function (conf, options) {
   }
 
   pc.addEventListener('track', async event => {
-    //log(`RTCPeerConnection-${id} track`)
     const { receiver, transceiver } = event
     if (receiver?.track) {
       log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
-      if (encodedInsertableStreams) {
+      if (encodedInsertableStreams && timestampInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
       if (receiver.track.kind === 'video') {
