@@ -219,7 +219,7 @@ ${delayDesc}\
 ${lossDesc}\
 ${limit && limit >= 0 ? ` limit ${limit}` : ''}`
 
-      log.info(`applying rules on ${device} (${mark}): ${desc}`)
+      log.debug(`applying rules on ${device} (${mark}): ${desc}`)
       const cmd = `\
 sudo -n tc qdisc change dev ${device} \
   parent 1:${handle} \

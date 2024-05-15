@@ -20,7 +20,7 @@ import { Session } from './session'
 const ps = require('pidusage/lib/ps')
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const debugLevel = require('debug-level')
+const { Log } = require('debug-level')
 
 type Logger = {
   error: (...args: unknown[]) => void
@@ -31,7 +31,7 @@ type Logger = {
 }
 
 export function logger(name: string): Logger {
-  return debugLevel(name)
+  return new Log(name)
 }
 
 export class LoggerInterface {

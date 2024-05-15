@@ -2549,10 +2549,10 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-debug-level@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/debug-level/-/debug-level-2.1.2.tgz#1ca0491e7461ed361b6733ae7115f22f0185ea87"
-  integrity sha512-heU83emvzbi2LtJwIF+m/dRB0l3kg6gsKeTtA1hfn2+GXKQ15I8wgwvoqCJ9hYJUuia1bH3zwcWJReSGDhRlgQ==
+debug-level@^3.1.4:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/debug-level/-/debug-level-3.1.4.tgz#aa239f9e44ba04e96d920874bb4eb7137c60565f"
+  integrity sha512-Pmz7v3262EV2Hv64P1AHkLv8GTh2aKDUnvAeqavCdwRy0bcLW1lAB2GnqLpTXkNZZAAvDAC+eOY7810LxiyTeg==
   dependencies:
     asyncc "^2.0.6"
     chalk "^4.1.2"
@@ -2560,7 +2560,7 @@ debug-level@^2.1.2:
     flatstr "^1.0.12"
     map-lru "^2.0.0"
     ms "^2.1.3"
-    sonic-boom "^2.3.0"
+    sonic-boom "^3.8.0"
   optionalDependencies:
     debug "^4.3.1"
 
@@ -7346,10 +7346,10 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-sonic-boom@^2.3.0:
-  version "2.8.0"
-  resolved "https://registry.yarnpkg.com/sonic-boom/-/sonic-boom-2.8.0.tgz#c1def62a77425090e6ad7516aad8eb402e047611"
-  integrity sha512-kuonw1YOYYNOve5iHdSahXPOK49GqwA+LZhI6Wz/l0rP57iKyXXIHaRagOBHAPmGwJC6od2Z9zgvZ5loSgMlVg==
+sonic-boom@^3.8.0:
+  version "3.8.1"
+  resolved "https://registry.yarnpkg.com/sonic-boom/-/sonic-boom-3.8.1.tgz#d5ba8c4e26d6176c9a1d14d549d9ff579a163422"
+  integrity sha512-y4Z8LCDBuum+PBP3lSV7RHrXscqksve/bi0as7mhwVnBW+/wUqKT/2Kb7um8yqcFy0duYbbPxzt89Zy2nOCaxg==
   dependencies:
     atomic-sleep "^1.0.0"
 
