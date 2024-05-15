@@ -190,56 +190,59 @@ sudo -n tc filter add dev ${device} \
       }
     }
 
-    const timeoutId = setTimeout(async () => {
-      let delayDesc = ''
-      if (delay && delay > 0) {
-        delayDesc = ` delay ${delay}ms`
-        if (delayJitter && delayJitter > 0) {
-          delayDesc += ` ${delayJitter}ms`
-          if (delayJitterCorrelation && delayJitterCorrelation > 0) {
-            delayDesc += ` ${delayJitterCorrelation}`
+    const timeoutId = setTimeout(
+      async () => {
+        let delayDesc = ''
+        if (delay && delay > 0) {
+          delayDesc = ` delay ${delay}ms`
+          if (delayJitter && delayJitter > 0) {
+            delayDesc += ` ${delayJitter}ms`
+            if (delayJitterCorrelation && delayJitterCorrelation > 0) {
+              delayDesc += ` ${delayJitterCorrelation}`
+            }
           }
         }
-      }
 
-      let lossDesc = ''
-      if (loss && loss > 0) {
-        if (lossBurst && lossBurst > 0) {
-          const p = (100 * loss) / (lossBurst * (100 - loss))
-          const r = 100 / lossBurst
-          lossDesc = ` loss gemodel ${toPrecision(p, 2)} ${toPrecision(r, 2)}`
-        } else {
-          lossDesc = ` loss ${toPrecision(loss, 2)}%`
+        let lossDesc = ''
+        if (loss && loss > 0) {
+          if (lossBurst && lossBurst > 0) {
+            const p = (100 * loss) / (lossBurst * (100 - loss))
+            const r = 100 / lossBurst
+            lossDesc = ` loss gemodel ${toPrecision(p, 2)} ${toPrecision(r, 2)}`
+          } else {
+            lossDesc = ` loss ${toPrecision(loss, 2)}%`
+          }
         }
-      }
 
-      const desc = `\
+        const desc = `\
 ${rate && rate > 0 ? `rate ${rate}kbit` : ''}\
 ${delayDesc}\
 ${lossDesc}\
 ${limit && limit >= 0 ? ` limit ${limit}` : ''}`
 
-      log.debug(`applying rules on ${device} (${mark}): ${desc}`)
-      const cmd = `\
+        log.debug(`applying rules on ${device} (${mark}): ${desc}`)
+        const cmd = `\
 sudo -n tc qdisc change dev ${device} \
   parent 1:${handle} \
   handle ${handle}: \
   netem ${desc}`
-      try {
-        ruleTimeouts.delete(timeoutId)
+        try {
+          ruleTimeouts.delete(timeoutId)
 
-        await runShellCommand(cmd)
+          await runShellCommand(cmd)
 
-        throttleCurrentValues[direction].set(index, {
-          rate: rate ? 1000 * rate : undefined,
-          delay: delay || undefined,
-          loss: loss || undefined,
-          queue: limit || undefined,
-        })
-      } catch (err) {
-        log.error(`error running "${cmd}": ${(err as Error).stack}`)
-      }
-    }, (at || 0) * 1000)
+          throttleCurrentValues[direction].set(index, {
+            rate: rate ? 1000 * rate : undefined,
+            delay: delay || undefined,
+            loss: loss || undefined,
+            queue: limit || undefined,
+          })
+        } catch (err) {
+          log.error(`error running "${cmd}": ${(err as Error).stack}`)
+        }
+      },
+      (at || 0) * 1000,
+    )
 
     ruleTimeouts.add(timeoutId)
   }
@@ -312,10 +315,12 @@ sudo -n tc filter add dev ${device} \
  * @param config A JSON5 configuration parsed as {@link ThrottleConfig}.
  */
 export async function startThrottle(config: string): Promise<void> {
-  if (os.platform() !== 'linux') return
+  if (os.platform() !== 'linux') {
+    throw new Error('Throttle option is only supported on Linux')
+  }
   try {
     throttleConfig = JSON5.parse(config) as ThrottleConfig[]
-    log.info('Starting throttle with config:', throttleConfig)
+    log.debug('Starting throttle with config:', throttleConfig)
     await cleanup()
     await start()
   } catch (err) {
@@ -331,7 +336,7 @@ export async function startThrottle(config: string): Promise<void> {
 export async function stopThrottle(): Promise<void> {
   if (os.platform() !== 'linux') return
   try {
-    log.info('Stopping throttle')
+    log.debug('Stopping throttle')
     await cleanup()
     throttleConfig = null
   } catch (err) {

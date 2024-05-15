@@ -1252,18 +1252,21 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (this.extraCSS) {
       log.debug(`Add extraCSS: ${this.extraCSS}`)
       try {
-        await page.evaluateOnNewDocument((css: string) => {
-          // eslint-disable-next-line no-undef
-          document.addEventListener('DOMContentLoaded', () => {
+        await page.evaluateOnNewDocument(
+          (css: string) => {
             // eslint-disable-next-line no-undef
-            const style = document.createElement('style')
-            style.setAttribute('id', 'webrtcperf-extra-style')
-            style.setAttribute('type', 'text/css')
-            style.innerHTML = css
-            // eslint-disable-next-line no-undef
-            document.head.appendChild(style)
-          })
-        }, this.extraCSS.replace(/important/g, '!important'))
+            document.addEventListener('DOMContentLoaded', () => {
+              // eslint-disable-next-line no-undef
+              const style = document.createElement('style')
+              style.setAttribute('id', 'webrtcperf-extra-style')
+              style.setAttribute('type', 'text/css')
+              style.innerHTML = css
+              // eslint-disable-next-line no-undef
+              document.head.appendChild(style)
+            })
+          },
+          this.extraCSS.replace(/important/g, '!important'),
+        )
       } catch (err) {
         log.error(`Add extraCSS error: ${(err as Error).stack}`)
       }

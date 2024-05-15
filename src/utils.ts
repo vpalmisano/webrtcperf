@@ -20,7 +20,7 @@ import { Session } from './session'
 const ps = require('pidusage/lib/ps')
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { Log } = require('debug-level')
+export const { Log } = require('debug-level')
 
 type Logger = {
   error: (...args: unknown[]) => void
@@ -821,27 +821,30 @@ export class Scheduler {
       }
     }
     this.last = now
-    this.statsTimeoutId = setTimeout(async () => {
-      try {
-        const now = Date.now()
-        await this.callback(now)
-        const elapsed = Date.now() - now
-        if (elapsed > this.interval) {
-          log.warn(
-            `[${this.name}-scheduler] callback elapsed=${elapsed}ms > ${this.interval}ms`,
+    this.statsTimeoutId = setTimeout(
+      async () => {
+        try {
+          const now = Date.now()
+          await this.callback(now)
+          const elapsed = Date.now() - now
+          if (elapsed > this.interval) {
+            log.warn(
+              `[${this.name}-scheduler] callback elapsed=${elapsed}ms > ${this.interval}ms`,
+            )
+          } else if (this.verbose) {
+            log.debug(`[${this.name}-scheduler] callback elapsed=${elapsed}ms`)
+          }
+        } catch (err) {
+          log.error(
+            `[${this.name}-scheduler] callback error: ${(err as Error).stack}`,
+            err,
           )
-        } else if (this.verbose) {
-          log.debug(`[${this.name}-scheduler] callback elapsed=${elapsed}ms`)
+        } finally {
+          this.scheduleNext()
         }
-      } catch (err) {
-        log.error(
-          `[${this.name}-scheduler] callback error: ${(err as Error).stack}`,
-          err,
-        )
-      } finally {
-        this.scheduleNext()
-      }
-    }, this.interval - this.errorSum / 2)
+      },
+      this.interval - this.errorSum / 2,
+    )
   }
 }
 

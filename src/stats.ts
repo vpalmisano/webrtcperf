@@ -526,15 +526,18 @@ export class Stats extends events.EventEmitter {
   }
 
   private initCollectedStats(): Record<string, CollectedStats> {
-    return this.statsNames.reduce((prev, name: string) => {
-      prev[name] = {
-        all: new FastStats(),
-        byHost: {},
-        byCodec: {},
-        byParticipantAndTrack: {},
-      } as CollectedStats
-      return prev
-    }, {} as Record<string, CollectedStats>)
+    return this.statsNames.reduce(
+      (prev, name: string) => {
+        prev[name] = {
+          all: new FastStats(),
+          byHost: {},
+          byCodec: {},
+          byParticipantAndTrack: {},
+        } as CollectedStats
+        return prev
+      },
+      {} as Record<string, CollectedStats>,
+    )
   }
 
   private get statsNames(): string[] {
@@ -1798,10 +1801,10 @@ export class Stats extends events.EventEmitter {
           failPerc < 5
             ? 'green'
             : failPerc < 25
-            ? 'yellowBright'
-            : failPerc < 50
-            ? 'yellow'
-            : 'red'
+              ? 'yellowBright'
+              : failPerc < 50
+                ? 'yellow'
+                : 'red'
         // eslint-disable-next-line
         out += sprintf(chalk`{${color} {bold %(tag)-${colSize}s %(failPerc)-15s}}\n`, {
             tag,

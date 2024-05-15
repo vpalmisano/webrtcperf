@@ -461,14 +461,17 @@ async function writeGraph(vmafLogPath: string, frameRate = 24) {
 
   const fpath = vmafLogPath.replace('.json', '.png')
 
-  const data = vmafLog.frames.reduce((prev, cur) => {
-    if (cur.frameNum % frameRate === 0) {
-      prev.push({ x: cur.frameNum, y: cur.metrics.vmaf / frameRate })
-    } else {
-      prev[prev.length - 1].y += cur.metrics.vmaf / frameRate
-    }
-    return prev
-  }, [] as { x: number; y: number }[])
+  const data = vmafLog.frames.reduce(
+    (prev, cur) => {
+      if (cur.frameNum % frameRate === 0) {
+        prev.push({ x: cur.frameNum, y: cur.metrics.vmaf / frameRate })
+      } else {
+        prev[prev.length - 1].y += cur.metrics.vmaf / frameRate
+      }
+      return prev
+    },
+    [] as { x: number; y: number }[],
+  )
 
   const chartJSNodeCanvas = new ChartJSNodeCanvas({
     width: 1280,
