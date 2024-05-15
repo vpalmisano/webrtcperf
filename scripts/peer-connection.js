@@ -123,11 +123,7 @@ window.RTCPeerConnection = function (conf, options) {
         'playoutDelayHint',
         (value, oldValue) => {
           log(
-            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} playoutDelayHint`,
-            {
-              value,
-              oldValue,
-            },
+            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} playoutDelayHint ${oldValue} -> ${value}`,
           )
         },
       )
@@ -136,8 +132,7 @@ window.RTCPeerConnection = function (conf, options) {
         'jitterBufferTarget',
         (value, oldValue) => {
           log(
-            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} jitterBufferTarget`,
-            { value, oldValue },
+            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} jitterBufferTarget ${oldValue} -> ${value}`,
           )
         },
       )
