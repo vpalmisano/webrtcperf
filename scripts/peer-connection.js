@@ -145,7 +145,7 @@ window.RTCPeerConnection = function (conf, options) {
     //log(`RTCPeerConnection-${id} track`)
     const { receiver, transceiver } = event
     if (receiver?.track) {
-      //log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
+      log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
       if (encodedInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }

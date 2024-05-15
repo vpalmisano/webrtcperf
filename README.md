@@ -266,14 +266,14 @@ DEBUG_LEVEL=DEBUG:* yarn start \
 ## Using the VMAF calculator
 1. Run the tool adding the following options:
   ```sh
-  --script-params="{timestampWatermarkVideo:true,saveRecvVideoTrack:1}"
+  --script-params="{timestampWatermarkVideo:true,saveSendVideoTrack:'0',saveRecvVideoTrack:'1'}"
   --server-port=5000
   --server-use-https=true
   --server-data=/data
   ```
-  With `saveRecvVideoTrack` you can specify the sessions that will be saved at
-  receiver side (in this example `1` will save all the streams received in the 
-  sessions with index `0` and `1`).
+  With `saveSendVideoTrack` and `saveRecvVideoTrack` you can specify the sessions that will be saved at
+  receiver side (in this example it will save all the streams sent in the 
+  session with index `0` and received in session `1`).
 2. The sent/received videos will be saved in the `/data` directory.
 3. Run the VMAF calculator comparing the sent/received videos:
   ```sh
@@ -283,7 +283,7 @@ DEBUG_LEVEL=DEBUG:* yarn start \
     ghcr.io/vpalmisano/webrtcperf:devel \
     --vmaf-path /data \
   ```
-  The tool will generate a `.vmaf.json` and a `.plotly` files in the `data/vmaf` directory.
+  The tool will generate a `.vmaf.json` and a `.vmaf.png` files in the `data/vmaf` directory.
   Adding the `--vmaf-preview` option, a `.mp4` file containing the side-by-side
   video comparison will be generated.
 
