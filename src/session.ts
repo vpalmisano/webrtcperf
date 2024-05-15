@@ -1413,7 +1413,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       : null
     if (!filter || text.match(filter)) {
       const errorOrWarning = ['error', 'warning'].includes(type)
-      const isWebrtcPerf = text.includes('[webrtcperf]')
+      const isWebrtcPerf = text.startsWith('[webrtcperf')
       if (saveFile) {
         if (!errorOrWarning && !isWebrtcPerf && text.length > 1024) {
           text = text.slice(0, 1024) + `... +${text.length - 1024} bytes`
