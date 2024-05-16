@@ -7,7 +7,6 @@ const handleTransceiverForPlayoutDelayHint = (id, transceiver, event) => {
     return
   }
   if (
-    ['recvonly', 'sendrecv'].includes(transceiver?.direction) &&
     transceiver.receiver &&
     transceiver.receiver.track?.label !== 'probator' &&
     transceiver.receiver.playoutDelayHint !== playoutDelayHint
@@ -32,7 +31,6 @@ window.getPlayoutDelayHint = () => {
   ;[...PeerConnections.entries()].forEach(([id, pc]) => {
     pc.getTransceivers().forEach(
       t =>
-        ['recvonly', 'sendrecv'].includes(t?.direction) &&
         t.receiver &&
         log(
           `${id} ${t.receiver.track?.kind} track: ${t.receiver.track?.label} playoutDelayHint: ${t.receiver.playoutDelayHint}`,
