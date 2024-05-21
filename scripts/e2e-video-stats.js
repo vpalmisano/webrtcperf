@@ -5,7 +5,7 @@
  * @type MeasuredStats
  */
 const videoEndToEndDelayStats = (window.videoEndToEndDelayStats =
-  new MeasuredStats({ ttl: 30 }))
+  new MeasuredStats({ ttl: 15 }))
 
 window.collectVideoEndToEndDelayStats = () => {
   return videoEndToEndDelayStats.mean()
@@ -151,7 +151,7 @@ async function loadTesseract() {
  */
 window.recognizeTimestampWatermark = async (
   videoTrack,
-  measureInterval = 10,
+  measureInterval = 5,
 ) => {
   const { scheduler } = await loadTesseract()
   const canvas = document.createElement('canvas')
