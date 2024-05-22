@@ -193,7 +193,7 @@ window.recognizeVideoTimestampWatermark = async (
               if (cleanText && data.confidence > 70) {
                 const recognizedTimestamp = parseInt(cleanText)
                 const delay = now - recognizedTimestamp
-                if (delay > 0 && delay < 30000) {
+                if (isFinite(delay) && delay > 0 && delay < 30000) {
                   log(
                     `VideoTimestampWatermark text=${cleanText} delay=${delay}ms confidence=${
                       data.confidence

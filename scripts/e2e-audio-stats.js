@@ -127,8 +127,8 @@ window.recognizeAudioTimestampWatermark = track => {
 
   const writableStream = new window.WritableStream(
     {
-      async write(frame) {
-        const { numberOfFrames, sampleRate } = frame
+      async write(/** @type AudioData */ audioFrame) {
+        const { numberOfFrames, sampleRate } = audioFrame
         if (instance === null) {
           const parameters = ggwave.getDefaultParameters()
           parameters.sampleRateInp = sampleRate
@@ -147,7 +147,7 @@ window.recognizeAudioTimestampWatermark = track => {
 
         try {
           const tmp = new Float32Array(numberOfFrames)
-          frame.copyTo(tmp, { planeIndex: 0 })
+          audioFrame.copyTo(tmp, { planeIndex: 0 })
 
           const addedFrames = Math.min(
             numberOfFrames,
@@ -174,7 +174,7 @@ window.recognizeAudioTimestampWatermark = track => {
               log(
                 `AudioTimestampWatermark rx delay: ${delay}ms rxFrames: ${rxFrames} rxFramesDuration: ${rxFramesDuration}ms`,
               )
-              if (isFinite(delay) && delay > 0 && delay < 5000) {
+              if (isFinite(delay) && delay > 0 && delay < 30000) {
                 audioEndToEndDelay.push(now, delay / 1000)
               }
             } catch (e) {
@@ -185,6 +185,8 @@ window.recognizeAudioTimestampWatermark = track => {
           }
         } catch (err) {
           log(`AudioTimestampWatermark error: ${err.message}`)
+        } finally {
+          audioFrame.close()
         }
       },
       close() {
