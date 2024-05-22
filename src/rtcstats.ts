@@ -42,6 +42,9 @@ export enum PageStatsNames {
   /** The page HTTP receive latency. */
   httpRecvLatency = 'httpRecvLatency',
 
+  /** The audio end to end total delay. */
+  audioEndToEndDelay = 'audioEndToEndDelay',
+
   /** The video end to end total delay. */
   videoEndToEndDelay = 'videoEndToEndDelay',
   /**

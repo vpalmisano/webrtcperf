@@ -1,4 +1,4 @@
-/* global log, sleep, applyTimestampWatermark, enabledForSession */
+/* global log, sleep, applyAudioTimestampWatermark, applyVideoTimestampWatermark, enabledForSession */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -165,8 +165,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       log(`collectMediaTracks error:`, err)
     }
 
+    if (enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+      mediaStream = applyAudioTimestampWatermark(mediaStream)
+    }
+
     if (enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
-      mediaStream = applyTimestampWatermark(mediaStream)
+      mediaStream = applyVideoTimestampWatermark(mediaStream)
     }
 
     return mediaStream

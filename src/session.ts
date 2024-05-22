@@ -56,6 +56,7 @@ declare global {
     signalingHost?: string
     participantName?: string
   }>
+  let collectAudioEndToEndDelayStats: () => number
   let collectVideoEndToEndDelayStats: () => number
   let collectVideoEndToEndNetworkDelayStats: () => number
   let collectHttpResourcesStats: () => {
@@ -926,14 +927,28 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         process.env.EXTERNAL_PEER_CONNECTION === 'true' ? '-external' : ''
       }.js`,
       'scripts/e2e-network-stats.js',
+      'https://raw.githubusercontent.com/ggerganov/ggwave/master/bindings/javascript/ggwave.js',
+      'scripts/e2e-audio-stats.js',
       'scripts/e2e-video-stats.js',
       'scripts/playout-delay-hint.js',
       'scripts/page-stats.js',
       'scripts/save-tracks.js',
     ]) {
-      const filePath = resolvePackagePath(name)
-      log.debug(`loading ${name} script from: ${filePath}`)
-      await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
+      if (name.startsWith('http')) {
+        log.debug(`loading ${name} script`)
+        const res = await downloadUrl(name)
+        if (!res?.data) {
+          throw new Error(`Failed to download script from: ${name}`)
+        }
+        await page.evaluateOnNewDocument(res.data)
+      } else {
+        const filePath = resolvePackagePath(name)
+        if (!fs.existsSync(filePath)) {
+          throw new Error(`${name} script not found: ${filePath}`)
+        }
+        log.debug(`loading ${name} script from: ${filePath}`)
+        await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
+      }
     }
 
     // Execute external script(s).
@@ -964,9 +979,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
               continue
             }
             log.debug(`loading custom script from file: ${filePath}`)
-            await page.evaluateOnNewDocument(
-              await fs.readFileSync(filePath, 'utf8'),
-            )
+            await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
           }
         }
       }
@@ -1491,6 +1504,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
     const pages: Record<string, number> = {}
     const peerConnections: Record<string, number> = {}
+    const audioEndToEndDelayStats: Record<string, number> = {}
     const videoEndToEndDelayStats: Record<string, number> = {}
     const videoEndToEndNetworkDelayStats: Record<string, number> = {}
     const httpRecvBytesStats: Record<string, number> = {}
@@ -1515,11 +1529,13 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         // Collect stats from page.
         const {
           peerConnectionStats,
+          audioEndToEndDelay,
           videoEndToEndDelay,
           videoEndToEndNetworkDelay,
           httpResourcesStats,
         } = await page.evaluate(async () => ({
           peerConnectionStats: await collectPeerConnectionStats(),
+          audioEndToEndDelay: collectAudioEndToEndDelayStats(),
           videoEndToEndDelay: collectVideoEndToEndDelayStats(),
           videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
           httpResourcesStats: collectHttpResourcesStats(),
@@ -1562,6 +1578,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         peerConnections[hostKey] += activePeerConnections
 
         // E2E stats.
+        if (audioEndToEndDelay) {
+          audioEndToEndDelayStats[pageKey] = audioEndToEndDelay
+        }
         if (videoEndToEndDelay) {
           videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
         }
@@ -1682,6 +1701,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     collectedStats.errors = this.pageErrors
     collectedStats.warnings = this.pageWarnings
     collectedStats.peerConnections = peerConnections
+    collectedStats.audioEndToEndDelay = audioEndToEndDelayStats
     collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
     collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
     collectedStats.httpRecvBytes = httpRecvBytesStats

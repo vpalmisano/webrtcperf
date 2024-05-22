@@ -17,7 +17,7 @@ window.collectVideoEndToEndDelayStats = () => {
  * @param {MediaStream} mediaStream
  * @returns {MediaStream}
  */
-window.applyTimestampWatermark = mediaStream => {
+window.applyVideoTimestampWatermark = mediaStream => {
   if (
     !('MediaStreamTrackProcessor' in window) ||
     !('MediaStreamTrackGenerator' in window)
@@ -145,11 +145,11 @@ async function loadTesseract() {
 }
 
 /**
- * recognizeTimestampWatermark
+ * recognizeVideoTimestampWatermark
  * @param {MediaStreamTrack} videoTrack
  * @param {number} measureInterval
  */
-window.recognizeTimestampWatermark = async (
+window.recognizeVideoTimestampWatermark = async (
   videoTrack,
   measureInterval = 5,
 ) => {
@@ -205,7 +205,7 @@ window.recognizeTimestampWatermark = async (
               }
             }
           } catch (err) {
-            log(`recognizeTimestampWatermark error: ${err.message}`)
+            log(`recognizeVideoTimestampWatermark error: ${err.message}`)
           }
         }
         videoFrame.close()

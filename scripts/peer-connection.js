@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeTimestampWatermark, saveMediaTrack, enabledForSession, watchObjectProperty */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, enabledForSession, watchObjectProperty */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -171,13 +171,16 @@ window.RTCPeerConnection = function (conf, options) {
       }
       if (receiver.track.kind === 'video') {
         if (enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
-          recognizeTimestampWatermark(receiver.track)
+          recognizeVideoTimestampWatermark(receiver.track)
         }
 
         if (enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
           await saveMediaTrack(receiver.track, 'recv')
         }
       } else if (receiver.track.kind === 'audio') {
+        if (window.PARAMS?.timestampWatermarkAudio) {
+          recognizeAudioTimestampWatermark(receiver.track)
+        }
         if (enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
           await saveMediaTrack(receiver.track, 'recv')
         }
