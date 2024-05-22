@@ -1,20 +1,4 @@
-/* global log, getParticipantNameForSave */
-
-function createWorker(fn) {
-  const blob = new Blob(
-    [
-      fn
-        .toString()
-        .replace(/^[^{]*{\s*/, '')
-        .replace(/\s*}[^}]*$/, ''),
-    ],
-    {
-      type: 'text/javascript',
-    },
-  )
-  const url = URL.createObjectURL(blob)
-  return new Worker(url)
-}
+/* global log, getParticipantNameForSave, createWorker */
 
 const saveFileWorkerFn = () => {
   const log = (...args) => {

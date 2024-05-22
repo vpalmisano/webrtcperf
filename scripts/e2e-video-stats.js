@@ -154,7 +154,7 @@ window.recognizeVideoTimestampWatermark = async (
   measureInterval = 5,
 ) => {
   const { scheduler } = await loadTesseract()
-  const canvas = document.createElement('canvas')
+  const canvas = new OffscreenCanvas(1, 1)
   const ctx = canvas.getContext('2d')
   let lastTimestamp = 0
 
@@ -163,9 +163,8 @@ window.recognizeVideoTimestampWatermark = async (
   })
   const writableStream = new window.WritableStream(
     {
-      async write(videoFrame) {
+      async write(/** @type VideoFrame */ videoFrame) {
         const { timestamp, codedWidth, codedHeight } = videoFrame
-        const bitmap = await createImageBitmap(videoFrame)
 
         if (
           timestamp - lastTimestamp > measureInterval * 1000000 &&
@@ -177,46 +176,45 @@ window.recognizeVideoTimestampWatermark = async (
           const fontHeight = Math.ceil(codedHeight / 18) + 6
           canvas.width = codedWidth
           canvas.height = fontHeight
-          ctx.drawImage(
-            bitmap,
-            0,
-            0,
-            codedWidth,
-            fontHeight,
+          const bitmap = await createImageBitmap(
+            videoFrame,
             0,
             0,
             codedWidth,
             fontHeight,
           )
+          ctx.drawImage(bitmap, 0, 0, codedWidth, fontHeight)
+          bitmap.close()
 
-          try {
-            const { data } = await scheduler.addJob('recognize', canvas)
-            const cleanText = data.text.trim()
-            if (cleanText && data.confidence > 70) {
-              const recognizedTimestamp = parseInt(cleanText)
-              const delay = now - recognizedTimestamp
-              if (delay > 0 && delay < 30000) {
-                log(
-                  `VideoTimestampWatermark text=${cleanText} delay=${delay}ms confidence=${
-                    data.confidence
-                  } elapsed=${Date.now() - now}ms`,
-                )
-                videoEndToEndDelayStats.push(now, delay / 1000)
+          scheduler
+            .addJob('recognize', canvas)
+            .then(({ data }) => {
+              const cleanText = data.text.trim()
+              if (cleanText && data.confidence > 70) {
+                const recognizedTimestamp = parseInt(cleanText)
+                const delay = now - recognizedTimestamp
+                if (delay > 0 && delay < 30000) {
+                  log(
+                    `VideoTimestampWatermark text=${cleanText} delay=${delay}ms confidence=${
+                      data.confidence
+                    } elapsed=${Date.now() - now}ms`,
+                  )
+                  videoEndToEndDelayStats.push(now, delay / 1000)
+                }
               }
-            }
-          } catch (err) {
-            log(`recognizeVideoTimestampWatermark error: ${err.message}`)
-          }
+            })
+            .catch(err => {
+              log(`recognizeVideoTimestampWatermark error: ${err.message}`)
+            })
         }
         videoFrame.close()
-        bitmap.close()
       },
       close() {},
       abort(err) {
         log('WritableStream error:', err)
       },
     },
-    new CountQueuingStrategy({ highWaterMark: 1 }),
+    new CountQueuingStrategy({ highWaterMark: 15 }),
   )
   trackProcessor.readable.pipeTo(writableStream)
 }
