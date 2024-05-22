@@ -22,6 +22,7 @@ if (enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       ggwave = await ggwave_factory()
+      if (!window.PARAMS?.timestampWatermarkAudioDebug) ggwave.disableLog()
     } catch (e) {
       log(`ggwave error: ${e}`)
     }
