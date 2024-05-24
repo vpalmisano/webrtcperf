@@ -96,6 +96,8 @@ export enum RtcStatsMetricNames {
   audioSentTransportRoundTripTime = 'audioSentTransportRoundTripTime',
   /** The sent audio encoding max bitrate. */
   audioSentMaxBitrate = 'audioSentMaxBitrate',
+  /** The sent audio RTX packets. */
+  audioSentRetransmittedPackets = 'audioSentRetransmittedPackets',
 
   /** The sent video codec. */
   videoSentCodec = 'videoSentCodec',
@@ -141,6 +143,8 @@ export enum RtcStatsMetricNames {
   videoSentRoundTripTime = 'videoSentRoundTripTime',
   /** The transport send video round trip time. */
   videoSentTransportRoundTripTime = 'videoSentTransportRoundTripTime',
+  /** The sent video RTX packets. */
+  videoSentRetransmittedPackets = 'videoSentRetransmittedPackets',
 
   /** The sent screen codec. */
   screenSentCodec = 'screenSentCodec',
@@ -186,6 +190,8 @@ export enum RtcStatsMetricNames {
   screenSentRoundTripTime = 'screenSentRoundTripTime',
   /** The transport sent screen round trip time. */
   screenSentTransportRoundTripTime = 'screenSentTransportRoundTripTime',
+  /** The screen audio RTX packets. */
+  screenSentRetransmittedPackets = 'screenSentRetransmittedPackets',
 
   // inbound audio,
   audioRecvCodec = 'audioRecvCodec',
@@ -566,6 +572,12 @@ export function updateRtcStats(
         (prefix + 'SentMaxBitrate') as RtcStatsMetricNames,
         key,
         sentMaxBitrate,
+      )
+      setStats(
+        stats,
+        (prefix + 'SentRetransmittedPackets') as RtcStatsMetricNames,
+        key,
+        outboundRtp.retransmittedPacketsSent,
       )
       if (outboundRtp.kind === 'video') {
         setStats(
