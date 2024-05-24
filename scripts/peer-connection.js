@@ -32,7 +32,7 @@ window.RTCPeerConnection = function (conf, options) {
     }
   })
 
-  /* const createOfferNative = pc.createOffer.bind(pc)
+  const createOfferNative = pc.createOffer.bind(pc)
   pc.createOffer = async options => {
     const offer = await createOfferNative(options)
     log(`RTCPeerConnection createOffer`, { options, offer })
@@ -49,7 +49,7 @@ window.RTCPeerConnection = function (conf, options) {
   pc.setRemoteDescription = description => {
     log(`RTCPeerConnection setRemoteDescription`, description)
     return setRemoteDescriptionNative(description)
-  } */
+  }
 
   const checkSaveStream = transceiver => {
     if (!transceiver?.sender?.track) return

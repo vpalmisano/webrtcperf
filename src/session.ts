@@ -18,6 +18,7 @@ import puppeteer, {
 } from 'puppeteer-core'
 import type { Interception } from 'puppeteer-intercept-and-modify-requests'
 import { RequestInterceptionManager } from 'puppeteer-intercept-and-modify-requests'
+import * as sdpTransform from 'sdp-transform'
 import { gunzipSync } from 'zlib'
 
 import { rtcStatKey, RtcStats, updateRtcStats } from './rtcstats'
@@ -1365,6 +1366,15 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         await this.onPageMessage(index, 'requestfailed', text, saveFile)
       })
     }
+
+    await page.exposeFunction('WebRtcPerf_sdpParse', (sdpStr: string) =>
+      sdpTransform.parse(sdpStr),
+    )
+
+    await page.exposeFunction(
+      'WebRtcPerf_sdpWrite',
+      (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp),
+    )
 
     /* page.on('workercreated', worker =>
       log.debug(`Worker created: ${worker.url()}`),
