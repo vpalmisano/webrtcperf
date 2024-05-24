@@ -1,4 +1,4 @@
-/* global log, MeasuredStats, loadScript, isSenderDisplayTrack, Tesseract */
+/* global log, MeasuredStats, loadScript, isSenderDisplayTrack, Tesseract, VideoFrame, createWorker */
 
 /**
  * Video end-to-end delay stats.
@@ -9,6 +9,70 @@ const videoEndToEndDelayStats = (window.videoEndToEndDelayStats =
 
 window.collectVideoEndToEndDelayStats = () => {
   return videoEndToEndDelayStats.mean()
+}
+
+const applyVideoTimestampWatermarkFn = () => {
+  const log = (...args) => {
+    console.log.apply(null, [
+      '[webrtcperf-applyVideoTimestampWatermarkWorker]',
+      ...args,
+    ])
+  }
+
+  onmessage = ({ data }) => {
+    const { readable, writable, width, height, participantName } = data
+    log(`participantName=${participantName}`)
+
+    const canvas = new OffscreenCanvas(width, height)
+    const ctx = canvas.getContext('2d')
+    const fontSize = Math.ceil(canvas.height / 18)
+    ctx.font = `${fontSize}px Noto Mono`
+    const textHeight = fontSize + 6
+
+    const transformer = new TransformStream({
+      async transform(videoFrame, controller) {
+        const text = String(Date.now())
+        const timestamp = videoFrame.timestamp
+
+        const bitmap = await createImageBitmap(videoFrame)
+        videoFrame.close()
+        ctx.drawImage(bitmap, 0, 0, width, height)
+        bitmap.close()
+
+        ctx.fillStyle = 'black'
+        ctx.fillRect(0, 0, width, textHeight)
+        ctx.fillStyle = 'white'
+        ctx.fillText(text, 0, fontSize)
+
+        ctx.fillStyle = 'black'
+        ctx.fillRect(0, height - textHeight, width, height)
+        ctx.fillStyle = 'white'
+        ctx.fillText(participantName, 0, height - 6)
+
+        const newBitmap = await createImageBitmap(canvas)
+        const newFrame = new VideoFrame(newBitmap, { timestamp })
+        newBitmap.close()
+        controller.enqueue(newFrame)
+      },
+
+      flush(controller) {
+        controller.terminate()
+      },
+    })
+
+    readable.pipeThrough(transformer).pipeTo(writable)
+  }
+}
+
+let applyVideoTimestampWatermarkWorker = null
+
+const getApplyVideoTimestampWatermarkWorker = () => {
+  if (!applyVideoTimestampWatermarkWorker) {
+    applyVideoTimestampWatermarkWorker = createWorker(
+      applyVideoTimestampWatermarkFn,
+    )
+  }
+  return applyVideoTimestampWatermarkWorker
 }
 
 /**
@@ -29,71 +93,39 @@ window.applyVideoTimestampWatermark = mediaStream => {
   if (!videoTrack) {
     return mediaStream
   }
-  const VideoFrame = window.VideoFrame
+
   const { width, height } = videoTrack.getSettings()
-  const canvas = new OffscreenCanvas(width, height)
-  const ctx = canvas.getContext('2d')
-  const fontSize = Math.ceil(canvas.height / 18)
-  ctx.font = `${fontSize}px Noto Mono`
-  const textHeight = fontSize + 6
   const isDisplay = isSenderDisplayTrack(videoTrack)
+
   let participantName = window.getParticipantName()
   if (participantName && isDisplay) {
     participantName += '-d'
   }
 
-  const transformer = new window.TransformStream({
-    async transform(videoFrame, controller) {
-      const text = String(Date.now())
-      const timestamp = videoFrame.timestamp
-
-      const bitmap = await createImageBitmap(videoFrame)
-      videoFrame.close()
-      ctx.drawImage(bitmap, 0, 0, width, height)
-      bitmap.close()
-
-      ctx.fillStyle = 'black'
-      ctx.fillRect(0, 0, width, textHeight)
-      ctx.fillStyle = 'white'
-      ctx.fillText(text, 0, fontSize)
-
-      ctx.fillStyle = 'black'
-      ctx.fillRect(0, height - textHeight, width, height)
-      ctx.fillStyle = 'white'
-
-      if (!participantName) {
-        participantName = window.getParticipantName()
-        if (participantName && isDisplay) {
-          participantName += '-d'
-        }
-      }
-      ctx.fillText(participantName, 0, height - 6)
-
-      const newBitmap = await createImageBitmap(canvas)
-      const newFrame = new VideoFrame(newBitmap, { timestamp })
-      newBitmap.close()
-      controller.enqueue(newFrame)
-    },
-
-    flush(controller) {
-      controller.terminate()
-    },
-  })
-
   const trackProcessor = new window.MediaStreamTrackProcessor({
     track: videoTrack,
   })
-  const trackGenerator = new window.MediaStreamTrackGenerator({ kind: 'video' })
+  const trackGenerator = new window.MediaStreamTrackGenerator({
+    kind: 'video',
+  })
+  const { readable } = trackProcessor
+  const { writable } = trackGenerator
 
-  trackProcessor.readable
-    .pipeThrough(transformer)
-    .pipeTo(trackGenerator.writable)
+  getApplyVideoTimestampWatermarkWorker().postMessage(
+    {
+      readable,
+      writable,
+      width,
+      height,
+      participantName,
+    },
+    [readable, writable],
+  )
 
   const newMediaStream = new MediaStream([
     trackGenerator,
     ...mediaStream.getAudioTracks(),
   ])
-
   return newMediaStream
 }
 
