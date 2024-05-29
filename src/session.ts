@@ -65,6 +65,7 @@ declare global {
     recvBitrate: number
     recvLatency: number
   }
+  let collectCpuPressure: () => number
   let collectCustomMetrics: () => Promise<Record<string, number | string>>
   let getParticipantName: () => string
 }
@@ -934,6 +935,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       'scripts/playout-delay-hint.js',
       'scripts/page-stats.js',
       'scripts/save-tracks.js',
+      'scripts/pressure-stats.js',
     ]) {
       if (name.startsWith('http')) {
         log.debug(`loading ${name} script`)
@@ -1522,6 +1524,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     const httpRecvLatencyStats: Record<string, number> = {}
     const pageCpu: Record<string, number> = {}
     const pageMemory: Record<string, number> = {}
+    const cpuPressureStats: Record<string, number> = {}
 
     const throttleUpValuesRate: Record<string, number> = {}
     const throttleUpValuesDelay: Record<string, number> = {}
@@ -1543,12 +1546,14 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           videoEndToEndDelay,
           videoEndToEndNetworkDelay,
           httpResourcesStats,
+          cpuPressure,
         } = await page.evaluate(async () => ({
           peerConnectionStats: await collectPeerConnectionStats(),
           audioEndToEndDelay: collectAudioEndToEndDelayStats(),
           videoEndToEndDelay: collectVideoEndToEndDelayStats(),
           videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
           httpResourcesStats: collectHttpResourcesStats(),
+          cpuPressure: collectCpuPressure(),
         }))
         const { participantName } = peerConnectionStats
 
@@ -1602,6 +1607,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
         httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
         httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
+
+        if (cpuPressure !== undefined) {
+          cpuPressureStats[pageKey] = cpuPressure
+        }
 
         // Collect RTC stats.
         for (const s of stats) {
@@ -1717,6 +1726,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvBitrate = httpRecvBitrateStats
     collectedStats.httpRecvLatency = httpRecvLatencyStats
+    collectedStats.cpuPressure = cpuPressureStats
     collectedStats.pageCpu = pageCpu
     collectedStats.pageMemory = pageMemory
     collectedStats.throttleUpRate = throttleUpValuesRate

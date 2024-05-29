@@ -53,6 +53,8 @@ export enum PageStatsNames {
    */
   videoEndToEndNetworkDelay = 'videoEndToEndNetworkDelay',
 
+  cpuPressure = 'cpuPressure',
+
   /** The throttle upload rate limitation. */
   throttleUpRate = 'throttleUpRate',
   /** The throttle upload delay. */
