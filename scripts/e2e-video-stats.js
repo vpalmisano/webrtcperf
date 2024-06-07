@@ -21,7 +21,7 @@ const applyVideoTimestampWatermarkFn = () => {
 
   onmessage = ({ data }) => {
     const { readable, writable, width, height, participantName } = data
-    log(`participantName=${participantName}`)
+    log(`participantName=${participantName} ${width}x${height}`)
 
     const canvas = new OffscreenCanvas(width, height)
     const ctx = canvas.getContext('2d')
@@ -94,7 +94,7 @@ window.applyVideoTimestampWatermark = mediaStream => {
     return mediaStream
   }
 
-  const { width, height } = videoTrack.getSettings()
+  const { width, height, frameRate, aspectRatio } = videoTrack.getSettings()
   const isDisplay = isSenderDisplayTrack(videoTrack)
 
   let participantName = window.getParticipantName()
@@ -108,6 +108,17 @@ window.applyVideoTimestampWatermark = mediaStream => {
   const trackGenerator = new window.MediaStreamTrackGenerator({
     kind: 'video',
   })
+  const nativeGetSettings = trackGenerator.getSettings.bind(trackGenerator)
+  trackGenerator.getSettings = () => {
+    return {
+      ...nativeGetSettings(),
+      width,
+      height,
+      frameRate,
+      aspectRatio,
+    }
+  }
+
   const { readable } = trackProcessor
   const { writable } = trackGenerator
 
