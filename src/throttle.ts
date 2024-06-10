@@ -80,6 +80,8 @@ export type ThrottleRule = {
   delayJitter?: number
   /** The one-way delay jitter correlation. */
   delayJitterCorrelation?: number
+  /** The delay distribution. */
+  delayDistribution?: 'uniform' | 'normal' | 'pareto' | 'paretonormal'
   /** The packet loss percentage. */
   loss?: number
   /** The packet loss burst. */
@@ -145,6 +147,7 @@ async function applyRules(
       delay,
       delayJitter,
       delayJitterCorrelation,
+      delayDistribution,
       loss,
       lossBurst,
       queue,
@@ -198,6 +201,9 @@ sudo -n tc filter add dev ${device} \
             if (delayJitterCorrelation && delayJitterCorrelation > 0) {
               delayDesc += ` ${delayJitterCorrelation}`
             }
+          }
+          if (delayDistribution) {
+            delayDesc += ` distribution ${delayDistribution}`
           }
         }
 
