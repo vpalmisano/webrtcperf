@@ -124,7 +124,7 @@ A JSON5 string with a valid network throttling configuration. Example:
   ```
 The sessions field represents the sessions IDs range that will be affected by the rule, e.g.: "0-10", "2,4" or simply "2". The device, protocol, up, down fields are optional. When device is not set, the default route device will be used. If protocol is specified ('udp' or 'tcp'), only the packets with the specified protocol will be affected by the shaping rules. When running as regular user, add the following sudo configuration:
   ```
-%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe
+%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe,/usr/sbin/ip
   ```
 
 
@@ -177,7 +177,7 @@ chromium process.
 *Default*: `""`
 
 ## chromiumFieldTrials
-Chromium additional field trials (comma-separated).
+Chromium additional field trials.
 
 *Type*: `string`
 
@@ -306,7 +306,7 @@ The user agent override.
 *Default*: `""`
 
 ## scriptPath
-One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_PERF_SESSION` the session number (0-indexed); ``WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); ``WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
+One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
 
 *Type*: `string`
 
@@ -329,6 +329,13 @@ A JSON string with the `getUserMedia` constraints to override for each tab in ea
 
 ## getDisplayMediaOverride
 A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}`
+
+*Type*: `string`
+
+*Default*: `""`
+
+## disabledVideoCodecs
+A string with the video codecs to disable (comma-separated); e.g. `vp9,av1`
 
 *Type*: `string`
 
@@ -370,11 +377,11 @@ It enables the GPU acceleration (experimental). Set to "desktop" to use the host
 *Default*: `""`
 
 ## enableBrowserLogging
-It enables the Chromium browser logging to standard output.
+It enables the Chromium browser logging, e.g. "--v=0" (see https://www.chromium.org/for-testers/enable-logging/).
 
-*Type*: `boolean`
+*Type*: `string`
 
-*Default*: `false`
+*Default*: `""`
 
 ## blockedUrls
 A comma-separated list of request URLs that will be automatically blocked.
@@ -419,7 +426,7 @@ The chrome debugging port. If this value != 0, the chrome instance will listen o
 *Default*: `0`
 
 ## debuggingAddress
-The chrome debugging listen address. Valid only if `debugging-port` is provided.
+The chrome debugging listening address. If unset, the network default interface address will be used.
 
 *Type*: `string`
 
@@ -433,7 +440,14 @@ If the statistics should be displayed on the console output.
 *Default*: `true`
 
 ## statsPath
-The log file directory path; if set, the log data will be written in a .csv file inside this directory; if the directory path does not exist, it will be created.
+The log file path; if set, the stats will be written in a .csv file inside that file.
+
+*Type*: `string`
+
+*Default*: `""`
+
+## detailedStatsPath
+The log file path; if set, the detailed stats will be written in a .csv file inside that file.
 
 *Type*: `string`
 
@@ -571,6 +585,13 @@ If true, the VMAF intermediate files will not be deleted.
 *Type*: `boolean`
 
 *Default*: `false`
+
+## vmafKeepSourceFiles
+If true, the VMAF source files will not be deleted.
+
+*Type*: `boolean`
+
+*Default*: `true`
 
 
 
