@@ -14,7 +14,7 @@ import {
   stopThrottle,
 } from './throttle'
 import {
-  checkChromiumExecutable,
+  checkChromeExecutable,
   logger,
   registerExitHandler,
   resolvePackagePath,
@@ -79,9 +79,9 @@ export async function setupApplication(
     await startThrottle(config.throttleConfig)
   }
 
-  // Download chromium if necessary.
+  // Download browser if necessary.
   if (!config.chromiumUrl && !config.chromiumPath) {
-    await checkChromiumExecutable()
+    await checkChromeExecutable()
   }
 
   // Start session function.

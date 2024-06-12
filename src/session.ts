@@ -24,7 +24,7 @@ import { gunzipSync } from 'zlib'
 import { rtcStatKey, RtcStats, updateRtcStats } from './rtcstats'
 import { getSessionThrottleValues } from './throttle'
 import {
-  checkChromiumExecutable,
+  checkChromeExecutable,
   downloadUrl,
   getProcessStats,
   getSystemStats,
@@ -631,7 +631,7 @@ export class Session extends EventEmitter {
       // run a browser instance locally
       let executablePath = this.chromiumPath
       if (!executablePath || !fs.existsSync(executablePath)) {
-        executablePath = await checkChromiumExecutable()
+        executablePath = await checkChromeExecutable()
         log.debug(`using executablePath=${executablePath}`)
       }
 
@@ -685,7 +685,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
       try {
         // log.debug('defaultArgs:', puppeteer.defaultArgs());
         this.browser = await puppeteer.launch({
-          headless: this.display ? false : 'new',
+          headless: this.display ? false : true,
           executablePath,
           handleSIGINT: false,
           env,
@@ -822,7 +822,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
     )
 
     if (this.incognito) {
-      this.context = await this.browser.createIncognitoBrowserContext()
+      this.context = await this.browser.createBrowserContext()
     } else {
       this.context = this.browser.defaultBrowserContext()
     }
@@ -1779,7 +1779,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       if (this.chromiumUrl) {
         log.debug(`${this.id} disconnect from browser`)
         try {
-          this.browser.disconnect()
+          await this.browser.disconnect()
         } catch (err) {
           log.warn(`browser disconnect error: ${(err as Error).message}`)
         }

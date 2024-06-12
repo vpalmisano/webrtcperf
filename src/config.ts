@@ -209,14 +209,14 @@ to be included into the random selection.`,
     env: 'CHROMIUM_PATH',
     arg: 'chromium-path',
   },
-  chromiumRevision: {
-    doc: `The Chromium revision number. It will be downloaded if the chromium \
+  chromiumVersion: {
+    doc: `The Chromium version. It will be downloaded if the chromium \
 path is not provided.`,
     format: String,
     nullable: false,
     default: puppeteer.default.browserRevision,
-    env: 'CHROMIUM_REVISION',
-    arg: 'chromium-revision',
+    env: 'CHROMIUM_VERSION',
+    arg: 'chromium-version',
   },
   chromiumUrl: {
     doc: `The remote Chromium URL (\`http://HOST:PORT\`).

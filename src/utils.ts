@@ -1,3 +1,10 @@
+import {
+  Browser,
+  computeExecutablePath,
+  getInstalledBrowsers,
+  getVersionComparator,
+  install,
+} from '@puppeteer/browsers'
 import axios from 'axios'
 import { spawn } from 'child_process'
 import { createHash } from 'crypto'
@@ -13,7 +20,7 @@ import os, { networkInterfaces } from 'os'
 import path, { dirname } from 'path'
 import pidtree from 'pidtree'
 import pidusage from 'pidusage'
-import { BrowserFetcher, Page } from 'puppeteer-core'
+import puppeteer, { Page } from 'puppeteer-core'
 
 import { Session } from './session'
 
@@ -604,34 +611,43 @@ SIGNALS.forEach(event =>
 
 /**
  * Downloads the configured chrome executable if it doesn't exists into the
- * `$HOME/.webrtcperf/chromium` directory.
+ * `$HOME/.webrtcperf/chrome` directory.
  * @returns The revision info.
  */
-export async function checkChromiumExecutable(): Promise<string> {
+export async function checkChromeExecutable(): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { loadConfig } = require('./config')
   const config = loadConfig()
-  const cacheDir = path.join(os.homedir(), '.webrtcperf/chromium')
-  const browserFetcher = new BrowserFetcher({ path: cacheDir })
-  const revisions = await browserFetcher.localRevisions()
-  revisions.sort((a: string, b: string) => b.localeCompare(a))
-  log.debug(`Available chromium revisions: ${revisions}`)
-  if (revisions.indexOf(config.chromiumRevision) === -1) {
-    log.info(`Downloading chromium revision ${config.chromiumRevision}...`)
+  const cacheDir = path.join(os.homedir(), '.webrtcperf/chrome')
+
+  const browsers = await getInstalledBrowsers({ cacheDir })
+  const revisions = browsers.map(b => b.buildId)
+  const browser = Browser.CHROME
+  revisions.sort(getVersionComparator(browser))
+  log.debug(`Available chrome versions: ${revisions}`)
+  const requiredRevision = config.chromiumVersion
+  if (revisions.indexOf(requiredRevision) === -1) {
+    log.info(`Downloading chrome ${requiredRevision}...`)
     let progress = 0
-    await browserFetcher.download(
-      config.chromiumRevision,
-      (downloadedBytes: number, totalBytes: number) => {
+    await install({
+      browser,
+      buildId: requiredRevision,
+      cacheDir,
+      downloadProgressCallback: (downloadedBytes, totalBytes) => {
         const cur = Math.round((100 * downloadedBytes) / totalBytes)
         if (cur - progress > 1) {
           progress = cur
           log.info(`  ${progress}%`)
         }
       },
-    )
-    log.info(`Downloading chromium revision ${config.chromiumRevision} done.`)
+    })
+    log.info(`Downloading chrome ${requiredRevision} done.`)
   }
-  return browserFetcher.revisionInfo(config.chromiumRevision).executablePath
+  return computeExecutablePath({
+    browser,
+    cacheDir,
+    buildId: requiredRevision,
+  })
 }
 
 export function clampMinMax(value: number, min: number, max: number): number {
@@ -1057,5 +1073,74 @@ export async function portForwarder(port: number, listenInterface?: string) {
   return () => {
     log.debug(`portForwarder on port ${port} stop`)
     controller.abort()
+  }
+}
+
+export async function pageScreenshot(
+  url: string,
+  filePath: string,
+  width = 1920,
+  height = 1024,
+  selector = 'body',
+  headers?: Record<string, string>,
+  extraCss?: string,
+): Promise<void> {
+  log.debug(`pageScreenshot ${url} -> ${filePath}`)
+  await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
+  let executablePath = process.env.CHROMIUM_PATH
+  if (!executablePath || !fs.existsSync(executablePath)) {
+    executablePath = await checkChromeExecutable()
+  }
+  const browser = await puppeteer.launch({
+    headless: true,
+    ignoreHTTPSErrors: true,
+    executablePath,
+    defaultViewport: {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      isMobile: false,
+      hasTouch: false,
+      isLandscape: false,
+    },
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      //'--remote-debugging-port=9222',
+    ],
+  })
+  const page = await browser.newPage()
+  if (headers) {
+    await page.setExtraHTTPHeaders(headers)
+  }
+  if (extraCss) {
+    await page.evaluateOnNewDocument((css: string) => {
+      document.addEventListener('DOMContentLoaded', () => {
+        const style = document.createElement('style')
+        style.setAttribute('id', 'webrtcperf-extra-style')
+        style.setAttribute('type', 'text/css')
+        style.innerHTML = css
+        document.head.appendChild(style)
+      })
+    }, extraCss)
+  }
+  await page.goto(url, {
+    waitUntil: ['domcontentloaded', 'networkidle0'],
+    timeout: 60 * 1000,
+  })
+  try {
+    const element = await page.waitForSelector(selector, {
+      visible: true,
+      timeout: 15 * 1000,
+    })
+    if (!element) {
+      throw new Error(`pageScreenshot selector "${selector}" not found`)
+    }
+    await element.screenshot({ path: filePath })
+  } catch (err) {
+    log.error(`pageScreenshot error: ${(err as Error).message}`)
+  } finally {
+    await page.close()
+    await browser.close()
   }
 }
