@@ -382,6 +382,7 @@ export class Stats extends events.EventEmitter {
   } = {}
 
   private alertTagsMetrics?: promClient.Gauge<string>
+  private readonly customMetricsLabels: Record<string, string | undefined>
 
   collectedStats: Record<string, CollectedStats>
 
@@ -423,6 +424,7 @@ export class Stats extends events.EventEmitter {
     startSessionId,
     startTimestamp,
     enableDetailedStats,
+    customMetricsLabels,
   }: {
     statsPath: string
     detailedStatsPath: string
@@ -444,6 +446,7 @@ export class Stats extends events.EventEmitter {
     startSessionId: number
     startTimestamp: number
     enableDetailedStats: boolean
+    customMetricsLabels?: string
   }) {
     super()
     this.statsPath = statsPath
@@ -474,6 +477,18 @@ export class Stats extends events.EventEmitter {
     this.startTimestamp = startTimestamp || Date.now()
     this.startTimestampString = new Date(this.startTimestamp).toISOString()
     this.enableDetailedStats = enableDetailedStats
+    this.customMetricsLabels = customMetricsLabels
+      ? customMetricsLabels.split(',').reduce(
+          (p, label) => {
+            label = label.trim()
+            if (label) {
+              p[label] = undefined
+            }
+            return p
+          },
+          {} as typeof this.customMetricsLabels,
+        )
+      : {}
 
     this.statsWriter = null
     this.detailedStatsWriter = null
@@ -581,6 +596,18 @@ export class Stats extends events.EventEmitter {
   }
 
   /**
+   * It updates the custom label value.
+   * @param label the custom metric label
+   * @param value the custom metric label value
+   */
+  setCustomMetricLabel(label: string, value: string | undefined): void {
+    if (!(label in this.customMetricsLabels)) {
+      throw new Error(`Unknown custom metric label: ${label}`)
+    }
+    this.customMetricsLabels[label] = value
+  }
+
+  /**
    * start
    */
   async start(): Promise<void> {
@@ -644,11 +671,12 @@ export class Stats extends events.EventEmitter {
         register,
         'elapsedTime',
         '',
-        ['datetime'],
+        ['datetime', ...Object.keys(this.customMetricsLabels)],
         () =>
           this.elapsedTimeMetric?.set(
             {
               datetime: this.startTimestampString,
+              ...this.customMetricsLabels,
             },
             (Date.now() - this.startTimestamp) / 1000,
           ),
@@ -661,41 +689,49 @@ export class Stats extends events.EventEmitter {
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           sum: promCreateGauge(register, name, 'sum', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           mean: promCreateGauge(register, name, 'mean', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           stddev: promCreateGauge(register, name, 'stddev', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           p5: promCreateGauge(register, name, 'p5', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           p95: promCreateGauge(register, name, 'p95', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           min: promCreateGauge(register, name, 'min', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           max: promCreateGauge(register, name, 'max', [
             'host',
             'codec',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ]),
           alertRules: {},
         }
@@ -705,6 +741,7 @@ export class Stats extends events.EventEmitter {
             'participantName',
             'trackId',
             'datetime',
+            ...Object.keys(this.customMetricsLabels),
           ])
         }
 
@@ -716,14 +753,17 @@ export class Stats extends events.EventEmitter {
               report: promCreateGauge(register, ruleName, 'report', [
                 'rule',
                 'datetime',
+                ...Object.keys(this.customMetricsLabels),
               ]),
               rule: promCreateGauge(register, ruleName, '', [
                 'rule',
                 'datetime',
+                ...Object.keys(this.customMetricsLabels),
               ]),
               mean: promCreateGauge(register, ruleName, 'mean', [
                 'rule',
                 'datetime',
+                ...Object.keys(this.customMetricsLabels),
               ]),
             }
           }
@@ -734,6 +774,7 @@ export class Stats extends events.EventEmitter {
         this.alertTagsMetrics = promCreateGauge(register, `alert_report`, '', [
           'datetime',
           'tag',
+          ...Object.keys(this.customMetricsLabels),
         ])
       }
 
@@ -1270,17 +1311,18 @@ export class Stats extends events.EventEmitter {
         host: string,
         codec: string,
       ): void => {
+        const labels = { host, codec, datetime, ...this.customMetricsLabels }
         const { length, sum, mean, stddev, p5, p95, min, max } = formatStats(
           stats,
         ) as StatsData
-        metric.length.set({ host, codec, datetime }, length)
-        metric.sum.set({ host, codec, datetime }, sum)
-        metric.mean.set({ host, codec, datetime }, mean)
-        metric.stddev.set({ host, codec, datetime }, stddev)
-        metric.p5.set({ host, codec, datetime }, p5)
-        metric.p95.set({ host, codec, datetime }, p95)
-        metric.min.set({ host, codec, datetime }, min)
-        metric.max.set({ host, codec, datetime }, max)
+        metric.length.set(labels, length)
+        metric.sum.set(labels, sum)
+        metric.mean.set(labels, mean)
+        metric.stddev.set(labels, stddev)
+        metric.p5.set(labels, p5)
+        metric.p95.set(labels, p95)
+        metric.min.set(labels, min)
+        metric.max.set(labels, max)
       }
 
       setStats(this.collectedStats[name].all, 'all', 'all')
@@ -1298,7 +1340,15 @@ export class Stats extends events.EventEmitter {
         Object.entries(this.collectedStats[name].byParticipantAndTrack).forEach(
           ([label, value]) => {
             const [participantName, trackId] = label.split(':', 2)
-            metric.value?.set({ participantName, trackId, datetime }, value)
+            metric.value?.set(
+              {
+                participantName,
+                trackId,
+                datetime,
+                ...this.customMetricsLabels,
+              },
+              value,
+            )
           },
         )
       }
@@ -1335,7 +1385,11 @@ export class Stats extends events.EventEmitter {
             if (report) {
               const ruleReport = report.get(ruleDesc)
               if (ruleReport) {
-                const labels = { rule: ruleDesc, datetime }
+                const labels = {
+                  rule: ruleDesc,
+                  datetime,
+                  ...this.customMetricsLabels,
+                }
                 if (!remove) {
                   ruleObj.report.set(labels, ruleReport.failAmountPercentile)
                   ruleObj.mean.set(labels, ruleReport.valueStats.amean())
@@ -1347,7 +1401,11 @@ export class Stats extends events.EventEmitter {
             }
             // Send rules values as metrics.
             if (ruleValue.$eq !== undefined) {
-              const labels = { rule: `${name} ${ruleKey} =`, datetime }
+              const labels = {
+                rule: `${name} ${ruleKey} =`,
+                datetime,
+                ...this.customMetricsLabels,
+              }
               if (!remove) {
                 ruleObj.rule.set(labels, ruleValue.$eq)
               } else {
@@ -1355,7 +1413,11 @@ export class Stats extends events.EventEmitter {
               }
             }
             if (ruleValue.$lt !== undefined) {
-              const labels = { rule: `${name} ${ruleKey} <`, datetime }
+              const labels = {
+                rule: `${name} ${ruleKey} <`,
+                datetime,
+                ...this.customMetricsLabels,
+              }
               if (!remove) {
                 ruleObj.rule.set(labels, ruleValue.$lt)
               } else {
@@ -1363,7 +1425,11 @@ export class Stats extends events.EventEmitter {
               }
             }
             if (ruleValue.$lte !== undefined) {
-              const labels = { rule: `${name} ${ruleKey} <=`, datetime }
+              const labels = {
+                rule: `${name} ${ruleKey} <=`,
+                datetime,
+                ...this.customMetricsLabels,
+              }
               if (!remove) {
                 ruleObj.rule.set(labels, ruleValue.$lte)
               } else {
@@ -1371,7 +1437,11 @@ export class Stats extends events.EventEmitter {
               }
             }
             if (ruleValue.$gt !== undefined) {
-              const labels = { rule: `${name} ${ruleKey} >`, datetime }
+              const labels = {
+                rule: `${name} ${ruleKey} >`,
+                datetime,
+                ...this.customMetricsLabels,
+              }
               if (!remove) {
                 ruleObj.rule.set(labels, ruleValue.$gt)
               } else {
@@ -1379,7 +1449,11 @@ export class Stats extends events.EventEmitter {
               }
             }
             if (ruleValue.$gte !== undefined) {
-              const labels = { rule: `${name} ${ruleKey} >=`, datetime }
+              const labels = {
+                rule: `${name} ${ruleKey} >=`,
+                datetime,
+                ...this.customMetricsLabels,
+              }
               if (!remove) {
                 ruleObj.rule.set(labels, ruleValue.$gte)
               } else {
@@ -1395,7 +1469,7 @@ export class Stats extends events.EventEmitter {
     if (alertRulesReportTags && this.alertTagsMetrics) {
       for (const [tag, stat] of alertRulesReportTags.entries()) {
         this.alertTagsMetrics.set(
-          { datetime, tag },
+          { datetime, tag, ...this.customMetricsLabels },
           calculateFailAmountPercentile(stat, this.alertRulesFailPercentile),
         )
       }

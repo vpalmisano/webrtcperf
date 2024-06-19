@@ -82,6 +82,12 @@ export type ThrottleRule = {
   delayJitterCorrelation?: number
   /** The delay distribution. */
   delayDistribution?: 'uniform' | 'normal' | 'pareto' | 'paretonormal'
+  /** The packet reordering percentage. */
+  reorder?: number
+  /** The packet reordering correlation. */
+  reorderCorrelation?: number
+  /** The packet reordering gap. */
+  reorderGap?: number
   /** The packet loss percentage. */
   loss?: number
   /** The packet loss burst. */
@@ -148,6 +154,9 @@ async function applyRules(
       delayJitter,
       delayJitterCorrelation,
       delayDistribution,
+      reorder,
+      reorderCorrelation,
+      reorderGap,
       loss,
       lossBurst,
       queue,
@@ -193,36 +202,48 @@ sudo -n tc filter add dev ${device} \
 
     const timeoutId = setTimeout(
       async () => {
-        let delayDesc = ''
+        let desc = ''
+
+        if (rate && rate > 0) {
+          desc += ` rate ${rate}kbit`
+        }
+
+        if (limit && limit > 0) {
+          desc += ` limit ${limit}`
+        }
+
         if (delay && delay > 0) {
-          delayDesc = ` delay ${delay}ms`
+          desc += ` delay ${delay}ms`
           if (delayJitter && delayJitter > 0) {
-            delayDesc += ` ${delayJitter}ms`
+            desc += ` ${delayJitter}ms`
             if (delayJitterCorrelation && delayJitterCorrelation > 0) {
-              delayDesc += ` ${delayJitterCorrelation}`
+              desc += ` ${delayJitterCorrelation}`
             }
           }
           if (delayDistribution) {
-            delayDesc += ` distribution ${delayDistribution}`
+            desc += ` distribution ${delayDistribution}`
           }
         }
 
-        let lossDesc = ''
         if (loss && loss > 0) {
           if (lossBurst && lossBurst > 0) {
             const p = (100 * loss) / (lossBurst * (100 - loss))
             const r = 100 / lossBurst
-            lossDesc = ` loss gemodel ${toPrecision(p, 2)} ${toPrecision(r, 2)}`
+            desc += ` loss gemodel ${toPrecision(p, 2)} ${toPrecision(r, 2)}`
           } else {
-            lossDesc = ` loss ${toPrecision(loss, 2)}%`
+            desc += ` loss ${toPrecision(loss, 2)}%`
           }
         }
 
-        const desc = `\
-${rate && rate > 0 ? `rate ${rate}kbit` : ''}\
-${delayDesc}\
-${lossDesc}\
-${limit && limit >= 0 ? ` limit ${limit}` : ''}`
+        if (reorder && reorder > 0) {
+          desc += ` reorder ${toPrecision(reorder, 2)}%`
+          if (reorderCorrelation && reorderCorrelation > 0) {
+            desc += ` ${toPrecision(reorderCorrelation, 2)}`
+          }
+          if (reorderGap && reorderGap > 0) {
+            desc += ` gap ${reorderGap}`
+          }
+        }
 
         log.debug(`applying rules on ${device} (${mark}): ${desc}`)
         const cmd = `\

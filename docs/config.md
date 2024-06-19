@@ -160,12 +160,12 @@ The Chromium executable path.
 
 *Default*: `""`
 
-## chromiumRevision
-The Chromium revision number. It will be downloaded if the chromium path is not provided.
+## chromiumVersion
+The Chromium version. It will be downloaded if the chromium path is not provided.
 
 *Type*: `string`
 
-*Default*: `"1108766"`
+*Default*: `"125.0.6422.141"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
