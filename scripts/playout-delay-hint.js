@@ -33,7 +33,7 @@ window.getPlayoutDelayHint = () => {
       t =>
         t.receiver &&
         log(
-          `${id} ${t.receiver.track?.kind} track: ${t.receiver.track?.label} playoutDelayHint: ${t.receiver.playoutDelayHint}`,
+          `${id} ${t.receiver.track?.kind} track: ${t.receiver.track?.label} playoutDelayHint: ${t.receiver.playoutDelayHint} jitterBufferTarget: ${t.receiver.jitterBufferTarget}`,
         ),
     )
   })

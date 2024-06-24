@@ -27,6 +27,8 @@ function setup() {
     cat <<EOF > out/Default/args.gn
 # Set build arguments here. See "gn help buildargs".
 
+target_cpu = "x64"
+
 is_debug=false
 is_component_build=false
 symbol_level=0
