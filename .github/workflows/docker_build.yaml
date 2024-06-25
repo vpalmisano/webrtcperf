@@ -28,6 +28,12 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+        - linux/amd64
+        - linux/arm64
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -53,6 +59,8 @@ jobs:
         version=$(sed -nE 's/^\s*"version": "(.*?)",$/\1/p' package.json)
         echo ::set-output name=version::${version}
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
     - name: Cache Docker layers
@@ -74,7 +82,6 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
         push: true
         tags: ghcr.io/${{ github.repository }}:devel
         cache-from: type=local,src=/tmp/.buildx-cache
@@ -85,7 +92,6 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
         push: true
         tags: ghcr.io/${{ github.repository }}:${{ steps.get_package_version.outputs.version }},ghcr.io/${{ github.repository }}:latest
         cache-from: type=local,src=/tmp/.buildx-cache
