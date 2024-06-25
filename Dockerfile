@@ -165,8 +165,13 @@ RUN \
 #   apt-get update && apt-get install -y google-chrome-stable && apt-get clean
 
 # chromium-browser-unstable
-RUN curl -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/chromium-127.0.6485.1/chromium-browser-unstable_127.0.6485.1-1_amd64.deb"
-RUN dpkg -i /chromium-browser-unstable.deb && rm chromium-browser-unstable.deb
+ENV CHROMIUM_VERSION=128.0.6542.1
+ARG TARGETPLATFORM
+ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCH=arm64; else ARCH=amd64; fi; \
+    curl -s -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/chromium-${CHROMIUM_VERSION}/chromium-browser-unstable_${CHROMIUM_VERSION}-1_${ARCH}.deb" \
+    && dpkg -i /chromium-browser-unstable.deb \
+    && rm chromium-browser-unstable.deb
 
 RUN apt-get clean \
     && rm -rf /var/cache/apt/* \
@@ -177,7 +182,7 @@ COPY --from=ffmpeg-build /usr/lib/x86_64-linux-gnu/libvmaf.so* /usr/lib/x86_64-l
 COPY --from=ffmpeg-build /usr/share/model/* /usr/share/model/
 
 RUN mkdir -p /app/
-RUN curl -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \
+RUN curl -s -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \
     && ffprobe /app/video.mp4
 
 #
