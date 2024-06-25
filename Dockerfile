@@ -179,7 +179,7 @@ RUN apt-get clean \
 
 COPY --from=ffmpeg-build /usr/bin/ffmpeg /usr/bin/ffprobe /usr/bin/
 COPY --from=ffmpeg-build /usr/lib/x86_64-linux-gnu*/libvmaf.so* /usr/lib/x86_64-linux-gnu/
-COPY --from=ffmpeg-build /usr/lib/arm64-linux-gnu*/libvmaf.so* /usr/lib/arm64-linux-gnu/
+COPY --from=ffmpeg-build /usr/lib/aarch64-linux-gnu*/libvmaf.so* /usr/lib/arm64-linux-gnu/
 COPY --from=ffmpeg-build /usr/share/model/* /usr/share/model/
 
 RUN mkdir -p /app/

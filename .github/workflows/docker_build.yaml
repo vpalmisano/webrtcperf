@@ -87,6 +87,7 @@ jobs:
         tags: ghcr.io/${{ github.repository }}:devel
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
+        outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=WebRTC performance and quality evaluation tool.
 
     - name: Docker build and push new version
       if: startsWith(github.event.ref, 'refs/tags/v')
@@ -98,6 +99,7 @@ jobs:
         tags: ghcr.io/${{ github.repository }}:${{ steps.get_package_version.outputs.version }},ghcr.io/${{ github.repository }}:latest
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
+        outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=WebRTC performance and quality evaluation tool.
 
     - name: Move cache
       run: |
