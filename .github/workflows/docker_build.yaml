@@ -74,7 +74,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        platform: linux/amd64,linux/arm64
+        platforms: linux/amd64,linux/arm64
         push: true
         tags: ghcr.io/${{ github.repository }}:devel
         cache-from: type=local,src=/tmp/.buildx-cache
@@ -85,7 +85,7 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         context: .
-        platform: linux/amd64,linux/arm64
+        platforms: linux/amd64,linux/arm64
         push: true
         tags: ghcr.io/${{ github.repository }}:${{ steps.get_package_version.outputs.version }},ghcr.io/${{ github.repository }}:latest
         cache-from: type=local,src=/tmp/.buildx-cache

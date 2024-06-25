@@ -29,7 +29,7 @@ ENV FFMPEG_VERSION=6.1
 RUN \
     mkdir -p /src \
     && cd /src \
-    && wget https://github.com/Netflix/vmaf/archive/refs/tags/v${VMAF_VERSION}.tar.gz \
+    && wget -q https://github.com/Netflix/vmaf/archive/refs/tags/v${VMAF_VERSION}.tar.gz \
 	&& tar -xzf v${VMAF_VERSION}.tar.gz \
 	&& cd vmaf-${VMAF_VERSION}/libvmaf \
 	&& meson build --prefix /usr \
@@ -41,7 +41,7 @@ RUN \
 RUN \
     mkdir -p /src \
     && cd /src \
-    && wget https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n${FFMPEG_VERSION}.tar.gz \
+    && wget -q https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n${FFMPEG_VERSION}.tar.gz \
 	&& tar -xzf n${FFMPEG_VERSION}.tar.gz \
 	&& cd FFmpeg-n${FFMPEG_VERSION} \
     && ./configure --prefix=/usr \
