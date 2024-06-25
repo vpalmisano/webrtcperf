@@ -51,7 +51,7 @@
     "@puppeteer/browsers": "^2.2.3",
     "axios": "^1.7.2",
     "browserify": "^17.0.0",
-    "camel-case": "^4.1.2",
+    "camel-case": "^5.0.0",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
     "compression": "^1.7.4",
