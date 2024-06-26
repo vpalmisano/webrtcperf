@@ -84,6 +84,7 @@ jobs:
         context: .
         push: true
         platforms: ${{ matrix.platform }}
+        provenance: false
         tags: ghcr.io/${{ github.repository }}:devel
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
@@ -96,6 +97,7 @@ jobs:
         context: .
         push: true
         platforms: ${{ matrix.platform }}
+        provenance: false
         tags: ghcr.io/${{ github.repository }}:${{ steps.get_package_version.outputs.version }},ghcr.io/${{ github.repository }}:latest
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
