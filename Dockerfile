@@ -1,4 +1,4 @@
-FROM ubuntu:jammy as ffmpeg-build
+FROM --platform=$TARGETPLATFORM ubuntu:jammy as ffmpeg-build
 RUN \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -56,7 +56,7 @@ RUN \
 RUN rm -rf /src
 
 #
-FROM ubuntu:jammy
+FROM --platform=$TARGETPLATFORM ubuntu:jammy
 LABEL org.opencontainers.image.title webrtcperf
 LABEL org.opencontainers.image.description WebRTC performance and quality evaluation tool.
 LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
