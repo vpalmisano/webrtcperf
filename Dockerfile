@@ -1,5 +1,4 @@
 ARG TARGETPLATFORM
-ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 FROM --platform=$TARGETPLATFORM ubuntu:jammy as ffmpeg-build
 RUN \
     apt-get update && \
@@ -168,6 +167,7 @@ RUN \
 
 # chromium-browser-unstable
 ENV CHROMIUM_VERSION=128.0.6542.1
+ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCH=arm64; else ARCH=amd64; fi; \
     curl -s -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/chromium-${CHROMIUM_VERSION}/chromium-browser-unstable_${CHROMIUM_VERSION}-1_${ARCH}.deb" \
     && dpkg -i /chromium-browser-unstable.deb \
