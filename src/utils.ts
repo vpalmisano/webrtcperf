@@ -699,7 +699,7 @@ const ipCache = new Map<string, { host: string; timestamp: number }>()
  */
 export async function resolveIP(
   ip: string,
-  cacheTime = 60000,
+  cacheTime = 60 * 60 * 1000,
 ): Promise<string> {
   if (!ip) return ''
   if (ipaddrJs.parse(ip).range() === 'private') {

@@ -35,19 +35,19 @@ window.RTCPeerConnection = function (conf, options) {
   const createOfferNative = pc.createOffer.bind(pc)
   pc.createOffer = async options => {
     const offer = await createOfferNative(options)
-    log(`RTCPeerConnection createOffer`, { options, offer })
+    // log(`RTCPeerConnection createOffer`, { options, offer })
     return offer
   }
 
   const setLocalDescriptionNative = pc.setLocalDescription.bind(pc)
   pc.setLocalDescription = description => {
-    log(`RTCPeerConnection setLocalDescription`, description)
+    // log(`RTCPeerConnection setLocalDescription`, description)
     return setLocalDescriptionNative(description)
   }
 
   const setRemoteDescriptionNative = pc.setRemoteDescription.bind(pc)
   pc.setRemoteDescription = description => {
-    log(`RTCPeerConnection setRemoteDescription`, description)
+    // log(`RTCPeerConnection setRemoteDescription`, description)
     return setRemoteDescriptionNative(description)
   }
 
@@ -79,7 +79,7 @@ window.RTCPeerConnection = function (conf, options) {
     //log(`RTCPeerConnection addTransceiver`, args)
 
     const transceiver = addTransceiverNative(...args)
-    log(`RTCPeerConnection-${id} addTransceiver`, transceiver)
+    // log(`RTCPeerConnection-${id} addTransceiver`, transceiver)
     if (transceiver.sender) {
       const setParametersNative = transceiver.sender.setParameters.bind(
         transceiver.sender,
@@ -148,7 +148,7 @@ window.RTCPeerConnection = function (conf, options) {
 
   const addStreamNative = pc.addStream.bind(pc)
   pc.addStream = (...args) => {
-    log(`RTCPeerConnection-${id} addStream`)
+    // log(`RTCPeerConnection-${id} addStream`)
     addStreamNative(...args)
     for (const transceiver of pc.getTransceivers()) {
       if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
@@ -165,7 +165,7 @@ window.RTCPeerConnection = function (conf, options) {
   pc.addEventListener('track', async event => {
     const { receiver, transceiver } = event
     if (receiver?.track) {
-      log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
+      // log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
       if (encodedInsertableStreams && timestampInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
