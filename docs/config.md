@@ -165,7 +165,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"125.0.6422.141"`
+*Default*: `"126.0.6478.126"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
