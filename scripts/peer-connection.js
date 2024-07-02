@@ -265,11 +265,9 @@ async function saveTransceiversTracks(
   }
 }
 
-window.saveSendAudioTracks = enableDelay =>
-  saveTransceiversTracks('sender', 'audio', enableDelay)
-window.saveSendVideoTracks = enableDelay =>
-  saveTransceiversTracks('sender', 'video', enableDelay)
-window.saveRecvAudioTracks = enableDelay =>
-  saveTransceiversTracks('receiver', 'audio', enableDelay)
-window.saveRecvVideoTracks = enableDelay =>
-  saveTransceiversTracks('receiver', 'video', enableDelay)
+window.saveSendAudioTracks = (enableStart, enableEnd) =>
+  saveTransceiversTracks('sender', 'audio', enableStart, enableEnd)
+window.saveSendVideoTracks = (enableStart, enableEnd) =>
+  saveTransceiversTracks('sender', 'video', enableStart, enableEnd)
+window.saveRecvAudioTracks = () => saveTransceiversTracks('receiver', 'audio')
+window.saveRecvVideoTracks = () => saveTransceiversTracks('receiver', 'video')
