@@ -159,10 +159,22 @@ const getSaveFileWorker = () => {
   return saveFileWorker
 }
 
+/**
+ * It saves the media track to a file.
+ * @param {MediaStreamTrack} track The media track to save.
+ * @param {'send'|'recv'} sendrecv If 'send', it is a local track. If 'recv', it is a remote track.
+ * @param {Number} enableStart If greater than 0, the track is enabled after this time in milliseconds.
+ * @param {Number} enableEnd If greater than 0, the track is disabled after this time in milliseconds.
+ * @param {Number} quality The MJPEG video quality.
+ * @param {Number} width The video width.
+ * @param {Number} height The video height.
+ * @param {Number} frameRate The video frame rate.
+ */
 window.saveMediaTrack = async (
   track,
   sendrecv,
-  enableDelay = 0,
+  enableStart = 0,
+  enableEnd = 0,
   quality = 0.75,
   width = window.VIDEO_WIDTH,
   height = window.VIDEO_HEIGHT,
@@ -173,11 +185,16 @@ window.saveMediaTrack = async (
     return
   }
   savingTracks[kind].add(id)
-  if (enableDelay > 0) {
+  if (enableStart > 0) {
     track.enabled = false
     setTimeout(() => {
       track.enabled = true
-    }, enableDelay)
+    }, enableStart)
+  }
+  if (enableEnd > 0) {
+    setTimeout(() => {
+      track.enabled = false
+    }, enableEnd)
   }
 
   const filename = `${getParticipantNameForSave(sendrecv, track)}${

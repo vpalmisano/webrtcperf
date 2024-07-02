@@ -60,7 +60,8 @@ window.RTCPeerConnection = function (conf, options) {
       saveMediaTrack(
         transceiver.sender.track,
         'send',
-        window.PARAMS?.saveVideoTrackEnableDelay,
+        window.PARAMS?.saveVideoTrackEnableStart,
+        window.PARAMS?.saveVideoTrackEnableEnd,
       ).catch(err => log(`saveMediaTrack error: ${err.message}`))
     } else if (
       transceiver.sender.track.kind === 'audio' &&
@@ -69,7 +70,8 @@ window.RTCPeerConnection = function (conf, options) {
       saveMediaTrack(
         transceiver.sender.track,
         'send',
-        window.PARAMS?.saveAudioTrackEnableDelay,
+        window.PARAMS?.saveAudioTrackEnableStart,
+        window.PARAMS?.saveAudioTrackEnableEnd,
       ).catch(err => log(`saveMediaTrack error: ${err.message}`))
     }
   }
@@ -238,7 +240,12 @@ window.RTCRtpSender.getCapabilities = kind => {
   return capabilities
 }
 
-async function saveTransceiversTracks(direction, kind, enableDelay = 0) {
+async function saveTransceiversTracks(
+  direction,
+  kind,
+  enableStart = 0,
+  enableEnd = 0,
+) {
   for (const pc of PeerConnections.values()) {
     const tranceivers = pc
       .getTransceivers()
@@ -251,7 +258,8 @@ async function saveTransceiversTracks(direction, kind, enableDelay = 0) {
       await saveMediaTrack(
         tranceiver[direction].track,
         direction === 'sender' ? 'send' : 'recv',
-        enableDelay,
+        enableStart,
+        enableEnd,
       )
     }
   }
