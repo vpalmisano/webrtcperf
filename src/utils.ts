@@ -620,13 +620,15 @@ export async function checkChromeExecutable(): Promise<string> {
   const config = loadConfig()
   const cacheDir = path.join(os.homedir(), '.webrtcperf/chrome')
 
+  const fixSemVer = (v: string) => v.split('.').slice(0, 3).join('.')
+
   const browsers = await getInstalledBrowsers({ cacheDir })
-  const revisions = browsers.map(b => b.buildId)
+  const revisions = browsers.map(b => fixSemVer(b.buildId))
   const browser = Browser.CHROME
   revisions.sort(getVersionComparator(browser))
   log.debug(`Available chrome versions: ${revisions}`)
   const requiredRevision = config.chromiumVersion
-  if (revisions.indexOf(requiredRevision) === -1) {
+  if (revisions.indexOf(fixSemVer(requiredRevision)) === -1) {
     log.info(`Downloading chrome ${requiredRevision}...`)
     let progress = 0
     await install({
