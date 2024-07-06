@@ -1,4 +1,3 @@
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -446,6 +445,9 @@ export async function runVmaf(
 }
 
 async function writeGraph(vmafLogPath: string, frameRate = 24) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { ChartJSNodeCanvas } = require('chartjs-node-canvas')
+
   const vmafLog = JSON.parse(
     await fs.promises.readFile(vmafLogPath, 'utf-8'),
   ) as {
