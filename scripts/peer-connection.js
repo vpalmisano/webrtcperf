@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, enabledForSession, watchObjectProperty */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack, enabledForSession, watchObjectProperty */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -271,3 +271,27 @@ window.saveSendVideoTracks = (enableStart, enableEnd) =>
   saveTransceiversTracks('sender', 'video', enableStart, enableEnd)
 window.saveRecvAudioTracks = () => saveTransceiversTracks('receiver', 'audio')
 window.saveRecvVideoTracks = () => saveTransceiversTracks('receiver', 'video')
+
+async function stopSaveTransceiversTracks(direction, kind) {
+  for (const pc of PeerConnections.values()) {
+    const tranceivers = pc
+      .getTransceivers()
+      .filter(
+        t =>
+          t[direction]?.track?.kind === kind &&
+          t[direction]?.track?.label !== 'probator',
+      )
+    for (const tranceiver of tranceivers) {
+      stopSaveMediaTrack(tranceiver[direction].track)
+    }
+  }
+}
+
+window.stopSaveSendAudioTracks = () =>
+  stopSaveTransceiversTracks('sender', 'audio')
+window.stopSaveRecvAudioTracks = () =>
+  stopSaveTransceiversTracks('receiver', 'audio')
+window.stopSaveSendVideoTracks = () =>
+  stopSaveTransceiversTracks('sender', 'video')
+window.stopSaveRecvVideoTracks = () =>
+  stopSaveTransceiversTracks('receiver', 'video')

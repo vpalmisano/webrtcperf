@@ -41,11 +41,29 @@ const saveFileWorkerFn = () => {
     ws.send(data)
   }
 
+  const websockets = new Map()
+
   onmessage = async ({ data }) => {
-    const { id, url, readable, kind, quality, width, height, frameRate } = data
-    log(`saveTrack id=${id} kind=${kind} url=${url}`)
+    const {
+      action,
+      id,
+      url,
+      readable,
+      kind,
+      quality,
+      width,
+      height,
+      frameRate,
+    } = data
+    log(`action=${action} id=${id} kind=${kind} url=${url}`)
+    if (action === 'stop') {
+      const writable = websockets.get(id)
+      writable?.close()
+      return
+    }
 
     const ws = await wsClient(url)
+    websockets.set(id, ws)
     if (kind === 'video') {
       writeIvfHeader(ws, width, height, frameRate, 'MJPG')
 
@@ -57,7 +75,12 @@ const saveFileWorkerFn = () => {
         {
           async write(frame) {
             const { timestamp, codedWidth, codedHeight } = frame
-            if (!codedWidth || !codedHeight) {
+            if (
+              !codedWidth ||
+              !codedHeight ||
+              ws.readyState !== WebSocket.OPEN
+            ) {
+              frame.close()
               return
             }
             const bitmap = await createImageBitmap(frame)
@@ -98,11 +121,13 @@ const saveFileWorkerFn = () => {
           close() {
             log(`saveTrack ${url} close`)
             ws.close()
+            websockets.delete(id)
             postMessage({ name: 'close', id, kind })
           },
           abort(error) {
             log(`saveTrack ${url} error`, error)
             ws.close()
+            websockets.delete(id)
             postMessage({ name: 'close', error, id, kind })
           },
         },
@@ -117,7 +142,9 @@ const saveFileWorkerFn = () => {
             try {
               const data = new Float32Array(numberOfFrames)
               frame.copyTo(data, { planeIndex: 0 })
-              ws.send(data)
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(data)
+              }
             } catch (err) {
               log(`saveMediaTrack ${url} error=${err.message}`)
             }
@@ -126,15 +153,17 @@ const saveFileWorkerFn = () => {
           close() {
             log(`saveTrack ${url} close`)
             ws.close()
+            websockets.delete(id)
             postMessage({ name: 'close', id, kind })
           },
           abort(error) {
             log(`saveTrack ${url} error`, error)
             ws.close()
+            websockets.delete(id)
             postMessage({ name: 'close', error, id, kind })
           },
         },
-        new CountQueuingStrategy({ highWaterMark: 100 }),
+        new CountQueuingStrategy({ highWaterMark: 10 }),
       )
       readable.pipeTo(writableStream)
     }
@@ -184,7 +213,9 @@ window.saveMediaTrack = async (
   if (savingTracks[kind].has(id)) {
     return
   }
+  const { readable } = new window.MediaStreamTrackProcessor({ track })
   savingTracks[kind].add(id)
+
   if (enableStart > 0) {
     track.enabled = false
     setTimeout(() => {
@@ -203,11 +234,11 @@ window.saveMediaTrack = async (
   const url = `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
     window.SERVER_PORT
   }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`
-  const { readable } = new window.MediaStreamTrackProcessor({ track })
 
   log(`saveMediaTrack ${filename}`)
   getSaveFileWorker().postMessage(
     {
+      action: 'start',
       id,
       url,
       readable,
@@ -219,4 +250,17 @@ window.saveMediaTrack = async (
     },
     [readable],
   )
+}
+
+window.stopSaveMediaTrack = async track => {
+  const { id, kind } = track
+  if (!savingTracks[kind].has(id)) {
+    return
+  }
+  log(`stopSaveMediaTrack ${id}`)
+  getSaveFileWorker().postMessage({
+    action: 'stop',
+    id,
+    kind,
+  })
 }
