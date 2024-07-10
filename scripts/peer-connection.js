@@ -240,12 +240,12 @@ window.RTCRtpSender.getCapabilities = kind => {
   return capabilities
 }
 
-async function saveTransceiversTracks(
+window.saveTransceiversTracks = async (
   direction,
   kind,
   enableStart = 0,
   enableEnd = 0,
-) {
+) => {
   for (const pc of PeerConnections.values()) {
     const tranceivers = pc
       .getTransceivers()
@@ -265,14 +265,7 @@ async function saveTransceiversTracks(
   }
 }
 
-window.saveSendAudioTracks = (enableStart, enableEnd) =>
-  saveTransceiversTracks('sender', 'audio', enableStart, enableEnd)
-window.saveSendVideoTracks = (enableStart, enableEnd) =>
-  saveTransceiversTracks('sender', 'video', enableStart, enableEnd)
-window.saveRecvAudioTracks = () => saveTransceiversTracks('receiver', 'audio')
-window.saveRecvVideoTracks = () => saveTransceiversTracks('receiver', 'video')
-
-async function stopSaveTransceiversTracks(direction, kind) {
+window.stopSaveTransceiversTracks = (direction, kind) => {
   for (const pc of PeerConnections.values()) {
     const tranceivers = pc
       .getTransceivers()
@@ -287,11 +280,17 @@ async function stopSaveTransceiversTracks(direction, kind) {
   }
 }
 
-window.stopSaveSendAudioTracks = () =>
-  stopSaveTransceiversTracks('sender', 'audio')
-window.stopSaveRecvAudioTracks = () =>
-  stopSaveTransceiversTracks('receiver', 'audio')
-window.stopSaveSendVideoTracks = () =>
-  stopSaveTransceiversTracks('sender', 'video')
-window.stopSaveRecvVideoTracks = () =>
-  stopSaveTransceiversTracks('receiver', 'video')
+window.setTransceiversTracks = (direction, kind, enabled) => {
+  for (const pc of PeerConnections.values()) {
+    const tranceivers = pc
+      .getTransceivers()
+      .filter(
+        t =>
+          t[direction]?.track?.kind === kind &&
+          t[direction]?.track?.label !== 'probator',
+      )
+    for (const tranceiver of tranceivers) {
+      tranceiver[direction].track.enabled = enabled
+    }
+  }
+}

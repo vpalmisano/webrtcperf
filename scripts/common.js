@@ -394,12 +394,12 @@ window.setupActions = async () => {
   }
   actionsStarted = true
 
-  /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, param: any }> */
+  /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, params: [] }> */
   const actions = window.PARAMS.actions
   actions
     .sort((a, b) => (a.at || 0) - (b.at || 0))
     .forEach(action => {
-      const { name, at, every, times, index, param } = action
+      const { name, at, every, times, index, params } = action
       const fn = window[name]
       if (!fn) {
         log(`setupActions undefined action: "${name}"`)
@@ -413,7 +413,7 @@ window.setupActions = async () => {
       }
 
       const setupTime = window.webrtcPerfElapsedTime()
-      const startTime = at * 1000 - setupTime
+      const startTime = at > 0 ? at * 1000 - setupTime : 0
       if (startTime < 0) {
         log(
           `setupActions action "${name}" already passed (setupTime: ${
@@ -423,7 +423,7 @@ window.setupActions = async () => {
         return
       }
       log(
-        `scheduling action ${name}(${param}) at ${at}s${
+        `scheduling action ${name}(${params || ''}) at ${at}s${
           every ? ` every ${every}s` : ''
         }${
           times ? ` ${times} times` : ''
@@ -433,7 +433,7 @@ window.setupActions = async () => {
       const cb = async () => {
         const ts = (window.webrtcPerfElapsedTime() / 1000).toFixed(0)
         log(
-          `run action [${ts}s] ${name}(${param}) at ${at}s${
+          `run action [${ts}s] ${name}(${params || ''})${
             every ? ` every ${every}s` : ''
           }${
             times
@@ -442,7 +442,11 @@ window.setupActions = async () => {
           } (${Date.now()})`,
         )
         try {
-          await fn(param)
+          if (params && params.length) {
+            await fn(...params)
+          } else {
+            await fn()
+          }
           log(`run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} done`)
         } catch (err) {
           log(

@@ -38,8 +38,8 @@ type Logger = {
   log: (...args: unknown[]) => void
 }
 
-export function logger(name: string, options?: unknown): Logger {
-  return new Log(name, options)
+export function logger(name: string, options = {}): Logger {
+  return new Log(name, { splitLine: false, ...options })
 }
 
 export class LoggerInterface {
