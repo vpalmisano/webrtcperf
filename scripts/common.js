@@ -393,7 +393,6 @@ window.setupActions = async () => {
     return
   }
   actionsStarted = true
-  const setupTime = window.webrtcPerfElapsedTime()
 
   /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, param: any }> */
   const actions = window.PARAMS.actions
@@ -413,6 +412,7 @@ window.setupActions = async () => {
         }
       }
 
+      const setupTime = window.webrtcPerfElapsedTime()
       const startTime = at * 1000 - setupTime
       if (startTime < 0) {
         log(
@@ -439,7 +439,7 @@ window.setupActions = async () => {
             times
               ? ` (${times - currentIteration}/${times} times remaining)`
               : ''
-          }`,
+          } (${Date.now()})`,
         )
         try {
           await fn(param)

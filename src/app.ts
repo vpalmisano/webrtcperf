@@ -54,6 +54,10 @@ ${wrap(value.doc, { width: 72, indent: '        ' })}
 export async function setupApplication(
   config: Config,
 ): Promise<{ stats: Stats; stop: () => Promise<void> }> {
+  if (!config.startTimestamp) {
+    config.startTimestamp = Date.now()
+  }
+
   // Stats.
   const stats = new Stats(config)
   await stats.start()
