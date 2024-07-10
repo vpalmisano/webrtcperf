@@ -103,6 +103,7 @@ export async function prepareFakeMedia({
           ` && mv ${destAudioPathTmp} ${destAudioPath}`,
       )
     } catch (err) {
+      log.error(`Error converting video: ${(err as Error).stack}`)
       promises.unlink(destVideoPathTmp).catch(e => log.debug(e.message))
       promises.unlink(destAudioPathTmp).catch(e => log.debug(e.message))
       throw err
