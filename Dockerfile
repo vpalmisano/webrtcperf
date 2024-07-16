@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM ubuntu:jammy as ffmpeg-build
+FROM --platform=$TARGETPLATFORM ubuntu:jammy AS ffmpeg-build
 RUN \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
@@ -54,6 +54,29 @@ RUN \
     && make install
 
 RUN rm -rf /src
+
+#
+FROM --platform=$TARGETPLATFORM ubuntu:jammy AS visqol-build
+RUN \
+    apt-get update \
+    && apt-get install apt-transport-https curl gnupg git -y \
+    && curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg \
+    && mv bazel-archive-keyring.gpg /usr/share/keyrings \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ninja-build \
+        python3 \
+        python3-pip \
+        build-essential \
+        bazel-5.3.2 \
+        python3-numpy
+RUN \
+    mkdir -p /src \
+    && cd /src \
+    && git clone https://github.com/google/visqol \
+    && cd visqol \
+    && bazel-5.3.2 build :visqol -c opt
 
 #
 FROM --platform=$TARGETPLATFORM ubuntu:jammy
@@ -181,6 +204,9 @@ COPY --from=ffmpeg-build /usr/bin/ffmpeg /usr/bin/ffprobe /usr/bin/
 COPY --from=ffmpeg-build /usr/lib/x86_64-linux-gnu*/libvmaf.so* /usr/lib/x86_64-linux-gnu/
 COPY --from=ffmpeg-build /usr/lib/aarch64-linux-gnu*/libvmaf.so* /usr/lib/aarch64-linux-gnu/
 COPY --from=ffmpeg-build /usr/share/model/* /usr/share/model/
+
+COPY --from=visqol-build /src/visqol/bazel-bin/visqol /usr/bin/
+COPY --from=visqol-build /src/visqol/model /usr/share/visqol/model
 
 RUN mkdir -p /app/
 RUN curl -s -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \

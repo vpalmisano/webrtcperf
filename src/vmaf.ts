@@ -571,6 +571,11 @@ export async function calculateVmafScore(
 
 if (require.main === module) {
   ;(async (): Promise<void> => {
-    /* await writeGraph(process.argv[2]) */
+    await calculateVmafScore({
+      vmafPath: process.argv[2],
+      vmafPreview: true,
+      vmafKeepIntermediateFiles: true,
+      vmafKeepSourceFiles: true,
+    })
   })().catch(err => console.error(err))
 }
