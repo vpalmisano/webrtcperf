@@ -566,7 +566,7 @@ An optional path that the HTTP server will expose with the /data endpoint.
 *Default*: `""`
 
 ## vmafPath
-When set, it runs the VMAF calculator for the videos saved under the provided directory path.
+When set, it runs the VMAF calculator for the video files saved under the provided directory path.
 
 *Type*: `string`
 
@@ -588,6 +588,20 @@ If true, the VMAF intermediate files will not be deleted.
 
 ## vmafKeepSourceFiles
 If true, the VMAF source files will not be deleted.
+
+*Type*: `boolean`
+
+*Default*: `true`
+
+## visqolPath
+When set, it runs the visqol calculator for the audio files saved under the provided directory path.
+
+*Type*: `string`
+
+*Default*: `""`
+
+## visqolKeepSourceFiles
+If true, the visqol source files will not be deleted.
 
 *Type*: `boolean`
 

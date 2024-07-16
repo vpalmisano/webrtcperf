@@ -13,8 +13,8 @@ type VisqolConfig = {
 export async function calculateVisqolScore(
   config: VisqolConfig,
 ): Promise<void> {
-  log.debug('calculateVisqolScore', config)
   const { visqolPath, visqolKeepSourceFiles } = config
+  log.debug('calculateVisqolScore', { visqolPath, visqolKeepSourceFiles })
 
   const ref = new Set<string>()
   const deg = new Set<string>()

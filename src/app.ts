@@ -23,6 +23,7 @@ import {
   stopRandomActivateAudio,
   stopUpdateSystemStats,
 } from './utils'
+import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore } from './vmaf'
 
 const log = logger('webrtcperf')
@@ -175,9 +176,15 @@ async function main(): Promise<void> {
 
   const config = loadConfig(process.argv[2])
 
-  // VMAF score.
+  // vmaf score.
   if (config.vmafPath) {
     await calculateVmafScore(config)
+    process.exit(0)
+  }
+
+  // visqol score
+  if (config.visqolPath) {
+    await calculateVisqolScore(config)
     process.exit(0)
   }
 
