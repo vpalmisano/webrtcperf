@@ -9,7 +9,11 @@ let peerConnectionNextId = 0
 window.RTCPeerConnection = function (conf, options) {
   const id = peerConnectionNextId++
 
-  log(`RTCPeerConnection-${id}`, { conf, options })
+  const debug = (...args) => {
+    if (enabledForSession(window.PARAMS?.peerConnectionDebug)) {
+      log(`RTCPeerConnection-${id}`, ...args)
+    }
+  }
 
   const encodedInsertableStreams =
     conf?.encodedInsertableStreams ||
@@ -26,7 +30,7 @@ window.RTCPeerConnection = function (conf, options) {
   PeerConnections.set(id, pc)
 
   pc.addEventListener('connectionstatechange', () => {
-    log(`RTCPeerConnection-${id} changed to: ${pc.connectionState}`)
+    debug(`changed to: ${pc.connectionState}`)
     if (pc.connectionState === 'closed') {
       PeerConnections.delete(id)
     }
@@ -35,19 +39,19 @@ window.RTCPeerConnection = function (conf, options) {
   const createOfferNative = pc.createOffer.bind(pc)
   pc.createOffer = async options => {
     const offer = await createOfferNative(options)
-    // log(`RTCPeerConnection createOffer`, { options, offer })
+    debug(`createOffer`, { options, offer })
     return offer
   }
 
   const setLocalDescriptionNative = pc.setLocalDescription.bind(pc)
   pc.setLocalDescription = description => {
-    // log(`RTCPeerConnection setLocalDescription`, description)
+    debug(`setLocalDescription`, description)
     return setLocalDescriptionNative(description)
   }
 
   const setRemoteDescriptionNative = pc.setRemoteDescription.bind(pc)
   pc.setRemoteDescription = description => {
-    // log(`RTCPeerConnection setRemoteDescription`, description)
+    debug(`setRemoteDescription`, description)
     return setRemoteDescriptionNative(description)
   }
 
@@ -78,16 +82,15 @@ window.RTCPeerConnection = function (conf, options) {
 
   const addTransceiverNative = pc.addTransceiver.bind(pc)
   pc.addTransceiver = (...args) => {
-    //log(`RTCPeerConnection addTransceiver`, args)
+    debug(`addTransceiver`, args)
 
     const transceiver = addTransceiverNative(...args)
-    // log(`RTCPeerConnection-${id} addTransceiver`, transceiver)
     if (transceiver.sender) {
       const setParametersNative = transceiver.sender.setParameters.bind(
         transceiver.sender,
       )
       transceiver.sender.setParameters = parameters => {
-        log(`RTCPeerConnection-${id} transceiver.setParameters`, parameters)
+        debug(`transceiver.setParameters`, parameters)
         if (window.overrideSetParameters) {
           parameters = window.overrideSetParameters(parameters)
         }
@@ -98,7 +101,7 @@ window.RTCPeerConnection = function (conf, options) {
         transceiver.sender,
       )
       transceiver.sender.setStreams = (...streams) => {
-        log(`RTCPeerConnection-${id} transceiver.setStreams`, streams)
+        debug(`transceiver.setStreams`, streams)
         setStreamsNative(...streams)
 
         checkSaveStream(transceiver)
@@ -108,7 +111,7 @@ window.RTCPeerConnection = function (conf, options) {
         transceiver.sender,
       )
       transceiver.sender.replaceTrack = async track => {
-        log(`RTCPeerConnection-${id} transceiver.replaceTrack`, track)
+        debug(`transceiver.replaceTrack`, track)
         await replaceTrackNative(track)
 
         if (encodedInsertableStreams && timestampInsertableStreams) {
@@ -124,8 +127,8 @@ window.RTCPeerConnection = function (conf, options) {
         transceiver.receiver,
         'playoutDelayHint',
         (value, oldValue) => {
-          log(
-            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} playoutDelayHint ${oldValue} -> ${value}`,
+          debug(
+            `receiver ${transceiver.receiver.track.kind} playoutDelayHint ${oldValue} -> ${value}`,
           )
         },
       )
@@ -133,8 +136,8 @@ window.RTCPeerConnection = function (conf, options) {
         transceiver.receiver,
         'jitterBufferTarget',
         (value, oldValue) => {
-          log(
-            `RTCPeerConnection-${id} receiver ${transceiver.receiver.track.kind} jitterBufferTarget ${oldValue} -> ${value}`,
+          debug(
+            `receiver ${transceiver.receiver.track.kind} jitterBufferTarget ${oldValue} -> ${value}`,
           )
         },
       )
@@ -150,7 +153,7 @@ window.RTCPeerConnection = function (conf, options) {
 
   const addStreamNative = pc.addStream.bind(pc)
   pc.addStream = (...args) => {
-    // log(`RTCPeerConnection-${id} addStream`)
+    debug(`addStream`, args)
     addStreamNative(...args)
     for (const transceiver of pc.getTransceivers()) {
       if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
@@ -167,7 +170,7 @@ window.RTCPeerConnection = function (conf, options) {
   pc.addEventListener('track', async event => {
     const { receiver, transceiver } = event
     if (receiver?.track) {
-      // log(`RTCPeerConnection-${id} ontrack`, receiver.track.kind, event)
+      debug(`ontrack`, receiver.track.kind, event)
       if (encodedInsertableStreams && timestampInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
@@ -193,7 +196,7 @@ window.RTCPeerConnection = function (conf, options) {
 
   const setConfigurationNative = pc.setConfiguration.bind(pc)
   pc.setConfiguration = configuration => {
-    log(`RTCPeerConnection-${id} setConfiguration`, configuration)
+    debug(`setConfiguration`, configuration)
     return setConfigurationNative({
       ...configuration,
       encodedInsertableStreams,
