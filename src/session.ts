@@ -15,6 +15,7 @@ import puppeteer, {
   ElementHandle,
   Metrics,
   Page,
+  Permission,
 } from 'puppeteer-core'
 import type { Interception } from 'puppeteer-intercept-and-modify-requests'
 import { RequestInterceptionManager } from 'puppeteer-intercept-and-modify-requests'
@@ -151,6 +152,7 @@ export type SessionParams = {
   responseModifiers: string
   extraCSS: string
   cookies: string
+  overridePermissions: string
   debuggingPort: number
   debuggingAddress: string
   randomAudioPeriod: number
@@ -229,6 +231,7 @@ export class Session extends EventEmitter {
   > = {}
   private readonly extraCSS: string
   private readonly cookies?: Record<string, string>
+  private readonly overridePermissions: Permission[] = []
   private readonly debuggingPort: number
   private readonly debuggingAddress: string
   private readonly randomAudioPeriod: number
@@ -345,6 +348,7 @@ export class Session extends EventEmitter {
     responseModifiers,
     extraCSS,
     cookies,
+    overridePermissions,
     debuggingPort,
     debuggingAddress,
     randomAudioPeriod,
@@ -508,6 +512,13 @@ export class Session extends EventEmitter {
       }
     } else {
       this.cookies = undefined
+    }
+
+    if (overridePermissions) {
+      this.overridePermissions = overridePermissions
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length) as Permission[]
     }
   }
 
@@ -825,6 +836,13 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
       this.context = await this.browser.createBrowserContext()
     } else {
       this.context = this.browser.defaultBrowserContext()
+    }
+
+    if (this.overridePermissions.length) {
+      await this.context.overridePermissions(
+        new URL(url).origin,
+        this.overridePermissions,
+      )
     }
 
     const page = await this.getNewPage(tabIndex)

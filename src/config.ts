@@ -517,6 +517,14 @@ Rules containing "important" will be replaced with "!important".`,
     env: 'COOKIES',
     arg: 'cookies',
   },
+  overridePermissions: {
+    doc: `A comma-separated list of permissions to grant to the opened url.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'OVERRIDE_PERMISSIONS',
+    arg: 'override-permissions',
+  },
   debuggingPort: {
     doc: `The chrome debugging port. If this value != 0, the chrome instance \
 will listen on the provided port + the start-session-id value.`,
