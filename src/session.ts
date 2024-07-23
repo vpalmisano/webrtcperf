@@ -42,14 +42,14 @@ import {
 
 const log = logger('webrtcperf:session')
 
-const metricsTotalDuration = (metrics: Metrics): number => {
+/* const metricsTotalDuration = (metrics: Metrics): number => {
   return (
     (metrics.LayoutDuration || 0) +
     (metrics.RecalcStyleCount || 0) +
     (metrics.ScriptDuration || 0) +
     (metrics.TaskDuration || 0)
   )
-}
+} */
 
 declare global {
   let collectPeerConnectionStats: () => Promise<{
@@ -89,7 +89,7 @@ type PageLogColorsKey =
   | 'requestfailed'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SessionStats = Record<string, number | any>
+type SessionStats = Record<string, number | Record<string, number>>
 
 export type SessionParams = {
   /** The chromium running instance url. */
@@ -1677,7 +1677,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         }
 
         // Collect page metrics
-        const metrics = await page.metrics()
+        /* const metrics = await page.metrics()
         if (metrics.Timestamp) {
           const lastMetrics = this.pagesMetrics.get(pageIndex)
           if (lastMetrics?.Timestamp) {
@@ -1694,7 +1694,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           } else {
             this.pagesMetrics.set(pageIndex, metrics)
           }
-        }
+        } */
+        pageCpu[pageKey] = collectedStats.cpu as number
+        pageMemory[pageKey] = collectedStats.memory as number
 
         // Collect throttle metrics
         const throttleUpValues = getSessionThrottleValues(
