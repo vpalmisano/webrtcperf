@@ -46,12 +46,18 @@ window.RTCPeerConnection = function (conf, options) {
   const setLocalDescriptionNative = pc.setLocalDescription.bind(pc)
   pc.setLocalDescription = description => {
     debug(`setLocalDescription`, description)
+    if (window.overrideSetLocalDescription) {
+      description = window.overrideSetLocalDescription(description)
+    }
     return setLocalDescriptionNative(description)
   }
 
   const setRemoteDescriptionNative = pc.setRemoteDescription.bind(pc)
   pc.setRemoteDescription = description => {
     debug(`setRemoteDescription`, description)
+    if (window.overrideSetRemoteDescription) {
+      description = window.overrideSetRemoteDescription(description)
+    }
     return setRemoteDescriptionNative(description)
   }
 
