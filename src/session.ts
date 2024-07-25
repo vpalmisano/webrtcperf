@@ -734,7 +734,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
     }
 
     this.browser.once('disconnected', () => {
-      log.warn('browser disconnected')
+      log.debug('browser disconnected')
       return this.stop()
     })
 

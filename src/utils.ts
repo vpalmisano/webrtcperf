@@ -667,18 +667,24 @@ export async function runShellCommand(
     let stdout = ''
     let stderr = ''
     p.stdout.on('data', data => {
-      if (stdout.length > 10 * 1024) return
+      if (stdout.length > 512 * 1024) {
+        stdout = stdout.slice(data.length)
+      }
       stdout += data
     })
     p.stderr.on('data', data => {
-      if (stderr.length > 10 * 1024) return
+      if (stderr.length > 512 * 1024) {
+        stderr = stderr.slice(data.length)
+      }
       stderr += data
     })
     p.once('error', err => reject(err))
     p.once('close', code => {
       if (code !== 0) {
         reject(
-          new Error(`runShellCommand cmd: ${cmd} failed with code ${code}`),
+          new Error(
+            `runShellCommand cmd: ${cmd} failed with code ${code}: ${stderr}`,
+          ),
         )
       } else {
         if (verbose)
