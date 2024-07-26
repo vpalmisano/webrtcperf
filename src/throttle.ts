@@ -2,6 +2,7 @@ import JSON5 from 'json5'
 import os from 'os'
 
 import {
+  checkNetworkInterface,
   getDefaultNetworkInterface,
   logger,
   runShellCommand,
@@ -277,6 +278,13 @@ async function start(): Promise<void> {
   if (!throttleConfig || !throttleConfig.length) return
 
   let device = throttleConfig[0].device
+  if (device) {
+    const found = await checkNetworkInterface(device)
+    if (!found) {
+      log.warn(`Network interface ${device} not found, using default.`)
+      device = ''
+    }
+  }
   if (!device) {
     device = await getDefaultNetworkInterface()
   }
