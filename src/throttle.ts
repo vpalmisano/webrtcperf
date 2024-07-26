@@ -279,8 +279,9 @@ async function start(): Promise<void> {
 
   let device = throttleConfig[0].device
   if (device) {
-    const found = await checkNetworkInterface(device)
-    if (!found) {
+    try {
+      await checkNetworkInterface(device)
+    } catch (_err) {
       log.warn(`Network interface ${device} not found, using default.`)
       device = ''
     }

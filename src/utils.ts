@@ -1041,9 +1041,8 @@ export async function getDefaultNetworkInterface(): Promise<string> {
   return stdout.trim()
 }
 
-export async function checkNetworkInterface(device: string): Promise<boolean> {
-  const { stdout } = await runShellCommand(`ip route | grep "dev ${device}"`)
-  return stdout.trim().length > 0
+export async function checkNetworkInterface(device: string): Promise<void> {
+  await runShellCommand(`ip route | grep -q "dev ${device}"`)
 }
 
 export async function portForwarder(port: number, listenInterface?: string) {
