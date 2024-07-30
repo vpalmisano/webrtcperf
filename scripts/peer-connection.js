@@ -108,6 +108,9 @@ window.RTCPeerConnection = function (conf, options) {
       )
       transceiver.sender.setStreams = (...streams) => {
         debug(`transceiver.setStreams`, streams)
+        if (window.overrideSetStreams) {
+          streams = window.overrideSetStreams(streams)
+        }
         setStreamsNative(...streams)
 
         checkSaveStream(transceiver)
@@ -118,6 +121,9 @@ window.RTCPeerConnection = function (conf, options) {
       )
       transceiver.sender.replaceTrack = async track => {
         debug(`transceiver.replaceTrack`, track)
+        if (window.overrideReplaceTrack) {
+          track = window.overrideReplaceTrack(track)
+        }
         await replaceTrackNative(track)
 
         if (encodedInsertableStreams && timestampInsertableStreams) {
