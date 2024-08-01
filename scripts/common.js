@@ -1,8 +1,8 @@
 // Global namespace.
-const WebRtcPerf = {}
+const webrtcperf = {}
 
 // Capture console messages in a serialized format.
-WebRtcPerf.safeStringify = obj => {
+webrtcperf.safeStringify = obj => {
   const values = new Set()
   try {
     const ret = JSON.stringify(obj, (_, v) => {
@@ -27,14 +27,14 @@ WebRtcPerf.safeStringify = obj => {
     const customArgs = args
       .map(arg => {
         if (typeof arg === 'object') {
-          return WebRtcPerf.safeStringify(arg)
+          return webrtcperf.safeStringify(arg)
         } else if (typeof arg === 'string') {
           if (arg.match(/^color: /)) {
             return ''
           }
           return arg.replace(/%c/g, '')
         }
-        return arg.toString()
+        return arg !== undefined ? arg.toString() : 'undefined'
       })
       .filter(arg => arg.length > 0)
       .join(' ')
