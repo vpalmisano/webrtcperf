@@ -76,7 +76,7 @@ RUN \
     && cd /src \
     && git clone --depth 1 https://github.com/google/visqol \
     && cd visqol \
-    && bazel-5.3.2 build :visqol -c opt
+    && bazel-5.3.2 build :visqol -c opt || true
 
 #
 FROM --platform=$TARGETPLATFORM ubuntu:jammy
@@ -205,9 +205,11 @@ COPY --from=ffmpeg-build /usr/lib/x86_64-linux-gnu*/libvmaf.so* /usr/lib/x86_64-
 COPY --from=ffmpeg-build /usr/lib/aarch64-linux-gnu*/libvmaf.so* /usr/lib/aarch64-linux-gnu/
 COPY --from=ffmpeg-build /usr/share/model/* /usr/share/model/
 
-COPY --from=visqol-build /src/visqol/bazel-bin/visqol /usr/bin/
-COPY --from=visqol-build /src/visqol/model /usr/share/visqol/model
+# Optional dependencies.
+COPY --from=visqol-build /src/visqol/bazel-bin/visqo[l] /usr/bin/
+COPY --from=visqol-build /src/visqol/mode[l] /usr/share/visqol/model
 
+# Default test video.
 RUN mkdir -p /app/
 RUN curl -s -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \
     && ffprobe /app/video.mp4
