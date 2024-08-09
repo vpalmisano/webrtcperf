@@ -1471,16 +1471,14 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           text = text.slice(0, 1024) + `... +${text.length - 1024} bytes`
         }
         await saveFile.write(
-          `${new Date().toISOString()} [page ${index + 1}] (${type}) ${text}\n`,
+          `${new Date().toISOString()} [page ${index}] (${type}) ${text}\n`,
         )
       }
       if (this.showPageLog) {
         if (!errorOrWarning && !isWebrtcPerf && text.length > 256) {
           text = text.slice(0, 256) + `... +${text.length - 256} bytes`
         }
-        console.log(
-          chalk`{bold [page ${index + 1}]} {${color} (${type}) ${text}}`,
-        )
+        console.log(chalk`{bold [page ${index}]} {${color} (${type}) ${text}}`)
       }
       if (type === 'error') {
         this.pageErrors += 1
