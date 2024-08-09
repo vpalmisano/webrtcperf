@@ -74,7 +74,7 @@ RUN \
 RUN \
     mkdir -p /src \
     && cd /src \
-    && git clone https://github.com/google/visqol \
+    && git clone --depth 1 https://github.com/google/visqol \
     && cd visqol \
     && bazel-5.3.2 build :visqol -c opt
 
