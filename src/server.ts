@@ -555,7 +555,7 @@ export class Server {
    * Starts the {@link Server} instance.
    */
   async start(): Promise<void> {
-    log.info('start')
+    log.debug('start')
     if (this.serverUseHttps) {
       const destDir = path.join(os.homedir(), '.webrtcperf/ssl')
       await runShellCommand(
@@ -681,7 +681,7 @@ export class Server {
     })
 
     this.server.listen(this.serverPort, () => {
-      log.info(`HTTPS server listening on port ${this.serverPort}`)
+      log.debug(`HTTPS server listening on port ${this.serverPort}`)
     })
   }
 
@@ -694,7 +694,7 @@ export class Server {
       this.wss = null
     }
     if (this.server) {
-      log.info('stop')
+      log.debug('stop')
       this.server.close()
       this.server = null
     }

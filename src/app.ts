@@ -124,7 +124,7 @@ export async function setupApplication(
       )
     }
     const spawnPeriod = 1000 / config.spawnRate
-    log.info(
+    log.debug(
       `Starting ${config.sessions} sessions (spawnPeriod: ${spawnPeriod}ms)`,
     )
     const startTime = Date.now()
@@ -138,7 +138,7 @@ export async function setupApplication(
     }
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     const spawnRate = (config.sessions * config.tabsPerSession) / elapsed
-    log.info(
+    log.debug(
       `${
         config.sessions * config.tabsPerSession
       } pages started in ${elapsed}s (${spawnRate.toFixed(2)}/s)`,

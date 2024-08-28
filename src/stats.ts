@@ -619,7 +619,7 @@ export class Stats extends events.EventEmitter {
     this.running = true
 
     if (this.statsPath) {
-      log.info(`Logging stats into ${this.statsPath}`)
+      log.debug(`Logging stats into ${this.statsPath}`)
       const headers = this.statsNames.reduce(
         (v: string[], name) => v.concat(formatStatsColumns(name)),
         [],
@@ -628,7 +628,7 @@ export class Stats extends events.EventEmitter {
     }
 
     if (this.detailedStatsPath) {
-      log.info(`Logging stats into ${this.statsPath}`)
+      log.debug(`Logging stats into ${this.statsPath}`)
       this.detailedStatsWriter = new StatsWriter(this.detailedStatsPath, [
         'participantName',
         'trackId',
@@ -1936,7 +1936,7 @@ export class Stats extends events.EventEmitter {
       return
     }
     this.running = false
-    log.info('stop')
+    log.debug('stop')
     if (this.scheduler) {
       this.scheduler.stop()
       this.scheduler = undefined

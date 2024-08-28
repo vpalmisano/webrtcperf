@@ -826,7 +826,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
         .replace(/\$p/g, String(process.pid))}`
     }
 
-    log.info(
+    log.debug(
       `opening page ${index} (session: ${this.id} tab: ${tabIndex}): ${hideAuth(
         url,
       )}`,
@@ -1007,7 +1007,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     }
 
     page.on('dialog', async dialog => {
-      log.info(`page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`)
+      log.debug(
+        `page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`,
+      )
       try {
         await dialog.accept()
       } catch (err) {
@@ -1021,7 +1023,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     })
 
     page.once('close', () => {
-      log.info(`page ${index + 1} closed`)
+      log.debug(`page ${index + 1} closed`)
       this.pages.delete(index)
       this.pagesMetrics.delete(index)
 
@@ -1330,7 +1332,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
               httpOnly: true,
               secure: true,
             }
-            log.info(`setting cookie: %j`, cookie)
+            log.debug(`setting cookie: %j`, cookie)
             return page.setCookie(cookie)
           }),
         )
@@ -1774,7 +1776,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       return
     }
     this.running = false
-    log.info(`${this.id} stop`)
+    log.debug(`${this.id} stop`)
 
     if (this.stopPortForwarder) {
       this.stopPortForwarder()
