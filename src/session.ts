@@ -1555,111 +1555,115 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
     const customStats: Record<string, Record<string, number | string>> = {}
 
-    for (const [pageIndex, page] of this.pages.entries()) {
-      try {
-        // Collect stats from page.
-        const {
-          peerConnectionStats,
-          audioEndToEndDelay,
-          videoEndToEndDelay,
-          videoEndToEndNetworkDelay,
-          httpResourcesStats,
-          cpuPressure,
-        } = await page.evaluate(async () => ({
-          peerConnectionStats: await collectPeerConnectionStats(),
-          audioEndToEndDelay: collectAudioEndToEndDelayStats(),
-          videoEndToEndDelay: collectVideoEndToEndDelayStats(),
-          videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
-          httpResourcesStats: collectHttpResourcesStats(),
-          cpuPressure: collectCpuPressure(),
-        }))
-        const { participantName } = peerConnectionStats
-
-        // Get host from the first collected remote address.
-        if (
-          !peerConnectionStats.signalingHost &&
-          peerConnectionStats.stats.length
-        ) {
-          const values = Object.values(peerConnectionStats.stats[0])
-          if (values.length) {
-            peerConnectionStats.signalingHost = await resolveIP(
-              values[0].remoteAddress as string,
-            )
-          }
-        }
-        const { stats, activePeerConnections, signalingHost } =
-          peerConnectionStats
-
-        // Calculate stats keys.
-        const hostKey = rtcStatKey({ hostName: signalingHost, participantName })
-        const pageKey = rtcStatKey({
-          pageIndex,
-          hostName: signalingHost,
-          participantName,
-        })
-
-        // Set pages counter.
-        if (!pages[hostKey]) {
-          pages[hostKey] = 0
-        }
-        pages[hostKey] += 1
-
-        // Set peerConnections counter.
-        if (!peerConnections[hostKey]) {
-          peerConnections[hostKey] = 0
-        }
-        peerConnections[hostKey] += activePeerConnections
-
-        // E2E stats.
-        if (audioEndToEndDelay) {
-          audioEndToEndDelayStats[pageKey] = audioEndToEndDelay
-        }
-        if (videoEndToEndDelay) {
-          videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
-        }
-        if (videoEndToEndNetworkDelay) {
-          videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
-        }
-
-        // HTTP stats.
-        httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
-        httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
-        httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
-
-        if (cpuPressure !== undefined) {
-          cpuPressureStats[pageKey] = cpuPressure
-        }
-
-        // Collect RTC stats.
-        for (const s of stats) {
-          for (const [trackId, value] of Object.entries(s)) {
-            try {
-              updateRtcStats(
-                collectedStats as RtcStats,
-                pageIndex,
-                trackId,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                value,
-                signalingHost,
-                participantName,
-              )
-            } catch (err) {
-              log.error(
-                `updateRtcStats error for ${trackId}: ${(err as Error).stack}`,
-                err,
-              )
-            }
-          }
-        }
-
-        // Collect custom metrics.
+    await Promise.allSettled(
+      [...this.pages.entries()].map(async ([pageIndex, page]) => {
         try {
-          const customMetrics = await page.evaluate(() => {
-            if (!('collectCustomMetrics' in window)) {
-              return null
+          // Collect stats from the page.
+          const {
+            peerConnectionStats,
+            audioEndToEndDelay,
+            videoEndToEndDelay,
+            videoEndToEndNetworkDelay,
+            httpResourcesStats,
+            cpuPressure,
+            customMetrics,
+          } = await page.evaluate(async () => ({
+            peerConnectionStats: await collectPeerConnectionStats(),
+            audioEndToEndDelay: collectAudioEndToEndDelayStats(),
+            videoEndToEndDelay: collectVideoEndToEndDelayStats(),
+            videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
+            httpResourcesStats: collectHttpResourcesStats(),
+            cpuPressure: collectCpuPressure(),
+            customMetrics: await page.evaluate(() => {
+              if (!('collectCustomMetrics' in window)) {
+                return null
+              }
+              return collectCustomMetrics()
+            }),
+          }))
+          const { participantName } = peerConnectionStats
+
+          // Get host from the first collected remote address.
+          if (
+            !peerConnectionStats.signalingHost &&
+            peerConnectionStats.stats.length
+          ) {
+            const values = Object.values(peerConnectionStats.stats[0])
+            if (values.length) {
+              peerConnectionStats.signalingHost = await resolveIP(
+                values[0].remoteAddress as string,
+              )
             }
-            return collectCustomMetrics()
+          }
+          const { stats, activePeerConnections, signalingHost } =
+            peerConnectionStats
+
+          // Calculate stats keys.
+          const hostKey = rtcStatKey({
+            hostName: signalingHost,
+            participantName,
           })
+          const pageKey = rtcStatKey({
+            pageIndex,
+            hostName: signalingHost,
+            participantName,
+          })
+
+          // Set pages counter.
+          if (!pages[hostKey]) {
+            pages[hostKey] = 0
+          }
+          pages[hostKey] += 1
+
+          // Set peerConnections counter.
+          if (!peerConnections[hostKey]) {
+            peerConnections[hostKey] = 0
+          }
+          peerConnections[hostKey] += activePeerConnections
+
+          // E2E stats.
+          if (audioEndToEndDelay) {
+            audioEndToEndDelayStats[pageKey] = audioEndToEndDelay
+          }
+          if (videoEndToEndDelay) {
+            videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
+          }
+          if (videoEndToEndNetworkDelay) {
+            videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
+          }
+
+          // HTTP stats.
+          httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
+          httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
+          httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
+
+          if (cpuPressure !== undefined) {
+            cpuPressureStats[pageKey] = cpuPressure
+          }
+
+          // Collect RTC stats.
+          for (const s of stats) {
+            for (const [trackId, value] of Object.entries(s)) {
+              try {
+                updateRtcStats(
+                  collectedStats as RtcStats,
+                  pageIndex,
+                  trackId,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  value,
+                  signalingHost,
+                  participantName,
+                )
+              } catch (err) {
+                log.error(
+                  `updateRtcStats error for ${trackId}: ${(err as Error).stack}`,
+                  err,
+                )
+              }
+            }
+          }
+
+          // Collect custom metrics.
           if (customMetrics) {
             for (const [name, value] of Object.entries(customMetrics)) {
               if (!customStats[name]) {
@@ -1668,16 +1672,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
               customStats[name][pageKey] = value
             }
           }
-        } catch (err) {
-          log.error(
-            `updateRtcStats collectCustomMetrics error: ${
-              (err as Error).stack
-            }`,
-          )
-        }
 
-        // Collect page metrics
-        /* const metrics = await page.metrics()
+          // Collect page metrics
+          /* const metrics = await page.metrics()
         if (metrics.Timestamp) {
           const lastMetrics = this.pagesMetrics.get(pageIndex)
           if (lastMetrics?.Timestamp) {
@@ -1695,47 +1692,51 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             this.pagesMetrics.set(pageIndex, metrics)
           }
         } */
-        pageCpu[pageKey] = collectedStats.cpu as number
-        pageMemory[pageKey] = collectedStats.memory as number
+          pageCpu[pageKey] = collectedStats.cpu as number
+          pageMemory[pageKey] = collectedStats.memory as number
 
-        // Collect throttle metrics
-        const throttleUpValues = getSessionThrottleValues(
-          this.throttleIndex,
-          'up',
-        )
-        if (throttleUpValues.rate !== undefined) {
-          throttleUpValuesRate[pageKey] = throttleUpValues.rate
-        }
-        if (throttleUpValues.delay !== undefined) {
-          throttleUpValuesDelay[pageKey] = throttleUpValues.delay
-        }
-        if (throttleUpValues.loss !== undefined) {
-          throttleUpValuesLoss[pageKey] = throttleUpValues.loss
-        }
-        if (throttleUpValues.queue !== undefined) {
-          throttleUpValuesQueue[pageKey] = throttleUpValues.queue
-        }
+          // Collect throttle metrics
+          const throttleUpValues = getSessionThrottleValues(
+            this.throttleIndex,
+            'up',
+          )
+          if (throttleUpValues.rate !== undefined) {
+            throttleUpValuesRate[pageKey] = throttleUpValues.rate
+          }
+          if (throttleUpValues.delay !== undefined) {
+            throttleUpValuesDelay[pageKey] = throttleUpValues.delay
+          }
+          if (throttleUpValues.loss !== undefined) {
+            throttleUpValuesLoss[pageKey] = throttleUpValues.loss
+          }
+          if (throttleUpValues.queue !== undefined) {
+            throttleUpValuesQueue[pageKey] = throttleUpValues.queue
+          }
 
-        const throttleDownValues = getSessionThrottleValues(
-          this.throttleIndex,
-          'down',
-        )
-        if (throttleDownValues.rate !== undefined) {
-          throttleDownValuesRate[pageKey] = throttleDownValues.rate
+          const throttleDownValues = getSessionThrottleValues(
+            this.throttleIndex,
+            'down',
+          )
+          if (throttleDownValues.rate !== undefined) {
+            throttleDownValuesRate[pageKey] = throttleDownValues.rate
+          }
+          if (throttleDownValues.delay !== undefined) {
+            throttleDownValuesDelay[pageKey] = throttleDownValues.delay
+          }
+          if (throttleDownValues.loss !== undefined) {
+            throttleDownValuesLoss[pageKey] = throttleDownValues.loss
+          }
+          if (throttleDownValues.queue !== undefined) {
+            throttleDownValuesQueue[pageKey] = throttleDownValues.queue
+          }
+        } catch (err) {
+          log.error(
+            `collectPeerConnectionStats for page ${pageIndex} error: ${(err as Error).stack}`,
+          )
         }
-        if (throttleDownValues.delay !== undefined) {
-          throttleDownValuesDelay[pageKey] = throttleDownValues.delay
-        }
-        if (throttleDownValues.loss !== undefined) {
-          throttleDownValuesLoss[pageKey] = throttleDownValues.loss
-        }
-        if (throttleDownValues.queue !== undefined) {
-          throttleDownValuesQueue[pageKey] = throttleDownValues.queue
-        }
-      } catch (err) {
-        log.error(`collectPeerConnectionStats error: ${(err as Error).stack}`)
-      }
-    }
+      }),
+    )
+
     collectedStats.pages = pages
     collectedStats.errors = this.pageErrors
     collectedStats.warnings = this.pageWarnings
