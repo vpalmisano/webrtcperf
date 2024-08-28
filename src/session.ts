@@ -1574,12 +1574,8 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
             httpResourcesStats: collectHttpResourcesStats(),
             cpuPressure: collectCpuPressure(),
-            customMetrics: await page.evaluate(() => {
-              if (!('collectCustomMetrics' in window)) {
-                return null
-              }
-              return collectCustomMetrics()
-            }),
+            customMetrics:
+              'collectCustomMetrics' in window ? collectCustomMetrics() : null,
           }))
           const { participantName } = peerConnectionStats
 
