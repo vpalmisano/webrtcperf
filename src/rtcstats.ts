@@ -209,6 +209,7 @@ export enum RtcStatsMetricNames {
   audioRecvRetransmittedPackets = 'audioRecvRetransmittedPackets',
   audioRecvNackCountSent = 'audioRecvNackCountSent',
   audioRecvLevel = 'audioRecvLevel',
+  audioRecvTotalSamplesReceived = 'audioRecvTotalSamplesReceived',
   audioRecvConcealedSamples = 'audioRecvConcealedSamples',
   audioRecvConcealmentEvents = 'audioRecvConcealmentEvents',
   audioRecvInsertedSamplesForDeceleration = 'audioRecvInsertedSamplesForDeceleration',
@@ -444,6 +445,7 @@ export function updateRtcStats(
       if (inboundRtp.kind === 'audio') {
         ;[
           'audioLevel',
+          'totalSamplesReceived',
           'concealedSamples',
           'concealmentEvents',
           'insertedSamplesForDeceleration',
