@@ -26,15 +26,20 @@ const index = {
       if (v === 'true' || v === 'false' || v === '') return
       if (v.indexOf('-') !== -1) {
         v.split('-').forEach(n => {
-          if (isNaN(parseInt(n))) throw new Error(`Invalid index: ${v}`)
+          if (isNaN(parseInt(n)) || !isFinite(parseInt(n)))
+            throw new Error(`Invalid index: ${n}`)
         })
+        return
       }
       if (v.indexOf(',') !== -1) {
         v.split(',').forEach(n => {
-          if (isNaN(parseInt(n))) throw new Error(`Invalid index: ${v}`)
+          if (isNaN(parseInt(n)) || !isFinite(parseInt(n)))
+            throw new Error(`Invalid index: ${n}`)
         })
+        return
       }
-      if (isNaN(parseInt(v))) throw new Error(`Invalid index: ${v}`)
+      if (isNaN(parseInt(v)) || !isFinite(parseInt(v)))
+        throw new Error(`Invalid index: ${v}`)
     } else if (typeof v === 'number' || typeof v === 'boolean') {
       return
     }
