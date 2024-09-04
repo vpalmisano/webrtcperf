@@ -27,6 +27,7 @@ import { getSessionThrottleValues } from './throttle'
 import {
   checkChromeExecutable,
   downloadUrl,
+  enabledForSession,
   getProcessStats,
   getSystemStats,
   hideAuth,
@@ -192,7 +193,7 @@ export class Session extends EventEmitter {
   private readonly videoHeight: number
   private readonly videoFramerate: number
   private readonly enableGpu: string
-  private readonly enableBrowserLogging: string
+  private readonly enableBrowserLogging: boolean
   private readonly startTimestamp: number
   private readonly sessions: number
   private readonly tabsPerSession: number
@@ -361,6 +362,7 @@ export class Session extends EventEmitter {
   }: SessionParams) {
     super()
     log.debug('constructor', { id })
+    this.id = id
     this.chromiumUrl = chromiumUrl
     this.chromiumPath = chromiumPath || undefined
     this.chromiumFieldTrials = chromiumFieldTrials || undefined
@@ -385,7 +387,7 @@ export class Session extends EventEmitter {
     this.videoHeight = videoHeight
     this.videoFramerate = videoFramerate
     this.enableGpu = enableGpu
-    this.enableBrowserLogging = enableBrowserLogging
+    this.enableBrowserLogging = enabledForSession(this.id, enableBrowserLogging)
     this.startTimestamp = startTimestamp || Date.now()
     this.sessions = sessions || 1
     this.tabsPerSession = tabsPerSession || 1
@@ -442,7 +444,6 @@ export class Session extends EventEmitter {
     this.serverSecret = serverSecret
     this.serverUseHttps = serverUseHttps
 
-    this.id = id
     this.throttleIndex = throttleIndex
     this.evaluateAfter = evaluateAfter || []
     this.exposedFunctions = exposedFunctions || {}
@@ -599,7 +600,7 @@ export class Session extends EventEmitter {
     }
 
     if (this.enableBrowserLogging) {
-      args = args.concat(['--enable-logging=stderr', this.enableBrowserLogging])
+      args = args.concat(['--enable-logging=stderr', '--vmodule=*/webrtc/*=1'])
     }
 
     return args
@@ -700,7 +701,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           executablePath,
           handleSIGINT: false,
           env,
-          dumpio: !!this.enableBrowserLogging,
+          dumpio: this.enableBrowserLogging,
           // devtools: true,
           ignoreHTTPSErrors: true,
           defaultViewport: {

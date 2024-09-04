@@ -18,7 +18,31 @@ const float = {
   },
 }
 
-addFormats({ ipaddress, url, float })
+const index = {
+  name: 'index',
+  coerce: (v: unknown) => v,
+  validate: (v: boolean | string | number) => {
+    if (typeof v === 'string') {
+      if (v === 'true' || v === 'false') return
+      if (v.indexOf('-') !== -1) {
+        v.split('-').forEach(n => {
+          if (isNaN(parseInt(n))) throw new Error(`Invalid index: ${v}`)
+        })
+      }
+      if (v.indexOf(',') !== -1) {
+        v.split(',').forEach(n => {
+          if (isNaN(parseInt(n))) throw new Error(`Invalid index: ${v}`)
+        })
+      }
+      if (isNaN(parseInt(v))) throw new Error(`Invalid index: ${v}`)
+    } else if (typeof v === 'number' || typeof v === 'boolean') {
+      return
+    }
+    throw new Error(`Invalid index: ${v}`)
+  },
+}
+
+addFormats({ ipaddress, url, float, index })
 
 // config schema
 const configSchema = convict({
@@ -465,8 +489,8 @@ use the host X server instance.`,
     arg: 'enable-gpu',
   },
   enableBrowserLogging: {
-    doc: `It enables the Chromium browser logging, e.g. "--v=0" (see https://www.chromium.org/for-testers/enable-logging/).`,
-    format: String,
+    doc: `It enables the Chromium browser logging for the specified session indexes.`,
+    format: 'index',
     nullable: true,
     default: '',
     env: 'ENABLE_BROWSER_LOGGING',

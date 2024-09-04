@@ -1156,3 +1156,35 @@ export async function pageScreenshot(
     await browser.close()
   }
 }
+
+export function enabledForSession(
+  index: number,
+  value: boolean | string | number,
+): boolean {
+  if (value === true || value === 'true') {
+    return true
+  } else if (value === false || value === 'false' || value === undefined) {
+    return false
+  } else if (typeof value === 'string') {
+    if (value.indexOf('-') !== -1) {
+      const [start, end] = value.split('-').map(s => parseInt(s))
+      if (isFinite(start) && index < start) {
+        return false
+      }
+      if (isFinite(end) && index > end) {
+        return false
+      }
+      return true
+    } else {
+      const indexes = value
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length)
+        .map(s => parseInt(s))
+      return indexes.includes(index)
+    }
+  } else if (index === value) {
+    return true
+  }
+  return false
+}
