@@ -23,7 +23,7 @@ const index = {
   coerce: (v: unknown) => v,
   validate: (v: boolean | string | number) => {
     if (typeof v === 'string') {
-      if (v === 'true' || v === 'false') return
+      if (v === 'true' || v === 'false' || v === '') return
       if (v.indexOf('-') !== -1) {
         v.split('-').forEach(n => {
           if (isNaN(parseInt(n))) throw new Error(`Invalid index: ${v}`)
