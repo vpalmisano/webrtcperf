@@ -1,4 +1,4 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack, enabledForSession, watchObjectProperty */
+/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack, enabledForSession, watchObjectProperty */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -160,6 +160,7 @@ window.RTCPeerConnection = function (conf, options) {
     }
 
     handleTransceiverForPlayoutDelayHint(id, transceiver, 'addTransceiver')
+    handleTransceiverForJitterBufferTarget(id, transceiver, 'addTransceiver')
     return transceiver
   }
 
@@ -173,6 +174,7 @@ window.RTCPeerConnection = function (conf, options) {
           handleTransceiverForInsertableStreams(id, transceiver)
         }
         handleTransceiverForPlayoutDelayHint(id, transceiver, 'addStream')
+        handleTransceiverForJitterBufferTarget(id, transceiver, 'addStream')
 
         checkSaveStream(transceiver)
       }
@@ -204,6 +206,7 @@ window.RTCPeerConnection = function (conf, options) {
       }
     }
     handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
+    handleTransceiverForJitterBufferTarget(id, transceiver, 'track')
   })
 
   const setConfigurationNative = pc.setConfiguration.bind(pc)
