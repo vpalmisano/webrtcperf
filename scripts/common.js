@@ -455,7 +455,7 @@ window.setupActions = async () => {
         } finally {
           currentIteration += 1
           if (every > 0 && currentIteration < (times || Infinity)) {
-            setTimeout(cb, startTime + every * 1000 * currentIteration)
+            setTimeout(cb, every * 1000)
           }
         }
       }
