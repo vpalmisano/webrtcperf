@@ -20,15 +20,21 @@ export enum PageStatsNames {
   usedMemory = 'usedMemory',
   /** The system total GPU usage. */
   usedGpu = 'usedGpu',
-  /** The page CPU usage calculated as the sum of Layout, RecalcStyle, Script and Task durations. */
+  /** The page CPU usage. */
   pageCpu = 'pageCpu',
-  /** The page memory usage (JSHeapUsedSize). */
+  /** The page memory usage. */
   pageMemory = 'pageMemory',
 
   /** The opened pages count. */
   pages = 'pages',
-  /** The total opened PeerConnections. */
+  /** The current opened PeerConnections. */
   peerConnections = 'peerConnections',
+  /** The total closed PeerConnections. */
+  peerConnectionsClosed = 'peerConnectionsClosed',
+  /** The total disconnected PeerConnections. */
+  peerConnectionsDisconnected = 'peerConnectionsDisconnected',
+  /** The total failed PeerConnections. */
+  peerConnectionsFailed = 'peerConnectionsFailed',
 
   /** The page errors count. */
   errors = 'errors',

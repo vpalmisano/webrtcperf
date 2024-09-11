@@ -1188,3 +1188,11 @@ export function enabledForSession(
   }
   return false
 }
+
+export function increaseKey(o: Record<string, number>, key: string, value = 1) {
+  if (!value) return
+  if (o[key] === undefined) {
+    o[key] = 0
+  }
+  o[key] += value
+}

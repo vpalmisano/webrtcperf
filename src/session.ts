@@ -31,6 +31,7 @@ import {
   getProcessStats,
   getSystemStats,
   hideAuth,
+  increaseKey,
   logger,
   PeerConnectionExternal,
   PeerConnectionExternalMethod,
@@ -55,9 +56,12 @@ const log = logger('webrtcperf:session')
 declare global {
   let collectPeerConnectionStats: () => Promise<{
     stats: RtcStats[]
-    activePeerConnections: number
     signalingHost?: string
     participantName?: string
+    activePeerConnections: number
+    peerConnectionsDisconnected: number
+    peerConnectionsFailed: number
+    peerConnectionsClosed: number
   }>
   let collectAudioEndToEndDelayStats: () => number
   let collectVideoEndToEndDelayStats: () => number
@@ -1535,6 +1539,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
     const pages: Record<string, number> = {}
     const peerConnections: Record<string, number> = {}
+    const peerConnectionsClosed: Record<string, number> = {}
+    const peerConnectionsDisconnected: Record<string, number> = {}
+    const peerConnectionsFailed: Record<string, number> = {}
     const audioEndToEndDelayStats: Record<string, number> = {}
     const videoEndToEndDelayStats: Record<string, number> = {}
     const videoEndToEndNetworkDelayStats: Record<string, number> = {}
@@ -1607,16 +1614,25 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           })
 
           // Set pages counter.
-          if (!pages[hostKey]) {
-            pages[hostKey] = 0
-          }
-          pages[hostKey] += 1
+          increaseKey(pages, hostKey, 1)
 
-          // Set peerConnections counter.
-          if (!peerConnections[hostKey]) {
-            peerConnections[hostKey] = 0
-          }
-          peerConnections[hostKey] += activePeerConnections
+          // Set peerConnections counters.
+          increaseKey(peerConnections, hostKey, activePeerConnections)
+          increaseKey(
+            peerConnectionsClosed,
+            hostKey,
+            peerConnectionStats.peerConnectionsClosed,
+          )
+          increaseKey(
+            peerConnectionsDisconnected,
+            hostKey,
+            peerConnectionStats.peerConnectionsDisconnected,
+          )
+          increaseKey(
+            peerConnectionsFailed,
+            hostKey,
+            peerConnectionStats.peerConnectionsFailed,
+          )
 
           // E2E stats.
           if (audioEndToEndDelay) {
@@ -1735,9 +1751,12 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     )
 
     collectedStats.pages = pages
-    collectedStats.errors = this.pageErrors
-    collectedStats.warnings = this.pageWarnings
+    if (this.pageErrors) collectedStats.errors = this.pageErrors
+    if (this.pageWarnings) collectedStats.warnings = this.pageWarnings
     collectedStats.peerConnections = peerConnections
+    collectedStats.peerConnectionsClosed = peerConnectionsClosed
+    collectedStats.peerConnectionsDisconnected = peerConnectionsDisconnected
+    collectedStats.peerConnectionsFailed = peerConnectionsFailed
     collectedStats.audioEndToEndDelay = audioEndToEndDelayStats
     collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
     collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats

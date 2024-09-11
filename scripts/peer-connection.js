@@ -1,13 +1,17 @@
-/* global log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack, enabledForSession, watchObjectProperty */
+/* global webrtcperf, log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack, enabledForSession, watchObjectProperty */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
-let peerConnectionNextId = 0
+webrtcperf.peerConnectionNextId = 0
+
+webrtcperf.peerConnectionsDisconnected = 0
+webrtcperf.peerConnectionsFailed = 0
+webrtcperf.peerConnectionsClosed = 0
 
 window.RTCPeerConnection = function (conf, options) {
-  const id = peerConnectionNextId++
+  const id = webrtcperf.peerConnectionNextId++
 
   const debug = (...args) => {
     if (enabledForSession(window.PARAMS?.peerConnectionDebug)) {
@@ -31,8 +35,20 @@ window.RTCPeerConnection = function (conf, options) {
 
   pc.addEventListener('connectionstatechange', () => {
     debug(`connectionState: ${pc.connectionState}`)
-    if (pc.connectionState === 'closed') {
-      PeerConnections.delete(id)
+    switch (pc.connectionState) {
+      case 'disconnected': {
+        webrtcperf.peerConnectionsDisconnected++
+        break
+      }
+      case 'failed': {
+        webrtcperf.peerConnectionsFailed++
+        break
+      }
+      case 'closed': {
+        webrtcperf.peerConnectionsClosed++
+        PeerConnections.delete(id)
+        break
+      }
     }
   })
 

@@ -1,4 +1,4 @@
-/* global log */
+/* global log, webrtcperf */
 
 const PeerConnections = new Map()
 const TrackStats = new Map()
@@ -587,12 +587,6 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
   let activePeerConnections = 0
   for (const [id, pc] of PeerConnections.entries()) {
     if (pc.connectionState !== 'connected') {
-      if (pc.connectionState === 'closed') {
-        log(
-          `remove PeerConnection-${id} (connectionState: ${pc.connectionState})`,
-        )
-        PeerConnections.delete(id)
-      }
       continue
     }
     activePeerConnections += 1
@@ -614,5 +608,8 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
     activePeerConnections,
     signalingHost,
     participantName: window.getParticipantName(),
+    peerConnectionsDisconnected: webrtcperf.peerConnectionsDisconnected,
+    peerConnectionsFailed: webrtcperf.peerConnectionsFailed,
+    peerConnectionsClosed: webrtcperf.peerConnectionsClosed,
   }
 }
