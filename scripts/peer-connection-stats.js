@@ -588,6 +588,9 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
   for (const [id, pc] of PeerConnections.entries()) {
     if (pc.connectionState !== 'connected') {
       if (pc.connectionState === 'closed') {
+        log(
+          `remove PeerConnection-${id} (connectionState: ${pc.connectionState})`,
+        )
         PeerConnections.delete(id)
       }
       continue

@@ -30,11 +30,18 @@ window.RTCPeerConnection = function (conf, options) {
   PeerConnections.set(id, pc)
 
   pc.addEventListener('connectionstatechange', () => {
-    debug(`changed to: ${pc.connectionState}`)
+    debug(`connectionState: ${pc.connectionState}`)
     if (pc.connectionState === 'closed') {
       PeerConnections.delete(id)
     }
   })
+
+  const closeNative = pc.close.bind(pc)
+  pc.close = () => {
+    debug('close')
+    PeerConnections.delete(id)
+    return closeNative()
+  }
 
   const createOfferNative = pc.createOffer.bind(pc)
   pc.createOffer = async options => {
