@@ -1,8 +1,8 @@
 /* global MeasuredStats */
 
 // Page performance
-const httpBitrateStats = new MeasuredStats({ ttl: 60 })
-const httpLatencyStats = new MeasuredStats({ ttl: 60 })
+const httpBitrateStats = new MeasuredStats({ ttl: 30 })
+const httpLatencyStats = new MeasuredStats({ ttl: 30 })
 
 const httpResourcesStats = {
   recvBytes: 0,
@@ -11,8 +11,8 @@ const httpResourcesStats = {
 }
 
 window.collectHttpResourcesStats = () => {
-  httpResourcesStats.recvBitrate = httpBitrateStats.mean()
-  httpResourcesStats.recvLatency = httpLatencyStats.mean()
+  httpResourcesStats.recvBitrate = httpBitrateStats.mean() || 0
+  httpResourcesStats.recvLatency = httpLatencyStats.mean() || 0
   return httpResourcesStats
 }
 
@@ -29,19 +29,11 @@ if (typeof window.PerformanceObserver === 'function') {
     entries
       .filter(entry => {
         const { duration, transferSize } = entry
-        httpResourcesStats.recvBytes += transferSize
         // Filter cached entries.
         if (!transferSize || duration < 10) {
           return false
         }
-        // 304 response.
-        /* if (
-          encodedBodySize > 0 &&
-          transferSize > 0 &&
-          transferSize < encodedBodySize
-        ) {
-          return false
-        } */
+        httpResourcesStats.recvBytes += transferSize
         return true
       })
       .forEach(entry => {
@@ -56,6 +48,5 @@ if (typeof window.PerformanceObserver === 'function') {
   const observer = new PerformanceObserver(list =>
     processEntries(list.getEntries()),
   )
-  observer.observe({ entryTypes: ['resource'] })
-  processEntries(observer.takeRecords())
+  observer.observe({ type: 'resource', buffered: true })
 }

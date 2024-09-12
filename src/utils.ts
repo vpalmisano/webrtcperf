@@ -141,6 +141,7 @@ export async function getProcessStats(
   } else {
     stat = { cpu: 0, memory: 0 }
   }
+
   if (children) {
     try {
       let childrenPids: number[] | undefined =
@@ -154,11 +155,10 @@ export async function getProcessStats(
       if (childrenPids?.length) {
         const pidStats = await pidusage(childrenPids)
         for (const p of childrenPids) {
-          if (!pidStats[p]) {
-            continue
+          if (pidStats[p]) {
+            stat.cpu += pidStats[p].cpu
+            stat.memory += pidStats[p].memory / 1e6
           }
-          stat.cpu += pidStats[p].cpu
-          stat.memory += pidStats[p].memory / 1e6
         }
       }
     } catch (err) {
@@ -167,6 +167,33 @@ export async function getProcessStats(
   }
   ProcessStatsCache.set(processPid, stat)
   return stat
+}
+
+// Socket stats.
+type SocketStat = {
+  recvBytes: number
+  sendBytes: number
+}
+
+export async function getSocketStats(processPid: number): Promise<SocketStat> {
+  const stats: SocketStat = { recvBytes: 0, sendBytes: 0 }
+  try {
+    const { stdout } = await runShellCommand(
+      `ss -nOHpti | { grep pid=${processPid} || true; }`,
+    )
+    for (const { groups } of stdout.matchAll(
+      /bytes_sent:(?<sendBytes>\d+).+bytes_received:(?<recvBytes>\d+)/g,
+    )) {
+      if (!groups) continue
+      const recvBytes = parseInt(groups.recvBytes)
+      const sendBytes = parseInt(groups.sendBytes)
+      stats.recvBytes += recvBytes
+      stats.sendBytes += sendBytes
+    }
+  } catch (err) {
+    log.error(`socketStats error: ${(err as Error).stack}`)
+  }
+  return stats
 }
 
 // System stats.
@@ -210,7 +237,7 @@ export function startUpdateSystemStats(): void {
   systemStatsInterval = setInterval(updateSystemStats, 5000)
 }
 
-export function stopUpdateSystemStats(): void {
+export function stopTimers(): void {
   if (systemStatsInterval) {
     clearInterval(systemStatsInterval)
     systemStatsInterval = null
@@ -576,7 +603,7 @@ export async function runExitHandlersNow(signal?: string): Promise<void> {
     runExitHandlersPromise = runExitHandlers(signal)
   }
   await runExitHandlersPromise
-  stopUpdateSystemStats()
+  stopTimers()
 }
 
 const SIGNALS = [

@@ -21,7 +21,7 @@ import {
   sleep,
   startRandomActivateAudio,
   stopRandomActivateAudio,
-  stopUpdateSystemStats,
+  stopTimers,
 } from './utils'
 import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore } from './vmaf'
@@ -162,7 +162,7 @@ export async function setupApplication(
         await stopThrottle()
       }
 
-      stopUpdateSystemStats()
+      stopTimers()
       log.debug('Stopped')
     },
   }

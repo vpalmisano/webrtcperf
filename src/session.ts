@@ -1529,8 +1529,6 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (browserProcess) {
       try {
         const processStats = await getProcessStats(browserProcess.pid, true)
-        processStats.cpu /= this.tabsPerSession
-        processStats.memory /= this.tabsPerSession
         Object.assign(collectedStats, processStats)
       } catch (err) {
         log.error(`getProcessStats error: ${(err as Error).stack}`)
@@ -1617,20 +1615,20 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           increaseKey(pages, hostKey, 1)
 
           // Set peerConnections counters.
-          increaseKey(peerConnections, hostKey, activePeerConnections)
+          increaseKey(peerConnections, pageKey, activePeerConnections)
           increaseKey(
             peerConnectionsClosed,
-            hostKey,
+            pageKey,
             peerConnectionStats.peerConnectionsClosed,
           )
           increaseKey(
             peerConnectionsDisconnected,
-            hostKey,
+            pageKey,
             peerConnectionStats.peerConnectionsDisconnected,
           )
           increaseKey(
             peerConnectionsFailed,
-            hostKey,
+            pageKey,
             peerConnectionStats.peerConnectionsFailed,
           )
 
@@ -1646,13 +1644,14 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           }
 
           // HTTP stats.
-          httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
-          httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
-          httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
+          if (httpResourcesStats.recvBytes !== undefined)
+            httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
+          if (httpResourcesStats.recvBitrate !== undefined)
+            httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
+          if (httpResourcesStats.recvLatency !== undefined)
+            httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency
 
-          if (cpuPressure !== undefined) {
-            cpuPressureStats[pageKey] = cpuPressure
-          }
+          if (cpuPressure !== undefined) cpuPressureStats[pageKey] = cpuPressure
 
           // Collect RTC stats.
           for (const s of stats) {
@@ -1705,8 +1704,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             this.pagesMetrics.set(pageIndex, metrics)
           }
         } */
-          pageCpu[pageKey] = collectedStats.cpu as number
-          pageMemory[pageKey] = collectedStats.memory as number
+          pageCpu[pageKey] =
+            (collectedStats.cpu as number) / this.tabsPerSession
+          pageMemory[pageKey] =
+            (collectedStats.memory as number) / this.tabsPerSession
 
           // Collect throttle metrics
           const throttleUpValues = getSessionThrottleValues(
