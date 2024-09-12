@@ -655,6 +655,7 @@ export async function checkChromeExecutable(): Promise<string> {
   revisions.sort(getVersionComparator(browser))
   log.debug(`Available chrome versions: ${revisions}`)
   const requiredRevision = config.chromiumVersion
+  if (!requiredRevision) throw new Error('Chromium version not set')
   if (revisions.indexOf(fixSemVer(requiredRevision)) === -1) {
     log.info(`Downloading chrome ${requiredRevision}...`)
     let progress = 0
@@ -1132,7 +1133,6 @@ export async function pageScreenshot(
   }
   const browser = await puppeteer.launch({
     headless: true,
-    ignoreHTTPSErrors: true,
     executablePath,
     defaultViewport: {
       width,
@@ -1216,8 +1216,12 @@ export function enabledForSession(
   return false
 }
 
-export function increaseKey(o: Record<string, number>, key: string, value = 1) {
-  if (!value) return
+export function increaseKey(
+  o: Record<string, number>,
+  key: string,
+  value?: number,
+): void {
+  if (value === undefined || !isFinite(value)) return
   if (o[key] === undefined) {
     o[key] = 0
   }

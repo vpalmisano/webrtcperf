@@ -605,9 +605,11 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
 
   return {
     stats,
-    activePeerConnections,
     signalingHost,
     participantName: window.getParticipantName(),
+    activePeerConnections,
+    peerConnectionsCreated: webrtcperf.peerConnectionNextId,
+    peerConnectionsConnected: webrtcperf.peerConnectionsConnected,
     peerConnectionsDisconnected: webrtcperf.peerConnectionsDisconnected,
     peerConnectionsFailed: webrtcperf.peerConnectionsFailed,
     peerConnectionsClosed: webrtcperf.peerConnectionsClosed,

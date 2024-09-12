@@ -29,6 +29,10 @@ export enum PageStatsNames {
   pages = 'pages',
   /** The current opened PeerConnections. */
   peerConnections = 'peerConnections',
+  /** The total created PeerConnections. */
+  peerConnectionsCreated = 'peerConnectionsCreated',
+  /** The total connected PeerConnections. */
+  peerConnectionsConnected = 'peerConnectionsConnected',
   /** The total closed PeerConnections. */
   peerConnectionsClosed = 'peerConnectionsClosed',
   /** The total disconnected PeerConnections. */

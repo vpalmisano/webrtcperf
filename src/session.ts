@@ -59,6 +59,8 @@ declare global {
     signalingHost?: string
     participantName?: string
     activePeerConnections: number
+    peerConnectionsCreated: number
+    peerConnectionsConnected: number
     peerConnectionsDisconnected: number
     peerConnectionsFailed: number
     peerConnectionsClosed: number
@@ -629,7 +631,6 @@ export class Session extends EventEmitter {
       try {
         this.browser = await puppeteer.connect({
           browserURL: this.chromiumUrl,
-          ignoreHTTPSErrors: true,
           defaultViewport: {
             width: this.windowWidth,
             height: this.windowHeight,
@@ -695,19 +696,20 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
         ignoreDefaultArgs.push('--enable-automation')
       }
 
-      log.debug(`Using args:\n  ${args.join('\n  ')}`)
-      log.debug(`Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`)
+      log.debug(`[session ${this.id}] Using args:\n  ${args.join('\n  ')}`)
+      log.debug(
+        `[session ${this.id}] Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`,
+      )
 
       try {
-        // log.debug('defaultArgs:', puppeteer.defaultArgs());
         this.browser = await puppeteer.launch({
+          browser: 'chrome',
           headless: this.display ? false : true,
           executablePath,
           handleSIGINT: false,
           env,
           dumpio: this.enableBrowserLogging,
           // devtools: true,
-          ignoreHTTPSErrors: true,
           defaultViewport: {
             width: this.windowWidth,
             height: this.windowHeight,
@@ -719,8 +721,8 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           ignoreDefaultArgs,
           args,
         })
-        // const version = await this.browser.version();
-        // console.log(`[session ${this.id}] Using chrome version: ${version}`);
+        const version = await this.browser.version()
+        log.debug(`[session ${this.id}] Using chrome version: ${version}`)
       } catch (err) {
         log.error(
           `[session ${this.id}] Browser launch error: ${(err as Error).stack}`,
@@ -1537,7 +1539,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
     const pages: Record<string, number> = {}
     const peerConnections: Record<string, number> = {}
+    const peerConnectionsCreated: Record<string, number> = {}
     const peerConnectionsClosed: Record<string, number> = {}
+    const peerConnectionsConnected: Record<string, number> = {}
     const peerConnectionsDisconnected: Record<string, number> = {}
     const peerConnectionsFailed: Record<string, number> = {}
     const audioEndToEndDelayStats: Record<string, number> = {}
@@ -1617,9 +1621,19 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           // Set peerConnections counters.
           increaseKey(peerConnections, pageKey, activePeerConnections)
           increaseKey(
+            peerConnectionsCreated,
+            pageKey,
+            peerConnectionStats.peerConnectionsCreated,
+          )
+          increaseKey(
             peerConnectionsClosed,
             pageKey,
             peerConnectionStats.peerConnectionsClosed,
+          )
+          increaseKey(
+            peerConnectionsConnected,
+            pageKey,
+            peerConnectionStats.peerConnectionsConnected,
           )
           increaseKey(
             peerConnectionsDisconnected,
@@ -1714,35 +1728,19 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             this.throttleIndex,
             'up',
           )
-          if (throttleUpValues.rate !== undefined) {
-            throttleUpValuesRate[pageKey] = throttleUpValues.rate
-          }
-          if (throttleUpValues.delay !== undefined) {
-            throttleUpValuesDelay[pageKey] = throttleUpValues.delay
-          }
-          if (throttleUpValues.loss !== undefined) {
-            throttleUpValuesLoss[pageKey] = throttleUpValues.loss
-          }
-          if (throttleUpValues.queue !== undefined) {
-            throttleUpValuesQueue[pageKey] = throttleUpValues.queue
-          }
+          throttleUpValuesRate[pageKey] = throttleUpValues.rate || 0
+          throttleUpValuesDelay[pageKey] = throttleUpValues.delay || 0
+          throttleUpValuesLoss[pageKey] = throttleUpValues.loss || 0
+          throttleUpValuesQueue[pageKey] = throttleUpValues.queue || 0
 
           const throttleDownValues = getSessionThrottleValues(
             this.throttleIndex,
             'down',
           )
-          if (throttleDownValues.rate !== undefined) {
-            throttleDownValuesRate[pageKey] = throttleDownValues.rate
-          }
-          if (throttleDownValues.delay !== undefined) {
-            throttleDownValuesDelay[pageKey] = throttleDownValues.delay
-          }
-          if (throttleDownValues.loss !== undefined) {
-            throttleDownValuesLoss[pageKey] = throttleDownValues.loss
-          }
-          if (throttleDownValues.queue !== undefined) {
-            throttleDownValuesQueue[pageKey] = throttleDownValues.queue
-          }
+          throttleDownValuesRate[pageKey] = throttleDownValues.rate || 0
+          throttleDownValuesDelay[pageKey] = throttleDownValues.delay || 0
+          throttleDownValuesLoss[pageKey] = throttleDownValues.loss || 0
+          throttleDownValuesQueue[pageKey] = throttleDownValues.queue || 0
         } catch (err) {
           log.error(
             `collectPeerConnectionStats for page ${pageIndex} error: ${(err as Error).stack}`,
@@ -1755,6 +1753,8 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (this.pageErrors) collectedStats.errors = this.pageErrors
     if (this.pageWarnings) collectedStats.warnings = this.pageWarnings
     collectedStats.peerConnections = peerConnections
+    collectedStats.peerConnectionsCreated = peerConnectionsCreated
+    collectedStats.peerConnectionsConnected = peerConnectionsConnected
     collectedStats.peerConnectionsClosed = peerConnectionsClosed
     collectedStats.peerConnectionsDisconnected = peerConnectionsDisconnected
     collectedStats.peerConnectionsFailed = peerConnectionsFailed

@@ -5,7 +5,7 @@ const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
 webrtcperf.peerConnectionNextId = 0
-
+webrtcperf.peerConnectionsConnected = 0
 webrtcperf.peerConnectionsDisconnected = 0
 webrtcperf.peerConnectionsFailed = 0
 webrtcperf.peerConnectionsClosed = 0
@@ -36,6 +36,10 @@ window.RTCPeerConnection = function (conf, options) {
   pc.addEventListener('connectionstatechange', () => {
     debug(`connectionState: ${pc.connectionState}`)
     switch (pc.connectionState) {
+      case 'connected': {
+        webrtcperf.peerConnectionsConnected++
+        break
+      }
       case 'disconnected': {
         webrtcperf.peerConnectionsDisconnected++
         break
@@ -45,8 +49,10 @@ window.RTCPeerConnection = function (conf, options) {
         break
       }
       case 'closed': {
-        webrtcperf.peerConnectionsClosed++
-        PeerConnections.delete(id)
+        if (PeerConnections.has(id)) {
+          PeerConnections.delete(id)
+          webrtcperf.peerConnectionsClosed++
+        }
         break
       }
     }
@@ -55,7 +61,10 @@ window.RTCPeerConnection = function (conf, options) {
   const closeNative = pc.close.bind(pc)
   pc.close = () => {
     debug('close')
-    PeerConnections.delete(id)
+    if (PeerConnections.has(id)) {
+      PeerConnections.delete(id)
+      webrtcperf.peerConnectionsClosed++
+    }
     return closeNative()
   }
 
