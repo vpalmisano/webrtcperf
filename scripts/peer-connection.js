@@ -10,6 +10,66 @@ webrtcperf.peerConnectionsDisconnected = 0
 webrtcperf.peerConnectionsFailed = 0
 webrtcperf.peerConnectionsClosed = 0
 
+webrtcperf.Timer = class {
+  constructor() {
+    this.duration = 0
+    this.lastTime = 0
+    this.timer = null
+  }
+
+  start() {
+    if (this.timer) return
+    this.lastTime = Date.now()
+    this.timer = setInterval(() => {
+      const now = Date.now()
+      this.duration += now - this.lastTime
+      this.lastTime = now
+    }, 1000)
+  }
+
+  stop() {
+    if (!this.timer) return
+    clearInterval(this.timer)
+    this.timer = null
+    if (this.lastTime) {
+      this.duration += Date.now() - this.lastTime
+      this.lastTime = 0
+    }
+  }
+}
+webrtcperf.OnOffTimer = class {
+  constructor() {
+    this.onTimer = new webrtcperf.Timer()
+    this.offTimer = new webrtcperf.Timer()
+    this.ids = new Set()
+  }
+
+  get onDuration() {
+    return this.onTimer.duration
+  }
+
+  get offDuration() {
+    return this.offTimer.duration
+  }
+
+  add(id) {
+    if (this.ids.has(id)) return
+    this.ids.add(id)
+    this.offTimer.stop()
+    this.onTimer.start()
+  }
+
+  remove(id) {
+    if (!this.ids.has(id)) return
+    this.ids.delete(id)
+    if (this.ids.size > 0) return
+    this.onTimer.stop()
+    this.offTimer.start()
+  }
+}
+
+webrtcperf.connectionTimer = new webrtcperf.OnOffTimer()
+
 window.RTCPeerConnection = function (conf, options) {
   const id = webrtcperf.peerConnectionNextId++
 
@@ -38,20 +98,24 @@ window.RTCPeerConnection = function (conf, options) {
     switch (pc.connectionState) {
       case 'connected': {
         webrtcperf.peerConnectionsConnected++
+        webrtcperf.connectionTimer.add(id)
         break
       }
       case 'disconnected': {
         webrtcperf.peerConnectionsDisconnected++
+        webrtcperf.connectionTimer.remove(id)
         break
       }
       case 'failed': {
         webrtcperf.peerConnectionsFailed++
+        webrtcperf.connectionTimer.remove(id)
         break
       }
       case 'closed': {
         if (PeerConnections.has(id)) {
           PeerConnections.delete(id)
           webrtcperf.peerConnectionsClosed++
+          webrtcperf.connectionTimer.remove(id)
         }
         break
       }

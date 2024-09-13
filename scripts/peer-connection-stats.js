@@ -608,6 +608,8 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
     signalingHost,
     participantName: window.getParticipantName(),
     activePeerConnections,
+    peerConnectionConnectionTime: webrtcperf.connectionTimer.onDuration,
+    peerConnectionDisconnectionTime: webrtcperf.connectionTimer.offDuration,
     peerConnectionsCreated: webrtcperf.peerConnectionNextId,
     peerConnectionsConnected: webrtcperf.peerConnectionsConnected,
     peerConnectionsDisconnected: webrtcperf.peerConnectionsDisconnected,

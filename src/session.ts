@@ -59,6 +59,8 @@ declare global {
     signalingHost?: string
     participantName?: string
     activePeerConnections: number
+    peerConnectionConnectionTime: number
+    peerConnectionDisconnectionTime: number
     peerConnectionsCreated: number
     peerConnectionsConnected: number
     peerConnectionsDisconnected: number
@@ -1539,6 +1541,8 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
     const pages: Record<string, number> = {}
     const peerConnections: Record<string, number> = {}
+    const peerConnectionConnectionTime: Record<string, number> = {}
+    const peerConnectionDisconnectionTime: Record<string, number> = {}
     const peerConnectionsCreated: Record<string, number> = {}
     const peerConnectionsClosed: Record<string, number> = {}
     const peerConnectionsConnected: Record<string, number> = {}
@@ -1620,6 +1624,16 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
           // Set peerConnections counters.
           increaseKey(peerConnections, pageKey, activePeerConnections)
+          increaseKey(
+            peerConnectionConnectionTime,
+            pageKey,
+            peerConnectionStats.peerConnectionConnectionTime,
+          )
+          increaseKey(
+            peerConnectionDisconnectionTime,
+            pageKey,
+            peerConnectionStats.peerConnectionDisconnectionTime,
+          )
           increaseKey(
             peerConnectionsCreated,
             pageKey,
@@ -1753,7 +1767,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (this.pageErrors) collectedStats.errors = this.pageErrors
     if (this.pageWarnings) collectedStats.warnings = this.pageWarnings
     collectedStats.peerConnections = peerConnections
-    collectedStats.peerConnectionsCreated = peerConnectionsCreated
+    collectedStats.peerConnectionConnectionTime = peerConnectionConnectionTime
+    collectedStats.peerConnectionDisconnectionTime =
+      peerConnectionDisconnectionTime
     collectedStats.peerConnectionsConnected = peerConnectionsConnected
     collectedStats.peerConnectionsClosed = peerConnectionsClosed
     collectedStats.peerConnectionsDisconnected = peerConnectionsDisconnected
