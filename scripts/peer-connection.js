@@ -93,6 +93,14 @@ window.RTCPeerConnection = function (conf, options) {
 
   PeerConnections.set(id, pc)
 
+  const closed = () => {
+    if (PeerConnections.has(id)) {
+      PeerConnections.delete(id)
+      webrtcperf.peerConnectionsClosed++
+      webrtcperf.connectionTimer.remove(id)
+    }
+  }
+
   pc.addEventListener('connectionstatechange', () => {
     debug(`connectionState: ${pc.connectionState}`)
     switch (pc.connectionState) {
@@ -112,11 +120,7 @@ window.RTCPeerConnection = function (conf, options) {
         break
       }
       case 'closed': {
-        if (PeerConnections.has(id)) {
-          PeerConnections.delete(id)
-          webrtcperf.peerConnectionsClosed++
-          webrtcperf.connectionTimer.remove(id)
-        }
+        closed()
         break
       }
     }
@@ -125,10 +129,7 @@ window.RTCPeerConnection = function (conf, options) {
   const closeNative = pc.close.bind(pc)
   pc.close = () => {
     debug('close')
-    if (PeerConnections.has(id)) {
-      PeerConnections.delete(id)
-      webrtcperf.peerConnectionsClosed++
-    }
+    closed()
     return closeNative()
   }
 
