@@ -22,7 +22,7 @@ webrtcperf.Timer = class {
     this.lastTime = Date.now()
     this.timer = setInterval(() => {
       const now = Date.now()
-      this.duration += now - this.lastTime
+      this.duration += (now - this.lastTime) / 1000
       this.lastTime = now
     }, 1000)
   }
@@ -32,7 +32,7 @@ webrtcperf.Timer = class {
     clearInterval(this.timer)
     this.timer = null
     if (this.lastTime) {
-      this.duration += Date.now() - this.lastTime
+      this.duration += (Date.now() - this.lastTime) / 1000
       this.lastTime = 0
     }
   }
