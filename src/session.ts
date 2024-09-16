@@ -1524,6 +1524,16 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         collectedStats.usedCpu = systemStats.usedCpu
         collectedStats.usedMemory = systemStats.usedMemory
         collectedStats.usedGpu = systemStats.usedGpu
+        if (collectedStats.usedCpu > 0.8) {
+          log.warn(
+            `High system CPU usage: ${collectedStats.usedCpu.toFixed(2)}%`,
+          )
+        }
+        if (collectedStats.usedMemory > 0.8) {
+          log.warn(
+            `High system memory usage: ${collectedStats.usedMemory.toFixed(2)}%`,
+          )
+        }
       }
     } catch (err) {
       log.error(`node getSystemStats error: ${(err as Error).stack}`)
