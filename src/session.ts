@@ -1771,6 +1771,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     collectedStats.peerConnectionDisconnectionTime =
       peerConnectionDisconnectionTime
     collectedStats.peerConnectionsConnected = peerConnectionsConnected
+    collectedStats.peerConnectionsCreated = peerConnectionsCreated
     collectedStats.peerConnectionsClosed = peerConnectionsClosed
     collectedStats.peerConnectionsDisconnected = peerConnectionsDisconnected
     collectedStats.peerConnectionsFailed = peerConnectionsFailed
