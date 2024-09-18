@@ -520,9 +520,13 @@ blocked.`,
     arg: 'extra-headers',
   },
   responseModifiers: {
-    doc: `A dictionary of content replacements keyed by the url in JSON5 format (e.g. \
-\`{ "https://url.com/*": [{ search: "searchString": replace: "anotherString" }] }\`).\
-The search string should be a valid regular expression.`,
+    doc: `A dictionary of content replacements keyed by the url in JSON5 format.
+Examples:
+- replace strings using a regular expression:
+  \`{ "https://url.com/*": [{ search: "searchString": replace: "anotherString" }] }\`
+- completely replace the content:
+  \`{ "https://url.com/file.js": [{ file: "path/to/newFile.js" }] }\`
+`,
     format: String,
     nullable: true,
     default: '',

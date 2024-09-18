@@ -236,7 +236,12 @@ export class Session extends EventEmitter {
   private readonly extraHeaders?: Record<string, Record<string, string>>
   private readonly responseModifiers: Record<
     string,
-    { search: RegExp; replace: string }[]
+    {
+      search?: RegExp
+      replace?: string
+      file?: string
+      headers?: Record<string, string>
+    }[]
   > = {}
   private readonly extraCSS: string
   private readonly cookies?: Record<string, string>
@@ -491,18 +496,30 @@ export class Session extends EventEmitter {
       try {
         const parsed = JSON5.parse(responseModifiers) as Record<
           string,
-          { search: string; replace: string }[]
+          {
+            search?: string
+            replace?: string
+            file?: string
+            headers?: Record<string, string>
+          }[]
         >
         Object.entries(parsed).forEach(([url, replacements]) => {
+          if (!Array.isArray(replacements)) {
+            throw new Error(
+              `responseModifiers replacements should be an array of { search, replace, body, headers } objects: ${replacements}`,
+            )
+          }
           this.responseModifiers[url] = replacements.map(
-            ({ search, replace }) => ({
-              search: new RegExp(search, 'g'),
+            ({ search, replace, file, headers }) => ({
+              search: search ? new RegExp(search, 'g') : undefined,
               replace,
+              file,
+              headers,
             }),
           )
         })
       } catch (err) {
-        log.error(
+        throw new Error(
           `error parsing responseModifiers "${responseModifiers}": ${
             (err as Error).stack
           }`,
@@ -549,6 +566,9 @@ export class Session extends EventEmitter {
       `--unsafely-treat-insecure-origin-as-secure=http://${
         new URL(this.url || 'http://localhost').host
       }`,
+      '--disable-web-security',
+      '--disable-features=IsolateOrigins',
+      '--disable-site-isolation-trials',
       '--use-fake-ui-for-media-stream',
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
@@ -1094,17 +1114,27 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     Object.entries(this.responseModifiers).forEach(([url, replacements]) => {
       interceptions.push({
         urlPattern: url,
-        modifyResponse: ({ event, body }) => {
-          if (body) {
-            log.debug(
-              `using responseModifiers in: ${event.request.url}`,
-              replacements.map(
-                ({ search, replace }) => `${search.toString()} => ${replace}`,
-              ),
-            )
-            replacements.forEach(({ search, replace }) => {
+        modifyResponse: async ({ event, body }) => {
+          for (const { search, replace, file, headers } of replacements) {
+            if (search && replace) {
+              log.debug(
+                `using responseModifiers in: ${event.request.url}: ${search.toString()} => ${replace}`,
+              )
               body = body?.replace(search, replace)
-            })
+            } else if (file) {
+              log.log(
+                `using responseModifiers in: ${event.request.url}: ${file}`,
+              )
+              body = await fs.promises.readFile(file, 'utf8')
+            }
+            if (headers) {
+              for (const [name, value] of Object.entries(headers)) {
+                event.responseHeaders?.push({
+                  name,
+                  value,
+                })
+              }
+            }
           }
           return { body }
         },
