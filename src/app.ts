@@ -1,3 +1,8 @@
+import {
+  getSessionThrottleIndex,
+  startThrottle,
+  stopThrottle,
+} from '@vpalmisano/throttler'
 import { paramCase } from 'change-case'
 import fs from 'fs'
 import json5 from 'json5'
@@ -8,11 +13,6 @@ import { prepareFakeMedia } from './media'
 import { Server } from './server'
 import { Session } from './session'
 import { Stats } from './stats'
-import {
-  getSessionThrottleIndex,
-  startThrottle,
-  stopThrottle,
-} from './throttle'
 import {
   checkChromeExecutable,
   logger,

@@ -1,3 +1,7 @@
+import {
+  getSessionThrottleValues,
+  throttleLauncher,
+} from '@vpalmisano/throttler'
 import assert from 'assert'
 import axios from 'axios'
 import chalk from 'chalk'
@@ -23,7 +27,6 @@ import * as sdpTransform from 'sdp-transform'
 import { gunzipSync } from 'zlib'
 
 import { rtcStatKey, RtcStats, updateRtcStats } from './rtcstats'
-import { getSessionThrottleValues } from './throttle'
 import {
   checkChromeExecutable,
   downloadUrl,
@@ -674,31 +677,12 @@ export class Session extends EventEmitter {
         log.debug(`using executablePath=${executablePath}`)
       }
 
-      // Create process wrapper.
+      // Create the process wrapper.
       if (this.throttleIndex > -1 && os.platform() === 'linux') {
-        const mark = this.throttleIndex + 1
-        const executableWrapperPath = `/tmp/webrtcperf-launcher-${mark}`
-        const group = `webrtcperf${mark}`
-        await fs.promises.writeFile(
-          executableWrapperPath,
-          `#!/bin/bash
-getent group ${group} || sudo -n addgroup --system ${group}
-sudo -n adduser $USER ${group}
-
-sudo -n iptables -t mangle -L OUTPUT | grep -q "owner GID match ${group}" || sudo -n iptables -t mangle -A OUTPUT -m owner --gid-owner ${group} -j MARK --set-mark ${mark}
-sudo -n iptables -t mangle -L PREROUTING | grep -q "CONNMARK restore" || sudo -n iptables -t mangle -A PREROUTING -j CONNMARK --restore-mark
-sudo -n iptables -t mangle -L POSTROUTING | grep -q "CONNMARK save" || sudo -n iptables -t mangle -A POSTROUTING -j CONNMARK --save-mark
-
-cat <<EOF > /tmp/webrtcperf-launcher-${mark}-browser
-#!/bin/bash
-exec ${executablePath} $@
-EOF
-chmod +x /tmp/webrtcperf-launcher-${mark}-browser
-
-exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
+        executablePath = await throttleLauncher(
+          executablePath,
+          this.throttleIndex,
         )
-        await fs.promises.chmod(executableWrapperPath, 0o755)
-        executablePath = executableWrapperPath
       }
 
       const env = { ...process.env }
