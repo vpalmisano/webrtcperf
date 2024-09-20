@@ -136,7 +136,7 @@ async function applyRules(
 ): Promise<void> {
   let rules = config[direction]
   if (!rules) return
-  log.debug(
+  log.info(
     `applyRules device=${device} index=${index} protocol=${protocol} match=${match} ${JSON.stringify(
       rules,
     )}`,
@@ -246,7 +246,7 @@ sudo -n tc filter add dev ${device} \
           }
         }
 
-        log.debug(`applying rules on ${device} (${mark}): ${desc}`)
+        log.info(`applying rules on ${device} (${mark}): ${desc}`)
         const cmd = `\
 sudo -n tc qdisc change dev ${device} \
   parent 1:${handle} \
