@@ -1050,15 +1050,17 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
-"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#176ea6135d0254de4d94b299df5b202e2f74d9db":
-  version "0.0.1"
-  resolved "https://github.com/vpalmisano/throttler#176ea6135d0254de4d94b299df5b202e2f74d9db"
+"@vpalmisano/throttler@^0.0.4":
+  version "0.0.4"
+  resolved "https://npm.pkg.github.com/download/@vpalmisano/throttler/0.0.4/0f44aa72d478c427210ccb7a09859407b901784b#0f44aa72d478c427210ccb7a09859407b901784b"
+  integrity sha512-Zs09wRYKPQixreDcYm2nw8N9yaWfjoPY/8By7FHcaACzPgpjldkeoEIK1d9UBEa1pjjsmau1C3LzBle382DV4Q==
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"
     convict-format-with-validator "^6.2.0"
     debug-level "^3.1.4"
     json5 "^2.2.3"
+    word-wrap "^1.2.5"
 
 "@webassemblyjs/ast@1.12.1", "@webassemblyjs/ast@^1.12.1":
   version "1.12.1"
