@@ -971,14 +971,14 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
-"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#e1d576aa8313e55d8c864e5f31bb3aeb394cef56":
+"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#99aea70c59b9c5c32629fde333a27d881e4780c7":
   version "0.0.4"
-  resolved "https://github.com/vpalmisano/throttler#e1d576aa8313e55d8c864e5f31bb3aeb394cef56"
+  resolved "https://github.com/vpalmisano/throttler#99aea70c59b9c5c32629fde333a27d881e4780c7"
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"
     convict-format-with-validator "^6.2.0"
-    debug-level "^3.1.4"
+    debug-level "^3.2.0"
     json5 "^2.2.3"
     word-wrap "^1.2.5"
 
@@ -2657,21 +2657,6 @@ data-view-byte-offset@^1.0.0:
     call-bind "^1.0.6"
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
-
-debug-level@^3.1.4:
-  version "3.1.4"
-  resolved "https://registry.yarnpkg.com/debug-level/-/debug-level-3.1.4.tgz#aa239f9e44ba04e96d920874bb4eb7137c60565f"
-  integrity sha512-Pmz7v3262EV2Hv64P1AHkLv8GTh2aKDUnvAeqavCdwRy0bcLW1lAB2GnqLpTXkNZZAAvDAC+eOY7810LxiyTeg==
-  dependencies:
-    asyncc "^2.0.6"
-    chalk "^4.1.2"
-    fast-safe-stringify "^2.1.1"
-    flatstr "^1.0.12"
-    map-lru "^2.0.0"
-    ms "^2.1.3"
-    sonic-boom "^3.8.0"
-  optionalDependencies:
-    debug "^4.3.1"
 
 debug-level@^3.2.0:
   version "3.2.0"
@@ -7969,13 +7954,6 @@ socks@^2.7.1:
   dependencies:
     ip-address "^9.0.5"
     smart-buffer "^4.2.0"
-
-sonic-boom@^3.8.0:
-  version "3.8.1"
-  resolved "https://registry.yarnpkg.com/sonic-boom/-/sonic-boom-3.8.1.tgz#d5ba8c4e26d6176c9a1d14d549d9ff579a163422"
-  integrity sha512-y4Z8LCDBuum+PBP3lSV7RHrXscqksve/bi0as7mhwVnBW+/wUqKT/2Kb7um8yqcFy0duYbbPxzt89Zy2nOCaxg==
-  dependencies:
-    atomic-sleep "^1.0.0"
 
 sonic-boom@^4.0.1:
   version "4.1.0"
