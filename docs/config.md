@@ -104,29 +104,7 @@ If greater than 0, the test will stop after the provided number of seconds.
 *Default*: `0`
 
 ## throttleConfig
-A JSON5 string with a valid network throttling configuration. Example: 
-  ```javascript
-  [{
-    sessions: '0-1',
-    device: 'eth0',
-    protocol: 'udp',
-    up: {
-      rate: 1000,
-      delay: 50,
-      loss: 5,
-      queue: 10,
-    },
-    down: [
-      { rate: 2000, delay: 50, loss: 2, queue: 20 },
-      { rate: 1000, delay: 50, loss: 2, queue: 20, at: 60 },
-    ]
-  }]
-  ```
-The sessions field represents the sessions IDs range that will be affected by the rule, e.g.: "0-10", "2,4" or simply "2". The device, protocol, up, down fields are optional. When device is not set, the default route device will be used. If protocol is specified ('udp' or 'tcp'), only the packets with the specified protocol will be affected by the shaping rules. When running as regular user, add the following sudo configuration:
-  ```
-%sudo ALL=(ALL) NOPASSWD: /usr/sbin/iptables,/usr/sbin/addgroup,/usr/sbin/adduser,/usr/sbin/tc,/usr/sbin/modprobe,/usr/sbin/ip
-  ```
-
+A JSON5 string with a valid throtter configuration (https://github.com/vpalmisano/throttler).
 
 *Type*: `string`
 
@@ -165,7 +143,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"126.0.6478.126"`
+*Default*: `"129.0.6668.58"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -377,9 +355,9 @@ It enables the GPU acceleration (experimental). Set to "desktop" to use the host
 *Default*: `""`
 
 ## enableBrowserLogging
-It enables the Chromium browser logging, e.g. "--v=0" (see https://www.chromium.org/for-testers/enable-logging/).
+It enables the Chromium browser logging for the specified session indexes.
 
-*Type*: `string`
+*Type*: `index`
 
 *Default*: `""`
 
@@ -398,7 +376,13 @@ A dictionary of headers keyed by the url in JSON5 format (e.g. `{ "https://url.c
 *Default*: `""`
 
 ## responseModifiers
-A dictionary of content replacements keyed by the url in JSON5 format (e.g. `{ "https://url.com/*": [{ search: "searchString": replace: "anotherString" }] }`).The search string should be a valid regular expression.
+A dictionary of content replacements keyed by the url in JSON5 format.
+Examples:
+- replace strings using a regular expression:
+  `{ "https://url.com/*": [{ search: "searchString": replace: "anotherString" }] }`
+- completely replace the content:
+  `{ "https://url.com/file.js": [{ file: "path/to/newFile.js" }] }`
+
 
 *Type*: `string`
 
@@ -413,6 +397,13 @@ A string with a CSS styles to inject into each page. Rules containing "important
 
 ## cookies
 A string with the cookies to set into each page in JSON format.
+
+*Type*: `string`
+
+*Default*: `""`
+
+## overridePermissions
+A comma-separated list of permissions to grant to the opened url.
 
 *Type*: `string`
 
