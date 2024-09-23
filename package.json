@@ -52,7 +52,7 @@
     "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#99aea70c59b9c5c32629fde333a27d881e4780c7",
     "axios": "^1.7.7",
     "browserify": "^17.0.0",
-    "camel-case": "^4.1.2",
+    "camel-case": "^5.0.0",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
     "compression": "^1.7.4",
