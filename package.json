@@ -101,7 +101,7 @@
     "@types/sdp-transform": "^2.4.9",
     "@types/sprintf-js": "^1.1.4",
     "@types/tar-fs": "^2.0.4",
-    "@types/uuid": "^9.0.8",
+    "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
