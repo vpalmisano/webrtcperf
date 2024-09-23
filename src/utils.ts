@@ -691,7 +691,11 @@ export async function runShellCommand(
 ): Promise<{ stdout: string; stderr: string }> {
   if (verbose) log.debug(`runShellCommand cmd: ${cmd}`)
   return new Promise((resolve, reject) => {
-    const p = spawn(cmd, { shell: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    const p = spawn(cmd, {
+      shell: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: true,
+    })
     let stdout = ''
     let stderr = ''
     p.stdout.on('data', data => {
