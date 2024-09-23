@@ -513,7 +513,7 @@ Rules containing "important" will be replaced with "!important".`,
     arg: 'extra-css',
   },
   cookies: {
-    doc: `A string with the cookies to set into each page in JSON format.`,
+    doc: `A string with an array of [CookieParam](https://pptr.dev/api/puppeteer.cookieparam) to set into each page in JSON5 format.`,
     format: String,
     nullable: true,
     default: '',

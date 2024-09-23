@@ -16,6 +16,7 @@ import puppeteer, {
   Browser,
   BrowserContext,
   CDPSession,
+  CookieParam,
   ElementHandle,
   Metrics,
   Page,
@@ -247,7 +248,7 @@ export class Session extends EventEmitter {
     }[]
   > = {}
   private readonly extraCSS: string
-  private readonly cookies?: Record<string, string>
+  private readonly cookies: CookieParam[] = []
   private readonly overridePermissions: Permission[] = []
   private readonly debuggingPort: number
   private readonly debuggingAddress: string
@@ -534,13 +535,10 @@ export class Session extends EventEmitter {
 
     if (cookies) {
       try {
-        this.cookies = JSON5.parse(cookies)
+        this.cookies = JSON5.parse(cookies) as CookieParam[]
       } catch (err) {
         log.error(`error parsing cookies: ${(err as Error).stack}`)
-        this.cookies = undefined
       }
-    } else {
-      this.cookies = undefined
     }
 
     if (overridePermissions) {
@@ -1343,22 +1341,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     // add cookies
     if (this.cookies) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars,unused-imports/no-unused-vars-ts
-        const [schema, _, domain] = url.split('/').slice(0, 3)
-        await Promise.all(
-          Object.entries(this.cookies).map(([name, value]) => {
-            const cookie = {
-              name,
-              value,
-              domain,
-              path: '/',
-              httpOnly: true,
-              secure: true,
-            }
-            log.debug(`setting cookie: %j`, cookie)
-            return page.setCookie(cookie)
-          }),
-        )
+        await page.setCookie(...this.cookies)
       } catch (err) {
         log.error(`Set cookies error: ${(err as Error).stack}`)
       }
