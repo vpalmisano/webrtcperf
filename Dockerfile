@@ -222,7 +222,8 @@ ENV CHROMIUM_PATH=/usr/bin/chromium-browser-unstable
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 COPY package.json yarn.lock /app/
-RUN PUPPETEER_SKIP_DOWNLOAD=true yarn install --frozen-lockfile --production
+ENV PUPPETEER_SKIP_DOWNLOAD=true 
+RUN yarn install --frozen-lockfile --production || yarn install --frozen-lockfile --production
 
 COPY scripts /app/scripts/
 COPY app.min.js entrypoint.sh /app/

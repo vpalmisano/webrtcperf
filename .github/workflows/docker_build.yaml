@@ -51,7 +51,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Yarn build
-      run: yarn install --frozen-lockfile
+      run: yarn install --frozen-lockfile || yarn install --frozen-lockfile
 
     - name: Get package version
       id: get_package_version
