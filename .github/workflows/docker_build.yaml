@@ -40,9 +40,9 @@ jobs:
       with:
         fetch-depth: 1
     - uses: actions/setup-node@v4
-      #with:
-      #  node-version: 20
-      #  cache: 'yarn'
+      with:
+        node-version: 20
+        cache: 'yarn'
     - name: Cache modules
       uses: actions/cache@v3
       with:
@@ -51,7 +51,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Yarn build
-      run: yarn
+      run: yarn install --frozen-lockfile
 
     - name: Get package version
       id: get_package_version

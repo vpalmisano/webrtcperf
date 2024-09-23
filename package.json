@@ -51,7 +51,6 @@
     "@puppeteer/browsers": "^2.4.0",
     "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#99aea70c59b9c5c32629fde333a27d881e4780c7",
     "axios": "^1.7.7",
-    "browserify": "^17.0.0",
     "camel-case": "^4.1.2",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
@@ -78,13 +77,11 @@
     "sdp-transform": "^2.14.2",
     "sprintf-js": "^1.1.3",
     "tar-fs": "^3.0.6",
-    "terser": "^5.33.0",
     "tesseract.js": "^5.1.1",
     "word-wrap": "^1.2.5",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/browserify": "^12.0.40",
     "@types/compression": "^1.7.5",
     "@types/convict": "^6.1.6",
     "@types/convict-format-with-validator": "^6.0.5",
