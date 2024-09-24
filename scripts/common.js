@@ -436,7 +436,8 @@ window.setupActions = async () => {
       )
       let currentIteration = 0
       const cb = async () => {
-        const ts = (window.webrtcPerfElapsedTime() / 1000).toFixed(0)
+        const now = window.webrtcPerfElapsedTime()
+        const ts = (now / 1000).toFixed(0)
         log(
           `run action [${ts}s] ${name}(${params || ''})${
             every ? ` every ${every}s` : ''
@@ -444,7 +445,7 @@ window.setupActions = async () => {
             times
               ? ` (${times - currentIteration}/${times} times remaining)`
               : ''
-          } (${Date.now()})`,
+          } (system time: ${Date.now()})`,
         )
         try {
           if (params && params.length) {
@@ -452,7 +453,13 @@ window.setupActions = async () => {
           } else {
             await fn()
           }
-          log(`run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} done`)
+          const elapsed = (
+            (window.webrtcPerfElapsedTime() - now) /
+            1000
+          ).toFixed(3)
+          log(
+            `run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} done (${elapsed}s elapsed)`,
+          )
         } catch (err) {
           log(
             `run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} error: ${err.message}`,
