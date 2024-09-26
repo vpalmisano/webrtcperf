@@ -1,4 +1,4 @@
-/* global log, sleep, applyAudioTimestampWatermark, applyVideoTimestampWatermark, enabledForSession */
+/* global webrtcperf, log, sleep, applyAudioTimestampWatermark, applyVideoTimestampWatermark, enabledForSession */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -97,7 +97,7 @@ window.getActiveVideoTracks = () => {
  * It collects MediaTracks from MediaStream.
  * @param {MediaStream} mediaStream
  */
-function collectMediaTracks(mediaStream) {
+function collectMediaTracks(mediaStream, onEnded = null) {
   const audioTracks = mediaStream.getAudioTracks()
   if (audioTracks.length) {
     const track = audioTracks[0]
@@ -111,7 +111,12 @@ function collectMediaTracks(mediaStream) {
     /* const settings = track.getSettings() */
     /* log(`MediaStream new video track ${track.id} ${
       settings.width}x${settings.height} ${settings.frameRate}fps`); */
-    track.addEventListener('ended', () => VideoTracks.delete(track))
+    track.addEventListener('ended', () => {
+      VideoTracks.delete(track)
+      if (onEnded) {
+        onEnded(track)
+      }
+    })
     VideoTracks.add(track)
   }
   /* mediaStream.getTracks().forEach(track => {
@@ -186,13 +191,21 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     ...args
   ) {
     log(`getDisplayMedia:`, constraints)
+    let stopFakeScreenshare = null
+    if (window.PARAMS?.fakeScreenshare) {
+      stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(
+        window.PARAMS?.fakeScreenshare,
+      )
+    }
     overrideGetDisplayMedia(constraints)
     if (window.PARAMS?.getDisplayMediaWaitTime > 0) {
       await sleep(window.PARAMS?.getDisplayMediaWaitTime)
     }
     const mediaStream = await nativeGetDisplayMedia(constraints, ...args)
     await applyGetDisplayMediaCrop(mediaStream)
-    collectMediaTracks(mediaStream)
+    collectMediaTracks(mediaStream, () => {
+      stopFakeScreenshare && stopFakeScreenshare()
+    })
     return mediaStream
   }
 }

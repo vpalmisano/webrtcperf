@@ -952,6 +952,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     // Load scripts.
     for (const name of [
       'scripts/common.js',
+      'scripts/screenshare.js',
       'scripts/get-user-media.js',
       'scripts/peer-connection-stats.js',
       `scripts/peer-connection${
@@ -1268,6 +1269,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         min: 2,
       },
     })
+
+    await page.exposeFunction('loremIpsum', (count = 1) =>
+      lorem.generateSentences(count),
+    )
 
     await page.exposeFunction(
       'keypressRandomText',
