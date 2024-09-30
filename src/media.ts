@@ -93,7 +93,7 @@ export async function prepareFakeMedia({
         source = `-f lavfi -i testsrc=size=${videoWidth}x${videoHeight}:rate=${videoFramerate} -pix_fmt yuv420p -f lavfi -i sine=frequency=220:beep_factor=4:sample_rate=48000`
       }
       await runShellCommand(
-        `ffmpeg -y ${source}` +
+        `ffmpeg -y -threads 0 ${source}` +
           ` -s ${videoWidth}:${videoHeight}` +
           ` -r ${videoFramerate}` +
           ` -ss ${videoSeek} -t ${videoDuration} -shortest -af apad` +

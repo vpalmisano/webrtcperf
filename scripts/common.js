@@ -355,9 +355,9 @@ window.MeasuredStats = class {
 }
 
 window.enabledForSession = value => {
-  if (value === true) {
+  if (value === true || value === 'true') {
     return true
-  } else if (value === false || value === undefined) {
+  } else if (value === false || value === 'false' || value === undefined) {
     return false
   } else if (typeof value === 'string') {
     if (value.indexOf('-') !== -1) {
