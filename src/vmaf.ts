@@ -122,7 +122,7 @@ export async function parseIvf(
       const buffer = Buffer.from(frameView.buffer, 0, frameView.byteLength)
 
       const ret = await tesseractScheduler.addJob('recognize', buffer, {
-        rectangle: { top: 0, left: 0, width: width / 2, height: textHeight },
+        rectangle: { top: 0, left: 0, width, height: textHeight },
       })
       const { data } = ret
       const recognizedTime = parseInt(data.text.trim() || '0')

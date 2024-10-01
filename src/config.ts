@@ -503,6 +503,16 @@ Examples:
     env: 'RESPONSE_MODIFIERS',
     arg: 'response-modifiers',
   },
+  downloadResponses: {
+    doc: `A dictionary of url responses that will be saved to the disk, keyed by the url in JSON5 format.
+Example: \`{ "https://url.com/*": { dir: "save/directory" } }\`
+`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'DOWNLOAD_RESPONSES',
+    arg: 'download-responses',
+  },
   extraCSS: {
     doc: `A string with a CSS styles to inject into each page. \
 Rules containing "important" will be replaced with "!important".`,

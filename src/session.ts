@@ -22,8 +22,11 @@ import puppeteer, {
   Page,
   Permission,
 } from 'puppeteer-core'
-import type { Interception } from 'puppeteer-intercept-and-modify-requests'
-import { RequestInterceptionManager } from 'puppeteer-intercept-and-modify-requests'
+import {
+  getUrlPatternRegExp,
+  type Interception,
+  RequestInterceptionManager,
+} from 'puppeteer-intercept-and-modify-requests'
 import * as sdpTransform from 'sdp-transform'
 import { gunzipSync } from 'zlib'
 
@@ -163,6 +166,7 @@ export type SessionParams = {
   blockedUrls: string
   extraHeaders: string
   responseModifiers: string
+  downloadResponses: string
   extraCSS: string
   cookies: string
   overridePermissions: string
@@ -246,6 +250,13 @@ export class Session extends EventEmitter {
       file?: string
       headers?: Record<string, string>
     }[]
+  > = {}
+  private readonly downloadResponses: Record<
+    string,
+    {
+      urlPattern: RegExp
+      dir: string
+    }
   > = {}
   private readonly extraCSS: string
   private readonly cookies: CookieParam[] = []
@@ -364,6 +375,7 @@ export class Session extends EventEmitter {
     blockedUrls,
     extraHeaders,
     responseModifiers,
+    downloadResponses,
     extraCSS,
     cookies,
     overridePermissions,
@@ -525,6 +537,27 @@ export class Session extends EventEmitter {
       } catch (err) {
         throw new Error(
           `error parsing responseModifiers "${responseModifiers}": ${
+            (err as Error).stack
+          }`,
+        )
+      }
+    }
+
+    if (downloadResponses) {
+      try {
+        const parsed = JSON5.parse(downloadResponses) as Record<
+          string,
+          { dir: string }
+        >
+        Object.entries(parsed).forEach(([url, { dir }]) => {
+          this.downloadResponses[url] = {
+            urlPattern: getUrlPatternRegExp(url),
+            dir,
+          }
+        })
+      } catch (err) {
+        throw new Error(
+          `error parsing downloadResponses "${downloadResponses}": ${
             (err as Error).stack
           }`,
         )
@@ -1047,7 +1080,13 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       }
 
       if (this.browser && this.running) {
-        setTimeout(() => this.openPage(index), 1000)
+        setTimeout(
+          () =>
+            this.openPage(index).catch(err =>
+              log.error(`openPage after close error: ${(err as Error).stack}`),
+            ),
+          1000,
+        )
       }
     })
 
@@ -1105,7 +1144,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
               )
               body = body?.replace(search, replace)
             } else if (file) {
-              log.log(
+              log.debug(
                 `using responseModifiers in: ${event.request.url}: ${file}`,
               )
               body = await fs.promises.readFile(file, 'utf8')
@@ -1125,6 +1164,36 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     })
 
     await interceptManager.intercept(...interceptions)
+
+    // Download responses.
+    const downloadResponses = Object.values(this.downloadResponses)
+    if (downloadResponses.length) {
+      page.on('response', async response => {
+        if (!response.ok()) return
+        const url = response.url()
+        for (const { urlPattern, dir } of downloadResponses) {
+          if (!urlPattern.test(url)) continue
+          try {
+            const data = await response.buffer()
+            if (data.byteLength > 0) {
+              if (!fs.existsSync(dir)) {
+                await fs.promises.mkdir(dir, { recursive: true })
+              }
+              const savePath = path.join(
+                dir,
+                `${path.basename(new URL(url).pathname)}`,
+              )
+              log.debug(
+                `saving response body ${data.byteLength} to: ${savePath}`,
+              )
+              await fs.promises.writeFile(savePath, data)
+            }
+          } catch (err) {
+            log.error(`downloadResponses error: ${(err as Error).stack}`)
+          }
+        }
+      })
+    }
 
     // Allow to change the setRequestInterception state from page.
     const setRequestInterceptionFunction = async (value: boolean) => {
@@ -1442,12 +1511,6 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         ...this.evaluateAfter[i].args,
       )
     }
-
-    // If not using a real display, select the first blank page.
-    /* if (!this.display) {
-      const pages = await this.browser.pages()
-      await pages[0].bringToFront()
-    } */
   }
 
   private async getNewPage(_tabIndex: number): Promise<Page> {

@@ -94,11 +94,12 @@ const saveFileWorkerFn = () => {
               if (startTimestamp < 0) {
                 startTimestamp = timestamp
               }
-              const pts = Math.round(
+              let pts = Math.floor(
                 (frameRate * (timestamp - startTimestamp)) / 1000000,
               )
               if (pts <= lastPts) {
                 log(`warning: pts=${pts} <= lastPts=${lastPts}`)
+                pts++
               }
               lastPts = pts
               /* log(
@@ -204,7 +205,7 @@ window.saveMediaTrack = async (
   sendrecv,
   enableStart = 0,
   enableEnd = 0,
-  quality = 0.75,
+  quality = 0.85,
   width = window.VIDEO_WIDTH,
   height = window.VIDEO_HEIGHT,
   frameRate = window.VIDEO_FRAMERATE,

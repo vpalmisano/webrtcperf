@@ -27,6 +27,7 @@ const applyVideoTimestampWatermarkFn = () => {
     const ctx = canvas.getContext('2d')
     const fontSize = Math.ceil(canvas.height / 18)
     ctx.font = `${fontSize}px Noto Mono`
+    ctx.textAlign = 'center'
     const textHeight = fontSize + 6
 
     const transformer = new TransformStream({
@@ -42,12 +43,12 @@ const applyVideoTimestampWatermarkFn = () => {
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, width, textHeight)
         ctx.fillStyle = 'white'
-        ctx.fillText(text, 0, fontSize)
+        ctx.fillText(text, width / 2, fontSize)
 
         ctx.fillStyle = 'black'
         ctx.fillRect(0, height - textHeight, width, height)
         ctx.fillStyle = 'white'
-        ctx.fillText(participantName, 0, height - 6)
+        ctx.fillText(participantName, width / 2, height - 6)
 
         const newBitmap = await createImageBitmap(canvas)
         const newFrame = new VideoFrame(newBitmap, { timestamp })
