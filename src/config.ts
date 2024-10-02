@@ -738,6 +738,15 @@ the reference and degraded versions.`,
     env: 'VMAF_KEEP_SOURCE_FILES',
     arg: 'vmaf-keep-source-files',
   },
+  vmafCrop: {
+    doc: `If set, the reference and degraded videos will be cropped using the specified configuration in JSON5 format. \
+E.g. \`{ ref: { width: 10, height: 5 }, deg: { width: 2, height: 4 } }\``,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'VMAF_CROP',
+    arg: 'vmaf-crop',
+  },
   visqolPath: {
     doc: `When set, it runs the visqol calculator for the audio files saved under the provided directory path.`,
     format: String,
