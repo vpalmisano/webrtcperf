@@ -172,7 +172,7 @@ export async function parseIvf(
             `participantDisplayName="${participantDisplayName}" confidence=${data.confidence}`,
           )
         } else {
-          log.warn(
+          log.debug(
             `participantDisplayName failed text="${data.text.trim()}" confidence=${
               data.confidence
             }`,
