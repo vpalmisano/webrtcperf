@@ -59,6 +59,7 @@ export async function parseIvf(
   const num = headerView.getUint32(20, true)
   const frameRate = den / num
   let participantDisplayName = ''
+  let skipped = 0
 
   const frameHeaderView = new DataView(new ArrayBuffer(12))
   let index = 0
@@ -82,13 +83,18 @@ export async function parseIvf(
       log.warn(`IVF file ${fpath}: pts ${pts} <= prev ${ptsIndex[ptsIndex.length - 1]}`)
     } */
     if (frames.has(pts)) {
-      log.warn(`IVF file ${fpath}: pts ${pts} already present, skipping`)
+      log.debug(`IVF file ${fpath}: pts ${pts} already present, skipping`)
+      skipped++
     } else {
       frames.set(pts, { index, position, size: size + 12 })
       index++
     }
     position += size + 12
   } while (bytesRead === 12)
+
+  log.info(
+    `IVF file ${fpath}: width=${width} height=${height} frameRate=${frameRate} frames=${frames.size} skipped=${skipped}`,
+  )
 
   if (runRecognizer) {
     const tesseractScheduler = createScheduler()
@@ -457,22 +463,22 @@ fps=fps=${degradedFrameRate}${preview ? ',split=3[deg1][deg2][deg3]' : '[deg1]'}
 [1:v]crop=${width - refCropWidth}:${height - textHeight * 2 - refCropHeight}:${refCropWidth / 2}:${textHeight + refCropHeight / 2},\
 scale=w=${width}:h=${height}:flags=bicubic:eval=frame,\
 fps=fps=${degradedFrameRate}${preview ? ',split=3[ref1][ref2][ref3]' : '[ref1]'};\
-[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}[vmaf]`
+[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1[vmaf]`
 
   const cmd = preview
     ? `${ffmpegCmd} \
 -filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
--map [vmaf] ${durationCmd} -f null - \
+-map [vmaf] -f null - \
 -map [stacked] ${durationCmd} -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${
         comparisonPath + '_comparison.mp4'
       } \
--map [ref3] -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${referencePathMp4} \
--map [deg3] -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${degradedPathMp4} \
+-map [ref3] ${durationCmd} -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${referencePathMp4} \
+-map [deg3] ${durationCmd} -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${degradedPathMp4} \
 `
     : `${ffmpegCmd} \
 -filter_complex "${filter}" \
 -shortest \
--map [vmaf] ${durationCmd} -f null - \
+-map [vmaf] -f null - \
 `
 
   log.debug('runVmaf', cmd)
