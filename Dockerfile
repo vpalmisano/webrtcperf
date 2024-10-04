@@ -155,6 +155,7 @@ RUN \
         libharfbuzz0b \
         libspeex1 \
         libtesseract4 \
+        tesseract-ocr-eng \
         libvorbis0a \
         libvorbisenc2 \
         libvorbisfile3 \

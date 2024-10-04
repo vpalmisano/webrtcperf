@@ -42,12 +42,24 @@ const applyVideoTimestampWatermarkFn = () => {
 
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, width, textHeight)
+        ctx.fillRect(0, height - textHeight, width, height)
+
+        ctx.beginPath()
+        for (let d = 0; d < 20; d += 4) {
+          ctx.moveTo(0, textHeight + d)
+          ctx.lineTo(width, textHeight + d)
+          ctx.moveTo(0, height - textHeight - d)
+          ctx.lineTo(width, height - textHeight - d)
+          ctx.moveTo(d, 0)
+          ctx.lineTo(d, height)
+          ctx.moveTo(width - d, 0)
+          ctx.lineTo(width - d, height)
+        }
+        ctx.strokeStyle = 'black'
+        ctx.stroke()
+
         ctx.fillStyle = 'white'
         ctx.fillText(text, width / 2, fontSize)
-
-        ctx.fillStyle = 'black'
-        ctx.fillRect(0, height - textHeight, width, height)
-        ctx.fillStyle = 'white'
         ctx.fillText(participantName, width / 2, height - 6)
 
         const newBitmap = await createImageBitmap(canvas)

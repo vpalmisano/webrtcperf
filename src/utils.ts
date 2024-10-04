@@ -688,6 +688,7 @@ export function clampMinMax(value: number, min: number, max: number): number {
 export async function runShellCommand(
   cmd: string,
   verbose = false,
+  maxBuffer = 1024 * 1024,
 ): Promise<{ stdout: string; stderr: string }> {
   if (verbose) log.debug(`runShellCommand cmd: ${cmd}`)
   return new Promise((resolve, reject) => {
@@ -699,13 +700,13 @@ export async function runShellCommand(
     let stdout = ''
     let stderr = ''
     p.stdout.on('data', data => {
-      if (stdout.length > 512 * 1024) {
+      if (maxBuffer && stdout.length > maxBuffer) {
         stdout = stdout.slice(data.length)
       }
       stdout += data
     })
     p.stderr.on('data', data => {
-      if (stderr.length > 512 * 1024) {
+      if (maxBuffer && stderr.length > maxBuffer) {
         stderr = stderr.slice(data.length)
       }
       stderr += data
@@ -1230,4 +1231,20 @@ export function increaseKey(
     o[key] = 0
   }
   o[key] += value
+}
+
+export async function chunkedPromiseAll<T, R>(
+  items: Array<T>,
+  f: (v: T, index: number) => Promise<R>,
+  chunkSize = 1,
+): Promise<R[]> {
+  const results = Array<R>(items.length)
+  for (let index = 0; index < items.length; index += chunkSize) {
+    await Promise.allSettled(
+      items.slice(index, index + chunkSize).map(async (item, i) => {
+        results[index + i] = await f(item, index + i)
+      }),
+    )
+  }
+  return results
 }
