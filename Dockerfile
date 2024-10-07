@@ -24,7 +24,7 @@ RUN \
         libssl-dev
 
 ENV VMAF_VERSION=3.0.0
-ENV FFMPEG_VERSION=6.1
+ENV FFMPEG_VERSION=7.1
 
 RUN \
     mkdir -p /src \

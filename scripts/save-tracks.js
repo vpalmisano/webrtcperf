@@ -25,17 +25,24 @@ const saveFileWorkerFn = () => {
       .reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
   }
 
-  const writeIvfHeader = (ws, width, height, frameRate, fourcc) => {
+  const writeIvfHeader = (
+    ws,
+    width,
+    height,
+    frameRateDenominator,
+    frameRateNumerator,
+    fourcc,
+  ) => {
     const data = new ArrayBuffer(32)
     const view = new DataView(data)
     view.setUint32(0, stringToBinary('DKIF'), true)
     view.setUint16(4, 0, true) // version
     view.setUint16(6, 32, true) // header size
-    view.setUint32(8, stringToBinary(fourcc), true) // fourcc
-    view.setUint16(12, width, true) // width
-    view.setUint16(14, height, true) // header
-    view.setUint32(16, frameRate, true) // framerate denominator
-    view.setUint32(20, 1, true) // framerate numerator
+    view.setUint32(8, stringToBinary(fourcc), true)
+    view.setUint16(12, width, true)
+    view.setUint16(14, height, true)
+    view.setUint32(16, frameRateDenominator, true)
+    view.setUint32(20, frameRateNumerator, true)
     view.setUint32(24, 0, true) // frame count
     view.setUint32(28, 0, true) // unused
     ws.send(data)
@@ -65,7 +72,7 @@ const saveFileWorkerFn = () => {
     const ws = await wsClient(url)
     websockets.set(id, ws)
     if (kind === 'video') {
-      writeIvfHeader(ws, width, height, frameRate, 'MJPG')
+      writeIvfHeader(ws, width, height, frameRate, 1, 'MJPG')
 
       const canvas = new OffscreenCanvas(width, height)
       const ctx = canvas.getContext('2d')
@@ -75,10 +82,17 @@ const saveFileWorkerFn = () => {
         {
           async write(frame) {
             const { timestamp, codedWidth, codedHeight } = frame
+            if (startTimestamp < 0) {
+              startTimestamp = timestamp
+            }
+            const pts = Math.floor(
+              (frameRate * (timestamp - startTimestamp)) / 1000000,
+            )
             if (
               !codedWidth ||
               !codedHeight ||
-              ws.readyState !== WebSocket.OPEN
+              ws.readyState !== WebSocket.OPEN ||
+              pts <= lastPts
             ) {
               frame.close()
               return
@@ -91,18 +105,6 @@ const saveFileWorkerFn = () => {
                 quality,
               })
               const data = await blob.arrayBuffer()
-              if (startTimestamp < 0) {
-                startTimestamp = timestamp
-              }
-              let pts = Math.round(
-                (frameRate * (timestamp - startTimestamp)) / 1000000,
-              )
-              if (pts <= lastPts) {
-                log(
-                  `warning: pts=${pts} <= lastPts=${lastPts} (timestamp: ${timestamp - startTimestamp})`,
-                )
-              }
-              lastPts = pts
               /* log(
                 `writer ${data.byteLength} bytes timestamp=${
                   videoFrame.timestamp / 1000000
@@ -114,6 +116,7 @@ const saveFileWorkerFn = () => {
               view.setBigUint64(4, BigInt(pts), true)
               ws.send(header)
               ws.send(data)
+              lastPts = pts
             } catch (err) {
               log(`saveMediaTrack ${url} error=${err.message}`)
             }
@@ -206,7 +209,7 @@ window.saveMediaTrack = async (
   sendrecv,
   enableStart = 0,
   enableEnd = 0,
-  quality = 0.8,
+  quality = 0.7,
   width = window.VIDEO_WIDTH,
   height = window.VIDEO_HEIGHT,
   frameRate = window.VIDEO_FRAMERATE,

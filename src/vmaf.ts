@@ -3,6 +3,7 @@ import json5 from 'json5'
 import os from 'os'
 import path from 'path'
 
+import { FastStats } from './stats'
 import { getFiles, logger, runShellCommand } from './utils'
 
 const log = logger('webrtcperf:vmaf')
@@ -13,15 +14,14 @@ export type IvfFrame = {
   size: number
 }
 
-export async function recognizeFrames(fpath: string) {
+export async function recognizeFrames(fpath: string, frameRate: number) {
   const fname = path.basename(fpath)
-  log.debug(`recognizeFrames ${fname}`)
   const cpus = os.cpus().length
 
   const [{ stdout }, { stdout: stdout2 }] = await Promise.all([
     runShellCommand(
       `ffprobe -loglevel error -threads ${cpus} -select_streams v -show_frames -print_format json=compact=1 \
- -show_entries frame=pts,duration_time,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence \
+ -show_entries frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence \
  -f lavfi -i 'movie=${fpath},crop=in_w:(in_h/18)+6:0:0,ocr=whitelist="0123456789"'`,
       false,
       10 * 1024 * 1024,
@@ -38,27 +38,26 @@ export async function recognizeFrames(fpath: string) {
   const data = JSON.parse(stdout) as {
     frames: {
       pts: number
-      duration_time: string
       tags: Record<string, string>
     }[]
   }
 
-  let frameRate = 0
   const frames = new Map<number, number>()
   let skipped = 0
   let failed = 0
+  let firstTimestamp = 0
+  let lastTimestamp = 0
 
   data.frames.forEach(frame => {
-    const { pts, duration_time, tags } = frame
-    if (!frameRate) {
-      frameRate = Math.round(1 / parseFloat(duration_time))
-    }
+    const { pts, tags } = frame
     if (!frames.has(pts) || !frames.get(pts)) {
       const recognizedTime = parseInt(tags['lavfi.ocr.text']?.trim() || '0')
       const confidence = parseFloat(tags['lavfi.ocr.confidence']?.trim() || '0')
       if (confidence > 50) {
         const recognizedPts = Math.round((frameRate * recognizedTime) / 1000)
         frames.set(pts, recognizedPts)
+        if (!firstTimestamp) firstTimestamp = recognizedPts / frameRate
+        lastTimestamp = recognizedPts / frameRate
       } else {
         frames.set(pts, 0)
         failed++
@@ -85,16 +84,14 @@ export async function recognizeFrames(fpath: string) {
     }
   }
 
-  log.debug(
-    `recognizeFrames ${fname} frameRate: ${frameRate} frames: ${frames.size} skipped: ${skipped} failed: ${failed} participantDisplayName: ${participantDisplayName}`,
+  log.info(
+    `recognizeFrames ${fname} participantDisplayName: ${participantDisplayName} frames: ${frames.size} skipped: ${skipped} failed: ${failed} ts: ${firstTimestamp}-${lastTimestamp} (${lastTimestamp - firstTimestamp})`,
   )
-  return { frameRate, frames, participantDisplayName }
+  return { frames, participantDisplayName }
 }
 
 async function parseIvf(fpath: string, runRecognizer = false) {
   const fname = path.basename(fpath)
-  log.debug(`parseIvf ${fname} runRecognizer=${runRecognizer}`)
-
   const fd = await fs.promises.open(fpath, 'r')
   const headerData = new ArrayBuffer(32)
   const headerView = new DataView(headerData)
@@ -147,14 +144,15 @@ async function parseIvf(fpath: string, runRecognizer = false) {
     }
     position += size + 12
   } while (bytesRead === 12)
+  await fd.close()
 
-  log.info(
-    `parseIvf ${fname}: width=${width} height=${height} frameRate=${frameRate} frames=${frames.size} skipped=${skipped}`,
+  log.debug(
+    `parseIvf ${fname}: width: ${width} height: ${height} frameRate: ${frameRate} frames: ${frames.size} skipped: ${skipped} ts: ${firstTimestamp}-${lastTimestamp} (${lastTimestamp - firstTimestamp})`,
   )
 
   if (runRecognizer) {
     const { frames: ptsToRecognized, participantDisplayName: name } =
-      await recognizeFrames(fpath)
+      await recognizeFrames(fpath, frameRate)
     participantDisplayName = name
 
     const ptsIndex = Array.from(ptsToRecognized.keys()).sort((a, b) => a - b)
@@ -181,8 +179,6 @@ async function parseIvf(fpath: string, runRecognizer = false) {
     frames = recognizedFrames
   }
 
-  await fd.close()
-
   return {
     width,
     height,
@@ -194,12 +190,14 @@ async function parseIvf(fpath: string, runRecognizer = false) {
   }
 }
 
-export async function fixIvfFrames(fpath: string, outDir: string) {
+export async function fixIvfFrames(
+  fpath: string,
+  outDir: string,
+  duplicate = false,
+) {
   const fname = path.basename(fpath)
-  const { width, height, frames, participantDisplayName } = await parseIvf(
-    fpath,
-    true,
-  )
+  const { width, height, frameRate, frames, participantDisplayName } =
+    await parseIvf(fpath, true)
   if (!participantDisplayName) {
     throw new Error(`fixIvfFrames ${fname}: no participant name found`)
   }
@@ -225,6 +223,9 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
 
   let position = 32
   let writtenFrames = 0
+  let duplicatedFrames = 0
+  let previousPts = -1
+  let previousFrame: DataView | null = null
 
   const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
   for (const pts of ptsIndex) {
@@ -233,6 +234,34 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
       log.warn(`fixIvfFrames ${fname}: pts ${pts} not found, skipping`)
       continue
     }
+
+    if (
+      duplicate &&
+      previousFrame &&
+      previousPts >= 0 &&
+      pts - previousPts - 1 > 0
+    ) {
+      const missing = pts - previousPts - 1
+      if (missing > frameRate * 60) {
+        log.warn(`${fname} too many frames missing: ${missing}`)
+      } else {
+        // log.debug(`${fname} pts ${pts} missing ${missing} frames, copying previous`)
+        while (pts - previousPts - 1 > 0) {
+          previousPts += 1
+          previousFrame.setBigUint64(4, BigInt(previousPts), true)
+          await fixedFd.write(
+            new Uint8Array(previousFrame.buffer),
+            0,
+            previousFrame.byteLength,
+            position,
+          )
+          position += previousFrame.byteLength
+          writtenFrames++
+          duplicatedFrames++
+        }
+      }
+    }
+
     const frameView = new DataView(new ArrayBuffer(frame.size))
     await fd.read(frameView, 0, frame.size, frame.position)
     frameView.setBigUint64(4, BigInt(pts), true)
@@ -244,7 +273,10 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
     )
     position += frameView.byteLength
     writtenFrames++
+    previousPts = pts
+    previousFrame = frameView
   }
+  previousFrame = null
 
   headerView.setUint32(24, writtenFrames, true)
   await fixedFd.write(
@@ -257,7 +289,9 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
   await fd.close()
   await fixedFd.close()
 
-  log.info(`fixIvfFrames ${fname}: frames written: ${writtenFrames}`)
+  log.debug(
+    `fixIvfFrames ${fname}: frames written: ${writtenFrames} duplicatedFrames: ${duplicatedFrames}`,
+  )
 
   return { participantDisplayName, outFilePath }
 }
@@ -341,34 +375,38 @@ export async function runVmaf(
   const vmafLogPath = comparisonPath + '.vmaf.json'
   const cpus = os.cpus().length
 
-  const dir = path.dirname(referencePath)
   const sender = path.basename(referencePath).replace('.ivf', '')
   const receiver = path
     .basename(degradedPath)
     .replace('.ivf', '')
     .split('_recv-by_')[1]
-  const referencePathMp4 = `${dir}/${sender}_sent-to_${receiver}.mp4`
-  const degradedPathMp4 = `${dir}/${sender}_recv-by_${receiver}.mp4`
 
   const {
-    width,
-    height,
-    firstTimestamp: referenceFirstTimestamp,
-    lastTimestamp: referenceLastTimestamp,
+    width: refWidth,
+    height: refHeight,
+    frameRate: refFrameRate,
+    firstTimestamp: refFirstTimestamp,
+    lastTimestamp: refLastTimestamp,
   } = await parseIvf(referencePath, false)
   const {
-    frameRate: degradedFrameRate,
+    width: degWidth,
+    height: degHeight,
+    frameRate: degFrameRate,
     firstTimestamp: degradedFirstTimestamp,
-    lastTimestamp: degradedLastTimestmap,
+    lastTimestamp: degLastTimestmap,
   } = await parseIvf(degradedPath, false)
-  const degMinusRefDiff = degradedFirstTimestamp - referenceFirstTimestamp
+  const width = Math.max(refWidth, degWidth)
+  const height = Math.max(refHeight, degHeight)
+  const frameRate = Math.max(refFrameRate, degFrameRate)
+
+  const degMinusRefDiff = degradedFirstTimestamp - refFirstTimestamp
   const degradedDuration =
-    degradedLastTimestmap -
+    degLastTimestmap -
     degradedFirstTimestamp -
     (degMinusRefDiff < 0 ? -degMinusRefDiff : 0)
   const referenceDuration =
-    referenceLastTimestamp -
-    referenceFirstTimestamp -
+    refLastTimestamp -
+    refFirstTimestamp -
     (degMinusRefDiff > 0 ? degMinusRefDiff : 0)
 
   log.debug('runVmaf', {
@@ -390,14 +428,14 @@ export async function runVmaf(
 ${cropFilter(crop?.deg)}\
 scale=w=${width}:h=${height},\
 ${cropFilter({ top: textHeight, bottom: textHeight })}\
-fps=fps=${degradedFrameRate}\
-${preview ? ',split=3[deg1][deg2][deg3]' : '[deg1]'};\
+fps=fps=${frameRate}\
+${preview ? ',split=2[deg1][deg2]' : '[deg1]'};\
 [1:v]\
 ${cropFilter(crop?.ref)}\
 scale=w=${width}:h=${height},\
 ${cropFilter({ top: textHeight, bottom: textHeight })}\
-fps=fps=${degradedFrameRate}\
-${preview ? ',split=3[ref1][ref2][ref3]' : '[ref1]'};\
+fps=fps=${frameRate}\
+${preview ? ',split=2[ref1][ref2]' : '[ref1]'};\
 [deg1][ref1]\
 libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1\
 [vmaf]`
@@ -409,8 +447,6 @@ libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${v
 -map [stacked] ${durationCmd} -c:v libx264 -crf 15 -g 10 -f mp4 -movflags frag_keyframe+delay_moov+skip_trailer ${
         comparisonPath + '_comparison.mp4'
       } \
--map [ref3] ${durationCmd} -c:v libx264 -crf 15 -g 10 -f mp4 -movflags frag_keyframe+delay_moov+skip_trailer ${referencePathMp4} \
--map [deg3] ${durationCmd} -c:v libx264 -crf 15 -g 10 -f mp4 -movflags frag_keyframe+delay_moov+skip_trailer ${degradedPathMp4} \
 `
     : `${ffmpegCmd} \
 -filter_complex "${filter}" \
@@ -433,7 +469,7 @@ libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${v
 
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
-  await writeGraph(vmafLogPath, degradedFrameRate)
+  await writeGraph(vmafLogPath, frameRate)
 
   return metrics
 }
@@ -458,6 +494,7 @@ async function writeGraph(vmafLogPath: string, frameRate: number) {
   const fpath = vmafLogPath.replace('.json', '.png')
 
   const decimation = Math.ceil(vmafLog.frames.length / 500)
+  const stats = new FastStats()
   const data = vmafLog.frames
     .reduce(
       (prev, cur) => {
@@ -471,6 +508,7 @@ async function writeGraph(vmafLogPath: string, frameRate: number) {
           prev[prev.length - 1].y += cur.metrics.vmaf
           prev[prev.length - 1].count++
         }
+        stats.push(cur.metrics.vmaf)
         return prev
       },
       [] as { x: number; y: number; count: 1 }[],
@@ -491,7 +529,7 @@ async function writeGraph(vmafLogPath: string, frameRate: number) {
         {
           label: `VMAF score (min: ${min.toFixed(2)}, max: ${max.toFixed(
             2,
-          )}, mean: ${mean.toFixed(2)})`,
+          )}, mean: ${mean.toFixed(2)}, P5: ${stats.percentile(5).toFixed(2)})`,
           data: data.map(d => d.y),
           fill: false,
           borderColor: 'rgb(0, 0, 0)',
@@ -606,7 +644,10 @@ if (require.main === module) {
       vmafPreview: true,
       vmafKeepIntermediateFiles: true,
       vmafKeepSourceFiles: true,
-      vmafCrop: json5.stringify({}),
+      vmafCrop: json5.stringify({
+        ref: { top: 1, left: 1, right: 1, bottom: 1 },
+        deg: { top: 6, bottom: 5, left: 9, right: 9 },
+      }),
     })
   })()
     .catch(err => console.error(err))
