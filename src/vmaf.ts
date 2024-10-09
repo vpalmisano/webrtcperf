@@ -85,7 +85,8 @@ export async function recognizeFrames(fpath: string, frameRate: number) {
   }
 
   log.info(
-    `recognizeFrames ${fname} participantDisplayName: ${participantDisplayName} frames: ${frames.size} skipped: ${skipped} failed: ${failed} ts: ${firstTimestamp}-${lastTimestamp} (${lastTimestamp - firstTimestamp})`,
+    `recognizeFrames ${fname} ${participantDisplayName} frames: ${frames.size} skipped: ${skipped} failed: ${failed} \
+ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp - firstTimestamp).toFixed(2)})`,
   )
   return { frames, participantDisplayName }
 }
@@ -147,7 +148,9 @@ async function parseIvf(fpath: string, runRecognizer = false) {
   await fd.close()
 
   log.debug(
-    `parseIvf ${fname}: width: ${width} height: ${height} frameRate: ${frameRate} frames: ${frames.size} skipped: ${skipped} ts: ${firstTimestamp}-${lastTimestamp} (${lastTimestamp - firstTimestamp})`,
+    `parseIvf ${fname}: ${width}x${height}@${frameRate} \
+frames: ${frames.size} skipped: ${skipped} \
+ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp - firstTimestamp).toFixed(2)})`,
   )
 
   if (runRecognizer) {
@@ -185,8 +188,6 @@ async function parseIvf(fpath: string, runRecognizer = false) {
     frameRate,
     frames,
     participantDisplayName,
-    firstTimestamp,
-    lastTimestamp,
   }
 }
 
@@ -328,6 +329,7 @@ export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
 
   const ivfFiles = await getFiles(directory, '.ivf')
   if (ivfFiles.length) {
+    log.info(`fixIvfFiles directory=${directory} ivfFiles=${ivfFiles}`)
     for (const filePath of ivfFiles) {
       try {
         const participantDisplayName = path
@@ -350,9 +352,43 @@ export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
       }
     }
   }
-  log.info(`fixIvfFiles done`)
 
   return { reference, degraded }
+}
+
+async function filterIvfFrames(fpath: string, frames: IvfFrame[]) {
+  const outFilePath = fpath.replace('.ivf', '.filtered.ivf')
+  const fd = await fs.promises.open(fpath, 'r')
+  const fixedFd = await fs.promises.open(outFilePath, 'w')
+  const headerView = new DataView(new ArrayBuffer(32))
+  await fd.read(headerView, 0, headerView.byteLength, 0)
+
+  let position = 32
+  let writtenFrames = 0
+  for (const frame of frames.values()) {
+    const frameView = new DataView(new ArrayBuffer(frame.size))
+    await fd.read(frameView, 0, frame.size, frame.position)
+    await fixedFd.write(
+      new Uint8Array(frameView.buffer),
+      0,
+      frameView.byteLength,
+      position,
+    )
+    position += frameView.byteLength
+    writtenFrames++
+  }
+
+  headerView.setUint32(24, writtenFrames, true)
+  await fixedFd.write(
+    new Uint8Array(headerView.buffer),
+    0,
+    headerView.byteLength,
+    0,
+  )
+
+  await fd.close()
+  await fixedFd.close()
+  return outFilePath
 }
 
 export type VmafScore = {
@@ -385,56 +421,48 @@ export async function runVmaf(
     width: refWidth,
     height: refHeight,
     frameRate: refFrameRate,
-    firstTimestamp: refFirstTimestamp,
-    lastTimestamp: refLastTimestamp,
+    frames: refFrames,
   } = await parseIvf(referencePath, false)
   const {
     width: degWidth,
     height: degHeight,
     frameRate: degFrameRate,
-    firstTimestamp: degradedFirstTimestamp,
-    lastTimestamp: degLastTimestmap,
+    frames: degFrames,
   } = await parseIvf(degradedPath, false)
   const width = Math.max(refWidth, degWidth)
   const height = Math.max(refHeight, degHeight)
   const frameRate = Math.max(refFrameRate, degFrameRate)
 
-  const degMinusRefDiff = degradedFirstTimestamp - refFirstTimestamp
-  const degradedDuration =
-    degLastTimestmap -
-    degradedFirstTimestamp -
-    (degMinusRefDiff < 0 ? -degMinusRefDiff : 0)
-  const referenceDuration =
-    refLastTimestamp -
-    refFirstTimestamp -
-    (degMinusRefDiff > 0 ? degMinusRefDiff : 0)
-
-  log.debug('runVmaf', {
-    referencePath,
-    degradedPath,
-    degradedDuration,
-    referenceDuration,
-    tsDiff: degMinusRefDiff,
-  })
+  const commonRefFrames = []
+  const commonDegFrames = []
+  for (const [pts, refFrame] of refFrames.entries()) {
+    const degFrame = degFrames.get(pts)
+    if (degFrame) {
+      commonRefFrames.push(refFrame)
+      commonDegFrames.push(degFrame)
+    }
+  }
+  log.debug(
+    `common frames ref: ${commonRefFrames.length}/${refFrames.size} deg: ${commonDegFrames.length}/${degFrames.size}`,
+  )
+  referencePath = await filterIvfFrames(referencePath, commonRefFrames)
+  degradedPath = await filterIvfFrames(degradedPath, commonDegFrames)
 
   const ffmpegCmd = `ffmpeg -loglevel warning -y -threads ${cpus} \
--ss ${degMinusRefDiff < 0 ? -degMinusRefDiff : 0} -i ${degradedPath} \
--ss ${degMinusRefDiff > 0 ? degMinusRefDiff : 0} -i ${referencePath}`
-  const durationCmd = `-t ${Math.min(degradedDuration, referenceDuration)}`
+-i ${degradedPath} \
+-i ${referencePath}`
 
   const textHeight = Math.ceil(height / 18) + 6
   const filter = `\
 [0:v]\
-${cropFilter(crop?.deg)}\
+${cropFilter(crop?.deg, ',')}\
 scale=w=${width}:h=${height},\
 ${cropFilter({ top: textHeight, bottom: textHeight })}\
-fps=fps=${frameRate}\
 ${preview ? ',split=2[deg1][deg2]' : '[deg1]'};\
 [1:v]\
-${cropFilter(crop?.ref)}\
+${cropFilter(crop?.ref, ',')}\
 scale=w=${width}:h=${height},\
 ${cropFilter({ top: textHeight, bottom: textHeight })}\
-fps=fps=${frameRate}\
 ${preview ? ',split=2[ref1][ref2]' : '[ref1]'};\
 [deg1][ref1]\
 libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1\
@@ -444,7 +472,7 @@ libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${v
     ? `${ffmpegCmd} \
 -filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
 -map [vmaf] -f null - \
--map [stacked] ${durationCmd} -c:v libx264 -crf 15 -g 10 -f mp4 -movflags frag_keyframe+delay_moov+skip_trailer ${
+-map [stacked] -fps_mode vfr -c:v libx264 -crf 15 -g 10 -f mp4 -movflags frag_keyframe+delay_moov+skip_trailer ${
         comparisonPath + '_comparison.mp4'
       } \
 `
@@ -468,6 +496,9 @@ libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${v
   } as VmafScore
 
   log.info(`VMAF metrics ${comparisonPath}:`, metrics)
+
+  await fs.promises.unlink(degradedPath)
+  await fs.promises.unlink(referencePath)
 
   await writeGraph(vmafLogPath, frameRate)
 
@@ -566,12 +597,12 @@ type VmafCrop = {
   deg?: Crop
 }
 
-const cropFilter = (crop?: Crop) => {
+const cropFilter = (crop?: Crop, suffix = '') => {
   if (!crop) return ''
   const { top, bottom, left, right } = crop
   const width = (left || 0) + (right || 0)
   const height = (top || 0) + (bottom || 0)
-  return `crop=w=iw-${width}:h=ih-${height}:x=${left || 0}:y=${top || 0}:exact=1,`
+  return `crop=w=iw-${width}:h=ih-${height}:x=${left || 0}:y=${top || 0}:exact=1${suffix}`
 }
 
 type VmafConfig = {
@@ -644,10 +675,7 @@ if (require.main === module) {
       vmafPreview: true,
       vmafKeepIntermediateFiles: true,
       vmafKeepSourceFiles: true,
-      vmafCrop: json5.stringify({
-        ref: { top: 1, left: 1, right: 1, bottom: 1 },
-        deg: { top: 6, bottom: 5, left: 9, right: 9 },
-      }),
+      vmafCrop: json5.stringify({}),
     })
   })()
     .catch(err => console.error(err))
