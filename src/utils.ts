@@ -975,76 +975,6 @@ export function toTitleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-export type VideoInfo = {
-  width: number
-  height: number
-  frameRate: number
-  start_pts: number
-  start_time: number
-  duration: number
-  keyFrames: { index: number; pkt_pts_time: number }[]
-}
-
-export async function ffprobe(fpath: string): Promise<VideoInfo> {
-  const { stdout } = await runShellCommand(
-    `ffprobe -v quiet -show_format -show_streams -show_frames -show_entries frame=key_frame,pkt_pts_time -print_format json ${fpath}`,
-  )
-  const data = JSON.parse(stdout) as {
-    format: { start_pts: number; duration: string }
-    streams: {
-      width: number
-      height: number
-      r_frame_rate: string
-      start_pts: number
-      start_time: string
-      duration: string
-    }[]
-    frames: { key_frame: number; pkt_pts_time: string }[]
-  }
-  const [den, num] = data.streams[0].r_frame_rate
-    .split('/')
-    .map(i => parseInt(i))
-  return {
-    width: data.streams[0].width,
-    height: data.streams[0].height,
-    start_pts: data.streams[0].start_pts,
-    start_time: parseFloat(data.streams[0].start_time),
-    duration: parseFloat(data.streams[0].duration),
-    frameRate: den / num,
-    keyFrames: data.frames
-      .map((f, index) => ({
-        index,
-        key: f.key_frame === 1,
-        pkt_pts_time: parseFloat(f.pkt_pts_time),
-      }))
-      .filter(f => f.key),
-  }
-}
-
-export async function ffprobeOcr(
-  fpath: string,
-): Promise<{ pts: number; t: number }[]> {
-  const { stdout } = await runShellCommand(
-    `\
-ffprobe -loglevel quiet -show_frames -show_entries frame=pts,pkt_pos,pkt_size:frame_tags=lavfi.ocr.text -print_format json \
-    -f lavfi -i 'movie="${fpath}",crop=in_w:6+in_h/18:0:0,ocr=whitelist="0123456789"' 2>/dev/null`,
-  )
-  const data = JSON.parse(stdout) as {
-    frames: {
-      pts: number
-      pkt_pos: number
-      pkt_size: number
-      tags: Record<string, string>
-    }[]
-  }
-  return data.frames.map(frame => ({
-    pts: frame.pts,
-    position: frame.pkt_pos,
-    size: frame.pkt_size,
-    t: parseInt(frame.tags['lavfi.ocr.text'].trim() || '0'),
-  }))
-}
-
 export async function getFiles(dir: string, ext: string): Promise<string[]> {
   const dirs = await fs.promises.readdir(dir, { withFileTypes: true })
   const files = await Promise.all(
@@ -1247,4 +1177,55 @@ export async function chunkedPromiseAll<T, R>(
     )
   }
   return results
+}
+
+export function maybeNumber(s: string): string | number {
+  const n = parseFloat(s)
+  return !isNaN(n) ? n : s
+}
+
+export async function ffprobe(
+  fpath: string,
+  entries = '',
+  filters = '',
+): Promise<Record<string, string>[]> {
+  const cmd = `\
+exec ffprobe -loglevel error -select_streams v -show_frames -print_format compact \
+${entries ? `-show_entries ${entries}` : ''} \
+-f lavfi -i 'movie=${fpath}${filters ? `,${filters}` : ''}'`
+  const frames = [] as Record<string, string>[]
+  let stderr = ''
+  return new Promise((resolve, reject) => {
+    const p = spawn(cmd, {
+      shell: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    p.stdout.on('data', data => {
+      const frame = data
+        .toString()
+        .split('|')
+        .reduce(
+          (prev: Record<string, string>, cur: string) => {
+            const [key, value] = cur.split('=')
+            if (value && !key.startsWith('side_datum')) {
+              prev[key.replace(/[:.]/g, '_')] = value
+            }
+            return prev
+          },
+          {} as Record<string, string>,
+        )
+      frames.push(frame)
+    })
+    p.stderr.on('data', data => {
+      stderr += data
+    })
+    p.once('error', err => reject(err))
+    p.once('close', code => {
+      if (code !== 0) {
+        reject(new Error(`${cmd} failed with code ${code}: ${stderr}`))
+      } else {
+        resolve(frames)
+      }
+    })
+  })
 }

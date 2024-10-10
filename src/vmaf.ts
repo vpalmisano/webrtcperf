@@ -4,7 +4,7 @@ import os from 'os'
 import path from 'path'
 
 import { FastStats } from './stats'
-import { getFiles, logger, runShellCommand } from './utils'
+import { ffprobe, getFiles, logger, runShellCommand } from './utils'
 
 const log = logger('webrtcperf:vmaf')
 
@@ -16,31 +16,18 @@ export type IvfFrame = {
 
 export async function recognizeFrames(fpath: string, frameRate: number) {
   const fname = path.basename(fpath)
-  const cpus = os.cpus().length
-
-  const [{ stdout }, { stdout: stdout2 }] = await Promise.all([
-    runShellCommand(
-      `ffprobe -loglevel error -threads ${cpus} -select_streams v -show_frames -print_format json=compact=1 \
- -show_entries frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence \
- -f lavfi -i 'movie=${fpath},crop=in_w:(in_h/18)+6:0:0,ocr=whitelist="0123456789"'`,
-      false,
-      10 * 1024 * 1024,
+  const [frames1, frames2] = await Promise.all([
+    ffprobe(
+      fpath,
+      'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
+      'crop=in_w:max((in_h/18)*1.2\\,48):0:0,ocr=whitelist=0123456789',
     ),
-    runShellCommand(
-      `ffprobe -loglevel error -threads ${cpus} -select_streams v -show_frames -print_format json=compact=1 \
- -show_entries frame=frame_tags=lavfi.ocr.text,lavfi.ocr.confidence \
- -f lavfi -i 'movie=${fpath},crop=in_w:(in_h/18)+6:0:in_h-(in_h/18)-6,fps=1/1,ocr=whitelist="Participant-0123456789"'`,
-      false,
-      10 * 1024 * 1024,
+    ffprobe(
+      fpath,
+      'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
+      'crop=in_w:max((in_h/18)*1.2\\,48):0:in_h-max((in_h/18)*1.2\\,48),ocr=whitelist=Participant-0123456789',
     ),
   ])
-
-  const data = JSON.parse(stdout) as {
-    frames: {
-      pts: number
-      tags: Record<string, string>
-    }[]
-  }
 
   const frames = new Map<number, number>()
   let skipped = 0
@@ -48,11 +35,13 @@ export async function recognizeFrames(fpath: string, frameRate: number) {
   let firstTimestamp = 0
   let lastTimestamp = 0
 
-  data.frames.forEach(frame => {
-    const { pts, tags } = frame
+  frames1.forEach(frame => {
+    const pts = parseInt(frame.pts)
     if (!frames.has(pts) || !frames.get(pts)) {
-      const recognizedTime = parseInt(tags['lavfi.ocr.text']?.trim() || '0')
-      const confidence = parseFloat(tags['lavfi.ocr.confidence']?.trim() || '0')
+      const recognizedTime = parseInt(frame.tag_lavfi_ocr_text?.trim() || '0')
+      const confidence = parseFloat(
+        frame.tag_lavfi_ocr_confidence?.trim() || '0',
+      )
       if (confidence > 50) {
         const recognizedPts = Math.round((frameRate * recognizedTime) / 1000)
         frames.set(pts, recognizedPts)
@@ -67,19 +56,13 @@ export async function recognizeFrames(fpath: string, frameRate: number) {
     }
   })
 
-  const data2 = JSON.parse(stdout2) as {
-    frames: {
-      tags: Record<string, string>
-    }[]
-  }
+  const participantRegExp = /(Participant-\d\d\d\d\d\d)/
   let participantDisplayName = ''
-  for (const frame of data2.frames) {
-    const text = frame.tags['lavfi.ocr.text']?.trim().split(' ')[0] || ''
-    const confidence = parseFloat(
-      frame.tags['lavfi.ocr.confidence']?.trim() || '0',
-    )
-    if (confidence > 50 && /^Participant-\d\d\d\d\d\d$/.test(text)) {
-      participantDisplayName = text
+  for (const frame of frames2) {
+    const match = frame.tag_lavfi_ocr_text?.match(participantRegExp)
+    const confidence = parseFloat(frame.tag_lavfi_ocr_confidence?.trim() || '0')
+    if (match && confidence > 50) {
+      participantDisplayName = match[0]
       break
     }
   }
@@ -404,7 +387,7 @@ export async function runVmaf(
   referencePath: string,
   degradedPath: string,
   preview: boolean,
-  crop?: VmafCrop,
+  crop: VmafCrop = {},
 ) {
   log.info('runVmaf', { referencePath, degradedPath, preview, crop })
   const comparisonPath = degradedPath.replace(/\.[^.]+$/, '')
@@ -429,9 +412,28 @@ export async function runVmaf(
     frameRate: degFrameRate,
     frames: degFrames,
   } = await parseIvf(degradedPath, false)
-  const width = Math.max(refWidth, degWidth)
-  const height = Math.max(refHeight, degHeight)
-  const frameRate = Math.max(refFrameRate, degFrameRate)
+  const refTextHeight = Math.round(Math.round(refHeight / 18) * 1.2)
+  const degTextHeight = Math.round(Math.round(degHeight / 18) * 1.2)
+  if (!crop.ref) crop.ref = {}
+  crop.ref.top = (crop.ref.top || 0) + refTextHeight
+  crop.ref.bottom = (crop.ref.bottom || 0) + refTextHeight
+  if (!crop.deg) crop.deg = {}
+  crop.deg.top = (crop.deg.top || 0) + degTextHeight
+  crop.deg.bottom = (crop.deg.bottom || 0) + degTextHeight
+  const width = Math.min(
+    refWidth - (crop.ref.left || 0) - (crop.ref.right || 0),
+    degWidth - (crop.deg.left || 0) - (crop.deg.right || 0),
+  )
+  const height = Math.min(
+    refHeight - (crop.ref.top || 0) - (crop.ref.bottom || 0),
+    degHeight - (crop.deg.top || 0) - (crop.deg.bottom || 0),
+  )
+  if (refFrameRate !== degFrameRate) {
+    throw new Error(
+      `runVmaf: frame rates do not match: ref=${refFrameRate} deg=${degFrameRate}`,
+    )
+  }
+  const frameRate = refFrameRate
 
   const commonRefFrames = []
   const commonDegFrames = []
@@ -452,17 +454,14 @@ export async function runVmaf(
 -i ${degradedPath} \
 -i ${referencePath}`
 
-  const textHeight = Math.ceil(height / 18) + 6
   const filter = `\
 [0:v]\
-${cropFilter(crop?.deg, ',')}\
-scale=w=${width}:h=${height},\
-${cropFilter({ top: textHeight, bottom: textHeight })}\
+${cropFilter(crop.deg, ',')}\
+scale=w=${width}:h=${height}\
 ${preview ? ',split=2[deg1][deg2]' : '[deg1]'};\
 [1:v]\
-${cropFilter(crop?.ref, ',')}\
-scale=w=${width}:h=${height},\
-${cropFilter({ top: textHeight, bottom: textHeight })}\
+${cropFilter(crop.ref, ',')}\
+scale=w=${width}:h=${height}\
 ${preview ? ',split=2[ref1][ref2]' : '[ref1]'};\
 [deg1][ref1]\
 libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1\

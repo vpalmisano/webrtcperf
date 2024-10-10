@@ -294,7 +294,7 @@ window.RTCPeerConnection = function (conf, options) {
           await saveMediaTrack(receiver.track, 'recv')
         }
       } else if (receiver.track.kind === 'audio') {
-        if (window.PARAMS?.timestampWatermarkAudio) {
+        if (enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
           recognizeAudioTimestampWatermark(receiver.track)
         }
         if (enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {

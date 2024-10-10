@@ -58,6 +58,8 @@ const saveFileWorkerFn = () => {
       readable,
       kind,
       quality,
+      x,
+      y,
       width,
       height,
       frameRate,
@@ -76,6 +78,8 @@ const saveFileWorkerFn = () => {
 
       const canvas = new OffscreenCanvas(width, height)
       const ctx = canvas.getContext('2d')
+      const header = new ArrayBuffer(12)
+      const view = new DataView(header)
       let startTimestamp = -1
       let lastPts = -1
       const writableStream = new WritableStream(
@@ -99,7 +103,7 @@ const saveFileWorkerFn = () => {
             }
             const bitmap = await createImageBitmap(frame)
             try {
-              ctx.drawImage(bitmap, 0, 0, width, height)
+              ctx.drawImage(bitmap, x, y, width, height, 0, 0, width, height)
               const blob = await canvas.convertToBlob({
                 type: 'image/jpeg',
                 quality,
@@ -110,8 +114,6 @@ const saveFileWorkerFn = () => {
                   videoFrame.timestamp / 1000000
                 } pts=${pts}`,
               ) */
-              const header = new ArrayBuffer(12)
-              const view = new DataView(header)
               view.setUint32(0, data.byteLength, true)
               view.setBigUint64(4, BigInt(pts), true)
               ws.send(header)
@@ -168,7 +170,7 @@ const saveFileWorkerFn = () => {
             postMessage({ name: 'close', error, id, kind })
           },
         },
-        new CountQueuingStrategy({ highWaterMark: 10 }),
+        new CountQueuingStrategy({ highWaterMark: 100 }),
       )
       readable.pipeTo(writableStream)
     }
@@ -210,6 +212,8 @@ window.saveMediaTrack = async (
   enableStart = 0,
   enableEnd = 0,
   quality = 0.7,
+  x = 0,
+  y = 0,
   width = window.VIDEO_WIDTH,
   height = window.VIDEO_HEIGHT,
   frameRate = window.VIDEO_FRAMERATE,
@@ -249,6 +253,8 @@ window.saveMediaTrack = async (
       readable,
       kind,
       quality,
+      x,
+      y,
       width,
       height,
       frameRate,

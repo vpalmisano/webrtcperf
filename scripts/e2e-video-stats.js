@@ -25,10 +25,10 @@ const applyVideoTimestampWatermarkFn = () => {
 
     const canvas = new OffscreenCanvas(width, height)
     const ctx = canvas.getContext('2d')
-    const fontSize = Math.ceil(canvas.height / 18)
+    const fontSize = Math.round(canvas.height / 18)
     ctx.font = `${fontSize}px Noto Mono`
     ctx.textAlign = 'center'
-    const textHeight = fontSize + 6
+    const textHeight = Math.round(fontSize * 1.2)
 
     const transformer = new TransformStream({
       async transform(videoFrame, controller) {
