@@ -251,7 +251,7 @@ chromium process.`,
   },
   deviceScaleFactor: {
     doc: `The browser device scale factor.`,
-    format: 'nat',
+    format: 'float',
     default: 1,
     env: 'DEVICE_SCALE_FACTOR',
     arg: 'device-scale-factor',

@@ -74,12 +74,9 @@ const saveFileWorkerFn = () => {
     const ws = await wsClient(url)
     websockets.set(id, ws)
     if (kind === 'video') {
-      writeIvfHeader(ws, width, height, frameRate, 1, 'MJPG')
-
-      const canvas = new OffscreenCanvas(width, height)
-      const ctx = canvas.getContext('2d')
       const header = new ArrayBuffer(12)
       const view = new DataView(header)
+      let headerWritten = false
       let startTimestamp = -1
       let lastPts = -1
       const writableStream = new WritableStream(
@@ -101,29 +98,48 @@ const saveFileWorkerFn = () => {
               frame.close()
               return
             }
-            const bitmap = await createImageBitmap(frame)
+            const bitmap = await createImageBitmap(
+              frame,
+              x,
+              y,
+              Math.min(width, codedWidth),
+              Math.min(height, codedHeight),
+            )
+            frame.close()
+            const canvas = new OffscreenCanvas(bitmap.width, bitmap.height)
+            const ctx = canvas.getContext('bitmaprenderer')
+            ctx.transferFromImageBitmap(bitmap)
+            bitmap.close()
             try {
-              ctx.drawImage(bitmap, x, y, width, height, 0, 0, width, height)
               const blob = await canvas.convertToBlob({
                 type: 'image/jpeg',
                 quality,
               })
               const data = await blob.arrayBuffer()
-              /* log(
-                `writer ${data.byteLength} bytes timestamp=${
-                  videoFrame.timestamp / 1000000
-                } pts=${pts}`,
-              ) */
+              if (!headerWritten) {
+                headerWritten = true
+                log(
+                  `saveTrack ${url} writeIvfHeader ${canvas.width}x${canvas.height}@${frameRate}`,
+                )
+                writeIvfHeader(
+                  ws,
+                  canvas.width,
+                  canvas.height,
+                  frameRate,
+                  1,
+                  'MJPG',
+                )
+              }
               view.setUint32(0, data.byteLength, true)
               view.setBigUint64(4, BigInt(pts), true)
-              ws.send(header)
-              ws.send(data)
+              const buf = new Uint8Array(header.byteLength + data.byteLength)
+              buf.set(new Uint8Array(header), 0)
+              buf.set(new Uint8Array(data), header.byteLength)
+              ws.send(buf)
               lastPts = pts
             } catch (err) {
               log(`saveMediaTrack ${url} error=${err.message}`)
             }
-            frame.close()
-            bitmap.close()
           },
           close() {
             log(`saveTrack ${url} close`)

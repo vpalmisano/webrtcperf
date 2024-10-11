@@ -414,12 +414,23 @@ export async function runVmaf(
   } = await parseIvf(degradedPath, false)
   const refTextHeight = Math.round(Math.round(refHeight / 18) * 1.2)
   const degTextHeight = Math.round(Math.round(degHeight / 18) * 1.2)
+
   if (!crop.ref) crop.ref = {}
   crop.ref.top = (crop.ref.top || 0) + refTextHeight
   crop.ref.bottom = (crop.ref.bottom || 0) + refTextHeight
+
   if (!crop.deg) crop.deg = {}
   crop.deg.top = (crop.deg.top || 0) + degTextHeight
   crop.deg.bottom = (crop.deg.bottom || 0) + degTextHeight
+
+  const refAspectRatio = refWidth / refHeight
+  const degAspectRatio = degWidth / degHeight
+  if (refAspectRatio > degAspectRatio) {
+    const diff = (refWidth - refHeight * degAspectRatio) / 2
+    crop.ref.left = (crop.ref.left || 0) + diff
+    crop.ref.right = (crop.ref.right || 0) + diff
+  }
+
   const width = Math.min(
     refWidth - (crop.ref.left || 0) - (crop.ref.right || 0),
     degWidth - (crop.deg.left || 0) - (crop.deg.right || 0),
@@ -444,11 +455,12 @@ export async function runVmaf(
       commonDegFrames.push(degFrame)
     }
   }
-  log.debug(
-    `common frames ref: ${commonRefFrames.length}/${refFrames.size} deg: ${commonDegFrames.length}/${degFrames.size}`,
-  )
   referencePath = await filterIvfFrames(referencePath, commonRefFrames)
   degradedPath = await filterIvfFrames(degradedPath, commonDegFrames)
+  log.debug(
+    `common frames: ${commonRefFrames.length} ref: ${refFrames.size} deg: ${degFrames.size}`,
+    { width, height, ...crop },
+  )
 
   const ffmpegCmd = `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
@@ -643,7 +655,7 @@ export async function calculateVmafScore(
           vmafReferencePath,
           degradedPath,
           vmafPreview,
-          crop,
+          { ...crop },
         )
         ret.push(metrics)
       } catch (err) {
