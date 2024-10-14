@@ -1,4 +1,4 @@
-/* global log, enabledForSession, ggwave_factory, MeasuredStats */
+/* global webrtcperf, log, ggwave_factory, MeasuredStats */
 
 /**
  * Audio end-to-end delay stats.
@@ -18,7 +18,7 @@ function convertTypedArray(src, type) {
 
 let ggwave = null
 
-if (enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       ggwave = await ggwave_factory()

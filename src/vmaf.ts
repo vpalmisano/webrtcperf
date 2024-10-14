@@ -16,33 +16,30 @@ export type IvfFrame = {
 
 export async function recognizeFrames(fpath: string, frameRate: number) {
   const fname = path.basename(fpath)
-  const [frames1, frames2] = await Promise.all([
-    ffprobe(
-      fpath,
-      'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
-      'crop=in_w:max((in_h/18)*1.2\\,48):0:0,ocr=whitelist=0123456789',
-    ),
-    ffprobe(
-      fpath,
-      'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
-      'crop=in_w:max((in_h/18)*1.2\\,48):0:in_h-max((in_h/18)*1.2\\,48),ocr=whitelist=Participant-0123456789',
-    ),
-  ])
+  const ret = await ffprobe(
+    fpath,
+    'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
+    'crop=in_w:max((in_h/18)*1.2\\,48):0:0,ocr=whitelist=0123456789-',
+  )
 
   const frames = new Map<number, number>()
   let skipped = 0
   let failed = 0
   let firstTimestamp = 0
   let lastTimestamp = 0
+  let participantDisplayName = ''
 
-  frames1.forEach(frame => {
+  ret.forEach(frame => {
     const pts = parseInt(frame.pts)
     if (!frames.has(pts) || !frames.get(pts)) {
-      const recognizedTime = parseInt(frame.tag_lavfi_ocr_text?.trim() || '0')
       const confidence = parseFloat(
         frame.tag_lavfi_ocr_confidence?.trim() || '0',
       )
       if (confidence > 50) {
+        const text = frame.tag_lavfi_ocr_text?.trim() || ''
+        const parts = text.split('-')
+        participantDisplayName = `Participant-${parts[0].padStart(6, '0')}`
+        const recognizedTime = parseInt(parts[1])
         const recognizedPts = Math.round((frameRate * recognizedTime) / 1000)
         frames.set(pts, recognizedPts)
         if (!firstTimestamp) firstTimestamp = recognizedPts / frameRate
@@ -55,17 +52,6 @@ export async function recognizeFrames(fpath: string, frameRate: number) {
       skipped++
     }
   })
-
-  const participantRegExp = /(Participant-\d\d\d\d\d\d)/
-  let participantDisplayName = ''
-  for (const frame of frames2) {
-    const match = frame.tag_lavfi_ocr_text?.match(participantRegExp)
-    const confidence = parseFloat(frame.tag_lavfi_ocr_confidence?.trim() || '0')
-    if (match && confidence > 50) {
-      participantDisplayName = match[0]
-      break
-    }
-  }
 
   log.info(
     `recognizeFrames ${fname} ${participantDisplayName} frames: ${frames.size} skipped: ${skipped} failed: ${failed} \
@@ -416,13 +402,12 @@ export async function runVmaf(
   const degTextHeight = Math.round(Math.round(degHeight / 18) * 1.2)
 
   if (!crop.ref) crop.ref = {}
-  crop.ref.top = (crop.ref.top || 0) + refTextHeight
-  crop.ref.bottom = (crop.ref.bottom || 0) + refTextHeight
+  crop.ref.top = (crop.ref.top || 0) + refTextHeight * 2
 
   if (!crop.deg) crop.deg = {}
-  crop.deg.top = (crop.deg.top || 0) + degTextHeight
-  crop.deg.bottom = (crop.deg.bottom || 0) + degTextHeight
+  crop.deg.top = (crop.deg.top || 0) + degTextHeight * 2
 
+  // Adjust the reference aspect ratio to match the degraded one.
   const refAspectRatio = refWidth / refHeight
   const degAspectRatio = degWidth / degHeight
   if (refAspectRatio > degAspectRatio) {
@@ -431,6 +416,7 @@ export async function runVmaf(
     crop.ref.right = (crop.ref.right || 0) + diff
   }
 
+  // Scale using the minimum width and height.
   const width = Math.min(
     refWidth - (crop.ref.left || 0) - (crop.ref.right || 0),
     degWidth - (crop.deg.left || 0) - (crop.deg.right || 0),
@@ -439,6 +425,7 @@ export async function runVmaf(
     refHeight - (crop.ref.top || 0) - (crop.ref.bottom || 0),
     degHeight - (crop.deg.top || 0) - (crop.deg.bottom || 0),
   )
+
   if (refFrameRate !== degFrameRate) {
     throw new Error(
       `runVmaf: frame rates do not match: ref=${refFrameRate} deg=${degFrameRate}`,
@@ -446,6 +433,7 @@ export async function runVmaf(
   }
   const frameRate = refFrameRate
 
+  // Find common frames.
   const commonRefFrames = []
   const commonDegFrames = []
   for (const [pts, refFrame] of refFrames.entries()) {
@@ -686,7 +674,10 @@ if (require.main === module) {
       vmafPreview: true,
       vmafKeepIntermediateFiles: true,
       vmafKeepSourceFiles: true,
-      vmafCrop: json5.stringify({}),
+      vmafCrop: json5.stringify({
+        deg: { top: 0, bottom: 0, left: 0, right: 0 },
+        ref: { top: 0, bottom: 0, left: 0, right: 0 },
+      }),
     })
   })()
     .catch(err => console.error(err))

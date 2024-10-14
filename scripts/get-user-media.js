@@ -1,4 +1,4 @@
-/* global webrtcperf, log, sleep, applyAudioTimestampWatermark, applyVideoTimestampWatermark, enabledForSession */
+/* global webrtcperf, log, sleep, applyAudioTimestampWatermark, applyVideoTimestampWatermark */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -170,11 +170,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       log(`collectMediaTracks error:`, err)
     }
 
-    if (enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+    if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
       mediaStream = applyAudioTimestampWatermark(mediaStream)
     }
 
-    if (enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
+    if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
       mediaStream = applyVideoTimestampWatermark(mediaStream)
     }
 

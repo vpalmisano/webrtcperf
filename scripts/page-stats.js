@@ -19,9 +19,9 @@ window.collectHttpResourcesStats = () => {
 if (typeof window.PerformanceObserver === 'function') {
   // Stop ServiceWorkers.
   /* navigator.serviceWorker.addEventListener('controllerchange', () => {
-    unregisterServiceWorkers()
+    webrtcperf.unregisterServiceWorkers()
   })
-  unregisterServiceWorkers() */
+  webrtcperf.unregisterServiceWorkers() */
 
   // https://nicj.net/resourcetiming-in-practice/
   const processEntries = entries => {

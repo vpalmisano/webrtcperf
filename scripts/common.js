@@ -48,27 +48,34 @@ webrtcperf.safeStringify = obj => {
  * log
  * @param  {...any} args args
  */
-function log(...args) {
+webrtcperf.log = (...args) => {
   console.log.apply(null, [`[webrtcperf-${window.WEBRTC_PERF_INDEX}]`, ...args])
 }
+const log = webrtcperf.log
 
 /**
  * sleep
  * @param  {number} ms ms
  * @return {Promise}
  */
-function sleep(ms) {
+webrtcperf.sleep = ms => {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
+const sleep = webrtcperf.sleep
 
 /**
  * getParticipantName
  */
-window.getParticipantName = (index = window.WEBRTC_PERF_INDEX || 0) => {
+webrtcperf.getParticipantName = window.getParticipantName = (
+  index = window.WEBRTC_PERF_INDEX || 0,
+) => {
   return `Participant-${index.toString().padStart(6, '0')}`
 }
 
-window.getParticipantNameForSave = (sendrecv, track) => {
+webrtcperf.getParticipantNameForSave = window.getParticipantNameForSave = (
+  sendrecv,
+  track,
+) => {
   return `${window.getParticipantName()}_${sendrecv}_${track.id}`
 }
 
@@ -76,9 +83,10 @@ window.getParticipantNameForSave = (sendrecv, track) => {
  * Returns the name of the sender participant for a given track.
  * @param {MediaStreamTrack} track
  */
-window.getReceiverParticipantName = track => {
-  return track.id
-}
+webrtcperf.getReceiverParticipantName = window.getReceiverParticipantName =
+  track => {
+    return track.id
+  }
 
 /**
  * getElement
@@ -87,12 +95,16 @@ window.getReceiverParticipantName = track => {
  * @param {boolean} throwError
  * @return {Promise<HTMLElement>}
  */
-window.getElement = async (selector, timeout = 60000, throwError = false) => {
+webrtcperf.getElement = window.getElement = async (
+  selector,
+  timeout = 60000,
+  throwError = false,
+) => {
   let element = document.querySelector(selector)
   if (timeout) {
     const startTime = Date.now()
     while (!element && Date.now() - startTime < timeout) {
-      await sleep(Math.min(timeout / 2, 1000))
+      await sleep(Math.max(timeout / 2, 200))
       element = document.querySelector(selector)
     }
   }
@@ -110,7 +122,7 @@ window.getElement = async (selector, timeout = 60000, throwError = false) => {
  * @param {string} innerText
  * @return {Promise<HTMLElement[]>}
  */
-window.getElements = async (
+webrtcperf.getElements = window.getElements = async (
   selector,
   timeout = 60000,
   throwError = false,
@@ -136,10 +148,23 @@ window.getElements = async (
   }
 }
 
+webrtcperf.simulateMouseClick = element => {
+  ;['mousedown', 'click', 'mouseup'].forEach(event =>
+    element.dispatchEvent(
+      new MouseEvent(event, {
+        view: window,
+        bubbles: true,
+        cancelable: true,
+        buttons: 1,
+      }),
+    ),
+  )
+}
+
 /**
  * overrideLocalStorage
  */
-window.overrideLocalStorage = () => {
+webrtcperf.overrideLocalStorage = window.overrideLocalStorage = () => {
   if (window.LOCAL_STORAGE) {
     try {
       const values = JSON.parse(window.LOCAL_STORAGE)
@@ -152,14 +177,18 @@ window.overrideLocalStorage = () => {
   }
 }
 
-window.injectCss = css => {
+webrtcperf.injectCss = window.injectCss = css => {
   const style = document.createElement('style')
   style.setAttribute('type', 'text/css')
   style.innerHTML = css
   document.head.appendChild(style)
 }
 
-window.watchObjectProperty = (object, name, cb) => {
+webrtcperf.watchObjectProperty = window.watchObjectProperty = (
+  object,
+  name,
+  cb,
+) => {
   let value = object[name]
   Object.defineProperty(object, name, {
     get: function () {
@@ -172,7 +201,11 @@ window.watchObjectProperty = (object, name, cb) => {
   })
 }
 
-window.loadScript = (name, src = '', textContent = '') => {
+webrtcperf.loadScript = window.loadScript = (
+  name,
+  src = '',
+  textContent = '',
+) => {
   return new Promise((resolve, reject) => {
     let script = document.getElementById(name)
     if (script) {
@@ -198,7 +231,7 @@ window.loadScript = (name, src = '', textContent = '') => {
   })
 }
 
-window.harmonicMean = array => {
+webrtcperf.harmonicMean = array => {
   return array.length
     ? 1 /
         (array.reduce((sum, b) => {
@@ -209,7 +242,7 @@ window.harmonicMean = array => {
     : 0
 }
 
-window.unregisterServiceWorkers = () => {
+webrtcperf.unregisterServiceWorkers = () => {
   navigator.serviceWorker.getRegistrations().then(registrations => {
     for (let registration of registrations) {
       registration.unregister()
@@ -217,7 +250,7 @@ window.unregisterServiceWorkers = () => {
   })
 }
 
-window.MeasuredStats = class {
+webrtcperf.MeasuredStats = window.MeasuredStats = class {
   constructor(
     { ttl, maxItems, secondsPerSample, storeId } = {
       ttl: 0,
@@ -354,7 +387,11 @@ window.MeasuredStats = class {
   }
 }
 
-window.enabledForSession = value => {
+/**
+ * Check if the current session is included into the value setting configuration.
+ * @param {number | string | boolean} value A session ID number, a range of numbers separated by a dash, a comma separated list of numbers or a boolean.
+ */
+webrtcperf.enabledForSession = value => {
   if (value === true || value === 'true') {
     return true
   } else if (value === false || value === 'false' || value === undefined) {
@@ -385,10 +422,9 @@ window.enabledForSession = value => {
 // Common page actions
 let actionsStarted = false
 
-window.webrtcPerfElapsedTime = () =>
-  Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
+webrtcperf.elapsedTime = () => Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
 
-window.setupActions = async () => {
+webrtcperf.setupActions = async () => {
   if (!window.PARAMS?.actions || actionsStarted) {
     return
   }
@@ -407,12 +443,12 @@ window.setupActions = async () => {
       }
 
       if (index !== undefined) {
-        if (!window.enabledForSession(index)) {
+        if (!webrtcperf.enabledForSession(index)) {
           return
         }
       }
 
-      const setupTime = window.webrtcPerfElapsedTime()
+      const setupTime = webrtcperf.elapsedTime()
       let startTime = at > 0 ? at * 1000 - setupTime : 0
       if (startTime < 0) {
         log(
@@ -436,7 +472,7 @@ window.setupActions = async () => {
       )
       let currentIteration = 0
       const cb = async () => {
-        const now = window.webrtcPerfElapsedTime()
+        const now = webrtcperf.elapsedTime()
         const ts = (now / 1000).toFixed(0)
         log(
           `run action [${ts}s] ${name}(${params || ''})${
@@ -453,10 +489,7 @@ window.setupActions = async () => {
           } else {
             await fn()
           }
-          const elapsed = (
-            (window.webrtcPerfElapsedTime() - now) /
-            1000
-          ).toFixed(3)
+          const elapsed = ((webrtcperf.elapsedTime() - now) / 1000).toFixed(3)
           log(
             `run action [${ts}s] [${window.WEBRTC_PERF_INDEX}] ${name} done (${elapsed}s elapsed)`,
           )

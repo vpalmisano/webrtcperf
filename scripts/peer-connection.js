@@ -1,4 +1,4 @@
-/* global webrtcperf, log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack, enabledForSession, watchObjectProperty */
+/* global webrtcperf, log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, recognizeAudioTimestampWatermark, recognizeVideoTimestampWatermark, saveMediaTrack, stopSaveMediaTrack */
 
 const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
 
@@ -74,7 +74,7 @@ window.RTCPeerConnection = function (conf, options) {
   const id = webrtcperf.peerConnectionNextId++
 
   const debug = (...args) => {
-    if (enabledForSession(window.PARAMS?.peerConnectionDebug)) {
+    if (webrtcperf.enabledForSession(window.PARAMS?.peerConnectionDebug)) {
       log(`RTCPeerConnection-${id}`, ...args)
     }
   }
@@ -162,7 +162,7 @@ window.RTCPeerConnection = function (conf, options) {
     if (!transceiver?.sender?.track) return
     if (
       transceiver.sender.track.kind === 'video' &&
-      enabledForSession(window.PARAMS?.saveSendVideoTrack)
+      webrtcperf.enabledForSession(window.PARAMS?.saveSendVideoTrack)
     ) {
       saveMediaTrack(
         transceiver.sender.track,
@@ -172,7 +172,7 @@ window.RTCPeerConnection = function (conf, options) {
       ).catch(err => log(`saveMediaTrack error: ${err.message}`))
     } else if (
       transceiver.sender.track.kind === 'audio' &&
-      enabledForSession(window.PARAMS?.saveSendAudioTrack)
+      webrtcperf.enabledForSession(window.PARAMS?.saveSendAudioTrack)
     ) {
       saveMediaTrack(
         transceiver.sender.track,
@@ -232,7 +232,7 @@ window.RTCPeerConnection = function (conf, options) {
     }
 
     if (transceiver.receiver) {
-      watchObjectProperty(
+      webrtcperf.watchObjectProperty(
         transceiver.receiver,
         'playoutDelayHint',
         (value, oldValue) => {
@@ -241,7 +241,7 @@ window.RTCPeerConnection = function (conf, options) {
           )
         },
       )
-      watchObjectProperty(
+      webrtcperf.watchObjectProperty(
         transceiver.receiver,
         'jitterBufferTarget',
         (value, oldValue) => {
@@ -286,18 +286,22 @@ window.RTCPeerConnection = function (conf, options) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
       if (receiver.track.kind === 'video') {
-        if (enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
+        if (
+          webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)
+        ) {
           recognizeVideoTimestampWatermark(receiver.track)
         }
 
-        if (enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
+        if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
           await saveMediaTrack(receiver.track, 'recv')
         }
       } else if (receiver.track.kind === 'audio') {
-        if (enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+        if (
+          webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)
+        ) {
           recognizeAudioTimestampWatermark(receiver.track)
         }
-        if (enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
+        if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
           await saveMediaTrack(receiver.track, 'recv')
         }
       }

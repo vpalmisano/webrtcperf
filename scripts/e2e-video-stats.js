@@ -29,10 +29,11 @@ const applyVideoTimestampWatermarkFn = () => {
     ctx.font = `${fontSize}px Noto Mono`
     ctx.textAlign = 'center'
     const textHeight = Math.round(fontSize * 1.2)
+    const participantNameIndex = parseInt(participantName.split('-')[1]) || 0
 
     const transformer = new TransformStream({
       async transform(videoFrame, controller) {
-        const text = String(Date.now())
+        const text = `${participantNameIndex}-${Date.now()}`
         const timestamp = videoFrame.timestamp
 
         const bitmap = await createImageBitmap(videoFrame)
@@ -42,14 +43,13 @@ const applyVideoTimestampWatermarkFn = () => {
 
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, width, textHeight)
-        ctx.fillRect(0, height - textHeight, width, height)
 
         ctx.beginPath()
-        for (let d = 0; d < 20; d += 4) {
-          ctx.moveTo(0, textHeight + d)
-          ctx.lineTo(width, textHeight + d)
-          ctx.moveTo(0, height - textHeight - d)
-          ctx.lineTo(width, height - textHeight - d)
+        for (let d = 0; d < 50; d += 10) {
+          //ctx.moveTo(0, textHeight * 2 + d)
+          //ctx.lineTo(width, textHeight * 2 + d)
+          //ctx.moveTo(0, height - d)
+          //ctx.lineTo(width, height - d)
           ctx.moveTo(d, 0)
           ctx.lineTo(d, height)
           ctx.moveTo(width - d, 0)
@@ -60,7 +60,6 @@ const applyVideoTimestampWatermarkFn = () => {
 
         ctx.fillStyle = 'white'
         ctx.fillText(text, width / 2, fontSize)
-        ctx.fillText(participantName, width / 2, height - 6)
 
         const newBitmap = await createImageBitmap(canvas)
         const newFrame = new VideoFrame(newBitmap, { timestamp })
@@ -183,7 +182,7 @@ async function loadTesseract() {
       )
       await worker.setParameters({
         tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE,
-        tessedit_char_whitelist: '0123456789',
+        tessedit_char_whitelist: '0123456789-',
       })
       scheduler.addWorker(worker)
       log('Creating Tesseract worker done')
@@ -229,25 +228,26 @@ window.recognizeVideoTimestampWatermark = async (
         ) {
           lastTimestamp = timestamp
           const now = Date.now()
-          const fontHeight = Math.ceil(codedHeight / 18) + 6
+          const fontSize = Math.round(codedHeight / 18)
+          const textHeight = Math.round(fontSize * 1.2)
           canvas.width = codedWidth
-          canvas.height = fontHeight
+          canvas.height = textHeight
           const bitmap = await createImageBitmap(
             videoFrame,
             0,
             0,
             codedWidth,
-            fontHeight,
+            textHeight,
           )
-          ctx.drawImage(bitmap, 0, 0, codedWidth, fontHeight)
+          ctx.drawImage(bitmap, 0, 0, codedWidth, textHeight)
           bitmap.close()
 
           scheduler
             .addJob('recognize', canvas)
             .then(({ data }) => {
               const cleanText = data.text.trim()
-              if (cleanText && data.confidence > 70) {
-                const recognizedTimestamp = parseInt(cleanText)
+              if (cleanText && data.confidence > 50) {
+                const recognizedTimestamp = parseInt(cleanText.split('-')[1])
                 const delay = now - recognizedTimestamp
                 if (isFinite(delay) && delay > 0 && delay < 30000) {
                   log(

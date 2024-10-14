@@ -854,6 +854,7 @@ export class Session extends EventEmitter {
         env: { ...process.env } as Record<string, string>,
         params: this.scriptParams,
       })
+      log.debug(`customUrlHandlerFn: ${url}`)
     }
 
     if (!url) {
