@@ -402,10 +402,10 @@ export async function runVmaf(
   const degTextHeight = Math.round(Math.round(degHeight / 18) * 1.2)
 
   if (!crop.ref) crop.ref = {}
-  crop.ref.top = (crop.ref.top || 0) + refTextHeight * 2
+  crop.ref.top = (crop.ref.top || 0) + refTextHeight
 
   if (!crop.deg) crop.deg = {}
-  crop.deg.top = (crop.deg.top || 0) + degTextHeight * 2
+  crop.deg.top = (crop.deg.top || 0) + degTextHeight
 
   // Adjust the reference aspect ratio to match the degraded one.
   const refAspectRatio = refWidth / refHeight

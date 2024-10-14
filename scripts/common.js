@@ -140,8 +140,8 @@ webrtcperf.getElements = window.getElements = async (
     throw new Error(`Timeout getting "${selector}"`)
   }
   if (innerText) {
-    return [...elements].filter(
-      e => e.innerText.trim().toLowerCase() === innerText.trim().toLowerCase(),
+    return [...elements].filter(e =>
+      e.innerText.trim().toLowerCase().includes(innerText.trim().toLowerCase()),
     )
   } else {
     return [...elements]
