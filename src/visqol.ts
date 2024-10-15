@@ -10,9 +10,7 @@ type VisqolConfig = {
   visqolKeepSourceFiles: boolean
 }
 
-export async function calculateVisqolScore(
-  config: VisqolConfig,
-): Promise<void> {
+export async function calculateVisqolScore(config: VisqolConfig): Promise<void> {
   const { visqolPath, visqolKeepSourceFiles } = config
   log.debug('calculateVisqolScore', { visqolPath, visqolKeepSourceFiles })
 
@@ -29,13 +27,8 @@ export async function calculateVisqolScore(
     }
     let outFile = file
     if (file.endsWith('.f32le.raw')) {
-      outFile = path.join(
-        path.dirname(file),
-        path.basename(file).replace('.f32le.raw', '.wav'),
-      )
-      await runShellCommand(
-        `ffmpeg -hide_banner -loglevel info -f f32le -ar 48000 -ac 1 -i ${file} -ac 1 ${outFile}`,
-      )
+      outFile = path.join(path.dirname(file), path.basename(file).replace('.f32le.raw', '.wav'))
+      await runShellCommand(`ffmpeg -hide_banner -loglevel info -f f32le -ar 48000 -ac 1 -i ${file} -ac 1 ${outFile}`)
       if (!visqolKeepSourceFiles) {
         fs.unlinkSync(file)
       }

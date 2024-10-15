@@ -122,10 +122,7 @@ type ProcessStat = {
  * @param children If process children should be taken into account.
  * @returns
  */
-export async function getProcessStats(
-  pid = 0,
-  children = false,
-): Promise<ProcessStat> {
+export async function getProcessStats(pid = 0, children = false): Promise<ProcessStat> {
   const processPid = pid || process.pid
   let stat: ProcessStat | undefined = ProcessStatsCache.get(processPid)
   if (stat) {
@@ -144,8 +141,7 @@ export async function getProcessStats(
 
   if (children) {
     try {
-      let childrenPids: number[] | undefined =
-        ProcessChildrenCache.get(processPid)
+      let childrenPids: number[] | undefined = ProcessChildrenCache.get(processPid)
       if (!childrenPids?.length) {
         childrenPids = await pidtree(processPid)
         if (childrenPids?.length) {
@@ -178,12 +174,8 @@ type SocketStat = {
 export async function getSocketStats(processPid: number): Promise<SocketStat> {
   const stats: SocketStat = { recvBytes: 0, sendBytes: 0 }
   try {
-    const { stdout } = await runShellCommand(
-      `ss -nOHpti | { grep pid=${processPid} || true; }`,
-    )
-    for (const { groups } of stdout.matchAll(
-      /bytes_sent:(?<sendBytes>\d+).+bytes_received:(?<recvBytes>\d+)/g,
-    )) {
+    const { stdout } = await runShellCommand(`ss -nOHpti | { grep pid=${processPid} || true; }`)
+    for (const { groups } of stdout.matchAll(/bytes_sent:(?<sendBytes>\d+).+bytes_received:(?<recvBytes>\d+)/g)) {
       if (!groups) continue
       const recvBytes = parseInt(groups.recvBytes)
       const sendBytes = parseInt(groups.sendBytes)
@@ -207,11 +199,7 @@ export type SystemStats = {
 }
 
 async function updateSystemStats(): Promise<void> {
-  const [cpu, memInfo, gpuStats] = await Promise.all([
-    OSUtils.cpu.free(10000),
-    OSUtils.mem.info(),
-    systemGpuStats(),
-  ])
+  const [cpu, memInfo, gpuStats] = await Promise.all([OSUtils.cpu.free(10000), OSUtils.mem.info(), systemGpuStats()])
   const stat = {
     usedCpu: 100 - cpu,
     usedMemory: 100 - memInfo.freeMemPercentage,
@@ -269,12 +257,7 @@ export function startRandomActivateAudio(
 ): void {
   if (randomActivateAudioRunning) return
   randomActivateAudioRunning = true
-  void randomActivateAudio(
-    sessions,
-    randomAudioPeriod,
-    randomAudioProbability,
-    randomAudioRange,
-  )
+  void randomActivateAudio(sessions, randomAudioPeriod, randomAudioProbability, randomAudioRange)
 }
 
 export function stopRandomActivateAudio(): void {
@@ -338,11 +321,7 @@ export async function randomActivateAudio(
     for (const [i, page] of pagesWithAudio.entries()) {
       try {
         if (i === index) {
-          log.debug(
-            `Changing audio in page ${i + 1}/${
-              pagesWithAudio.length
-            } (enable: ${enable})`,
-          )
+          log.debug(`Changing audio in page ${i + 1}/${pagesWithAudio.length} (enable: ${enable})`)
           await page.evaluate(async enable => {
             if (typeof publisherSetMuted !== 'undefined') {
               await publisherSetMuted(!enable)
@@ -366,11 +345,7 @@ export async function randomActivateAudio(
           })
         }
       } catch (err) {
-        log.error(
-          `randomActivateAudio in page ${i + 1}/${
-            pagesWithAudio.length
-          } error: ${(err as Error).stack}`,
-        )
+        log.error(`randomActivateAudio in page ${i + 1}/${pagesWithAudio.length} error: ${(err as Error).stack}`)
       }
     }
   } catch (err) {
@@ -447,9 +422,7 @@ export async function downloadUrl(
       : undefined,
     timeout,
     onDownloadProgress: event => {
-      log.debug(
-        `downloadUrl fileUrl=${url} progress=${event.progress || event.bytes}`,
-      )
+      log.debug(`downloadUrl fileUrl=${url} progress=${event.progress || event.bytes}`)
     },
     httpsAgent: new Agent({
       rejectUnauthorized: false,
@@ -481,9 +454,7 @@ export async function downloadUrl(
     let end = 0
     let total = 0
     if (response.headers['content-range']) {
-      log.debug(
-        `downloadUrl ${response.data.length} bytes, content-range=${response.headers['content-range']}`,
-      )
+      log.debug(`downloadUrl ${response.data.length} bytes, content-range=${response.headers['content-range']}`)
       const contentRange = response.headers['content-range'].split('/')
       const rangeParts = contentRange[0].split('-')
       total = parseInt(contentRange[1])
@@ -512,11 +483,7 @@ export async function downloadUrl(
  * @param url The remote url to upload.
  * @param auth The basic authentication (`user:password`).
  */
-export async function uploadUrl(
-  filePath: string,
-  url: string,
-  auth?: string,
-): Promise<string> {
+export async function uploadUrl(filePath: string, url: string, auth?: string): Promise<string> {
   log.debug(`uploadUrl ${filePath} to ${url}`)
   const authParts = auth && auth.split(':')
   const formData = new FormData()
@@ -714,14 +681,9 @@ export async function runShellCommand(
     p.once('error', err => reject(err))
     p.once('close', code => {
       if (code !== 0) {
-        reject(
-          new Error(
-            `runShellCommand cmd: ${cmd} failed with code ${code}: ${stderr}`,
-          ),
-        )
+        reject(new Error(`runShellCommand cmd: ${cmd} failed with code ${code}: ${stderr}`))
       } else {
-        if (verbose)
-          log.debug(`runShellCommand cmd: ${cmd} done`, { stdout, stderr })
+        if (verbose) log.debug(`runShellCommand cmd: ${cmd} done`, { stdout, stderr })
         resolve({ stdout, stderr })
       }
     })
@@ -738,10 +700,7 @@ const ipCache = new Map<string, { host: string; timestamp: number }>()
  * into the memory cache.
  * @returns The IP address hostname.
  */
-export async function resolveIP(
-  ip: string,
-  cacheTime = 60 * 60 * 1000,
-): Promise<string> {
+export async function resolveIP(ip: string, cacheTime = 60 * 60 * 1000): Promise<string> {
   if (!ip) return ''
   if (ipaddrJs.parse(ip).range() === 'private') {
     return ip
@@ -787,8 +746,7 @@ export function stripColors(str: string): string {
   return str.replace(/\x1B[[(?);]{0,2}(;?\d)*./g, '')
 }
 
-const nvidiaGpuPresent =
-  fs.existsSync('/usr/bin/nvidia-smi') && fs.existsSync('/dev/dri')
+const nvidiaGpuPresent = fs.existsSync('/usr/bin/nvidia-smi') && fs.existsSync('/dev/dri')
 
 const macOS = process.platform === 'darwin' && fs.existsSync('/usr/sbin/ioreg')
 
@@ -801,18 +759,12 @@ const macOS = process.platform === 'darwin' && fs.existsSync('/usr/sbin/ioreg')
 export async function systemGpuStats(): Promise<{ gpu: number; mem: number }> {
   try {
     if (nvidiaGpuPresent) {
-      const { stdout } = await runShellCommand(
-        'nvidia-smi --query-gpu=utilization.gpu,utilization.memory --format=csv',
-      )
+      const { stdout } = await runShellCommand('nvidia-smi --query-gpu=utilization.gpu,utilization.memory --format=csv')
       const line = stdout.split('\n')[1].trim()
-      const [gpu, mem] = line
-        .split(',')
-        .map(s => parseFloat(s.replace(' %', '')))
+      const [gpu, mem] = line.split(',').map(s => parseFloat(s.replace(' %', '')))
       return { gpu, mem }
     } else if (macOS) {
-      const { stdout } = await runShellCommand(
-        'ioreg -r -d 1 -w 0 -c IOAccelerator | grep PerformanceStatistics\\"',
-      )
+      const { stdout } = await runShellCommand('ioreg -r -d 1 -w 0 -c IOAccelerator | grep PerformanceStatistics\\"')
       const stats = JSON.parse(stdout.trim().split(' = ')[1].replace(/=/g, ':'))
       const gpu = stats['Device Utilization %'] || stats['GPU Activity(%)'] || 0
       return { gpu, mem: 0 }
@@ -844,19 +796,12 @@ export class Scheduler {
    * @param callback Callback function.
    * @param verbose Verbose logging.
    */
-  constructor(
-    name: string,
-    interval: number,
-    callback: (now: number) => Promise<void>,
-    verbose = false,
-  ) {
+  constructor(name: string, interval: number, callback: (now: number) => Promise<void>, verbose = false) {
     this.name = name
     this.interval = interval * 1000
     this.callback = callback
     this.verbose = verbose
-    log.debug(
-      `[${this.name}-scheduler] constructor interval=${this.interval}ms`,
-    )
+    log.debug(`[${this.name}-scheduler] constructor interval=${this.interval}ms`)
   }
 
   start(): void {
@@ -879,17 +824,9 @@ export class Scheduler {
     }
     const now = Date.now()
     if (this.last) {
-      this.errorSum += clampMinMax(
-        now - this.last - this.interval,
-        -this.interval,
-        this.interval,
-      )
+      this.errorSum += clampMinMax(now - this.last - this.interval, -this.interval, this.interval)
       if (this.verbose) {
-        log.debug(
-          `[${this.name}-scheduler] last=${now - this.last}ms drift=${
-            this.errorSum
-          }ms`,
-        )
+        log.debug(`[${this.name}-scheduler] last=${now - this.last}ms drift=${this.errorSum}ms`)
       }
     }
     this.last = now
@@ -900,17 +837,12 @@ export class Scheduler {
           await this.callback(now)
           const elapsed = Date.now() - now
           if (elapsed > this.interval) {
-            log.warn(
-              `[${this.name}-scheduler] callback elapsed=${elapsed}ms > ${this.interval}ms`,
-            )
+            log.warn(`[${this.name}-scheduler] callback elapsed=${elapsed}ms > ${this.interval}ms`)
           } else if (this.verbose) {
             log.debug(`[${this.name}-scheduler] callback elapsed=${elapsed}ms`)
           }
         } catch (err) {
-          log.error(
-            `[${this.name}-scheduler] callback error: ${(err as Error).stack}`,
-            err,
-          )
+          log.error(`[${this.name}-scheduler] callback error: ${(err as Error).stack}`, err)
         } finally {
           this.scheduleNext()
         }
@@ -966,10 +898,7 @@ export class PeerConnectionExternal {
   }
 }
 
-export type PeerConnectionExternalMethod =
-  | 'createOffer'
-  | 'setLocalDescription'
-  | 'setRemoteDescription'
+export type PeerConnectionExternalMethod = 'createOffer' | 'setLocalDescription' | 'setRemoteDescription'
 
 export function toTitleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
@@ -992,15 +921,11 @@ export async function getFiles(dir: string, ext: string): Promise<string[]> {
  * @param precision precision
  */
 export function toPrecision(value: number, precision = 3): string {
-  return (Math.round(value * 10 ** precision) / 10 ** precision).toFixed(
-    precision,
-  )
+  return (Math.round(value * 10 ** precision) / 10 ** precision).toFixed(precision)
 }
 
 export async function getDefaultNetworkInterface(): Promise<string> {
-  const { stdout } = await runShellCommand(
-    `ip route | awk '/default/ {print $5; exit}' | tr -d ''`,
-  )
+  const { stdout } = await runShellCommand(`ip route | awk '/default/ {print $5; exit}' | tr -d ''`)
   return stdout.trim()
 }
 
@@ -1119,10 +1044,7 @@ export async function pageScreenshot(
   }
 }
 
-export function enabledForSession(
-  index: number,
-  value: boolean | string | number,
-): boolean {
+export function enabledForSession(index: number, value: boolean | string | number): boolean {
   if (value === true || value === 'true') {
     return true
   } else if (value === false || value === 'false' || value === undefined) {
@@ -1151,11 +1073,7 @@ export function enabledForSession(
   return false
 }
 
-export function increaseKey(
-  o: Record<string, number>,
-  key: string,
-  value?: number,
-): void {
+export function increaseKey(o: Record<string, number>, key: string, value?: number): void {
   if (value === undefined || !isFinite(value)) return
   if (o[key] === undefined) {
     o[key] = 0
@@ -1184,11 +1102,7 @@ export function maybeNumber(s: string): string | number {
   return !isNaN(n) ? n : s
 }
 
-export async function ffprobe(
-  fpath: string,
-  entries = '',
-  filters = '',
-): Promise<Record<string, string>[]> {
+export async function ffprobe(fpath: string, entries = '', filters = ''): Promise<Record<string, string>[]> {
   const cmd = `\
 exec ffprobe -loglevel error -select_streams v -show_frames -print_format compact \
 ${entries ? `-show_entries ${entries}` : ''} \

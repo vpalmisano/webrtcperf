@@ -1,8 +1,4 @@
-import {
-  getSessionThrottleIndex,
-  startThrottle,
-  stopThrottle,
-} from '@vpalmisano/throttler'
+import { getSessionThrottleIndex, startThrottle, stopThrottle } from '@vpalmisano/throttler'
 import { paramCase } from 'change-case'
 import fs from 'fs'
 import json5 from 'json5'
@@ -40,21 +36,15 @@ ${wrap(value.doc, { width: 72, indent: '        ' })}
     })
     console.log(out)
     process.exit(0)
-  } else if (
-    process.argv.findIndex(a => a.localeCompare('--version') === 0) !== -1
-  ) {
+  } else if (process.argv.findIndex(a => a.localeCompare('--version') === 0) !== -1) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const version = json5.parse(
-      fs.readFileSync(resolvePackagePath('package.json')).toString(),
-    ).version
+    const version = json5.parse(fs.readFileSync(resolvePackagePath('package.json')).toString()).version
     console.log(version)
     process.exit(0)
   }
 }
 
-export async function setupApplication(
-  config: Config,
-): Promise<{ stats: Stats; stop: () => Promise<void> }> {
+export async function setupApplication(config: Config): Promise<{ stats: Stats; stop: () => Promise<void> }> {
   if (!config.startTimestamp) {
     config.startTimestamp = Date.now()
   }
@@ -90,14 +80,9 @@ export async function setupApplication(
   }
 
   // Start session function.
-  const startLocalSession = async (
-    id: number,
-    spawnPeriod: number,
-  ): Promise<void> => {
+  const startLocalSession = async (id: number, spawnPeriod: number): Promise<void> => {
     const throttleIndex = getSessionThrottleIndex(id)
-    const videoPath = videoPaths.length
-      ? videoPaths[id % videoPaths.length]
-      : undefined
+    const videoPath = videoPaths.length ? videoPaths[id % videoPaths.length] : undefined
     const session = new Session({
       ...config,
       videoPath,
@@ -124,9 +109,7 @@ export async function setupApplication(
       )
     }
     const spawnPeriod = 1000 / config.spawnRate
-    log.debug(
-      `Starting ${config.sessions} sessions (spawnPeriod: ${spawnPeriod}ms)`,
-    )
+    log.debug(`Starting ${config.sessions} sessions (spawnPeriod: ${spawnPeriod}ms)`)
     const startTime = Date.now()
     for (let i = 0; i < config.sessions; i += 1) {
       const id = stats.consumeSessionId(config.tabsPerSession)
@@ -138,11 +121,7 @@ export async function setupApplication(
     }
     const elapsed = Math.round((Date.now() - startTime) / 1000)
     const spawnRate = (config.sessions * config.tabsPerSession) / elapsed
-    log.debug(
-      `${
-        config.sessions * config.tabsPerSession
-      } pages started in ${elapsed}s (${spawnRate.toFixed(2)}/s)`,
-    )
+    log.debug(`${config.sessions * config.tabsPerSession} pages started in ${elapsed}s (${spawnRate.toFixed(2)}/s)`)
   }
 
   return {

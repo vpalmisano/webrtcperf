@@ -53,13 +53,7 @@ export class Server {
    * @param stats A {@link Stats} class instance.
    */
   constructor(
-    {
-      serverPort = 5000,
-      serverSecret = 'secret',
-      serverUseHttps = false,
-      serverData = '',
-      pageLogPath = '',
-    } = {},
+    { serverPort = 5000, serverSecret = 'secret', serverUseHttps = false, serverData = '', pageLogPath = '' } = {},
     stats: Stats,
   ) {
     this.serverPort = serverPort
@@ -100,10 +94,7 @@ export class Server {
     this.app.get('/view/docker.log', this.getDockerLog.bind(this))
     this.app.get('/download/alert-rules', this.getAlertRules.bind(this))
     this.app.get('/download/stats', this.getStatsFile.bind(this))
-    this.app.get(
-      '/download/detailed-stats',
-      this.getDetailedStatsFile.bind(this),
-    )
+    this.app.get('/download/detailed-stats', this.getDetailedStatsFile.bind(this))
     this.app.get('/empty-page', this.getEmptyPage.bind(this))
 
     if (this.serverData) {
@@ -118,17 +109,10 @@ export class Server {
         })
     }
 
-    this.app.use(
-      (
-        err: Error,
-        _req: express.Request,
-        res: express.Response,
-        _next: express.NextFunction,
-      ) => {
-        log.error(`request error: ${err.message}`)
-        res.status(500).send(err.message)
-      },
-    )
+    this.app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      log.error(`request error: ${err.message}`)
+      res.status(500).send(err.message)
+    })
   }
 
   /*
@@ -152,11 +136,7 @@ export class Server {
    *
    * Returns a JSON array of the last statistics for each running Session.
    */
-  private async getStats(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async getStats(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`GET /stats`)
     const stats = []
     try {
@@ -174,11 +154,7 @@ export class Server {
    *
    * Returns the {@link Stats.statsWriter} file content.
    */
-  private getStatsFile(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
+  private getStatsFile(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`/download/stats`, req.query)
     if (!this.stats.statsWriter) {
       return next(new Error('statsPath not set'))
@@ -191,11 +167,7 @@ export class Server {
    *
    * Returns the {@link Stats.detailedStatsWriter} file content.
    */
-  private getDetailedStatsFile(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
+  private getDetailedStatsFile(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`/download/detailed-stats`, req.query)
     if (!this.stats.detailedStatsWriter) {
       return next(new Error('detailedStatsPath not set'))
@@ -209,11 +181,7 @@ export class Server {
    * Returns a JSON array of the last statistics collected from external running
    * tools.
    */
-  private getCollectedStats(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
+  private getCollectedStats(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`GET /collected-stats`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stats: Record<string, any> = {}
@@ -237,11 +205,7 @@ export class Server {
    * - `page`: the page number (starting from `0`) running inside the {@link Session}.
    * - `format`: the image format (`jpeg`, `png`, `webp`). Default: `webp`.
    */
-  private async getScreenshot(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async getScreenshot(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     const sessionId = parseInt(req.params.sessionId)
     const pageId = parseInt((req.query.page as string) || '0')
     const format = (req.query.format as string) || 'webp'
@@ -263,11 +227,7 @@ export class Server {
    *
    * Allows to inject {@link Stats} metrics coming from an external tool.
    */
-  private putCollectedStats(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
+  private putCollectedStats(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`PUT /collected-stats`)
     const { id, stats, config } = req.body
     try {
@@ -286,11 +246,7 @@ export class Server {
    * Starts a new {@link Session}.
    * The request body format will be parsed as a {@link SessionParams} object.
    */
-  private async putSession(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async putSession(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`PUT /session`, req.body)
     try {
       const id = this.stats.consumeSessionId()
@@ -311,11 +267,7 @@ export class Server {
    * `body.sessions` value.
    * The request body will be parsed as a {@link SessionParams} object.
    */
-  private async putSessions(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async putSessions(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`PUT /sessions`, req.body)
     try {
       const { sessions } = req.body
@@ -339,11 +291,7 @@ export class Server {
    *
    * Delete the {@link Session} instance identified by the `body.id` param.
    */
-  private async deleteSession(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async deleteSession(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`DELETE /session`, req.body)
     try {
       const { id } = req.body
@@ -362,11 +310,7 @@ export class Server {
    *
    * Delete the {@link Session} instances specified by the `body.ids` array.
    */
-  private async deleteSessions(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async deleteSessions(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`DELETE /sessions`, req.body)
     try {
       const { ids } = req.body
@@ -387,11 +331,7 @@ export class Server {
    *
    * Returns the page log file content as specified in {@link Config} `pageLogPath`.
    */
-  private getPageLog(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
+  private getPageLog(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`GET /view/page.log`, req.query)
     if (!this.pageLogPath) {
       return next(new Error('pageLogPath not set'))
@@ -413,17 +353,10 @@ export class Server {
      -v /var/lib/docker:/var/lib/docker:ro
    * ```
    */
-  private async getDockerLog(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): Promise<void> {
+  private async getDockerLog(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`GET /view/docker.log`, req.query)
     try {
-      const containerId = await fs.promises.readFile(
-        `${os.homedir()}/.webrtcperf/docker.id`,
-        'utf-8',
-      )
+      const containerId = await fs.promises.readFile(`${os.homedir()}/.webrtcperf/docker.id`, 'utf-8')
       const logPath = `/var/lib/docker/containers/${containerId}/${containerId}-json.log`
       if (req.query.range && !req.headers.range) {
         req.headers.range = `bytes=${req.query.range}`
@@ -439,11 +372,7 @@ export class Server {
    *
    * Downloads the alert rules report stored into the {@link Stats.alertRulesFilename}.
    */
-  private getAlertRules(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
+  private getAlertRules(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`GET /download/alert-rules`, req.query)
     if (!this.stats.alertRulesFilename) {
       return next(new Error('Stats alertRulesFilename not set'))
@@ -477,24 +406,15 @@ export class Server {
    * If the requested path points to a directory, it returns the directory
    * content in tar.gz format.
    */
-  private getData(
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ): void {
-    const paramPath = path
-      .normalize(req.params[0])
-      .replace(/^(\.\.(\/|\\|$))+/, '')
+  private getData(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    const paramPath = path.normalize(req.params[0]).replace(/^(\.\.(\/|\\|$))+/, '')
     log.debug(`GET /data/${paramPath}`, req.query)
     const fpath = path.resolve(this.serverData, paramPath)
     if (!fs.existsSync(fpath)) {
       return next(new Error(`${paramPath} not found`))
     }
     if (fs.lstatSync(fpath).isDirectory()) {
-      res.header(
-        'Content-Disposition',
-        `attachment; filename="${path.basename(fpath)}.tar.gz"`,
-      )
+      res.header('Content-Disposition', `attachment; filename="${path.basename(fpath)}.tar.gz"`)
       res.setHeader('content-type', 'application/gzip')
       tar.pack(fpath).pipe(zlib.createGzip()).pipe(res)
     } else {
@@ -510,21 +430,13 @@ export class Server {
    * @param id The session unique id.
    * @param config The session configuration.
    */
-  private async startLocalSession(
-    id: number,
-    config: SessionParams,
-  ): Promise<Session> {
+  private async startLocalSession(id: number, config: SessionParams): Promise<Session> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sessionConfig = loadConfig(undefined, config) as any
     const session = new Session({ ...sessionConfig, id })
     session.once('stop', () => {
       console.warn(`Session ${id} stopped, reloading...`)
-      setTimeout(
-        this.startLocalSession.bind(this),
-        sessionConfig.spawnPeriod,
-        id,
-        config,
-      )
+      setTimeout(this.startLocalSession.bind(this), sessionConfig.spawnPeriod, id, config)
     })
     this.stats.addSession(session)
     try {
@@ -578,9 +490,7 @@ export class Server {
       try {
         const query = new URLSearchParams(request.url?.split('?')[1] || '')
         const action = query.get('action') || ''
-        log.debug(
-          `ws connection from ${request.socket.remoteAddress} action: ${action}`,
-        )
+        log.debug(`ws connection from ${request.socket.remoteAddress} action: ${action}`)
         switch (action) {
           case 'write-stream': {
             if (!this.serverData) {
@@ -590,9 +500,7 @@ export class Server {
             if (!filename) {
               throw new Error('filename not set')
             }
-            const paramPath = path
-              .normalize(filename)
-              .replace(/^(\.\.(\/|\\|$))+/, '')
+            const paramPath = path.normalize(filename).replace(/^(\.\.(\/|\\|$))+/, '')
 
             log.debug(`ws write-stream ${paramPath}`)
             const fpath = path.resolve(this.serverData, paramPath)
@@ -613,9 +521,7 @@ export class Server {
                   await fs.promises.unlink(fpath)
                 }
               } catch (err) {
-                log.error(
-                  `ws write-stream close error: ${(err as Error).message}`,
-                )
+                log.error(`ws write-stream close error: ${(err as Error).message}`)
               }
             }
 
@@ -662,10 +568,7 @@ export class Server {
       try {
         const query = new URLSearchParams(request.url?.split('?')[1] || '')
         const auth = query.get('auth')
-        if (
-          !auth ||
-          !timingSafeEqual(Buffer.from(auth), Buffer.from(this.serverSecret))
-        ) {
+        if (!auth || !timingSafeEqual(Buffer.from(auth), Buffer.from(this.serverSecret))) {
           throw new Error('invalid auth')
         }
       } catch (err) {

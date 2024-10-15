@@ -24,11 +24,7 @@ Object.entries(configDocs).forEach(entry => {
 ## ${name}
 ${value.doc}
 
-*Type*: \`${
-    value.format === '"nat"'
-      ? 'positive int'
-      : value.format.replace(/^"(.+)"$/, '$1')
-  }\`
+*Type*: \`${value.format === '"nat"' ? 'positive int' : value.format.replace(/^"(.+)"$/, '$1')}\`
 
 *Default*: ${formatJson(value.default)}
 

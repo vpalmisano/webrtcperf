@@ -38,15 +38,10 @@ if (typeof window.PerformanceObserver === 'function') {
       })
       .forEach(entry => {
         const { duration, transferSize } = entry
-        httpBitrateStats.push(
-          timestamp,
-          Math.round((8000 * transferSize) / duration),
-        )
+        httpBitrateStats.push(timestamp, Math.round((8000 * transferSize) / duration))
         httpLatencyStats.push(timestamp, duration / 1000)
       })
   }
-  const observer = new PerformanceObserver(list =>
-    processEntries(list.getEntries()),
-  )
+  const observer = new PerformanceObserver(list => processEntries(list.getEntries()))
   observer.observe({ type: 'resource', buffered: true })
 }

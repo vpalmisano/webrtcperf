@@ -26,20 +26,17 @@ const index = {
       if (v === 'true' || v === 'false' || v === '') return
       if (v.indexOf('-') !== -1) {
         v.split('-').forEach(n => {
-          if (isNaN(parseInt(n)) || !isFinite(parseInt(n)))
-            throw new Error(`Invalid index: ${n}`)
+          if (isNaN(parseInt(n)) || !isFinite(parseInt(n))) throw new Error(`Invalid index: ${n}`)
         })
         return
       }
       if (v.indexOf(',') !== -1) {
         v.split(',').forEach(n => {
-          if (isNaN(parseInt(n)) || !isFinite(parseInt(n)))
-            throw new Error(`Invalid index: ${n}`)
+          if (isNaN(parseInt(n)) || !isFinite(parseInt(n))) throw new Error(`Invalid index: ${n}`)
         })
         return
       }
-      if (isNaN(parseInt(v)) || !isFinite(parseInt(v)))
-        throw new Error(`Invalid index: ${v}`)
+      if (isNaN(parseInt(v)) || !isFinite(parseInt(v))) throw new Error(`Invalid index: ${v}`)
     } else if (typeof v === 'number' || typeof v === 'boolean') {
       return
     }
@@ -96,8 +93,7 @@ The temporary files containing the raw video and audio will be stored at \
 \`\${VIDEO_CACHE_PATH}/video.\${VIDEO_FORMAT}\` and \
 \`\${VIDEO_CACHE_PATH}/audio.wav\`.`,
     format: String,
-    default:
-      'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4',
+    default: 'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4',
     env: 'VIDEO_PATH',
     arg: 'video-path',
   },
@@ -764,10 +760,7 @@ E.g. \`{ ref: { width: 10, height: 5 }, deg: { width: 2, height: 4 } }\``,
   },
 })
 
-type ConfigDocs = Record<
-  string,
-  { doc: string; format: string; default: string }
->
+type ConfigDocs = Record<string, { doc: string; format: string; default: string }>
 
 /**
  * Formats the schema documentation, calling the same function recursively.

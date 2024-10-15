@@ -20,19 +20,10 @@ const saveFileWorkerFn = () => {
   }
 
   const stringToBinary = str => {
-    return str
-      .split('')
-      .reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
+    return str.split('').reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
   }
 
-  const writeIvfHeader = (
-    ws,
-    width,
-    height,
-    frameRateDenominator,
-    frameRateNumerator,
-    fourcc,
-  ) => {
+  const writeIvfHeader = (ws, width, height, frameRateDenominator, frameRateNumerator, fourcc) => {
     const data = new ArrayBuffer(32)
     const view = new DataView(data)
     view.setUint32(0, stringToBinary('DKIF'), true)
@@ -51,19 +42,7 @@ const saveFileWorkerFn = () => {
   const websockets = new Map()
 
   onmessage = async ({ data }) => {
-    const {
-      action,
-      id,
-      url,
-      readable,
-      kind,
-      quality,
-      x,
-      y,
-      width,
-      height,
-      frameRate,
-    } = data
+    const { action, id, url, readable, kind, quality, x, y, width, height, frameRate } = data
     log(`action=${action} id=${id} kind=${kind} url=${url}`)
     if (action === 'stop') {
       const writable = websockets.get(id)
@@ -86,15 +65,8 @@ const saveFileWorkerFn = () => {
             if (startTimestamp < 0) {
               startTimestamp = timestamp
             }
-            const pts = Math.floor(
-              (frameRate * (timestamp - startTimestamp)) / 1000000,
-            )
-            if (
-              !codedWidth ||
-              !codedHeight ||
-              ws.readyState !== WebSocket.OPEN ||
-              pts <= lastPts
-            ) {
+            const pts = Math.floor((frameRate * (timestamp - startTimestamp)) / 1000000)
+            if (!codedWidth || !codedHeight || ws.readyState !== WebSocket.OPEN || pts <= lastPts) {
               frame.close()
               return
             }
@@ -118,17 +90,8 @@ const saveFileWorkerFn = () => {
               const data = await blob.arrayBuffer()
               if (!headerWritten) {
                 headerWritten = true
-                log(
-                  `saveTrack ${url} writeIvfHeader ${canvas.width}x${canvas.height}@${frameRate}`,
-                )
-                writeIvfHeader(
-                  ws,
-                  canvas.width,
-                  canvas.height,
-                  frameRate,
-                  1,
-                  'MJPG',
-                )
+                log(`saveTrack ${url} writeIvfHeader ${canvas.width}x${canvas.height}@${frameRate}`)
+                writeIvfHeader(ws, canvas.width, canvas.height, frameRate, 1, 'MJPG')
               }
               view.setUint32(0, data.byteLength, true)
               view.setBigUint64(4, BigInt(pts), true)
@@ -253,9 +216,7 @@ window.saveMediaTrack = async (
     }, enableEnd)
   }
 
-  const filename = `${getParticipantNameForSave(sendrecv, track)}${
-    kind === 'audio' ? '.f32le.raw' : '.ivf.raw'
-  }`
+  const filename = `${getParticipantNameForSave(sendrecv, track)}${kind === 'audio' ? '.f32le.raw' : '.ivf.raw'}`
   const url = `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
     window.SERVER_PORT
   }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`

@@ -58,9 +58,13 @@ export enum PageStatsNames {
 
   /** The audio end to end total delay. */
   audioEndToEndDelay = 'audioEndToEndDelay',
+  /** The audio start frame delay. */
+  audioStartFrameDelay = 'audioStartFrameDelay',
 
   /** The video end to end total delay. */
   videoEndToEndDelay = 'videoEndToEndDelay',
+  /** The video start frame delay. */
+  videoStartFrameDelay = 'videoStartFrameDelay',
   /**
    * The video end to end network delay.
    * It does't include the video encode/decode time and the jitter buffer time.
@@ -288,19 +292,11 @@ export enum RtcStatsMetricNames {
  * - `hostName`: The remote endpoint IP address or hostname.
  * - `codec`: The track codec.
  */
-export type RtcStats = Record<
-  RtcStatsMetricNames,
-  Record<string, number | string>
->
+export type RtcStats = Record<RtcStatsMetricNames, Record<string, number | string>>
 
 const RtcStatsMetrics = Object.keys(RtcStatsMetricNames)
 
-function setStats(
-  stats: RtcStats,
-  name: RtcStatsMetricNames,
-  key: string,
-  value?: number | string,
-): void {
+function setStats(stats: RtcStats, name: RtcStatsMetricNames, key: string, value?: number | string): void {
   assert(RtcStatsMetrics.includes(name), `Unknown stat name: ${name}`)
   if (value === undefined) return
   if (!stats[name]) {
@@ -322,13 +318,7 @@ export function rtcStatKey({
   codec?: string
   participantName?: string
 }): string {
-  return [
-    pageIndex ?? '',
-    participantName || '',
-    hostName || 'unknown',
-    codec || '',
-    trackId || '',
-  ].join(':')
+  return [pageIndex ?? '', participantName || '', hostName || 'unknown', codec || '', trackId || ''].join(':')
 }
 
 export function parseRtStatKey(key: string): {
@@ -338,10 +328,7 @@ export function parseRtStatKey(key: string): {
   codec?: string
   participantName?: string
 } {
-  const [pageIndex, participantName, hostName, codec, trackId] = key.split(
-    ':',
-    5,
-  )
+  const [pageIndex, participantName, hostName, codec, trackId] = key.split(':', 5)
   return {
     pageIndex: pageIndex ? parseInt(pageIndex) : undefined,
     trackId: trackId || undefined,
@@ -385,46 +372,15 @@ export function updateRtcStats(
   //log.log(`updateRtcStats`, {enabled, signalingHost, remoteAddress, isDisplay, key})
   // inbound
   if (inboundRtp) {
-    const prefix =
-      inboundRtp.kind === 'video' ? (isDisplay ? 'screen' : 'video') : 'audio'
+    const prefix = inboundRtp.kind === 'video' ? (isDisplay ? 'screen' : 'video') : 'audio'
     setStats(stats, (prefix + 'RecvCodec') as RtcStatsMetricNames, key, codec)
     if (enabled) {
-      setStats(
-        stats,
-        (prefix + 'RecvAvgJitterBufferDelay') as RtcStatsMetricNames,
-        key,
-        inboundRtp.jitterBuffer,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvBitrates') as RtcStatsMetricNames,
-        key,
-        inboundRtp.bitrate,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvBytes') as RtcStatsMetricNames,
-        key,
-        inboundRtp.bytesReceived,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvJitter') as RtcStatsMetricNames,
-        key,
-        inboundRtp.jitter,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvRoundTripTime') as RtcStatsMetricNames,
-        key,
-        inboundRtp.transportRoundTripTime,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvPackets') as RtcStatsMetricNames,
-        key,
-        inboundRtp.packetsReceived,
-      )
+      setStats(stats, (prefix + 'RecvAvgJitterBufferDelay') as RtcStatsMetricNames, key, inboundRtp.jitterBuffer)
+      setStats(stats, (prefix + 'RecvBitrates') as RtcStatsMetricNames, key, inboundRtp.bitrate)
+      setStats(stats, (prefix + 'RecvBytes') as RtcStatsMetricNames, key, inboundRtp.bytesReceived)
+      setStats(stats, (prefix + 'RecvJitter') as RtcStatsMetricNames, key, inboundRtp.jitter)
+      setStats(stats, (prefix + 'RecvRoundTripTime') as RtcStatsMetricNames, key, inboundRtp.transportRoundTripTime)
+      setStats(stats, (prefix + 'RecvPackets') as RtcStatsMetricNames, key, inboundRtp.packetsReceived)
       setStats(
         stats,
         (prefix + 'RecvRetransmittedPackets') as RtcStatsMetricNames,
@@ -432,30 +388,10 @@ export function updateRtcStats(
         inboundRtp.retransmittedPacketsReceived,
       )
       // TODO: remove this.
-      setStats(
-        stats,
-        (prefix + 'RecvPacketsLost') as RtcStatsMetricNames,
-        key,
-        inboundRtp.packetsLossRate,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvPacketsLossRate') as RtcStatsMetricNames,
-        key,
-        inboundRtp.packetsLossRate,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvLostPackets') as RtcStatsMetricNames,
-        key,
-        inboundRtp.packetsLost,
-      )
-      setStats(
-        stats,
-        (prefix + 'RecvNackCountSent') as RtcStatsMetricNames,
-        key,
-        inboundRtp.nackCount,
-      )
+      setStats(stats, (prefix + 'RecvPacketsLost') as RtcStatsMetricNames, key, inboundRtp.packetsLossRate)
+      setStats(stats, (prefix + 'RecvPacketsLossRate') as RtcStatsMetricNames, key, inboundRtp.packetsLossRate)
+      setStats(stats, (prefix + 'RecvLostPackets') as RtcStatsMetricNames, key, inboundRtp.packetsLost)
+      setStats(stats, (prefix + 'RecvNackCountSent') as RtcStatsMetricNames, key, inboundRtp.nackCount)
       if (inboundRtp.kind === 'audio') {
         ;[
           'audioLevel',
@@ -467,9 +403,7 @@ export function updateRtcStats(
         ].forEach(name => {
           setStats(
             stats,
-            (prefix +
-              'Recv' +
-              toTitleCase(name.replace('audio', ''))) as RtcStatsMetricNames,
+            (prefix + 'Recv' + toTitleCase(name.replace('audio', ''))) as RtcStatsMetricNames,
             key,
             inboundRtp[name],
           )
@@ -477,120 +411,44 @@ export function updateRtcStats(
       }
       if (inboundRtp.kind === 'video' && inboundRtp.keyFramesDecoded > 0) {
         //setStats(stats, prefix + 'FramesDecoded', key, inboundRtp.framesDecoded
-        setStats(
-          stats,
-          (prefix + 'RecvFrames') as RtcStatsMetricNames,
-          key,
-          inboundRtp.framesReceived,
-        )
-        setStats(
-          stats,
-          (prefix + 'RecvFps') as RtcStatsMetricNames,
-          key,
-          inboundRtp.framesPerSecond,
-        )
-        setStats(
-          stats,
-          (prefix + 'RecvHeight') as RtcStatsMetricNames,
-          key,
-          inboundRtp.frameHeight,
-        )
-        setStats(
-          stats,
-          (prefix + 'RecvWidth') as RtcStatsMetricNames,
-          key,
-          inboundRtp.frameWidth,
-        )
+        setStats(stats, (prefix + 'RecvFrames') as RtcStatsMetricNames, key, inboundRtp.framesReceived)
+        setStats(stats, (prefix + 'RecvFps') as RtcStatsMetricNames, key, inboundRtp.framesPerSecond)
+        setStats(stats, (prefix + 'RecvHeight') as RtcStatsMetricNames, key, inboundRtp.frameHeight)
+        setStats(stats, (prefix + 'RecvWidth') as RtcStatsMetricNames, key, inboundRtp.frameWidth)
         //setStats(stats, prefix + 'TotalDecodeTime', key, inboundRtp.totalDecodeTime)
-        setStats(
-          stats,
-          (prefix + 'FirCountSent') as RtcStatsMetricNames,
-          key,
-          inboundRtp.firCount,
-        )
-        setStats(
-          stats,
-          (prefix + 'PliCountSent') as RtcStatsMetricNames,
-          key,
-          inboundRtp.pliCount,
-        )
-        setStats(
-          stats,
-          (prefix + 'DecodeLatency') as RtcStatsMetricNames,
-          key,
-          inboundRtp.decodeLatency,
-        )
-        setStats(
-          stats,
-          (prefix + 'TotalFreezesDuration') as RtcStatsMetricNames,
-          key,
-          inboundRtp.totalFreezesDuration,
-        )
+        setStats(stats, (prefix + 'FirCountSent') as RtcStatsMetricNames, key, inboundRtp.firCount)
+        setStats(stats, (prefix + 'PliCountSent') as RtcStatsMetricNames, key, inboundRtp.pliCount)
+        setStats(stats, (prefix + 'DecodeLatency') as RtcStatsMetricNames, key, inboundRtp.decodeLatency)
+        setStats(stats, (prefix + 'TotalFreezesDuration') as RtcStatsMetricNames, key, inboundRtp.totalFreezesDuration)
       }
     }
   }
   // outbound
   if (outboundRtp) {
     // log.log('outboundRtp', isDisplay, JSON.stringify(outboundRtp, null, 2));
-    const prefix =
-      outboundRtp.kind === 'video' ? (isDisplay ? 'screen' : 'video') : 'audio'
+    const prefix = outboundRtp.kind === 'video' ? (isDisplay ? 'screen' : 'video') : 'audio'
     setStats(stats, (prefix + 'SentCodec') as RtcStatsMetricNames, key, codec)
     if (enabled) {
-      setStats(
-        stats,
-        (prefix + 'SentBitrates') as RtcStatsMetricNames,
-        key,
-        outboundRtp.bitrate,
-      )
+      setStats(stats, (prefix + 'SentBitrates') as RtcStatsMetricNames, key, outboundRtp.bitrate)
       setStats(
         stats,
         (prefix + 'SentBytes') as RtcStatsMetricNames,
         key,
         outboundRtp.bytesSent + outboundRtp.headerBytesSent,
       )
-      setStats(
-        stats,
-        (prefix + 'SentPackets') as RtcStatsMetricNames,
-        key,
-        outboundRtp.packetsSent,
-      )
-      setStats(
-        stats,
-        (prefix + 'SentPacketsLost') as RtcStatsMetricNames,
-        key,
-        outboundRtp.packetsLossRate,
-      )
-      setStats(
-        stats,
-        (prefix + 'SentNackCountRecv') as RtcStatsMetricNames,
-        key,
-        outboundRtp.nackCount,
-      )
+      setStats(stats, (prefix + 'SentPackets') as RtcStatsMetricNames, key, outboundRtp.packetsSent)
+      setStats(stats, (prefix + 'SentPacketsLost') as RtcStatsMetricNames, key, outboundRtp.packetsLossRate)
+      setStats(stats, (prefix + 'SentNackCountRecv') as RtcStatsMetricNames, key, outboundRtp.nackCount)
       //setStats(stats, prefix + 'SentPacketsLostCount', key, outboundRtp.packetsLost)
-      setStats(
-        stats,
-        (prefix + 'SentRoundTripTime') as RtcStatsMetricNames,
-        key,
-        outboundRtp.roundTripTime,
-      )
+      setStats(stats, (prefix + 'SentRoundTripTime') as RtcStatsMetricNames, key, outboundRtp.roundTripTime)
       setStats(
         stats,
         (prefix + 'SentTransportRoundTripTime') as RtcStatsMetricNames,
         key,
         outboundRtp.transportRoundTripTime,
       )
-      setStats(
-        stats,
-        'transportSentAvailableOutgoingBitrate' as RtcStatsMetricNames,
-        key,
-        availableOutgoingBitrate,
-      )
-      setStats(
-        stats,
-        (prefix + 'SentMaxBitrate') as RtcStatsMetricNames,
-        key,
-        sentMaxBitrate,
-      )
+      setStats(stats, 'transportSentAvailableOutgoingBitrate' as RtcStatsMetricNames, key, availableOutgoingBitrate)
+      setStats(stats, (prefix + 'SentMaxBitrate') as RtcStatsMetricNames, key, sentMaxBitrate)
       setStats(
         stats,
         (prefix + 'SentRetransmittedPackets') as RtcStatsMetricNames,
@@ -598,79 +456,28 @@ export function updateRtcStats(
         outboundRtp.retransmittedPacketsSent,
       )
       if (outboundRtp.kind === 'video') {
+        setStats(stats, (prefix + 'SentActiveEncodings') as RtcStatsMetricNames, key, videoSentActiveEncodings)
         setStats(
           stats,
-          (prefix + 'SentActiveEncodings') as RtcStatsMetricNames,
-          key,
-          videoSentActiveEncodings,
-        )
-        setStats(
-          stats,
-          (prefix +
-            'QualityLimitationResolutionChanges') as RtcStatsMetricNames,
+          (prefix + 'QualityLimitationResolutionChanges') as RtcStatsMetricNames,
           key,
           outboundRtp.qualityLimitationResolutionChanges,
         )
-        setStats(
-          stats,
-          (prefix + 'QualityLimitationCpu') as RtcStatsMetricNames,
-          key,
-          outboundRtp.qualityLimitationCpu,
-        )
+        setStats(stats, (prefix + 'QualityLimitationCpu') as RtcStatsMetricNames, key, outboundRtp.qualityLimitationCpu)
         setStats(
           stats,
           (prefix + 'QualityLimitationBandwidth') as RtcStatsMetricNames,
           key,
           outboundRtp.qualityLimitationBandwidth,
         )
-        setStats(
-          stats,
-          (prefix + 'SentWidth') as RtcStatsMetricNames,
-          key,
-          outboundRtp.frameWidth,
-        )
-        setStats(
-          stats,
-          (prefix + 'SentHeight') as RtcStatsMetricNames,
-          key,
-          outboundRtp.frameHeight,
-        )
-        setStats(
-          stats,
-          (prefix + 'SentFrames') as RtcStatsMetricNames,
-          key,
-          outboundRtp.framesSent,
-        )
-        setStats(
-          stats,
-          (prefix + 'SentFps') as RtcStatsMetricNames,
-          key,
-          outboundRtp.framesPerSecond,
-        )
-        setStats(
-          stats,
-          (prefix + 'FirCountReceived') as RtcStatsMetricNames,
-          key,
-          outboundRtp.firCountReceived,
-        )
-        setStats(
-          stats,
-          (prefix + 'PliCountReceived') as RtcStatsMetricNames,
-          key,
-          outboundRtp.pliCountReceived,
-        )
-        setStats(
-          stats,
-          (prefix + 'EncodeLatency') as RtcStatsMetricNames,
-          key,
-          outboundRtp.encodeLatency,
-        )
-        setStats(
-          stats,
-          (prefix + 'SentLatency') as RtcStatsMetricNames,
-          key,
-          outboundRtp.sentLatency,
-        )
+        setStats(stats, (prefix + 'SentWidth') as RtcStatsMetricNames, key, outboundRtp.frameWidth)
+        setStats(stats, (prefix + 'SentHeight') as RtcStatsMetricNames, key, outboundRtp.frameHeight)
+        setStats(stats, (prefix + 'SentFrames') as RtcStatsMetricNames, key, outboundRtp.framesSent)
+        setStats(stats, (prefix + 'SentFps') as RtcStatsMetricNames, key, outboundRtp.framesPerSecond)
+        setStats(stats, (prefix + 'FirCountReceived') as RtcStatsMetricNames, key, outboundRtp.firCountReceived)
+        setStats(stats, (prefix + 'PliCountReceived') as RtcStatsMetricNames, key, outboundRtp.pliCountReceived)
+        setStats(stats, (prefix + 'EncodeLatency') as RtcStatsMetricNames, key, outboundRtp.encodeLatency)
+        setStats(stats, (prefix + 'SentLatency') as RtcStatsMetricNames, key, outboundRtp.sentLatency)
       }
     }
   }

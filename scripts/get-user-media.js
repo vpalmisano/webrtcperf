@@ -1,4 +1,4 @@
-/* global webrtcperf, log, sleep, applyAudioTimestampWatermark, applyVideoTimestampWatermark */
+/* global webrtcperf, log, sleep, applyAudioTimestampWatermark */
 
 const applyOverride = (constraints, override) => {
   if (override) {
@@ -46,9 +46,7 @@ function overrideGetDisplayMedia(constraints) {
     return
   }
   applyOverride(constraints, window.GET_DISPLAY_MEDIA_OVERRIDE)
-  log(
-    `getDisplayMedia override result: ${JSON.stringify(constraints, null, 2)}`,
-  )
+  log(`getDisplayMedia override result: ${JSON.stringify(constraints, null, 2)}`)
 }
 
 async function applyGetDisplayMediaCrop(mediaStream) {
@@ -143,9 +141,7 @@ if (navigator.getUserMedia) {
 }
 
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-  const nativeGetUserMedia = navigator.mediaDevices.getUserMedia.bind(
-    navigator.mediaDevices,
-  )
+  const nativeGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices)
   navigator.mediaDevices.getUserMedia = async function (constraints, ...args) {
     log(`getUserMedia:`, constraints)
     try {
@@ -175,7 +171,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     }
 
     if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
-      mediaStream = applyVideoTimestampWatermark(mediaStream)
+      mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
     }
 
     return mediaStream
@@ -183,19 +179,12 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 }
 
 if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-  const nativeGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(
-    navigator.mediaDevices,
-  )
-  navigator.mediaDevices.getDisplayMedia = async function (
-    constraints,
-    ...args
-  ) {
+  const nativeGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
+  navigator.mediaDevices.getDisplayMedia = async function (constraints, ...args) {
     log(`getDisplayMedia:`, constraints)
     let stopFakeScreenshare = null
     if (window.PARAMS?.fakeScreenshare) {
-      stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(
-        window.PARAMS?.fakeScreenshare,
-      )
+      stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(window.PARAMS?.fakeScreenshare)
     }
     overrideGetDisplayMedia(constraints)
     if (window.PARAMS?.getDisplayMediaWaitTime > 0) {
@@ -211,8 +200,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
 }
 
 if (navigator.mediaDevices && navigator.mediaDevices.setCaptureHandleConfig) {
-  const setCaptureHandleConfig =
-    navigator.mediaDevices.setCaptureHandleConfig.bind(navigator.mediaDevices)
+  const setCaptureHandleConfig = navigator.mediaDevices.setCaptureHandleConfig.bind(navigator.mediaDevices)
   navigator.mediaDevices.setCaptureHandleConfig = config => {
     log('setCaptureHandleConfig', config)
     return setCaptureHandleConfig(config)

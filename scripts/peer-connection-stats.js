@@ -23,20 +23,15 @@ const maxOptional = (a, b, prop) => {
 }
 
 const calculateBitrate = (cur, old, timeDiff, fallback = 0) =>
-  cur > 0 && old > 0 && cur >= old
-    ? Math.round((8000 * (cur - old)) / timeDiff)
-    : fallback
+  cur > 0 && old > 0 && cur >= old ? Math.round((8000 * (cur - old)) / timeDiff) : fallback
 
-const calculateRate = (diff, timeDiff, fallback = 0) =>
-  diff > 0 ? Math.round((1000 * diff) / timeDiff) : fallback
+const calculateRate = (diff, timeDiff, fallback = 0) => (diff > 0 ? Math.round((1000 * diff) / timeDiff) : fallback)
 
 const positiveDiff = (cur, old) => Math.max(0, (cur || 0) - (old || 0))
 
-const calculateLossRate = (lost, total) =>
-  total > 0 ? (100 * lost) / total : undefined
+const calculateLossRate = (lost, total) => (total > 0 ? (100 * lost) / total : undefined)
 
-const calculateJitterBuffer = (jitterBufferDelay, count) =>
-  count > 0 ? jitterBufferDelay / count : undefined
+const calculateJitterBuffer = (jitterBufferDelay, count) => (count > 0 ? jitterBufferDelay / count : undefined)
 
 /**
  * updateTrackStats
@@ -77,18 +72,10 @@ const updateTrackStats = (trackId, track, t, values) => {
  * @param {raw} verbose
  * @param {boolean} verbose
  */
-async function getPeerConnectionStats(
-  id,
-  pc,
-  now,
-  raw = false,
-  verbose = false,
-) {
+async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false) {
   // log('getPeerConnectionStats', id, pc);
   const ret = {}
-  const transceivers = pc
-    .getTransceivers()
-    .filter(t => t && t.mid !== 'probator')
+  const transceivers = pc.getTransceivers().filter(t => t && t.mid !== 'probator')
   if (verbose) {
     log('getPeerConnectionStats', { id, pc, transceivers })
   }
@@ -96,15 +83,12 @@ async function getPeerConnectionStats(
     // outbound
     if (t.sender && t.sender.track) {
       const track = t.sender.track
-      const encodings = t.sender
-        .getParameters()
-        .encodings.filter(encoding => encoding.active)
+      const encodings = t.sender.getParameters().encodings.filter(encoding => encoding.active)
       if (track) {
         const trackId = track.id
         const stats = await pc.getStats(track)
         const values = {
-          enabled:
-            track.enabled && (track.kind === 'audio' || encodings.length > 0),
+          enabled: track.enabled && (track.kind === 'audio' || encodings.length > 0),
           outboundRtp: {},
         }
         if (track.kind === 'video') {
@@ -141,10 +125,8 @@ async function getPeerConnectionStats(
               // Get the RTCRemoteInboundRtpStreamStats.
               const remoteInboundRtpStreamStats = stats.get(s.remoteId)
               s.packetsLost = remoteInboundRtpStreamStats.packetsLost
-              s.totalRoundTripTime =
-                remoteInboundRtpStreamStats.totalRoundTripTime
-              s.roundTripTimeMeasurements =
-                remoteInboundRtpStreamStats.roundTripTimeMeasurements
+              s.totalRoundTripTime = remoteInboundRtpStreamStats.totalRoundTripTime
+              s.roundTripTimeMeasurements = remoteInboundRtpStreamStats.roundTripTimeMeasurements
             }
             const {
               kind,
@@ -186,9 +168,7 @@ async function getPeerConnectionStats(
               totalEncodeTime,
               totalPacketSendDelay,
               qualityLimitationResolutionChanges,
-              qualityLimitationDurationsCpu: qualityLimitationDurations
-                ? qualityLimitationDurations.cpu
-                : undefined,
+              qualityLimitationDurationsCpu: qualityLimitationDurations ? qualityLimitationDurations.cpu : undefined,
               qualityLimitationDurationsBandwidth: qualityLimitationDurations
                 ? qualityLimitationDurations.bandwidth
                 : undefined,
@@ -211,9 +191,7 @@ async function getPeerConnectionStats(
               'qualityLimitationDurationsCpu',
               'qualityLimitationDurationsBandwidth',
               'qualityLimitationDurationsTotal',
-            ].forEach(prop =>
-              sumOptional(values.outboundRtp, outboundRtp, prop),
-            )
+            ].forEach(prop => sumOptional(values.outboundRtp, outboundRtp, prop))
             ;[
               'framesSent',
               'frameWidth',
@@ -225,40 +203,25 @@ async function getPeerConnectionStats(
               'roundTripTimeMeasurements',
               'totalEncodeTime',
               'totalPacketSendDelay',
-            ].forEach(prop =>
-              maxOptional(values.outboundRtp, outboundRtp, prop),
-            )
+            ].forEach(prop => maxOptional(values.outboundRtp, outboundRtp, prop))
           } else if (s.type === 'remote-candidate') {
             values.remoteAddress = s.address
           }
         }
-        if (
-          values.outboundRtp.kind &&
-          values.outboundRtp.bytesSent + values.outboundRtp.headerBytesSent > 0
-        ) {
+        if (values.outboundRtp.kind && values.outboundRtp.bytesSent + values.outboundRtp.headerBytesSent > 0) {
           const prevStats = TrackStats.get(trackId)
           if (prevStats) {
             // bitrate
             values.outboundRtp.bitrate = calculateBitrate(
               values.outboundRtp.bytesSent + values.outboundRtp.headerBytesSent,
-              prevStats.values.outboundRtp.bytesSent +
-                prevStats.values.outboundRtp.headerBytesSent,
+              prevStats.values.outboundRtp.bytesSent + prevStats.values.outboundRtp.headerBytesSent,
               now - prevStats.t,
               prevStats.values.outboundRtp.bitrate,
             )
             // loss rate
-            const lost = positiveDiff(
-              values.outboundRtp.packetsLost,
-              prevStats.values.outboundRtp.packetsLost,
-            )
-            const sent = positiveDiff(
-              values.outboundRtp.packetsSent,
-              prevStats.values.outboundRtp.packetsSent,
-            )
-            values.outboundRtp.packetsLossRate = calculateLossRate(
-              lost,
-              lost + sent,
-            )
+            const lost = positiveDiff(values.outboundRtp.packetsLost, prevStats.values.outboundRtp.packetsLost)
+            const sent = positiveDiff(values.outboundRtp.packetsSent, prevStats.values.outboundRtp.packetsSent)
+            values.outboundRtp.packetsLossRate = calculateLossRate(lost, lost + sent)
             // quality limitations
             const totalQualityLimitationDurationsDiff = positiveDiff(
               values.outboundRtp.qualityLimitationDurationsTotal,
@@ -271,46 +234,30 @@ async function getPeerConnectionStats(
               )
               const qualityLimitationDurationsBandwidthDiff = positiveDiff(
                 values.outboundRtp.qualityLimitationDurationsBandwidth,
-                prevStats.values.outboundRtp
-                  .qualityLimitationDurationsBandwidth,
+                prevStats.values.outboundRtp.qualityLimitationDurationsBandwidth,
               )
               values.outboundRtp.qualityLimitationCpu =
-                (100 * qualityLimitationDurationsCpuDiff) /
-                totalQualityLimitationDurationsDiff
+                (100 * qualityLimitationDurationsCpuDiff) / totalQualityLimitationDurationsDiff
               values.outboundRtp.qualityLimitationBandwidth =
-                (100 * qualityLimitationDurationsBandwidthDiff) /
-                totalQualityLimitationDurationsDiff
+                (100 * qualityLimitationDurationsBandwidthDiff) / totalQualityLimitationDurationsDiff
             }
             // round trip time
             values.outboundRtp.roundTripTime =
-              (values.outboundRtp.totalRoundTripTime -
-                prevStats.values.outboundRtp.totalRoundTripTime) /
-              (values.outboundRtp.roundTripTimeMeasurements -
-                prevStats.values.outboundRtp.roundTripTimeMeasurements)
+              (values.outboundRtp.totalRoundTripTime - prevStats.values.outboundRtp.totalRoundTripTime) /
+              (values.outboundRtp.roundTripTimeMeasurements - prevStats.values.outboundRtp.roundTripTimeMeasurements)
             // encode and sent latency
             if (values.outboundRtp.kind === 'video') {
-              const packetsSentDiff =
-                values.outboundRtp.packetsSent -
-                prevStats.values.outboundRtp.packetsSent
+              const packetsSentDiff = values.outboundRtp.packetsSent - prevStats.values.outboundRtp.packetsSent
               values.outboundRtp.encodeLatency =
-                (values.outboundRtp.totalEncodeTime -
-                  prevStats.values.outboundRtp.totalEncodeTime) /
-                packetsSentDiff
+                (values.outboundRtp.totalEncodeTime - prevStats.values.outboundRtp.totalEncodeTime) / packetsSentDiff
               values.outboundRtp.sentLatency =
-                (values.outboundRtp.totalPacketSendDelay -
-                  prevStats.values.outboundRtp.totalPacketSendDelay) /
+                (values.outboundRtp.totalPacketSendDelay - prevStats.values.outboundRtp.totalPacketSendDelay) /
                 packetsSentDiff
             }
           }
           values.outboundRtp = filterUndefined(values.outboundRtp)
           if (verbose) {
-            log(
-              `Track ${track.id} (${track.kind}): ${JSON.stringify(
-                values.outboundRtp,
-                null,
-                2,
-              )}`,
-            )
+            log(`Track ${track.id} (${track.kind}): ${JSON.stringify(values.outboundRtp, null, 2)}`)
           }
           ret[trackId] = values
           updateTrackStats(trackId, track, now, values)
@@ -333,19 +280,13 @@ async function getPeerConnectionStats(
         for (const s of stats.values()) {
           if (raw) {
             if (!values.raw) {
-              values.raw = [
-                { contributingSources: t.receiver.getContributingSources() },
-              ]
+              values.raw = [{ contributingSources: t.receiver.getContributingSources() }]
             }
             values.raw.push(s)
           }
           if (s.type === 'codec') {
             values.codec = s.mimeType.split('/')[1].toLowerCase()
-          } else if (
-            s.type === 'inbound-rtp' &&
-            s.kind === track.kind &&
-            s.bytesReceived + s.headerBytesReceived > 0
-          ) {
+          } else if (s.type === 'inbound-rtp' && s.kind === track.kind && s.bytesReceived + s.headerBytesReceived > 0) {
             const {
               kind,
               packetsLost,
@@ -419,69 +360,42 @@ async function getPeerConnectionStats(
             })
           }
         }
-        if (
-          values.inboundRtp.kind &&
-          values.inboundRtp.bytesReceived +
-            values.inboundRtp.headerBytesReceived >
-            0
-        ) {
+        if (values.inboundRtp.kind && values.inboundRtp.bytesReceived + values.inboundRtp.headerBytesReceived > 0) {
           const prevStats = TrackStats.get(trackId)
           if (prevStats) {
             // Update bitrate.
             values.inboundRtp.bitrate = calculateBitrate(
-              values.inboundRtp.bytesReceived +
-                values.inboundRtp.headerBytesReceived,
-              prevStats.values.inboundRtp.bytesReceived +
-                prevStats.values.inboundRtp.headerBytesReceived,
+              values.inboundRtp.bytesReceived + values.inboundRtp.headerBytesReceived,
+              prevStats.values.inboundRtp.bytesReceived + prevStats.values.inboundRtp.headerBytesReceived,
               now - prevStats.t,
             )
             // Update video framesPerSecond.
-            if (
-              values.inboundRtp.kind === 'video' &&
-              values.inboundRtp.keyFramesDecoded > 0
-            ) {
-              const frames = positiveDiff(
-                values.inboundRtp.framesReceived,
-                prevStats.values.inboundRtp.framesReceived,
-              )
-              values.inboundRtp.framesPerSecond = calculateRate(
-                frames,
-                now - prevStats.t,
-              )
+            if (values.inboundRtp.kind === 'video' && values.inboundRtp.keyFramesDecoded > 0) {
+              const frames = positiveDiff(values.inboundRtp.framesReceived, prevStats.values.inboundRtp.framesReceived)
+              values.inboundRtp.framesPerSecond = calculateRate(frames, now - prevStats.t)
             }
             // Update packet loss rate.
-            const lost = positiveDiff(
-              values.inboundRtp.packetsLost,
-              prevStats.values.inboundRtp.packetsLost,
-            )
+            const lost = positiveDiff(values.inboundRtp.packetsLost, prevStats.values.inboundRtp.packetsLost)
             const received = positiveDiff(
               values.inboundRtp.packetsReceived,
               prevStats.values.inboundRtp.packetsReceived,
             )
-            values.inboundRtp.packetsLossRate = calculateLossRate(
-              lost,
-              lost + received,
-            )
+            values.inboundRtp.packetsLossRate = calculateLossRate(lost, lost + received)
             // Update jitter buffer.
             values.inboundRtp.jitterBuffer = calculateJitterBuffer(
-              values.inboundRtp.jitterBufferDelay -
-                prevStats.values.inboundRtp.jitterBufferDelay,
-              values.inboundRtp.jitterBufferEmittedCount -
-                prevStats.values.inboundRtp.jitterBufferEmittedCount,
+              values.inboundRtp.jitterBufferDelay - prevStats.values.inboundRtp.jitterBufferDelay,
+              values.inboundRtp.jitterBufferEmittedCount - prevStats.values.inboundRtp.jitterBufferEmittedCount,
             )
             // Update round trip time.
             values.inboundRtp.transportRoundTripTime =
               (values.inboundRtp.transportTotalRoundTripTime -
                 prevStats.values.inboundRtp.transportTotalRoundTripTime) /
-              (values.inboundRtp.transportResponsesReceived -
-                prevStats.values.inboundRtp.transportResponsesReceived)
+              (values.inboundRtp.transportResponsesReceived - prevStats.values.inboundRtp.transportResponsesReceived)
             // Update latency.
             if (values.inboundRtp.kind === 'video') {
               values.inboundRtp.decodeLatency =
-                (values.inboundRtp.totalDecodeTime -
-                  prevStats.values.inboundRtp.totalDecodeTime) /
-                (values.inboundRtp.framesDecoded -
-                  prevStats.values.inboundRtp.framesDecoded)
+                (values.inboundRtp.totalDecodeTime - prevStats.values.inboundRtp.totalDecodeTime) /
+                (values.inboundRtp.framesDecoded - prevStats.values.inboundRtp.framesDecoded)
             }
             // Update audio metrics.
             if (values.inboundRtp.kind === 'audio') {
@@ -494,19 +408,12 @@ async function getPeerConnectionStats(
                 values.inboundRtp.totalSamplesDuration,
                 prevStats.values.inboundRtp.totalSamplesDuration,
               )
-              values.inboundRtp.audioLevel =
-                samples > 0 ? Math.sqrt(energy / samples) : undefined
+              values.inboundRtp.audioLevel = samples > 0 ? Math.sqrt(energy / samples) : undefined
             }
           }
           values.inboundRtp = filterUndefined(values.inboundRtp)
           if (verbose) {
-            log(
-              `Track ${track.id} (${track.kind}): ${JSON.stringify(
-                values.inboundRtp,
-                null,
-                2,
-              )}`,
-            )
+            log(`Track ${track.id} (${track.kind}): ${JSON.stringify(values.inboundRtp, null, 2)}`)
           }
           ret[trackId] = values
           updateTrackStats(trackId, track, now, values)
@@ -561,10 +468,7 @@ const isSenderDisplayTrack = videoTrack => {
 
   if (supportedConstraints?.mediaSource) {
     // supports mediaSource constraint (firefox)
-    return (
-      trackConstraints.mediaSource === 'window' ||
-      trackConstraints.mediaSource === 'screen'
-    )
+    return trackConstraints.mediaSource === 'window' || trackConstraints.mediaSource === 'screen'
   } else if (trackSettings.displaySurface || trackSettings.logicalSurface) {
     return true
   } else {

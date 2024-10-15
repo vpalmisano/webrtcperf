@@ -44,10 +44,7 @@ webrtcperf.setupFakeScreenshare = ({
   const slidesElements = []
   for (let i = 0; i < slides; i++) {
     const img = document.createElement('img')
-    img.setAttribute(
-      'src',
-      `https://picsum.photos/seed/${i + 1}/${width}/${height}`,
-    )
+    img.setAttribute('src', `https://picsum.photos/seed/${i + 1}/${width}/${height}`)
     img.setAttribute(
       'style',
       `position: absolute; width: ${width}px; height: ${height}px; transform: translateX(100%); opacity: 0;`,

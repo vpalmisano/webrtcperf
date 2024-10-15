@@ -20,10 +20,7 @@ export { FastStats }
 
 const log = logger('webrtcperf:stats')
 
-function calculateFailAmountPercentile(
-  stat: FastStats,
-  percentile = 95,
-): number {
+function calculateFailAmountPercentile(stat: FastStats, percentile = 95): number {
   return Math.round(stat.percentile(percentile))
 }
 
@@ -452,8 +449,7 @@ export class Stats extends events.EventEmitter {
     this.statsPath = statsPath
     this.detailedStatsPath = detailedStatsPath
     this.prometheusPushgateway = prometheusPushgateway
-    this.prometheusPushgatewayJobName =
-      prometheusPushgatewayJobName || 'default'
+    this.prometheusPushgatewayJobName = prometheusPushgatewayJobName || 'default'
     this.prometheusPushgatewayAuth = prometheusPushgatewayAuth || undefined
     this.prometheusPushgatewayGzip = prometheusPushgatewayGzip
     this.showStats = showStats !== undefined ? showStats : true
@@ -462,13 +458,7 @@ export class Stats extends events.EventEmitter {
     this.rtcStatsTimeout = Math.max(rtcStatsTimeout, this.statsInterval)
     if (customMetrics.trim()) {
       this.customMetrics = json5.parse(customMetrics)
-      log.debug(
-        `using customMetrics: ${JSON.stringify(
-          this.customMetrics,
-          undefined,
-          2,
-        )}`,
-      )
+      log.debug(`using customMetrics: ${JSON.stringify(this.customMetrics, undefined, 2)}`)
     }
 
     this.collectedStats = this.initCollectedStats()
@@ -494,9 +484,7 @@ export class Stats extends events.EventEmitter {
     this.detailedStatsWriter = null
     if (alertRules.trim()) {
       this.alertRules = json5.parse(alertRules)
-      log.debug(
-        `using alertRules: ${JSON.stringify(this.alertRules, undefined, 2)}`,
-      )
+      log.debug(`using alertRules: ${JSON.stringify(this.alertRules, undefined, 2)}`)
     }
     this.alertRulesFilename = alertRulesFilename
     this.alertRulesFailPercentile = alertRulesFailPercentile
@@ -520,15 +508,10 @@ export class Stats extends events.EventEmitter {
         },
         maxBodyLength: 20000000,
         transformRequest: [
-          ...(axios.defaults
-            .transformRequest as axios.AxiosRequestTransformer[]),
+          ...(axios.defaults.transformRequest as axios.AxiosRequestTransformer[]),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (data: any, headers?: axios.AxiosRequestHeaders): any => {
-            if (
-              headers &&
-              typeof data === 'string' &&
-              data.length > 16 * 1024
-            ) {
+            if (headers && typeof data === 'string' && data.length > 16 * 1024) {
               headers['Content-Encoding'] = 'gzip'
               return zlib.gzipSync(data)
             } else {
@@ -556,9 +539,7 @@ export class Stats extends events.EventEmitter {
   }
 
   private get statsNames(): string[] {
-    return Object.keys(PageStatsNames)
-      .concat(Object.keys(RtcStatsMetricNames))
-      .concat(Object.keys(this.customMetrics))
+    return Object.keys(PageStatsNames).concat(Object.keys(RtcStatsMetricNames)).concat(Object.keys(this.customMetrics))
   }
 
   /**
@@ -620,10 +601,7 @@ export class Stats extends events.EventEmitter {
 
     if (this.statsPath) {
       log.debug(`Logging stats into ${this.statsPath}`)
-      const headers = this.statsNames.reduce(
-        (v: string[], name) => v.concat(formatStatsColumns(name)),
-        [],
-      )
+      const headers = this.statsNames.reduce((v: string[], name) => v.concat(formatStatsColumns(name)), [])
       this.statsWriter = new StatsWriter(this.statsPath, headers)
     }
 
@@ -781,11 +759,7 @@ export class Stats extends events.EventEmitter {
       await this.deletePushgatewayStats()
     }
 
-    this.scheduler = new Scheduler(
-      'stats',
-      this.statsInterval,
-      this.collectStats.bind(this),
-    )
+    this.scheduler = new Scheduler('stats', this.statsInterval, this.collectStats.bind(this))
     this.scheduler.start()
   }
 
@@ -798,11 +772,7 @@ export class Stats extends events.EventEmitter {
         jobName: this.prometheusPushgatewayJobName,
       })
       if ((body as string).length) {
-        log.warn(
-          `Pushgateway delete error ${
-            (resp as http.ServerResponse).statusCode
-          }: ${body as string}`,
-        )
+        log.warn(`Pushgateway delete error ${(resp as http.ServerResponse).statusCode}: ${body as string}`)
       }
     } catch (err) {
       log.error(`Pushgateway delete error: ${(err as Error).stack}`)
@@ -831,8 +801,7 @@ export class Stats extends events.EventEmitter {
       stats.byParticipantAndTrack = {}
     })
     for (const session of this.sessions.values()) {
-      this.collectedStatsConfig.url =
-        `${hideAuth(session.url)}?${session.urlQuery}` || ''
+      this.collectedStatsConfig.url = `${hideAuth(session.url)}?${session.urlQuery}` || ''
       this.collectedStatsConfig.pages += session.pages.size || 0
       const sessionStats = await session.updateStats(now)
       for (const [name, obj] of Object.entries(sessionStats)) {
@@ -850,8 +819,7 @@ export class Stats extends events.EventEmitter {
               if (typeof value === 'number' && isFinite(value as any)) {
                 collectedStats.all.push(value as number)
                 // Push host label.
-                const { trackId, hostName, participantName } =
-                  parseRtStatKey(key)
+                const { trackId, hostName, participantName } = parseRtStatKey(key)
                 let stats = collectedStats.byHost[hostName]
                 if (!stats) {
                   stats = collectedStats.byHost[hostName] = new FastStats()
@@ -859,9 +827,7 @@ export class Stats extends events.EventEmitter {
                 stats.push(value as number)
                 // Push participant and track values.
                 if (this.enableDetailedStats && participantName) {
-                  collectedStats.byParticipantAndTrack[
-                    `${participantName}:${trackId || ''}`
-                  ] = value as number
+                  collectedStats.byParticipantAndTrack[`${participantName}:${trackId || ''}`] = value as number
                 }
               } else if (typeof value === 'string') {
                 // Codec stats.
@@ -875,10 +841,7 @@ export class Stats extends events.EventEmitter {
             }
           }
         } catch (err) {
-          log.error(
-            `session getStats name: ${name} error: ${(err as Error).stack}`,
-            err,
-          )
+          log.error(`session getStats name: ${name} error: ${(err as Error).stack}`, err)
         }
       }
     }
@@ -918,11 +881,9 @@ export class Stats extends events.EventEmitter {
           }
           collectedStats.byCodec[codec].push(values)
         })
-        Object.entries(stats.byParticipantAndTrack).forEach(
-          ([label, value]) => {
-            collectedStats.byParticipantAndTrack[label] = value
-          },
-        )
+        Object.entries(stats.byParticipantAndTrack).forEach(([label, value]) => {
+          collectedStats.byParticipantAndTrack[label] = value
+        })
       })
     }
     this.emit('stats', this.collectedStats)
@@ -945,11 +906,9 @@ export class Stats extends events.EventEmitter {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           pushStats[name].byCodec[codec] = (stat as any).data
         })
-        Object.entries(stats.byParticipantAndTrack).forEach(
-          ([label, value]) => {
-            pushStats[name].byParticipantAndTrack[label] = value
-          },
-        )
+        Object.entries(stats.byParticipantAndTrack).forEach(([label, value]) => {
+          pushStats[name].byParticipantAndTrack[label] = value
+        })
       }
       try {
         const res = await this.pushStatsInstance.put('/collected-stats', {
@@ -978,8 +937,7 @@ export class Stats extends events.EventEmitter {
   async writeStats() {
     if (!this.statsWriter) return
     const values = this.statsNames.reduce(
-      (v: string[], name) =>
-        v.concat(formatStats(this.collectedStats[name].all, true) as string[]),
+      (v: string[], name) => v.concat(formatStats(this.collectedStats[name].all, true) as string[]),
       [],
     )
     await this.statsWriter.push(values)
@@ -1051,232 +1009,59 @@ export class Stats extends events.EventEmitter {
       sprintfStatsHeader() +
       sprintfStats('System CPU', stats.usedCpu, '.2f', '%', undefined, true) +
       sprintfStats('System GPU', stats.usedGpu, '.2f', '%', undefined, true) +
-      sprintfStats(
-        'System Memory',
-        stats.usedMemory,
-        '.2f',
-        '%',
-        undefined,
-        true,
-      ) +
+      sprintfStats('System Memory', stats.usedMemory, '.2f', '%', undefined, true) +
       sprintfStats('CPU/page', stats.cpu, '.2f', '%') +
       sprintfStats('Memory/page', stats.memory, '.2f', 'MB') +
       sprintfStats('Pages', stats.pages, 'd', '') +
       sprintfStats('Errors', stats.errors, 'd', '') +
       sprintfStats('Warnings', stats.warnings, 'd', '') +
       sprintfStats('Peer Connections', stats.peerConnections, 'd', '') +
-      sprintfStats(
-        'audioSubscribeDelay',
-        stats.audioSubscribeDelay,
-        'd',
-        'ms',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'videoSubscribeDelay',
-        stats.videoSubscribeDelay,
-        'd',
-        'ms',
-        undefined,
-        true,
-      ) +
+      sprintfStats('audioSubscribeDelay', stats.audioSubscribeDelay, 'd', 'ms', undefined, true) +
+      sprintfStats('videoSubscribeDelay', stats.videoSubscribeDelay, 'd', 'ms', undefined, true) +
       // inbound audio
       sprintfStatsTitle('Inbound audio') +
       sprintfStats('received', stats.audioBytesReceived, '.2f', 'MB', 1e-6) +
       sprintfStats('rate', stats.audioRecvBitrates, '.2f', 'Kbps', 1e-3) +
-      sprintfStats(
-        'lost',
-        stats.audioRecvPacketsLost,
-        '.2f',
-        '%',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'jitter',
-        stats.audioRecvJitter,
-        '.2f',
-        's',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'avgJitterBufferDelay',
-        stats.audioRecvAvgJitterBufferDelay,
-        '.2f',
-        'ms',
-        1e3,
-        true,
-      ) +
+      sprintfStats('lost', stats.audioRecvPacketsLost, '.2f', '%', undefined, true) +
+      sprintfStats('jitter', stats.audioRecvJitter, '.2f', 's', undefined, true) +
+      sprintfStats('avgJitterBufferDelay', stats.audioRecvAvgJitterBufferDelay, '.2f', 'ms', 1e3, true) +
       // inbound video
       sprintfStatsTitle('Inbound video') +
       sprintfStats('received', stats.videoRecvBytes, '.2f', 'MB', 1e-6) +
       sprintfStats('decoded', stats.videoFramesDecoded, 'd', 'frames') +
       sprintfStats('rate', stats.videoRecvBitrates, '.2f', 'Kbps', 1e-3) +
-      sprintfStats(
-        'lost',
-        stats.videoRecvPacketsLost,
-        '.2f',
-        '%',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'jitter',
-        stats.videoRecvJitter,
-        '.2f',
-        's',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'avgJitterBufferDelay',
-        stats.videoRecvAvgJitterBufferDelay,
-        '.2f',
-        'ms',
-        1e3,
-        true,
-      ) +
+      sprintfStats('lost', stats.videoRecvPacketsLost, '.2f', '%', undefined, true) +
+      sprintfStats('jitter', stats.videoRecvJitter, '.2f', 's', undefined, true) +
+      sprintfStats('avgJitterBufferDelay', stats.videoRecvAvgJitterBufferDelay, '.2f', 'ms', 1e3, true) +
       sprintfStats('width', stats.videoRecvWidth, 'd', 'px', undefined, true) +
-      sprintfStats(
-        'height',
-        stats.videoRecvHeight,
-        'd',
-        'px',
-        undefined,
-        true,
-      ) +
+      sprintfStats('height', stats.videoRecvHeight, 'd', 'px', undefined, true) +
       sprintfStats('fps', stats.videoRecvFps, 'd', 'fps', undefined, true) +
-      sprintfStats(
-        'firCountSent',
-        stats.firCountSent,
-        'd',
-        '',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'pliCountSent',
-        stats.pliCountSent,
-        'd',
-        '',
-        undefined,
-        true,
-      ) +
+      sprintfStats('firCountSent', stats.firCountSent, 'd', '', undefined, true) +
+      sprintfStats('pliCountSent', stats.pliCountSent, 'd', '', undefined, true) +
       // outbound audio
       sprintfStatsTitle('Outbound audio') +
       sprintfStats('sent', stats.audioBytesSent, '.2f', 'MB', 1e-6) +
-      sprintfStats(
-        'retransmitted',
-        stats.audioRetransmittedBytesSent,
-        '.2f',
-        'MB',
-        1e-6,
-      ) +
+      sprintfStats('retransmitted', stats.audioRetransmittedBytesSent, '.2f', 'MB', 1e-6) +
       sprintfStats('rate', stats.audioSentBitrates, '.2f', 'Kbps', 1e-3) +
-      sprintfStats(
-        'lost',
-        stats.audioSentPacketsLost,
-        '.2f',
-        '%',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'roundTripTime',
-        stats.audioSentRoundTripTime,
-        '.3f',
-        's',
-        undefined,
-        true,
-      ) +
+      sprintfStats('lost', stats.audioSentPacketsLost, '.2f', '%', undefined, true) +
+      sprintfStats('roundTripTime', stats.audioSentRoundTripTime, '.3f', 's', undefined, true) +
       // outbound video
       sprintfStatsTitle('Outbound video') +
       sprintfStats('sent', stats.videoSentBytes, '.2f', 'MB', 1e-6) +
-      sprintfStats(
-        'retransmitted',
-        stats.videoSentRetransmittedBytes,
-        '.2f',
-        'MB',
-        1e-6,
-      ) +
+      sprintfStats('retransmitted', stats.videoSentRetransmittedBytes, '.2f', 'MB', 1e-6) +
       sprintfStats('rate', stats.videoSentBitrates, '.2f', 'Kbps', 1e-3) +
-      sprintfStats(
-        'lost',
-        stats.videoSentPacketsLost,
-        '.2f',
-        '%',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'roundTripTime',
-        stats.videoSentRoundTripTime,
-        '.3f',
-        's',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'qualityLimitResolutionChanges',
-        stats.videoQualityLimitationResolutionChanges,
-        'd',
-        '',
-      ) +
-      sprintfStats(
-        'qualityLimitationCpu',
-        stats.videoQualityLimitationCpu,
-        'd',
-        '%',
-      ) +
-      sprintfStats(
-        'qualityLimitationBandwidth',
-        stats.videoQualityLimitationBandwidth,
-        'd',
-        '%',
-      ) +
-      sprintfStats(
-        'sentActiveSpatialLayers',
-        stats.videoSentActiveSpatialLayers,
-        'd',
-        'layers',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'sentMaxBitrate',
-        stats.videoSentMaxBitrate,
-        '.2f',
-        'Kbps',
-        1e-3,
-      ) +
+      sprintfStats('lost', stats.videoSentPacketsLost, '.2f', '%', undefined, true) +
+      sprintfStats('roundTripTime', stats.videoSentRoundTripTime, '.3f', 's', undefined, true) +
+      sprintfStats('qualityLimitResolutionChanges', stats.videoQualityLimitationResolutionChanges, 'd', '') +
+      sprintfStats('qualityLimitationCpu', stats.videoQualityLimitationCpu, 'd', '%') +
+      sprintfStats('qualityLimitationBandwidth', stats.videoQualityLimitationBandwidth, 'd', '%') +
+      sprintfStats('sentActiveSpatialLayers', stats.videoSentActiveSpatialLayers, 'd', 'layers', undefined, true) +
+      sprintfStats('sentMaxBitrate', stats.videoSentMaxBitrate, '.2f', 'Kbps', 1e-3) +
       sprintfStats('width', stats.videoSentWidth, 'd', 'px', undefined, true) +
-      sprintfStats(
-        'height',
-        stats.videoSentHeight,
-        'd',
-        'px',
-        undefined,
-        true,
-      ) +
+      sprintfStats('height', stats.videoSentHeight, 'd', 'px', undefined, true) +
       sprintfStats('fps', stats.videoSentFps, 'd', 'fps', undefined, true) +
-      sprintfStats(
-        'firCountReceived',
-        stats.videoFirCountReceived,
-        'd',
-        '',
-        undefined,
-        true,
-      ) +
-      sprintfStats(
-        'pliCountReceived',
-        stats.videoPliCountReceived,
-        'd',
-        '',
-        undefined,
-        true,
-      )
+      sprintfStats('firCountReceived', stats.videoFirCountReceived, 'd', '', undefined, true) +
+      sprintfStats('pliCountReceived', stats.videoPliCountReceived, 'd', '', undefined, true)
     if (this.alertRules) {
       const report = this.formatAlertRulesReport()
       if (report.length) {
@@ -1306,15 +1091,9 @@ export class Stats extends events.EventEmitter {
         return
       }
 
-      const setStats = (
-        stats: FastStats,
-        host: string,
-        codec: string,
-      ): void => {
+      const setStats = (stats: FastStats, host: string, codec: string): void => {
         const labels = { host, codec, datetime, ...this.customMetricsLabels }
-        const { length, sum, mean, stddev, p5, p95, min, max } = formatStats(
-          stats,
-        ) as StatsData
+        const { length, sum, mean, stddev, p5, p95, min, max } = formatStats(stats) as StatsData
         metric.length.set(labels, length)
         metric.sum.set(labels, sum)
         metric.mean.set(labels, mean)
@@ -1326,31 +1105,25 @@ export class Stats extends events.EventEmitter {
       }
 
       setStats(this.collectedStats[name].all, 'all', 'all')
-      Object.entries(this.collectedStats[name].byHost).forEach(
-        ([host, stats]) => {
-          setStats(stats, host, 'all')
-        },
-      )
-      Object.entries(this.collectedStats[name].byCodec).forEach(
-        ([codec, stats]) => {
-          setStats(stats, 'all', codec)
-        },
-      )
+      Object.entries(this.collectedStats[name].byHost).forEach(([host, stats]) => {
+        setStats(stats, host, 'all')
+      })
+      Object.entries(this.collectedStats[name].byCodec).forEach(([codec, stats]) => {
+        setStats(stats, 'all', codec)
+      })
       if (metric.value) {
-        Object.entries(this.collectedStats[name].byParticipantAndTrack).forEach(
-          ([label, value]) => {
-            const [participantName, trackId] = label.split(':', 2)
-            metric.value?.set(
-              {
-                participantName,
-                trackId,
-                datetime,
-                ...this.customMetricsLabels,
-              },
-              value,
-            )
-          },
-        )
+        Object.entries(this.collectedStats[name].byParticipantAndTrack).forEach(([label, value]) => {
+          const [participantName, trackId] = label.split(':', 2)
+          metric.value?.set(
+            {
+              participantName,
+              trackId,
+              datetime,
+              ...this.customMetricsLabels,
+            },
+            value,
+          )
+        })
       }
 
       // Set alerts metrics.
@@ -1368,17 +1141,12 @@ export class Stats extends events.EventEmitter {
           }
           for (const ruleValue of ruleValues) {
             // Send rule values as metrics.
-            if (
-              ruleValue.$after !== undefined &&
-              elapsedSeconds < ruleValue.$after
-            ) {
+            if (ruleValue.$after !== undefined && elapsedSeconds < ruleValue.$after) {
               continue
             }
             const ruleName = `alert_${name}_${ruleKey}`
             const ruleObj = this.metrics[name].alertRules[ruleName]
-            const remove =
-              ruleValue.$before !== undefined &&
-              elapsedSeconds > ruleValue.$before
+            const remove = ruleValue.$before !== undefined && elapsedSeconds > ruleValue.$before
             // Send rule report as metric.
             const ruleDesc = this.getAlertRuleDesc(ruleKey, ruleValue)
             const report = this.alertRulesReport.get(name)
@@ -1480,11 +1248,7 @@ export class Stats extends events.EventEmitter {
         jobName: this.prometheusPushgatewayJobName,
       })
       if ((body as string).length) {
-        log.warn(
-          `Pushgateway error ${(resp as http.ServerResponse).statusCode}: ${
-            body as string
-          }`,
-        )
+        log.warn(`Pushgateway error ${(resp as http.ServerResponse).statusCode}: ${body as string}`)
       }
     } catch (err) {
       log.error(`Pushgateway push error: ${(err as Error).stack}`)
@@ -1553,10 +1317,8 @@ export class Stats extends events.EventEmitter {
         let ruleElapsedSeconds = elapsedSeconds
         for (const ruleValue of ruleValues) {
           if (
-            (ruleValue.$after !== undefined &&
-              elapsedSeconds < ruleValue.$after) ||
-            (ruleValue.$before !== undefined &&
-              elapsedSeconds > ruleValue.$before)
+            (ruleValue.$after !== undefined && elapsedSeconds < ruleValue.$after) ||
+            (ruleValue.$before !== undefined && elapsedSeconds > ruleValue.$before)
           ) {
             continue
           }
@@ -1572,14 +1334,10 @@ export class Stats extends events.EventEmitter {
           let failAmount = 0
 
           if (
-            (ruleValue.$skip_lt !== undefined &&
-              checkValue < ruleValue.$skip_lt) ||
-            (ruleValue.$skip_lte !== undefined &&
-              checkValue <= ruleValue.$skip_lte) ||
-            (ruleValue.$skip_gt !== undefined &&
-              checkValue > ruleValue.$skip_gt) ||
-            (ruleValue.$skip_gte !== undefined &&
-              checkValue >= ruleValue.$skip_gte)
+            (ruleValue.$skip_lt !== undefined && checkValue < ruleValue.$skip_lt) ||
+            (ruleValue.$skip_lte !== undefined && checkValue <= ruleValue.$skip_lte) ||
+            (ruleValue.$skip_gt !== undefined && checkValue > ruleValue.$skip_gt) ||
+            (ruleValue.$skip_gte !== undefined && checkValue >= ruleValue.$skip_gte)
           ) {
             continue
           }
@@ -1616,16 +1374,7 @@ export class Stats extends events.EventEmitter {
             }
           }
           // Report if failed or not.
-          this.updateRulesReport(
-            key,
-            checkValue,
-            ruleDesc,
-            failed,
-            failAmount,
-            now,
-            ruleElapsedSeconds,
-            failPercentile,
-          )
+          this.updateRulesReport(key, checkValue, ruleDesc, failed, failAmount, now, ruleElapsedSeconds, failPercentile)
         }
       }
     }
@@ -1676,15 +1425,10 @@ export class Stats extends events.EventEmitter {
     } else {
       reportValue.lastFailed = 0
     }
-    reportValue.totalFailsTimePerc = Math.round(
-      (100 * reportValue.totalFailsTime) / elapsedSeconds,
-    )
+    reportValue.totalFailsTimePerc = Math.round((100 * reportValue.totalFailsTime) / elapsedSeconds)
     reportValue.valueStats.push(checkValue)
     reportValue.failAmountStats.push(failAmount)
-    reportValue.failAmountPercentile = calculateFailAmountPercentile(
-      reportValue.failAmountStats,
-      failPercentile,
-    )
+    reportValue.failAmountPercentile = calculateFailAmountPercentile(reportValue.failAmountStats, failPercentile)
   }
 
   getAlertRulesTags(): Map<string, FastStats> | undefined {
@@ -1722,10 +1466,7 @@ export class Stats extends events.EventEmitter {
       return ''
     }
     // Update tags values.
-    const alertRulesReportTags = this.getAlertRulesTags() as Map<
-      string,
-      FastStats
-    >
+    const alertRulesReportTags = this.getAlertRulesTags() as Map<string, FastStats>
     // JSON output.
     if (ext === 'json') {
       const out = {
@@ -1745,14 +1486,8 @@ export class Stats extends events.EventEmitter {
       }
       for (const [key, report] of this.alertRulesReport.entries()) {
         for (const [reportDesc, reportValue] of report.entries()) {
-          const {
-            totalFails,
-            totalFailsTime,
-            valueStats,
-            totalFailsTimePerc,
-            failAmountStats,
-            failAmountPercentile,
-          } = reportValue
+          const { totalFails, totalFailsTime, valueStats, totalFailsTimePerc, failAmountStats, failAmountPercentile } =
+            reportValue
           if (totalFails) {
             out.reports[`${key} ${reportDesc}`] = {
               totalFails,
@@ -1768,10 +1503,7 @@ export class Stats extends events.EventEmitter {
         }
       }
       for (const [tag, stat] of alertRulesReportTags.entries()) {
-        out.tags[tag] = calculateFailAmountPercentile(
-          stat,
-          this.alertRulesFailPercentile,
-        )
+        out.tags[tag] = calculateFailAmountPercentile(stat, this.alertRulesFailPercentile)
       }
       return JSON.stringify(out, null, 2)
     }
@@ -1811,12 +1543,7 @@ export class Stats extends events.EventEmitter {
     }
     for (const [key, report] of this.alertRulesReport.entries()) {
       for (const [reportDesc, reportValue] of report.entries()) {
-        const {
-          totalFails,
-          totalFailsTime,
-          failAmountPercentile,
-          totalFailsTimePerc,
-        } = reportValue
+        const { totalFails, totalFailsTime, failAmountPercentile, totalFailsTimePerc } = reportValue
         if (totalFails && totalFailsTimePerc > 0) {
           if (ext) {
             // eslint-disable-next-line
@@ -1854,16 +1581,12 @@ export class Stats extends events.EventEmitter {
       out += sprintf(`%(fill)s\n`, { fill: '-'.repeat(colSize + 15) })
       // eslint-disable-next-line
       out += sprintf(chalk`{bold %(name)-${colSize}s} {bold %(failPerc)-15s}\n`, {
-          name: 'Tag',
-          failPerc: 'Fail %',
-        },
-      )
+        name: 'Tag',
+        failPerc: 'Fail %',
+      })
     }
     for (const [tag, stat] of alertRulesReportTags.entries()) {
-      const failPerc = calculateFailAmountPercentile(
-        stat,
-        this.alertRulesFailPercentile,
-      )
+      const failPerc = calculateFailAmountPercentile(stat, this.alertRulesFailPercentile)
       if (ext) {
         // eslint-disable-next-line
         out += sprintf(`| %(tag)-${colSize}s | %(failPerc)-15s |\n`, {
@@ -1871,20 +1594,12 @@ export class Stats extends events.EventEmitter {
           failPerc,
         })
       } else {
-        const color =
-          failPerc < 5
-            ? 'green'
-            : failPerc < 25
-              ? 'yellowBright'
-              : failPerc < 50
-                ? 'yellow'
-                : 'red'
+        const color = failPerc < 5 ? 'green' : failPerc < 25 ? 'yellowBright' : failPerc < 50 ? 'yellow' : 'red'
         // eslint-disable-next-line
         out += sprintf(chalk`{${color} {bold %(tag)-${colSize}s %(failPerc)-15s}}\n`, {
-            tag,
-            failPerc,
-          },
-        )
+          tag,
+          failPerc,
+        })
       }
     }
     return out

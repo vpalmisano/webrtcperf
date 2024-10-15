@@ -1,7 +1,4 @@
-import {
-  getSessionThrottleValues,
-  throttleLauncher,
-} from '@vpalmisano/throttler'
+import { getSessionThrottleValues, throttleLauncher } from '@vpalmisano/throttler'
 import assert from 'assert'
 import axios from 'axios'
 import chalk from 'chalk'
@@ -74,8 +71,14 @@ declare global {
     peerConnectionsFailed: number
     peerConnectionsClosed: number
   }>
-  let collectAudioEndToEndDelayStats: () => number
-  let collectVideoEndToEndDelayStats: () => number
+  let collectAudioEndToEndStats: () => {
+    delay: number
+    startFrameDelay: number
+  }
+  let collectVideoEndToEndStats: () => {
+    delay: number
+    startFrameDelay: number
+  }
   let collectVideoEndToEndNetworkDelayStats: () => number
   let collectHttpResourcesStats: () => {
     recvBytes: number
@@ -96,13 +99,7 @@ const PageLogColors = {
   requestfailed: 'magenta',
 }
 
-type PageLogColorsKey =
-  | 'error'
-  | 'warn'
-  | 'info'
-  | 'log'
-  | 'debug'
-  | 'requestfailed'
+type PageLogColorsKey = 'error' | 'warn' | 'info' | 'log' | 'debug' | 'requestfailed'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SessionStats = Record<string, number | Record<string, number>>
@@ -435,9 +432,7 @@ export class Session extends EventEmitter {
       try {
         this.getDisplayMediaOverride = JSON5.parse(getDisplayMediaOverride)
       } catch (err: unknown) {
-        log.error(
-          `error parsing getDisplayMediaOverride: ${(err as Error).stack}`,
-        )
+        log.error(`error parsing getDisplayMediaOverride: ${(err as Error).stack}`)
         this.getDisplayMediaOverride = null
       }
     }
@@ -480,11 +475,7 @@ export class Session extends EventEmitter {
       try {
         this.scriptParams = JSON5.parse(scriptParams)
       } catch (err) {
-        log.error(
-          `error parsing scriptParams '${scriptParams}': ${
-            (err as Error).stack
-          }`,
-        )
+        log.error(`error parsing scriptParams '${scriptParams}': ${(err as Error).stack}`)
         throw err
       }
     } else {
@@ -525,30 +516,21 @@ export class Session extends EventEmitter {
               `responseModifiers replacements should be an array of { search, replace, body, headers } objects: ${replacements}`,
             )
           }
-          this.responseModifiers[url] = replacements.map(
-            ({ search, replace, file, headers }) => ({
-              search: search ? new RegExp(search, 'g') : undefined,
-              replace,
-              file,
-              headers,
-            }),
-          )
+          this.responseModifiers[url] = replacements.map(({ search, replace, file, headers }) => ({
+            search: search ? new RegExp(search, 'g') : undefined,
+            replace,
+            file,
+            headers,
+          }))
         })
       } catch (err) {
-        throw new Error(
-          `error parsing responseModifiers "${responseModifiers}": ${
-            (err as Error).stack
-          }`,
-        )
+        throw new Error(`error parsing responseModifiers "${responseModifiers}": ${(err as Error).stack}`)
       }
     }
 
     if (downloadResponses) {
       try {
-        const parsed = JSON5.parse(downloadResponses) as Record<
-          string,
-          { dir: string }
-        >
+        const parsed = JSON5.parse(downloadResponses) as Record<string, { dir: string }>
         Object.entries(parsed).forEach(([url, { dir }]) => {
           this.downloadResponses[url] = {
             urlPattern: getUrlPatternRegExp(url),
@@ -556,11 +538,7 @@ export class Session extends EventEmitter {
           }
         })
       } catch (err) {
-        throw new Error(
-          `error parsing downloadResponses "${downloadResponses}": ${
-            (err as Error).stack
-          }`,
-        )
+        throw new Error(`error parsing downloadResponses "${downloadResponses}": ${(err as Error).stack}`)
       }
     }
 
@@ -597,9 +575,7 @@ export class Session extends EventEmitter {
       '--autoplay-policy=no-user-gesture-required',
       '--disable-infobars',
       '--allow-running-insecure-content',
-      `--unsafely-treat-insecure-origin-as-secure=http://${
-        new URL(this.url || 'http://localhost').host
-      }`,
+      `--unsafely-treat-insecure-origin-as-secure=http://${new URL(this.url || 'http://localhost').host}`,
       '--disable-web-security',
       '--disable-features=IsolateOrigins',
       '--disable-site-isolation-trials',
@@ -607,14 +583,10 @@ export class Session extends EventEmitter {
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
       '--auto-accept-this-tab-capture',
-      `--use-fake-device-for-media-stream=display-media-type=${
-        this.getDisplayMediaType || 'monitor'
-      },fps=30`,
+      `--use-fake-device-for-media-stream=display-media-type=${this.getDisplayMediaType || 'monitor'},fps=30`,
       // '--auto-select-desktop-capture-source=Entire screen',
       // `--auto-select-tab-capture-source-by-title=about:blank`,
-      `--remote-debugging-port=${
-        this.debuggingPort ? this.debuggingPort + this.id : 0
-      }`,
+      `--remote-debugging-port=${this.debuggingPort ? this.debuggingPort + this.id : 0}`,
     ]
 
     // 'WebRTC-VP8ConferenceTemporalLayers/2',
@@ -626,8 +598,7 @@ export class Session extends EventEmitter {
       fieldTrials.push('WebRTC-Audio-Red-For-Opus/Enabled')
     } */
     if (this.maxVideoDecoders !== -1 && this.id >= this.maxVideoDecodersAt) {
-      fieldTrials =
-        `WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}/` + fieldTrials
+      fieldTrials = `WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}/` + fieldTrials
     }
     if (fieldTrials.length) {
       args.push(`--force-fieldtrials=${fieldTrials}`)
@@ -710,10 +681,7 @@ export class Session extends EventEmitter {
 
       // Create the process wrapper.
       if (this.throttleIndex > -1 && os.platform() === 'linux') {
-        executablePath = await throttleLauncher(
-          executablePath,
-          this.throttleIndex,
-        )
+        executablePath = await throttleLauncher(executablePath, this.throttleIndex)
       }
 
       const env = { ...process.env }
@@ -734,9 +702,7 @@ export class Session extends EventEmitter {
       }
 
       log.debug(`[session ${this.id}] Using args:\n  ${args.join('\n  ')}`)
-      log.debug(
-        `[session ${this.id}] Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`,
-      )
+      log.debug(`[session ${this.id}] Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`)
 
       try {
         this.browser = await puppeteer.launch({
@@ -761,9 +727,7 @@ export class Session extends EventEmitter {
         const version = await this.browser.version()
         log.debug(`[session ${this.id}] Using chrome version: ${version}`)
       } catch (err) {
-        log.error(
-          `[session ${this.id}] Browser launch error: ${(err as Error).stack}`,
-        )
+        log.error(`[session ${this.id}] Browser launch error: ${(err as Error).stack}`)
         return this.stop()
       }
     }
@@ -771,10 +735,7 @@ export class Session extends EventEmitter {
     assert(this.browser, 'BrowserNotCreated')
 
     if (this.debuggingPort && this.debuggingAddress !== '127.0.0.1') {
-      this.stopPortForwarder = await portForwarder(
-        this.debuggingPort + this.id,
-        this.debuggingAddress,
-      )
+      this.stopPortForwarder = await portForwarder(this.debuggingPort + this.id, this.debuggingAddress)
     }
 
     this.browser.once('disconnected', () => {
@@ -805,9 +766,7 @@ export class Session extends EventEmitter {
 
     // open pages
     for (let i = 0; i < this.tabsPerSession; i++) {
-      this.openPage(i).catch(err =>
-        log.error(`openPage error: ${(err as Error).stack}`),
-      )
+      this.openPage(i).catch(err => log.error(`openPage error: ${(err as Error).stack}`))
       if (i < this.tabsPerSession - 1) {
         await sleep(this.spawnPeriod)
       }
@@ -828,18 +787,11 @@ export class Session extends EventEmitter {
 
     if (!url) {
       if (this.customUrlHandler && !this.customUrlHandlerFn) {
-        const customUrlHandlerPath = path.resolve(
-          process.cwd(),
-          this.customUrlHandler,
-        )
+        const customUrlHandlerPath = path.resolve(process.cwd(), this.customUrlHandler)
         if (!fs.existsSync(customUrlHandlerPath)) {
-          throw new Error(
-            `Custom url handler script not found: "${customUrlHandlerPath}"`,
-          )
+          throw new Error(`Custom url handler script not found: "${customUrlHandlerPath}"`)
         }
-        this.customUrlHandlerFn = (
-          await import(/* webpackIgnore: true */ customUrlHandlerPath)
-        ).default
+        this.customUrlHandlerFn = (await import(/* webpackIgnore: true */ customUrlHandlerPath)).default
       }
       if (!this.customUrlHandlerFn) {
         throw new Error(`Custom url handler function not set`)
@@ -871,11 +823,7 @@ export class Session extends EventEmitter {
         .replace(/\$p/g, String(process.pid))}`
     }
 
-    log.debug(
-      `opening page ${index} (session: ${this.id} tab: ${tabIndex}): ${hideAuth(
-        url,
-      )}`,
-    )
+    log.debug(`opening page ${index} (session: ${this.id} tab: ${tabIndex}): ${hideAuth(url)}`)
 
     if (this.incognito) {
       this.context = await this.browser.createBrowserContext()
@@ -884,10 +832,7 @@ export class Session extends EventEmitter {
     }
 
     if (this.overridePermissions.length) {
-      await this.context.overridePermissions(
-        new URL(url).origin,
-        this.overridePermissions,
-      )
+      await this.context.overridePermissions(new URL(url).origin, this.overridePermissions)
     }
 
     const page = await this.getNewPage(tabIndex)
@@ -902,9 +847,7 @@ export class Session extends EventEmitter {
       Object.keys(this.exposedFunctions).map(
         async (name: string) =>
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await page.exposeFunction(name, (...args: any[]) =>
-            this.exposedFunctions[name](...args),
-          ),
+          await page.exposeFunction(name, (...args: any[]) => this.exposedFunctions[name](...args)),
       ),
     )
 
@@ -919,9 +862,7 @@ window.STATS_INTERVAL = ${this.statsInterval};
 window.VIDEO_WIDTH = ${this.videoWidth};
 window.VIDEO_HEIGHT = "${this.videoHeight}";
 window.VIDEO_FRAMERATE = ${this.videoFramerate};
-window.LOCAL_STORAGE = '${
-      this.localStorage ? JSON.stringify(this.localStorage) : ''
-    }';
+window.LOCAL_STORAGE = '${this.localStorage ? JSON.stringify(this.localStorage) : ''}';
 window.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
 try {
   window.PARAMS = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
@@ -938,16 +879,12 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
     if (this.getUserMediaOverride) {
       log.debug('Using getUserMedia override:', this.getUserMediaOverride)
-      cmd += `window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(
-        this.getUserMediaOverride,
-      )}');\n`
+      cmd += `window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(this.getUserMediaOverride)}');\n`
     }
 
     if (this.getDisplayMediaOverride) {
       log.debug('Using getDisplayMedia override:', this.getDisplayMediaOverride)
-      cmd += `window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(
-        this.getDisplayMediaOverride,
-      )}');\n`
+      cmd += `window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(this.getDisplayMediaOverride)}');\n`
     }
 
     if (this.disabledVideoCodecs.length) {
@@ -965,9 +902,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (this.localStorage) {
       log.debug('Using localStorage:', this.localStorage)
       Object.entries(this.localStorage).map(([key, value]) => {
-        cmd += `localStorage.setItem('${key}', JSON.parse('${JSON.stringify(
-          value,
-        )}'));\n`
+        cmd += `localStorage.setItem('${key}', JSON.parse('${JSON.stringify(value)}'));\n`
       })
     }
 
@@ -989,9 +924,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       'scripts/screenshare.js',
       'scripts/get-user-media.js',
       'scripts/peer-connection-stats.js',
-      `scripts/peer-connection${
-        process.env.EXTERNAL_PEER_CONNECTION === 'true' ? '-external' : ''
-      }.js`,
+      `scripts/peer-connection${process.env.EXTERNAL_PEER_CONNECTION === 'true' ? '-external' : ''}.js`,
       'scripts/e2e-network-stats.js',
       'https://raw.githubusercontent.com/ggerganov/ggwave/master/bindings/javascript/ggwave.js',
       'scripts/e2e-audio-stats.js',
@@ -1021,10 +954,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     // Execute external script(s).
     if (this.scriptPath) {
       if (this.scriptPath.startsWith('base64:gzip:')) {
-        const data = Buffer.from(
-          this.scriptPath.replace('base64:gzip:', ''),
-          'base64',
-        )
+        const data = Buffer.from(this.scriptPath.replace('base64:gzip:', ''), 'base64')
         const code = gunzipSync(data).toString()
         log.debug(`loading script from ${code.length} bytes`)
         await page.evaluateOnNewDocument(code)
@@ -1053,9 +983,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     }
 
     page.on('dialog', async dialog => {
-      log.debug(
-        `page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`,
-      )
+      log.debug(`page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`)
       try {
         await dialog.accept()
       } catch (err) {
@@ -1082,10 +1010,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
       if (this.browser && this.running) {
         setTimeout(
-          () =>
-            this.openPage(index).catch(err =>
-              log.error(`openPage after close error: ${(err as Error).stack}`),
-            ),
+          () => this.openPage(index).catch(err => log.error(`openPage after close error: ${(err as Error).stack}`)),
           1000,
         )
       }
@@ -1140,14 +1065,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         modifyResponse: async ({ event, body }) => {
           for (const { search, replace, file, headers } of replacements) {
             if (search && replace) {
-              log.debug(
-                `using responseModifiers in: ${event.request.url}: ${search.toString()} => ${replace}`,
-              )
+              log.debug(`using responseModifiers in: ${event.request.url}: ${search.toString()} => ${replace}`)
               body = body?.replace(search, replace)
             } else if (file) {
-              log.debug(
-                `using responseModifiers in: ${event.request.url}: ${file}`,
-              )
+              log.debug(`using responseModifiers in: ${event.request.url}: ${file}`)
               body = await fs.promises.readFile(file, 'utf8')
             }
             if (headers) {
@@ -1180,13 +1101,8 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
               if (!fs.existsSync(dir)) {
                 await fs.promises.mkdir(dir, { recursive: true })
               }
-              const savePath = path.join(
-                dir,
-                `${path.basename(new URL(url).pathname)}`,
-              )
-              log.debug(
-                `saving response body ${data.byteLength} to: ${savePath}`,
-              )
+              const savePath = path.join(dir, `${path.basename(new URL(url).pathname)}`)
+              log.debug(`saving response body ${data.byteLength} to: ${savePath}`)
               await fs.promises.writeFile(savePath, data)
             }
           } catch (err) {
@@ -1214,10 +1130,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       }
     }
 
-    await page.exposeFunction(
-      'setRequestInterception',
-      setRequestInterceptionFunction,
-    )
+    await page.exposeFunction('setRequestInterception', setRequestInterceptionFunction)
 
     await page.exposeFunction(
       'jsonFetch',
@@ -1237,16 +1150,12 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         }
         try {
           if (options.validStatuses) {
-            options.validateStatus = status =>
-              options.validStatuses.includes(status)
+            options.validateStatus = status => options.validStatuses.includes(status)
           }
           const { status, data, headers } = await axios(options)
           if (options.responseType === 'stream') {
             if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
-              log.debug(
-                `jsonFetch saving file to: ${options.downloadPath}`,
-                headers['content-disposition'],
-              )
+              log.debug(`jsonFetch saving file to: ${options.downloadPath}`, headers['content-disposition'])
               await fs.promises.mkdir(path.dirname(options.downloadPath), {
                 recursive: true,
               })
@@ -1263,11 +1172,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             return { status, headers }
           } else {
             if (cacheKey) {
-              Session.jsonFetchCache.set(
-                cacheKey,
-                { status, data },
-                cacheTimeout,
-              )
+              Session.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
             }
             return { status, headers, data }
           }
@@ -1279,13 +1184,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       },
     )
 
-    await page.exposeFunction(
-      'readLocalFile',
-      (filePath: string, encoding?: BufferEncoding) => {
-        filePath = path.resolve(process.cwd(), filePath)
-        return fs.promises.readFile(filePath, encoding)
-      },
-    )
+    await page.exposeFunction('readLocalFile', (filePath: string, encoding?: BufferEncoding) => {
+      filePath = path.resolve(process.cwd(), filePath)
+      return fs.promises.readFile(filePath, encoding)
+    })
 
     // PeerConnectionExternal
     await page.exposeFunction(
@@ -1317,12 +1219,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     }) */
 
     // Simulate keypress
-    await page.exposeFunction(
-      'keypressText',
-      async (selector: string, text: string, delay = 20) => {
-        await page.type(selector, text, { delay })
-      },
-    )
+    await page.exposeFunction('keypressText', async (selector: string, text: string, delay = 20) => {
+      await page.type(selector, text, { delay })
+    })
 
     // Simulate mouse clicks
     await page.exposeFunction('mouseClick', async (selector: string) => {
@@ -1340,19 +1239,11 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       },
     })
 
-    await page.exposeFunction('loremIpsum', (count = 1) =>
-      lorem.generateSentences(count),
-    )
+    await page.exposeFunction('loremIpsum', (count = 1) => lorem.generateSentences(count))
 
     await page.exposeFunction(
       'keypressRandomText',
-      async (
-        selector: string,
-        count = 1,
-        prefix = '',
-        suffix = '',
-        delay = 0,
-      ) => {
+      async (selector: string, count = 1, prefix = '', suffix = '', delay = 0) => {
         const c = prefix + lorem.generateSentences(count) + suffix
         const frames = await page.frames()
         for (const frame of frames) {
@@ -1365,29 +1256,22 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       },
     )
 
-    await page.exposeFunction(
-      'uploadFileFromUrl',
-      async (fileUrl: string, selector: string) => {
-        const filename = sha256(fileUrl) + '.' + fileUrl.split('.').slice(-1)[0]
-        const filePath = path.join(
-          os.homedir(),
-          '.webrtcperf/uploads',
-          filename,
-        )
-        if (!fs.existsSync(filePath)) {
-          await downloadUrl(fileUrl, undefined, filePath)
+    await page.exposeFunction('uploadFileFromUrl', async (fileUrl: string, selector: string) => {
+      const filename = sha256(fileUrl) + '.' + fileUrl.split('.').slice(-1)[0]
+      const filePath = path.join(os.homedir(), '.webrtcperf/uploads', filename)
+      if (!fs.existsSync(filePath)) {
+        await downloadUrl(fileUrl, undefined, filePath)
+      }
+      log.debug(`uploadFileFromUrl: ${filePath}`)
+      const frames = await page.frames()
+      for (const frame of frames) {
+        const el = await frame.$(selector)
+        if (el) {
+          await (el as ElementHandle<HTMLInputElement>).uploadFile(filePath)
+          break
         }
-        log.debug(`uploadFileFromUrl: ${filePath}`)
-        const frames = await page.frames()
-        for (const frame of frames) {
-          const el = await frame.$(selector)
-          if (el) {
-            await (el as ElementHandle<HTMLInputElement>).uploadFile(filePath)
-            break
-          }
-        }
-      },
-    )
+      }
+    })
 
     // add extra styles
     if (this.extraCSS) {
@@ -1430,33 +1314,24 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         })
         saveFile = await fs.promises.open(this.pageLogPath, 'a')
       } catch (err) {
-        log.error(
-          `error opening page log file: ${this.pageLogPath}: ${
-            (err as Error).stack
-          }`,
-        )
+        log.error(`error opening page log file: ${this.pageLogPath}: ${(err as Error).stack}`)
       }
     }
 
-    await page.exposeFunction(
-      'serializedConsoleLog',
-      async (type: PageLogColorsKey, text: string) => {
-        if (this.showPageLog || saveFile) {
-          try {
-            await this.onPageMessage(index, type, text, saveFile)
-          } catch (err) {
-            log.error(`serializedConsoleLog error: ${(err as Error).stack}`)
-          }
+    await page.exposeFunction('serializedConsoleLog', async (type: PageLogColorsKey, text: string) => {
+      if (this.showPageLog || saveFile) {
+        try {
+          await this.onPageMessage(index, type, text, saveFile)
+        } catch (err) {
+          log.error(`serializedConsoleLog error: ${(err as Error).stack}`)
         }
-      },
-    )
+      }
+    })
 
     if (this.showPageLog || saveFile) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       page.on('pageerror', async (error: any) => {
-        const text = `pageerror: ${error.message?.message || error.message} - ${
-          error.message?.stack || error.stack
-        }`
+        const text = `pageerror: ${error.message?.message || error.message} - ${error.message?.stack || error.stack}`
         await this.onPageMessage(index, 'error', text, saveFile)
       })
 
@@ -1470,14 +1345,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       })
     }
 
-    await page.exposeFunction('WebRtcPerf_sdpParse', (sdpStr: string) =>
-      sdpTransform.parse(sdpStr),
-    )
+    await page.exposeFunction('WebRtcPerf_sdpParse', (sdpStr: string) => sdpTransform.parse(sdpStr))
 
-    await page.exposeFunction(
-      'WebRtcPerf_sdpWrite',
-      (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp),
-    )
+    await page.exposeFunction('WebRtcPerf_sdpWrite', (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp))
 
     /* page.on('workercreated', worker =>
       log.debug(`Worker created: ${worker.url()}`),
@@ -1493,9 +1363,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         timeout: 60 * 1000,
       })
     } catch (error) {
-      log.error(
-        `Page ${index + 1} "${url}" load error: ${(error as Error).stack}`,
-      )
+      log.error(`Page ${index + 1} "${url}" load error: ${(error as Error).stack}`)
       await page.close()
       return
     }
@@ -1529,17 +1397,13 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       return
     }
     const isBlocked = this.blockedUrls.some(
-      blockedUrl =>
-        (type === 'requestfailed' || text.search('FetchError') !== -1) &&
-        text.search(blockedUrl) !== -1,
+      blockedUrl => (type === 'requestfailed' || text.search('FetchError') !== -1) && text.search(blockedUrl) !== -1,
     )
     if (isBlocked) {
       return
     }
     const color = PageLogColors[type] || 'grey'
-    const filter = this.pageLogFilter
-      ? new RegExp(this.pageLogFilter, 'ig')
-      : null
+    const filter = this.pageLogFilter ? new RegExp(this.pageLogFilter, 'ig') : null
     if (!filter || text.match(filter)) {
       const errorOrWarning = ['error', 'warning'].includes(type)
       const isWebrtcPerf = text.startsWith('[webrtcperf')
@@ -1547,9 +1411,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         if (!errorOrWarning && !isWebrtcPerf && text.length > 1024) {
           text = text.slice(0, 1024) + `... +${text.length - 1024} bytes`
         }
-        await saveFile.write(
-          `${new Date().toISOString()} [page ${index}] (${type}) ${text}\n`,
-        )
+        await saveFile.write(`${new Date().toISOString()} [page ${index}] (${type}) ${text}\n`)
       }
       if (this.showPageLog) {
         if (!errorOrWarning && !isWebrtcPerf && text.length > 256) {
@@ -1591,14 +1453,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         collectedStats.usedMemory = systemStats.usedMemory
         collectedStats.usedGpu = systemStats.usedGpu
         if (collectedStats.usedCpu > 80) {
-          log.warn(
-            `High system CPU usage: ${collectedStats.usedCpu.toFixed(2)}%`,
-          )
+          log.warn(`High system CPU usage: ${collectedStats.usedCpu.toFixed(2)}%`)
         }
         if (collectedStats.usedMemory > 80) {
-          log.warn(
-            `High system memory usage: ${collectedStats.usedMemory.toFixed(2)}%`,
-          )
+          log.warn(`High system memory usage: ${collectedStats.usedMemory.toFixed(2)}%`)
         }
       }
     } catch (err) {
@@ -1625,7 +1483,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     const peerConnectionsDisconnected: Record<string, number> = {}
     const peerConnectionsFailed: Record<string, number> = {}
     const audioEndToEndDelayStats: Record<string, number> = {}
+    const audioStartFrameDelayStats: Record<string, number> = {}
     const videoEndToEndDelayStats: Record<string, number> = {}
+    const videoStartFrameDelayStats: Record<string, number> = {}
     const videoEndToEndNetworkDelayStats: Record<string, number> = {}
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvBitrateStats: Record<string, number> = {}
@@ -1659,30 +1519,23 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             customMetrics,
           } = await page.evaluate(async () => ({
             peerConnectionStats: await collectPeerConnectionStats(),
-            audioEndToEndDelay: collectAudioEndToEndDelayStats(),
-            videoEndToEndDelay: collectVideoEndToEndDelayStats(),
+            audioEndToEndDelay: collectAudioEndToEndStats(),
+            videoEndToEndDelay: collectVideoEndToEndStats(),
             videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
             httpResourcesStats: collectHttpResourcesStats(),
             cpuPressure: collectCpuPressure(),
-            customMetrics:
-              'collectCustomMetrics' in window ? collectCustomMetrics() : null,
+            customMetrics: 'collectCustomMetrics' in window ? collectCustomMetrics() : null,
           }))
           const { participantName } = peerConnectionStats
 
           // Get host from the first collected remote address.
-          if (
-            !peerConnectionStats.signalingHost &&
-            peerConnectionStats.stats.length
-          ) {
+          if (!peerConnectionStats.signalingHost && peerConnectionStats.stats.length) {
             const values = Object.values(peerConnectionStats.stats[0])
             if (values.length) {
-              peerConnectionStats.signalingHost = await resolveIP(
-                values[0].remoteAddress as string,
-              )
+              peerConnectionStats.signalingHost = await resolveIP(values[0].remoteAddress as string)
             }
           }
-          const { stats, activePeerConnections, signalingHost } =
-            peerConnectionStats
+          const { stats, activePeerConnections, signalingHost } = peerConnectionStats
 
           // Calculate stats keys.
           const hostKey = rtcStatKey({
@@ -1700,56 +1553,29 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 
           // Set peerConnections counters.
           increaseKey(peerConnections, pageKey, activePeerConnections)
-          increaseKey(
-            peerConnectionConnectionTime,
-            pageKey,
-            peerConnectionStats.peerConnectionConnectionTime,
-          )
-          increaseKey(
-            peerConnectionDisconnectionTime,
-            pageKey,
-            peerConnectionStats.peerConnectionDisconnectionTime,
-          )
-          increaseKey(
-            peerConnectionsCreated,
-            pageKey,
-            peerConnectionStats.peerConnectionsCreated,
-          )
-          increaseKey(
-            peerConnectionsClosed,
-            pageKey,
-            peerConnectionStats.peerConnectionsClosed,
-          )
-          increaseKey(
-            peerConnectionsConnected,
-            pageKey,
-            peerConnectionStats.peerConnectionsConnected,
-          )
-          increaseKey(
-            peerConnectionsDisconnected,
-            pageKey,
-            peerConnectionStats.peerConnectionsDisconnected,
-          )
-          increaseKey(
-            peerConnectionsFailed,
-            pageKey,
-            peerConnectionStats.peerConnectionsFailed,
-          )
+          increaseKey(peerConnectionConnectionTime, pageKey, peerConnectionStats.peerConnectionConnectionTime)
+          increaseKey(peerConnectionDisconnectionTime, pageKey, peerConnectionStats.peerConnectionDisconnectionTime)
+          increaseKey(peerConnectionsCreated, pageKey, peerConnectionStats.peerConnectionsCreated)
+          increaseKey(peerConnectionsClosed, pageKey, peerConnectionStats.peerConnectionsClosed)
+          increaseKey(peerConnectionsConnected, pageKey, peerConnectionStats.peerConnectionsConnected)
+          increaseKey(peerConnectionsDisconnected, pageKey, peerConnectionStats.peerConnectionsDisconnected)
+          increaseKey(peerConnectionsFailed, pageKey, peerConnectionStats.peerConnectionsFailed)
 
           // E2E stats.
           if (audioEndToEndDelay) {
-            audioEndToEndDelayStats[pageKey] = audioEndToEndDelay
+            audioEndToEndDelayStats[pageKey] = audioEndToEndDelay.delay
+            audioStartFrameDelayStats[pageKey] = audioEndToEndDelay.startFrameDelay
           }
           if (videoEndToEndDelay) {
-            videoEndToEndDelayStats[pageKey] = videoEndToEndDelay
+            videoEndToEndDelayStats[pageKey] = videoEndToEndDelay.delay
+            videoStartFrameDelayStats[pageKey] = videoEndToEndDelay.startFrameDelay
           }
           if (videoEndToEndNetworkDelay) {
             videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
           }
 
           // HTTP stats.
-          if (httpResourcesStats.recvBytes !== undefined)
-            httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
+          if (httpResourcesStats.recvBytes !== undefined) httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
           if (httpResourcesStats.recvBitrate !== undefined)
             httpRecvBitrateStats[pageKey] = httpResourcesStats.recvBitrate
           if (httpResourcesStats.recvLatency !== undefined)
@@ -1771,10 +1597,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
                   participantName,
                 )
               } catch (err) {
-                log.error(
-                  `updateRtcStats error for ${trackId}: ${(err as Error).stack}`,
-                  err,
-                )
+                log.error(`updateRtcStats error for ${trackId}: ${(err as Error).stack}`, err)
               }
             }
           }
@@ -1808,33 +1631,23 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             this.pagesMetrics.set(pageIndex, metrics)
           }
         } */
-          pageCpu[pageKey] =
-            (collectedStats.cpu as number) / this.tabsPerSession
-          pageMemory[pageKey] =
-            (collectedStats.memory as number) / this.tabsPerSession
+          pageCpu[pageKey] = (collectedStats.cpu as number) / this.tabsPerSession
+          pageMemory[pageKey] = (collectedStats.memory as number) / this.tabsPerSession
 
           // Collect throttle metrics
-          const throttleUpValues = getSessionThrottleValues(
-            this.throttleIndex,
-            'up',
-          )
+          const throttleUpValues = getSessionThrottleValues(this.throttleIndex, 'up')
           throttleUpValuesRate[pageKey] = throttleUpValues.rate || 0
           throttleUpValuesDelay[pageKey] = throttleUpValues.delay || 0
           throttleUpValuesLoss[pageKey] = throttleUpValues.loss || 0
           throttleUpValuesQueue[pageKey] = throttleUpValues.queue || 0
 
-          const throttleDownValues = getSessionThrottleValues(
-            this.throttleIndex,
-            'down',
-          )
+          const throttleDownValues = getSessionThrottleValues(this.throttleIndex, 'down')
           throttleDownValuesRate[pageKey] = throttleDownValues.rate || 0
           throttleDownValuesDelay[pageKey] = throttleDownValues.delay || 0
           throttleDownValuesLoss[pageKey] = throttleDownValues.loss || 0
           throttleDownValuesQueue[pageKey] = throttleDownValues.queue || 0
         } catch (err) {
-          log.error(
-            `collectPeerConnectionStats for page ${pageIndex} error: ${(err as Error).stack}`,
-          )
+          log.error(`collectPeerConnectionStats for page ${pageIndex} error: ${(err as Error).stack}`)
         }
       }),
     )
@@ -1844,15 +1657,16 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     if (this.pageWarnings) collectedStats.warnings = this.pageWarnings
     collectedStats.peerConnections = peerConnections
     collectedStats.peerConnectionConnectionTime = peerConnectionConnectionTime
-    collectedStats.peerConnectionDisconnectionTime =
-      peerConnectionDisconnectionTime
+    collectedStats.peerConnectionDisconnectionTime = peerConnectionDisconnectionTime
     collectedStats.peerConnectionsConnected = peerConnectionsConnected
     collectedStats.peerConnectionsCreated = peerConnectionsCreated
     collectedStats.peerConnectionsClosed = peerConnectionsClosed
     collectedStats.peerConnectionsDisconnected = peerConnectionsDisconnected
     collectedStats.peerConnectionsFailed = peerConnectionsFailed
     collectedStats.audioEndToEndDelay = audioEndToEndDelayStats
+    collectedStats.audioStartFrameDelay = audioStartFrameDelayStats
     collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
+    collectedStats.videoStartFrameDelay = videoStartFrameDelayStats
     collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvBitrate = httpRecvBitrateStats

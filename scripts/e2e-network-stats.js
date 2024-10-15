@@ -50,8 +50,7 @@ async function handleInsertableStreams(data, debug = false) {
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
         const timestamp = Date.now()
-        const { width, height, synchronizationSource } =
-          encodedFrame.getMetadata()
+        const { width, height, synchronizationSource } = encodedFrame.getMetadata()
         if (prevPts[synchronizationSource] === undefined) {
           prevPts[synchronizationSource] = -1
         }
@@ -75,9 +74,7 @@ async function handleInsertableStreams(data, debug = false) {
           }
         }
 
-        const newData = new ArrayBuffer(
-          encodedFrame.data.byteLength + headerSize,
-        )
+        const newData = new ArrayBuffer(encodedFrame.data.byteLength + headerSize)
         const newView = new DataView(newData)
         new Uint8Array(newData).set(new Uint8Array(encodedFrame.data))
         const pos = encodedFrame.data.byteLength
@@ -86,12 +83,7 @@ async function handleInsertableStreams(data, debug = false) {
         newView.setBigUint64(pos + 12, BigInt(pts), true)
         encodedFrame.data = newData
         if (debug) {
-          dumpFrame(
-            encodedFrame,
-            'e',
-            encodedFrame.data.byteLength - headerSize,
-            encodedFrame.data.byteLength,
-          )
+          dumpFrame(encodedFrame, 'e', encodedFrame.data.byteLength - headerSize, encodedFrame.data.byteLength)
         }
         controller.enqueue(encodedFrame)
       },
@@ -100,12 +92,7 @@ async function handleInsertableStreams(data, debug = false) {
     transformStream = new window.TransformStream({
       transform: (encodedFrame, controller) => {
         if (debug) {
-          dumpFrame(
-            encodedFrame,
-            'd',
-            encodedFrame.data.byteLength - headerSize,
-            encodedFrame.data.byteLength,
-          )
+          dumpFrame(encodedFrame, 'd', encodedFrame.data.byteLength - headerSize, encodedFrame.data.byteLength)
         }
         const view = new DataView(encodedFrame.data)
         const pos = encodedFrame.data.byteLength - headerSize
@@ -114,10 +101,7 @@ async function handleInsertableStreams(data, debug = false) {
           const timestamp = Date.now()
           const ts = Number(view.getBigUint64(pos + 4, true))
           const pts = Number(view.getBigUint64(pos + 12, true))
-          if (
-            !transformStream._lastTimestamp ||
-            timestamp - transformStream._lastTimestamp > 1000
-          ) {
+          if (!transformStream._lastTimestamp || timestamp - transformStream._lastTimestamp > 1000) {
             const delay = timestamp - ts
             videoEndToEndNetworkDelayStats.push(timestamp, delay / 1000)
             transformStream._lastTimestamp = timestamp
@@ -125,10 +109,7 @@ async function handleInsertableStreams(data, debug = false) {
               log(`t: ${timestamp} delay: ${delay}ms`)
             }
           }
-          const newData = encodedFrame.data.slice(
-            0,
-            encodedFrame.data.byteLength - headerSize,
-          )
+          const newData = encodedFrame.data.slice(0, encodedFrame.data.byteLength - headerSize)
           encodedFrame.data = newData
 
           if (writer) {
@@ -280,20 +261,15 @@ if (
  */
 // eslint-disable-next-line no-unused-vars
 const handleTransceiverForInsertableStreams = (id, transceiver) => {
-  log(
-    `RTCPeerConnection-${id} handleTransceiverForInsertableStreams ${transceiver.direction}`,
-  )
+  log(`RTCPeerConnection-${id} handleTransceiverForInsertableStreams ${transceiver.direction}`)
   if (
     ['sendonly', 'sendrecv'].includes(transceiver.direction) &&
     transceiver.sender &&
     !transceiver.sender._encodedStreams &&
     transceiver.sender.track
   ) {
-    log(
-      `RTCPeerConnection-${id} handleTransceiver sender transformStream ${transceiver.sender.track.kind}`,
-    )
-    transceiver.sender._encodedStreams =
-      transceiver.sender.createEncodedStreams()
+    log(`RTCPeerConnection-${id} handleTransceiver sender transformStream ${transceiver.sender.track.kind}`)
+    transceiver.sender._encodedStreams = transceiver.sender.createEncodedStreams()
     const { readable, writable } = transceiver.sender._encodedStreams
     const data = {
       operation: 'encode',
@@ -313,11 +289,8 @@ const handleTransceiverForInsertableStreams = (id, transceiver) => {
     !transceiver.receiver._encodedStreams &&
     transceiver.receiver.track
   ) {
-    log(
-      `RTCPeerConnection-${id} handleTransceiver receiver transformStream ${transceiver.receiver.track.kind}`,
-    )
-    transceiver.receiver._encodedStreams =
-      transceiver.receiver.createEncodedStreams()
+    log(`RTCPeerConnection-${id} handleTransceiver receiver transformStream ${transceiver.receiver.track.kind}`)
+    transceiver.receiver._encodedStreams = transceiver.receiver.createEncodedStreams()
     const { readable, writable } = transceiver.receiver._encodedStreams
     const data = {
       operation: 'decode',

@@ -5,10 +5,7 @@ const handleTransceiverForPlayoutDelayHint = (id, transceiver, event) => {
   if (playoutDelayHint === undefined) {
     return
   }
-  if (
-    transceiver.receiver &&
-    transceiver.receiver.track?.label !== 'probator'
-  ) {
+  if (transceiver.receiver && transceiver.receiver.track?.label !== 'probator') {
     log(
       `RTCPeerConnection-${id} ${event}: set playoutDelayHint ${transceiver.receiver.track?.kind} ${transceiver.receiver.playoutDelayHint} -> ${playoutDelayHint}`,
     )
@@ -19,9 +16,7 @@ const handleTransceiverForPlayoutDelayHint = (id, transceiver, event) => {
 window.setPlayoutDelayHint = value => {
   window.PARAMS.playoutDelayHint = value
   ;[...PeerConnections.entries()].forEach(([id, pc]) => {
-    pc.getTransceivers().forEach(t =>
-      handleTransceiverForPlayoutDelayHint(id, t, 'set'),
-    )
+    pc.getTransceivers().forEach(t => handleTransceiverForPlayoutDelayHint(id, t, 'set'))
   })
 }
 
@@ -42,10 +37,7 @@ const handleTransceiverForJitterBufferTarget = (id, transceiver, event) => {
   if (jitterBufferTarget === undefined) {
     return
   }
-  if (
-    transceiver.receiver &&
-    transceiver.receiver.track?.label !== 'probator'
-  ) {
+  if (transceiver.receiver && transceiver.receiver.track?.label !== 'probator') {
     log(
       `RTCPeerConnection-${id} ${event}: set jitterBufferTarget ${transceiver.receiver.track?.kind} ${transceiver.receiver.jitterBufferTarget} -> ${jitterBufferTarget}`,
     )
@@ -56,9 +48,7 @@ const handleTransceiverForJitterBufferTarget = (id, transceiver, event) => {
 window.setJitterBufferTarget = value => {
   window.PARAMS.jitterBufferTarget = value
   ;[...PeerConnections.entries()].forEach(([id, pc]) => {
-    pc.getTransceivers().forEach(t =>
-      handleTransceiverForJitterBufferTarget(id, t, 'set'),
-    )
+    pc.getTransceivers().forEach(t => handleTransceiverForJitterBufferTarget(id, t, 'set'))
   })
 }
 

@@ -4,8 +4,7 @@ import { logger, runShellCommand, sha256 } from './utils'
 
 const log = logger('webrtcperf:media')
 
-const DEFAULT_VIDEO_PATH =
-  'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4'
+const DEFAULT_VIDEO_PATH = 'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4'
 
 /**
  * Converts the video file into raw audio and video files.
@@ -57,11 +56,7 @@ export async function prepareFakeMedia({
   if (!videoPath) {
     throw new Error('empty video path')
   }
-  if (
-    !videoPath.startsWith('http') &&
-    !videoPath.startsWith('generate:') &&
-    !existsSync(videoPath)
-  ) {
+  if (!videoPath.startsWith('http') && !videoPath.startsWith('generate:') && !existsSync(videoPath)) {
     log.warn(`video not found: ${videoPath}, using default test video`)
     videoPath = DEFAULT_VIDEO_PATH
   }
@@ -72,11 +67,7 @@ export async function prepareFakeMedia({
   const destVideoPath = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.${videoFormat}`
   const destAudioPath = `${videoCachePath}/${name}.wav`
 
-  if (
-    !existsSync(destVideoPath) ||
-    !existsSync(destAudioPath) ||
-    !videoCacheRaw
-  ) {
+  if (!existsSync(destVideoPath) || !existsSync(destAudioPath) || !videoCacheRaw) {
     log.info(`Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}`)
     const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
     const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
@@ -84,9 +75,7 @@ export async function prepareFakeMedia({
     try {
       let source = `-i "${videoPath}"`
       const videoMap = `-map 0:v`
-      const audioMap = videoPath.startsWith('generate:')
-        ? '-map 1:a'
-        : '-map 0:a'
+      const audioMap = videoPath.startsWith('generate:') ? '-map 1:a' : '-map 0:a'
       if (videoPath === 'generate:null') {
         source = `-f lavfi -i color=size=${videoWidth}x${videoHeight}:rate=${videoFramerate}:color=black -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000`
       } else if (videoPath === 'generate:test') {
