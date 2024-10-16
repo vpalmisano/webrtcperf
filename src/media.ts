@@ -87,7 +87,7 @@ export async function prepareFakeMedia({
           ` -r ${videoFramerate}` +
           ` -ss ${videoSeek} -t ${videoDuration} -shortest -af apad` +
           ` ${videoMap} ${destVideoPathTmp}` +
-          ` ${audioMap} ${destAudioPathTmp}` +
+          ` ${audioMap} -ar 48000 ${destAudioPathTmp}` +
           ` && mv ${destVideoPathTmp} ${destVideoPath}` +
           ` && mv ${destAudioPathTmp} ${destAudioPath}`,
       )

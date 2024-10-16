@@ -22,6 +22,14 @@ const applyOverride = (constraints, override) => {
         constraints.audio = override.audio
       }
     }
+    log(`applyOverride result:`, constraints)
+  }
+  // Force audio sample rate to 48kHz.
+  if (constraints.audio) {
+    if (!(constraints.audio instanceof Object)) {
+      constraints.audio = {}
+    }
+    constraints.audio.sampleRate = 48000
   }
 }
 
@@ -30,11 +38,7 @@ const applyOverride = (constraints, override) => {
  * @param {*} constraints
  */
 function overrideGetUserMedia(constraints) {
-  if (!window.GET_USER_MEDIA_OVERRIDE) {
-    return
-  }
   applyOverride(constraints, window.GET_USER_MEDIA_OVERRIDE)
-  log(`getUserMedia override result: ${JSON.stringify(constraints, null, 2)}`)
 }
 
 /**
@@ -42,11 +46,7 @@ function overrideGetUserMedia(constraints) {
  * @param {*} constraints
  */
 function overrideGetDisplayMedia(constraints) {
-  if (!window.GET_DISPLAY_MEDIA_OVERRIDE) {
-    return
-  }
   applyOverride(constraints, window.GET_DISPLAY_MEDIA_OVERRIDE)
-  log(`getDisplayMedia override result: ${JSON.stringify(constraints, null, 2)}`)
 }
 
 async function applyGetDisplayMediaCrop(mediaStream) {
