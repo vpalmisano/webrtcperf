@@ -79,7 +79,7 @@ webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTim
   }
   debug('start')
   return new Promise((resolve, reject) => {
-    const { readable } = new window.MediaStreamTrackProcessor({ track, maxBufferSize: 1 })
+    const { readable } = new window.MediaStreamTrackProcessor({ track })
     const controller = new AbortController()
     const writeable = new WritableStream(
       {
@@ -299,28 +299,33 @@ window.RTCPeerConnection = function (conf, options) {
       if (encodedInsertableStreams && timestampInsertableStreams) {
         handleTransceiverForInsertableStreams(id, transceiver)
       }
+
       webrtcperf
         .waitTrackMedia(receiver.track)
         .then(({ now }) => {
           if (receiver.track.kind === 'video') {
             webrtcperf.videoStartFrameDelayStats.push(now, (now - window.WEBRTC_PERF_START_TIMESTAMP) / 1000)
-            if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
-              webrtcperf.recognizeVideoTimestampWatermark(receiver.track)
-            }
-            if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
-              return saveMediaTrack(receiver.track, 'recv')
-            }
           } else if (receiver.track.kind === 'audio') {
             webrtcperf.audioStartFrameDelayStats.push(now, (now - window.WEBRTC_PERF_START_TIMESTAMP) / 1000)
-            if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
-              recognizeAudioTimestampWatermark(receiver.track)
-            }
-            if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
-              return saveMediaTrack(receiver.track, 'recv')
-            }
           }
         })
         .catch(err => log(`waitTrackMedia error: ${err.message}`))
+
+      if (receiver.track.kind === 'video') {
+        if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
+          webrtcperf.recognizeVideoTimestampWatermark(receiver.track)
+        }
+        if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
+          saveMediaTrack(receiver.track, 'recv').catch(err => log(`saveMediaTrack error: ${err.message}`))
+        }
+      } else if (receiver.track.kind === 'audio') {
+        if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+          recognizeAudioTimestampWatermark(receiver.track)
+        }
+        if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
+          saveMediaTrack(receiver.track, 'recv').catch(err => log(`saveMediaTrack error: ${err.message}`))
+        }
+      }
     }
     handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
     handleTransceiverForJitterBufferTarget(id, transceiver, 'track')
@@ -368,40 +373,41 @@ window.RTCRtpSender.getCapabilities = kind => {
   return capabilities
 }
 
-window.saveTransceiversTracks = async (direction, kind, enableStart = 0, enableEnd = 0) => {
+webrtcperf.filterTransceiversTracks = (direction, kind) => {
+  if (!['send', 'recv'].includes(direction)) {
+    throw new Error(`Invalid direction: ${direction}`)
+  }
+  if (!['audio', 'video'].includes(kind)) {
+    throw new Error(`Invalid kind: ${kind}`)
+  }
+  const directionOption = direction === 'send' ? 'sender' : 'receiver'
+  const tranceivers = []
   for (const pc of PeerConnections.values()) {
-    const tranceivers = pc
-      .getTransceivers()
-      .filter(t => t[direction]?.track?.kind === kind && t[direction]?.track?.label !== 'probator')
-    for (const tranceiver of tranceivers) {
-      await saveMediaTrack(
-        tranceiver[direction].track,
-        direction === 'sender' ? 'send' : 'recv',
-        enableStart,
-        enableEnd,
-      )
-    }
+    pc.getTransceivers().forEach(tranceiver => {
+      if (!tranceiver.direction.includes(direction)) return
+      const track = tranceiver[directionOption]?.track
+      if (track?.kind === kind && track?.label !== 'probator') {
+        tranceivers.push({ tranceiver, track })
+      }
+    })
+  }
+  return tranceivers
+}
+
+window.saveTransceiversTracks = async (direction, kind, enableStart = 0, enableEnd = 0) => {
+  for (const { track } of webrtcperf.filterTransceiversTracks(direction, kind)) {
+    await saveMediaTrack(track, direction, enableStart, enableEnd)
   }
 }
 
 window.stopSaveTransceiversTracks = (direction, kind) => {
-  for (const pc of PeerConnections.values()) {
-    const tranceivers = pc
-      .getTransceivers()
-      .filter(t => t[direction]?.track?.kind === kind && t[direction]?.track?.label !== 'probator')
-    for (const tranceiver of tranceivers) {
-      stopSaveMediaTrack(tranceiver[direction].track)
-    }
+  for (const { track } of webrtcperf.filterTransceiversTracks(direction, kind)) {
+    stopSaveMediaTrack(track)
   }
 }
 
 window.setTransceiversTracks = (direction, kind, enabled) => {
-  for (const pc of PeerConnections.values()) {
-    const tranceivers = pc
-      .getTransceivers()
-      .filter(t => t[direction]?.track?.kind === kind && t[direction]?.track?.label !== 'probator')
-    for (const tranceiver of tranceivers) {
-      tranceiver[direction].track.enabled = enabled
-    }
+  for (const { track } of webrtcperf.filterTransceiversTracks(direction, kind)) {
+    track.enabled = enabled
   }
 }

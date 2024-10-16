@@ -417,7 +417,7 @@ webrtcperf.setupActions = async () => {
     .sort((a, b) => (a.at || 0) - (b.at || 0))
     .forEach(action => {
       const { name, at, every, times, index, params } = action
-      const fn = window[name]
+      const fn = window[name] || webrtcperf[name]
       if (!fn) {
         log(`setupActions undefined action: "${name}"`)
         return
