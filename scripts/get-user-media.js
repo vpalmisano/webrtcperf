@@ -117,13 +117,17 @@ function collectMediaTracks(mediaStream, onEnded = null) {
     })
     VideoTracks.add(track)
   }
-  /* mediaStream.getTracks().forEach(track => {
+  // Log applyConstraints calls.
+  mediaStream.getTracks().forEach(track => {
     const applyConstraintsNative = track.applyConstraints.bind(track)
     track.applyConstraints = constraints => {
-      log(`${track.kind} track applyConstraints`, constraints)
+      log(`applyConstraints ${track.id} (${track.kind})`, { track, constraints })
+      if (window.overrideTrackApplyConstraints) {
+        constraints = window.overrideTrackApplyConstraints(track, constraints)
+      }
       return applyConstraintsNative(constraints)
     }
-  }) */
+  })
 }
 
 // Overrides.
