@@ -189,7 +189,7 @@ RUN \
 #   apt-get update && apt-get install -y google-chrome-stable && apt-get clean
 
 # chromium-browser-unstable
-ENV CHROMIUM_VERSION=130.0.6685.1
+ENV CHROMIUM_VERSION=132.0.6779.1
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCH=arm64; else ARCH=amd64; fi; \

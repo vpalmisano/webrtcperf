@@ -612,8 +612,8 @@ export class Session extends EventEmitter {
 
     if (this.enableGpu) {
       args = args.concat([
-        '--ignore-gpu-blocklist',
         '--enable-features=VaapiVideoDecoder',
+        '--ignore-gpu-blocklist',
         '--enable-gpu-rasterization',
         '--enable-zero-copy',
         '--disable-gpu-sandbox',
