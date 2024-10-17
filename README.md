@@ -293,7 +293,7 @@ DEBUG_LEVEL=DEBUG:* yarn start \
    ```
    With `saveSendAudioTrack` and `saveRecvAudioTrack` you can specify the sessions that will be saved at sender and receiver side (in this example it will save all the audio streams sent in the session with index `0` and received in session `1`).
 2. The sent/received audio files will be saved in the `/data` directory.
-3. Run the VISQOL calculator comparing the sent/received videos:
+3. Run the VISQOL calculator comparing the sent/received audio files:
    ```sh
    docker run --rm \
      -e DEBUG_LEVEL=INFO \
