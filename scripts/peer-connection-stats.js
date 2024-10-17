@@ -25,7 +25,7 @@ const maxOptional = (a, b, prop) => {
 const calculateBitrate = (cur, old, timeDiff, fallback = 0) =>
   cur > 0 && old > 0 && cur >= old ? Math.round((8000 * (cur - old)) / timeDiff) : fallback
 
-const calculateRate = (diff, timeDiff, fallback = 0) => (diff > 0 ? Math.round((1000 * diff) / timeDiff) : fallback)
+const calculateRate = (diff, timeDiff, fallback = 0) => (diff > 0 ? (1000 * diff) / timeDiff : fallback)
 
 const positiveDiff = (cur, old) => Math.max(0, (cur || 0) - (old || 0))
 
