@@ -1,4 +1,4 @@
-import { existsSync, promises } from 'fs'
+import { existsSync, promises as fs } from 'fs'
 
 import { logger, runShellCommand, sha256 } from './utils'
 
@@ -61,7 +61,7 @@ export async function prepareFakeMedia({
     videoPath = DEFAULT_VIDEO_PATH
   }
 
-  await promises.mkdir(videoCachePath, { recursive: true })
+  await fs.mkdir(videoCachePath, { recursive: true })
   const name = sha256(videoPath)
 
   const destVideoPath = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.${videoFormat}`
@@ -77,24 +77,28 @@ export async function prepareFakeMedia({
       const videoMap = `-map 0:v`
       const audioMap = videoPath.startsWith('generate:') ? '-map 1:a' : '-map 0:a'
       if (videoPath === 'generate:null') {
-        source = `-f lavfi -i color=size=${videoWidth}x${videoHeight}:rate=${videoFramerate}:color=black -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000`
+        source =
+          `-f lavfi -i color=size=${videoWidth}x${videoHeight}:rate=${videoFramerate}:color=black` +
+          ` -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000`
       } else if (videoPath === 'generate:test') {
-        source = `-f lavfi -i testsrc=size=${videoWidth}x${videoHeight}:rate=${videoFramerate} -pix_fmt yuv420p -f lavfi -i sine=frequency=220:beep_factor=4:sample_rate=48000`
+        source =
+          `-f lavfi -i testsrc=size=${videoWidth}x${videoHeight}:rate=${videoFramerate} -pix_fmt yuv420p` +
+          ` -f lavfi -i sine=frequency=220:beep_factor=4:sample_rate=48000`
       }
       await runShellCommand(
-        `ffmpeg -y -threads 0 ${source}` +
+        `ffmpeg -loglevel warning -y -threads 0 ${source}` +
           ` -s ${videoWidth}:${videoHeight}` +
           ` -r ${videoFramerate}` +
           ` -ss ${videoSeek} -t ${videoDuration} -shortest -af apad` +
           ` ${videoMap} ${destVideoPathTmp}` +
-          ` ${audioMap} -ar 48000 ${destAudioPathTmp}` +
-          ` && mv ${destVideoPathTmp} ${destVideoPath}` +
-          ` && mv ${destAudioPathTmp} ${destAudioPath}`,
+          ` ${audioMap} -ar 48000 ${destAudioPathTmp}`,
       )
+      await fs.rename(destVideoPathTmp, destVideoPath)
+      await fs.rename(destAudioPathTmp, destAudioPath)
     } catch (err) {
       log.error(`Error converting video: ${(err as Error).stack}`)
-      promises.unlink(destVideoPathTmp).catch(e => log.debug(e.message))
-      promises.unlink(destAudioPathTmp).catch(e => log.debug(e.message))
+      fs.unlink(destVideoPathTmp).catch(e => log.debug(e.message))
+      fs.unlink(destAudioPathTmp).catch(e => log.debug(e.message))
       throw err
     }
   }
