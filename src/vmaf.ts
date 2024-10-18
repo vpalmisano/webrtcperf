@@ -18,6 +18,7 @@ export async function recognizeFrames(fpath: string, frameRate: number) {
   const fname = path.basename(fpath)
   const ret = await ffprobe(
     fpath,
+    'video',
     'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
     'crop=in_w:max((in_h/18)*1.2\\,48):0:0,ocr=whitelist=0123456789-',
   )

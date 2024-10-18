@@ -1102,11 +1102,16 @@ export function maybeNumber(s: string): string | number {
   return !isNaN(n) ? n : s
 }
 
-export async function ffprobe(fpath: string, entries = '', filters = ''): Promise<Record<string, string>[]> {
+export async function ffprobe(
+  fpath: string,
+  kind = 'video',
+  entries = '',
+  filters = '',
+): Promise<Record<string, string>[]> {
   const cmd = `\
-exec ffprobe -loglevel error -select_streams v -show_frames -print_format compact \
+exec ffprobe -loglevel error ${kind === 'video' ? '-select_streams v' : ''} -show_frames -print_format compact \
 ${entries ? `-show_entries ${entries}` : ''} \
--f lavfi -i 'movie=${fpath}${filters ? `,${filters}` : ''}'`
+-f lavfi -i '${kind === 'video' ? '' : 'a'}movie=${fpath}${filters ? `,${filters}` : ''}'`
   const frames = [] as Record<string, string>[]
   let stderr = ''
   return new Promise((resolve, reject) => {
