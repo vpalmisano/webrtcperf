@@ -1102,11 +1102,28 @@ export function maybeNumber(s: string): string | number {
   return !isNaN(n) ? n : s
 }
 
+export enum FFProbeProcess {
+  Skip = 'skip',
+  Stop = 'stop',
+}
+
+/**
+ * It runs the ffprobe command to extract the video/video frames.
+ * @param fpath The file path.
+ * @param kind The kind of the media (video or audio).
+ * @param entries Which entries to show.
+ * @param filters Apply filters.
+ * @param frameProcess A function to process the frame. The function return value could be:
+ *   - the modified frame object
+ *   - `FFProbeProcess.Skip` to skip the frame from the output
+ *   - `FFProbeProcess.Stop` to stop processing and immediately return the collected frames.
+ */
 export async function ffprobe(
   fpath: string,
   kind = 'video',
   entries = '',
   filters = '',
+  frameProcess?: (frame: Record<string, string>) => Record<string, string> | FFProbeProcess,
 ): Promise<Record<string, string>[]> {
   const cmd = `\
 exec ffprobe -loglevel error ${kind === 'video' ? '-select_streams v' : ''} -show_frames -print_format compact \
@@ -1114,12 +1131,14 @@ ${entries ? `-show_entries ${entries}` : ''} \
 -f lavfi -i '${kind === 'video' ? '' : 'a'}movie=${fpath}${filters ? `,${filters}` : ''}'`
   const frames = [] as Record<string, string>[]
   let stderr = ''
+  let stopProcessing = false
   return new Promise((resolve, reject) => {
     const p = spawn(cmd, {
       shell: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     p.stdout.on('data', data => {
+      if (stopProcessing) return
       const frame = data
         .toString()
         .split('|')
@@ -1133,14 +1152,26 @@ ${entries ? `-show_entries ${entries}` : ''} \
           },
           {} as Record<string, string>,
         )
-      frames.push(frame)
+      if (frameProcess) {
+        const newFrame = frameProcess(frame)
+        if (newFrame === FFProbeProcess.Skip) {
+          // Skip the frame.
+        } else if (newFrame === FFProbeProcess.Stop) {
+          stopProcessing = true
+          p.kill('SIGINT')
+        } else {
+          frames.push(newFrame)
+        }
+      } else {
+        frames.push(frame)
+      }
     })
     p.stderr.on('data', data => {
       stderr += data
     })
     p.once('error', err => reject(err))
     p.once('close', code => {
-      if (code !== 0) {
+      if (code !== 0 && !stopProcessing) {
         reject(new Error(`${cmd} failed with code ${code}: ${stderr}`))
       } else {
         resolve(frames)
