@@ -696,10 +696,8 @@ export class Session extends EventEmitter {
         '--disable-dev-shm-usage',
         '--remote-debugging-port',
         //'--hide-scrollbars',
+        '--enable-automation',
       ]
-      if (this.debuggingPort) {
-        ignoreDefaultArgs.push('--enable-automation')
-      }
 
       log.debug(`[session ${this.id}] Using args:\n  ${args.join('\n  ')}`)
       log.debug(`[session ${this.id}] Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`)
