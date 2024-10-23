@@ -35,7 +35,7 @@ const applyVideoTimestampWatermarkFn = () => {
   }
 
   onmessage = ({ data }) => {
-    const { readable, writable, width, height, participantName } = data
+    const { readable, writable, width, height, participantName, drawGrid } = data
     log(`participantName=${participantName} ${width}x${height}`)
 
     const canvas = new OffscreenCanvas(width, height)
@@ -59,19 +59,23 @@ const applyVideoTimestampWatermarkFn = () => {
         ctx.fillStyle = 'black'
         ctx.fillRect(0, 0, width, textHeight)
 
-        ctx.beginPath()
-        for (let d = 0; d < 50; d += 10) {
-          //ctx.moveTo(0, textHeight * 2 + d)
-          //ctx.lineTo(width, textHeight * 2 + d)
-          //ctx.moveTo(0, height - d)
-          //ctx.lineTo(width, height - d)
-          ctx.moveTo(d, 0)
-          ctx.lineTo(d, height)
-          ctx.moveTo(width - d, 0)
-          ctx.lineTo(width - d, height)
+        if (drawGrid) {
+          ctx.beginPath()
+          for (let d = 0; d < width / 2; d += 25) {
+            ctx.moveTo(0, textHeight + d)
+            ctx.lineTo(width, textHeight + d)
+            ctx.moveTo(0, height - d)
+            ctx.lineTo(width, height - d)
+          }
+          for (let d = 0; d < height / 2; d += 25) {
+            ctx.moveTo(d, 0)
+            ctx.lineTo(d, height)
+            ctx.moveTo(width - d, 0)
+            ctx.lineTo(width - d, height)
+          }
+          ctx.strokeStyle = 'black'
+          ctx.stroke()
         }
-        ctx.strokeStyle = 'black'
-        ctx.stroke()
 
         ctx.fillStyle = 'white'
         ctx.fillText(text, width / 2, fontSize)
