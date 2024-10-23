@@ -248,13 +248,7 @@ export class Session extends EventEmitter {
       headers?: Record<string, string>
     }[]
   > = {}
-  private readonly downloadResponses: Record<
-    string,
-    {
-      urlPattern: RegExp
-      dir: string
-    }
-  > = {}
+  private readonly downloadResponses: { urlPattern: RegExp; output: string; append?: boolean }[] = []
   private readonly extraCSS: string
   private readonly cookies: CookieParam[] = []
   private readonly overridePermissions: Permission[] = []
@@ -530,12 +524,10 @@ export class Session extends EventEmitter {
 
     if (downloadResponses) {
       try {
-        const parsed = JSON5.parse(downloadResponses) as Record<string, { dir: string }>
-        Object.entries(parsed).forEach(([url, { dir }]) => {
-          this.downloadResponses[url] = {
-            urlPattern: getUrlPatternRegExp(url),
-            dir,
-          }
+        const parsed = JSON5.parse(downloadResponses) as { urlPattern: string; output: string; append?: boolean }[]
+        if (!Array.isArray(parsed)) throw new Error(`downloadResponses should be an array: ${downloadResponses}`)
+        parsed.forEach(({ urlPattern, output, append }) => {
+          this.downloadResponses.push({ urlPattern: getUrlPatternRegExp(urlPattern), output, append })
         })
       } catch (err) {
         throw new Error(`error parsing downloadResponses "${downloadResponses}": ${(err as Error).stack}`)
@@ -1086,22 +1078,30 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     await interceptManager.intercept(...interceptions)
 
     // Download responses.
-    const downloadResponses = Object.values(this.downloadResponses)
-    if (downloadResponses.length) {
+    if (this.downloadResponses.length) {
       page.on('response', async response => {
         if (!response.ok()) return
         const url = response.url()
-        for (const { urlPattern, dir } of downloadResponses) {
+        for (const { urlPattern, output, append } of this.downloadResponses) {
           if (!urlPattern.test(url)) continue
           try {
             const data = await response.buffer()
             if (data.byteLength > 0) {
-              if (!fs.existsSync(dir)) {
-                await fs.promises.mkdir(dir, { recursive: true })
+              if (append) {
+                const savePath = output.replaceAll('${id}', this.id.toString())
+                if (!fs.existsSync(path.dirname(savePath))) {
+                  await fs.promises.mkdir(path.dirname(output), { recursive: true })
+                }
+                log.debug(`appending response body ${data.byteLength} to: ${savePath}`)
+                await fs.promises.appendFile(savePath, data)
+              } else {
+                if (!fs.existsSync(output)) {
+                  await fs.promises.mkdir(output, { recursive: true })
+                }
+                const savePath = path.join(output, `${path.basename(new URL(url).pathname)}`)
+                log.debug(`saving response body ${data.byteLength} to: ${savePath}`)
+                await fs.promises.writeFile(savePath, data)
               }
-              const savePath = path.join(dir, `${path.basename(new URL(url).pathname)}`)
-              log.debug(`saving response body ${data.byteLength} to: ${savePath}`)
-              await fs.promises.writeFile(savePath, data)
             }
           } catch (err) {
             log.error(`downloadResponses error: ${(err as Error).stack}`)

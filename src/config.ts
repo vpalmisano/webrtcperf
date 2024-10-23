@@ -500,8 +500,8 @@ Examples:
     arg: 'response-modifiers',
   },
   downloadResponses: {
-    doc: `A dictionary of url responses that will be saved to the disk, keyed by the url in JSON5 format.
-Example: \`{ "https://url.com/*": { dir: "save/directory" } }\`
+    doc: `An array of url responses that will be saved to the disk, keyed by the url in JSON5 format.
+Example: \`[{ urlPattern: "https://url.com/*", output: "save/directory" }]\`
 `,
     format: String,
     nullable: true,
