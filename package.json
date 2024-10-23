@@ -79,7 +79,8 @@
     "tar-fs": "^3.0.6",
     "tesseract.js": "^5.1.1",
     "word-wrap": "^1.2.5",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "zeromq": "^6.1.1"
   },
   "devDependencies": {
     "@types/compression": "^1.7.5",

@@ -21,7 +21,8 @@ RUN \
         libx264-dev \
         libzimg-dev \
         libx265-dev \
-        libssl-dev
+        libssl-dev \
+        libzmq-dev
 
 ENV VMAF_VERSION=3.0.0
 ENV FFMPEG_VERSION=7.1
@@ -165,7 +166,8 @@ RUN \
         libx264-163 \
         libzimg2 \
         libx265-199 \
-        openssl
+        openssl \
+        libzmq5
 
 RUN \
     mkdir -p /etc/apt/keyrings; \

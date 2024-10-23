@@ -1179,3 +1179,52 @@ ${entries ? `-show_entries ${entries}` : ''} \
     })
   })
 }
+
+export function buildIvfHeader(width = 1920, height = 1080, frameRate = 30, fourcc = 'MJPG') {
+  const buffer = Buffer.alloc(32)
+  buffer.write('DKIF', 0, 'utf8')
+  buffer.writeUint16LE(0, 4) // version
+  buffer.writeUint16LE(32, 6) // header size
+  buffer.write(fourcc, 8, 'utf8')
+  buffer.writeUint16LE(width, 12)
+  buffer.writeUint16LE(height, 14)
+  buffer.writeUint32LE(frameRate, 16)
+  buffer.writeUint32LE(1, 20)
+  buffer.writeUint32LE(0, 24) // frame count
+  buffer.writeUint32LE(0, 28) // unused
+  return buffer
+}
+
+import * as zmq from 'zeromq'
+
+export async function ffmpeg(command = 'video', processFn: (frame: Buffer) => void): Promise<void> {
+  const port = 10000 + Math.floor(Math.random() * 10000)
+  const cmd = `exec ffmpeg -loglevel error ${command} zmq:tcp://127.0.0.1:${port}`
+  log.debug(`ffmpeg ${cmd}`)
+  let stderr = ''
+
+  const sub = new zmq.Subscriber()
+  const p = spawn(cmd, {
+    shell: true,
+    stdio: ['ignore', 'ignore', 'pipe'],
+  })
+  p.stderr.on('data', data => {
+    stderr += data
+  })
+  p.once('error', err => {
+    sub.close()
+    throw err
+  })
+  p.once('close', code => {
+    sub.close()
+    if (code !== 0) {
+      throw new Error(`${cmd} failed with code ${code}: ${stderr}`)
+    }
+  })
+  sub.connect(`tcp://127.0.0.1:${port}`)
+  sub.subscribe('')
+  for await (const [msg] of sub) {
+    await processFn(msg)
+  }
+  sub.close()
+}
