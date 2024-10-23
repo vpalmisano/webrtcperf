@@ -4,7 +4,16 @@ import os from 'os'
 import path from 'path'
 
 import { FastStats } from './stats'
-import { ffprobe, getFiles, logger, runShellCommand } from './utils'
+import {
+  buildIvfHeader,
+  chunkedPromiseAll,
+  ffmpeg,
+  ffprobe,
+  FFProbeProcess,
+  getFiles,
+  logger,
+  runShellCommand,
+} from './utils'
 
 const log = logger('webrtcperf:vmaf')
 
@@ -14,49 +23,126 @@ export type IvfFrame = {
   size: number
 }
 
-export async function recognizeFrames(fpath: string, frameRate: number) {
-  const fname = path.basename(fpath)
-  const ret = await ffprobe(
-    fpath,
-    'video',
-    'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
-    'crop=in_w:max((in_h/18)*1.2\\,48):0:0,ocr=whitelist=0123456789-',
-  )
+export async function parseVideo(fpath: string) {
+  let width = 0
+  let height = 0
+  let frameRate = 0
+  await ffprobe(fpath, 'video', 'frame=pts,width,height,duration_time', '', frame => {
+    const w = parseInt(frame.width)
+    const h = parseInt(frame.height)
+    if (w > width) width = w
+    if (h > height) height = h
+    const duration = parseFloat(frame.duration_time)
+    if (duration) {
+      frameRate = Math.max(Math.round(1 / duration), frameRate)
+    }
+    return FFProbeProcess.Skip
+  })
+  return { width, height, frameRate }
+}
 
+export async function convertToIvf(fpath: string, crop?: Crop) {
+  const { width, height, frameRate } = await parseVideo(fpath)
+  const outputPath = fpath.replace(/\.[^.]+$/, '.ivf')
+  log.debug(`convertToIvf ${fpath} ${width}x${height}@${frameRate} -> ${outputPath}`)
+
+  const fd = await fs.promises.open(outputPath, 'w')
+  const header = buildIvfHeader(
+    width - (crop?.left || 0) - (crop?.right || 0),
+    height - (crop?.top || 0) - (crop?.bottom || 0),
+    frameRate,
+  )
+  await fd.write(header)
+
+  let pts = 0
+  let pos = header.byteLength
+  const filter = crop ? `-vf ${cropFilter(crop)}` : ''
+  await ffmpeg(`-i ${fpath} -map 0:v -c:v mjpeg -q:v 5 ${filter} -an -f data`, async data => {
+    const { byteLength } = data
+    const frameHeader = Buffer.alloc(12)
+    frameHeader.writeUInt32LE(byteLength, 0)
+    frameHeader.writeBigUInt64LE(BigInt(pts), 4)
+    await fd.write(frameHeader, 0, 12, pos)
+    await fd.write(data, 0, byteLength, pos + 12)
+    pos += 12 + byteLength
+    pts++
+  })
+  header.writeUint32LE(pts, 24)
+  await fd.write(header, 0, header.byteLength, 0)
+  log.debug(`${outputPath} pts: ${pts} size: ${pos}`)
+  await fd.close()
+}
+
+export async function recognizeFrames(
+  fpath: string,
+  recover = false,
+  crop = { top: 0, bottom: 0, left: 0, right: 0 },
+  debug = false,
+) {
+  const { width, height, frameRate } = await parseVideo(fpath)
+  const fname = path.basename(fpath)
   const frames = new Map<number, number>()
   let skipped = 0
   let failed = 0
+  let recovered = 0
   let firstTimestamp = 0
   let lastTimestamp = 0
   let participantDisplayName = ''
-
-  ret.forEach(frame => {
-    const pts = parseInt(frame.pts)
-    if (!frames.has(pts) || !frames.get(pts)) {
-      const confidence = parseFloat(frame.tag_lavfi_ocr_confidence?.trim() || '0')
-      if (confidence > 50) {
-        const text = frame.tag_lavfi_ocr_text?.trim() || ''
-        const parts = text.split('-')
-        participantDisplayName = `Participant-${parts[0].padStart(6, '0')}`
-        const recognizedTime = parseInt(parts[1])
-        const recognizedPts = Math.round((frameRate * recognizedTime) / 1000)
-        frames.set(pts, recognizedPts)
-        if (!firstTimestamp) firstTimestamp = recognizedPts / frameRate
-        lastTimestamp = recognizedPts / frameRate
+  const regExp = /(?<name>[0-9]{1,6})-(?<time>[0-9]{13,13})/
+  await ffprobe(
+    fpath,
+    'video',
+    'frame=pts,frame_tags=lavfi.ocr.text,lavfi.ocr.confidence',
+    `crop=in_w-${crop.left}-${crop.right}:in_h-${crop.top}-${crop.bottom}:${crop.left}:${crop.top},crop=in_w:max((in_h/18)*1.2\\,24):0:0,ocr=whitelist=0123456789-`,
+    frame => {
+      const pts = parseInt(frame.pts)
+      if ((!frames.has(pts) || !frames.get(pts)) && frameRate) {
+        const confidence = parseFloat(frame.tag_lavfi_ocr_confidence?.trim() || '0')
+        const textMatch = (frame.tag_lavfi_ocr_text?.trim() || '').match(regExp)
+        if (confidence > 50 && textMatch) {
+          const { name, time } = textMatch.groups as { name: string; time: string }
+          participantDisplayName = `Participant-${name.padStart(6, '0')}`
+          const recognizedTime = parseInt(time)
+          const recognizedPts = Math.round((frameRate * recognizedTime) / 1000)
+          debug &&
+            log.debug(
+              `recognized frame ${fname} confidence=${confidence} pts=${pts} name=${name} time=${time} recognized=${recognizedPts}`,
+            )
+          frames.set(pts, recognizedPts)
+          if (!firstTimestamp) firstTimestamp = recognizedPts / frameRate
+          lastTimestamp = recognizedPts / frameRate
+        } else {
+          recover && frames.set(pts, 0)
+          failed++
+        }
       } else {
-        frames.set(pts, 0)
-        failed++
+        skipped++
       }
-    } else {
-      skipped++
+      return FFProbeProcess.Skip
+    },
+  )
+
+  if (recover) {
+    const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
+    for (const [i, pts] of ptsIndex.entries()) {
+      const recognizedPts = frames.get(pts)
+      if (!recognizedPts && i) {
+        const prevRecognizedPts = frames.get(ptsIndex[i - 1])
+        if (prevRecognizedPts) {
+          frames.set(pts, prevRecognizedPts + pts - ptsIndex[i - 1])
+          recovered++
+        } else {
+          frames.delete(pts)
+        }
+      }
     }
-  })
+  }
 
   log.info(
-    `recognizeFrames ${fname} ${participantDisplayName} frames: ${frames.size} skipped: ${skipped} failed: ${failed} \
+    `recognizeFrames ${fname} ${width}x${height}@${frameRate} "${participantDisplayName}" frames: ${frames.size} skipped: ${skipped} recovered: ${recovered} failed: ${failed} \
 ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp - firstTimestamp).toFixed(2)})`,
   )
-  return { frames, participantDisplayName }
+  return { width, height, frameRate, frames, participantDisplayName }
 }
 
 async function parseIvf(fpath: string, runRecognizer = false) {
@@ -117,22 +203,8 @@ ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp -
   )
 
   if (runRecognizer) {
-    const { frames: ptsToRecognized, participantDisplayName: name } = await recognizeFrames(fpath, frameRate)
+    const { frames: ptsToRecognized, participantDisplayName: name } = await recognizeFrames(fpath)
     participantDisplayName = name
-
-    const ptsIndex = Array.from(ptsToRecognized.keys()).sort((a, b) => a - b)
-    for (const [i, pts] of ptsIndex.entries()) {
-      const recognizedPts = ptsToRecognized.get(pts)
-      if (!recognizedPts && i) {
-        const prevRecognizedPts = ptsToRecognized.get(ptsIndex[i - 1])
-        if (prevRecognizedPts) {
-          ptsToRecognized.set(pts, prevRecognizedPts + pts - ptsIndex[i - 1])
-        } else {
-          ptsToRecognized.delete(pts)
-        }
-      }
-    }
-
     const recognizedFrames = new Map<number, IvfFrame>()
     for (const [pts, frame] of frames) {
       const recognizedPts = ptsToRecognized.get(pts)
@@ -153,9 +225,9 @@ ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp -
   }
 }
 
-export async function fixIvfFrames(fpath: string, outDir: string, duplicate = false) {
+export async function fixIvfFrames(fpath: string, outDir: string) {
   const fname = path.basename(fpath)
-  const { width, height, frameRate, frames, participantDisplayName } = await parseIvf(fpath, true)
+  const { width, height, frames, participantDisplayName } = await parseIvf(fpath, true)
   if (!participantDisplayName) {
     throw new Error(`fixIvfFrames ${fname}: no participant name found`)
   }
@@ -177,9 +249,6 @@ export async function fixIvfFrames(fpath: string, outDir: string, duplicate = fa
 
   let position = 32
   let writtenFrames = 0
-  let duplicatedFrames = 0
-  let previousPts = -1
-  let previousFrame: DataView | null = null
 
   const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
   for (const pts of ptsIndex) {
@@ -188,34 +257,13 @@ export async function fixIvfFrames(fpath: string, outDir: string, duplicate = fa
       log.warn(`fixIvfFrames ${fname}: pts ${pts} not found, skipping`)
       continue
     }
-
-    if (duplicate && previousFrame && previousPts >= 0 && pts - previousPts - 1 > 0) {
-      const missing = pts - previousPts - 1
-      if (missing > frameRate * 60) {
-        log.warn(`${fname} too many frames missing: ${missing}`)
-      } else {
-        // log.debug(`${fname} pts ${pts} missing ${missing} frames, copying previous`)
-        while (pts - previousPts - 1 > 0) {
-          previousPts += 1
-          previousFrame.setBigUint64(4, BigInt(previousPts), true)
-          await fixedFd.write(new Uint8Array(previousFrame.buffer), 0, previousFrame.byteLength, position)
-          position += previousFrame.byteLength
-          writtenFrames++
-          duplicatedFrames++
-        }
-      }
-    }
-
     const frameView = new DataView(new ArrayBuffer(frame.size))
     await fd.read(frameView, 0, frame.size, frame.position)
     frameView.setBigUint64(4, BigInt(pts), true)
     await fixedFd.write(new Uint8Array(frameView.buffer), 0, frameView.byteLength, position)
     position += frameView.byteLength
     writtenFrames++
-    previousPts = pts
-    previousFrame = frameView
   }
-  previousFrame = null
 
   headerView.setUint32(24, writtenFrames, true)
   await fixedFd.write(new Uint8Array(headerView.buffer), 0, headerView.byteLength, 0)
@@ -223,7 +271,7 @@ export async function fixIvfFrames(fpath: string, outDir: string, duplicate = fa
   await fd.close()
   await fixedFd.close()
 
-  log.debug(`fixIvfFrames ${fname}: frames written: ${writtenFrames} duplicatedFrames: ${duplicatedFrames}`)
+  log.debug(`fixIvfFrames ${fname}: frames written: ${writtenFrames}`)
 
   return { participantDisplayName, outFilePath }
 }
@@ -235,24 +283,28 @@ export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
   const files = await getFiles(directory, '.ivf.raw')
   if (files.length) {
     log.info(`fixIvfFiles directory=${directory} files=${files}`)
-    for (const filePath of files) {
-      try {
-        const { participantDisplayName, outFilePath } = await fixIvfFrames(filePath, directory)
-        if (outFilePath.includes('_recv-by_')) {
-          if (!degraded.has(participantDisplayName)) {
-            degraded.set(participantDisplayName, [])
+    await chunkedPromiseAll(
+      files,
+      async filePath => {
+        try {
+          const { participantDisplayName, outFilePath } = await fixIvfFrames(filePath, directory)
+          if (outFilePath.includes('_recv-by_')) {
+            if (!degraded.has(participantDisplayName)) {
+              degraded.set(participantDisplayName, [])
+            }
+            degraded.get(participantDisplayName)?.push(outFilePath)
+          } else {
+            reference.set(participantDisplayName, outFilePath)
           }
-          degraded.get(participantDisplayName)?.push(outFilePath)
-        } else {
-          reference.set(participantDisplayName, outFilePath)
+          if (!keepSourceFiles) {
+            await fs.promises.unlink(filePath)
+          }
+        } catch (err) {
+          log.error(`fixIvfFrames error: ${(err as Error).stack}`)
         }
-        if (!keepSourceFiles) {
-          await fs.promises.unlink(filePath)
-        }
-      } catch (err) {
-        log.error(`fixIvfFrames error: ${(err as Error).stack}`)
-      }
-    }
+      },
+      Math.ceil(os.cpus().length / 2),
+    )
   }
 
   const ivfFiles = await getFiles(directory, '.ivf')
@@ -315,10 +367,19 @@ export type VmafScore = {
   harmonic_mean: number
 }
 
-export async function runVmaf(referencePath: string, degradedPath: string, preview: boolean, crop: VmafCrop = {}) {
-  log.info('runVmaf', { referencePath, degradedPath, preview, crop })
+export async function runVmaf(
+  referencePath: string,
+  degradedPath: string,
+  preview: boolean,
+  cropConfig: VmafCrop = {},
+  cropTimeOverlay = false,
+) {
   const comparisonPath = degradedPath.replace(/\.[^.]+$/, '')
+  const cropDest = cropConfig[path.basename(comparisonPath)] || {}
+  const crop = { deg: cropDest.deg ? { ...cropDest.deg } : {}, ref: cropDest.ref ? { ...cropDest.ref } : {} }
+  log.info('runVmaf', { referencePath, degradedPath, preview, crop })
   const vmafLogPath = comparisonPath + '.vmaf.json'
+  const psnrLogPath = comparisonPath + '.psnr.log'
   const cpus = os.cpus().length
 
   const sender = path.basename(referencePath).replace('.ivf', '')
@@ -336,8 +397,8 @@ export async function runVmaf(referencePath: string, degradedPath: string, previ
     frameRate: degFrameRate,
     frames: degFrames,
   } = await parseIvf(degradedPath, false)
-  const refTextHeight = Math.round(Math.round(refHeight / 18) * 1.2)
-  const degTextHeight = Math.round(Math.round(degHeight / 18) * 1.2)
+  const refTextHeight = cropTimeOverlay ? Math.round(Math.round(refHeight / 18) * 1.2) : 0
+  const degTextHeight = cropTimeOverlay ? Math.round(Math.round(degHeight / 18) * 1.2) : 0
 
   if (!crop.ref) crop.ref = {}
   crop.ref.top = (crop.ref.top || 0) + refTextHeight
@@ -389,56 +450,58 @@ export async function runVmaf(referencePath: string, degradedPath: string, previ
 
   const ffmpegCmd = `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
--i ${referencePath}`
+-i ${referencePath} \
+-pix_fmt yuvj420p`
 
   const filter = `\
 [0:v]\
 ${cropFilter(crop.deg, ',')}\
-scale=w=${width}:h=${height}\
-${preview ? ',split=2[deg1][deg2]' : '[deg1]'};\
+scale=w=${width}:h=${height}:flags=bicubic\
+${preview ? ',split=3[deg1][deg2][deg3]' : 'split=32[deg1][deg2]'};\
 [1:v]\
 ${cropFilter(crop.ref, ',')}\
-scale=w=${width}:h=${height}\
-${preview ? ',split=2[ref1][ref2]' : '[ref1]'};\
-[deg1][ref1]\
-libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1\
-[vmaf]`
+scale=w=${width}:h=${height}:flags=bicubic\
+${preview ? ',split=3[ref1][ref2][ref3]' : 'split=2[ref1][ref2]'};\
+[deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1[vmaf];\
+[deg2][ref2]psnr=stats_file=${psnrLogPath}[psnr]\
+`
 
   const cmd = preview
     ? `${ffmpegCmd} \
--filter_complex "${filter};[ref2][deg2]hstack[stacked]" \
+-filter_complex "${filter};[ref3][deg3]hstack[stacked]" \
 -map [vmaf] -f null - \
--map [stacked] -fps_mode vfr -c:v libx264 -crf 15 -g 10 -f mp4 -movflags frag_keyframe+delay_moov+skip_trailer ${
-        comparisonPath + '_comparison.mp4'
-      } \
+-map [psnr] -f null - \
+-map [stacked] -fps_mode vfr -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${comparisonPath + '_comparison.mp4'} \
 `
     : `${ffmpegCmd} \
 -filter_complex "${filter}" \
--shortest \
 -map [vmaf] -f null - \
+-map [psnr] -f null - \
 `
 
   log.debug('runVmaf', cmd)
-  const { stdout, stderr } = await runShellCommand(cmd)
-  const vmafLog = JSON.parse(await fs.promises.readFile(vmafLogPath, 'utf-8'))
-  log.debug('runVmaf', {
-    stdout,
-    stderr,
-  })
-  const metrics = {
-    sender,
-    receiver,
-    ...vmafLog['pooled_metrics']['vmaf'],
-  } as VmafScore
+  try {
+    const { stdout, stderr } = await runShellCommand(cmd)
+    const vmafLog = JSON.parse(await fs.promises.readFile(vmafLogPath, 'utf-8'))
+    log.debug('runVmaf', {
+      stdout,
+      stderr,
+    })
+    const metrics = {
+      sender,
+      receiver,
+      ...vmafLog['pooled_metrics']['vmaf'],
+    } as VmafScore
 
-  log.info(`VMAF metrics ${comparisonPath}:`, metrics)
+    log.info(`VMAF metrics ${comparisonPath}:`, metrics)
 
-  await fs.promises.unlink(degradedPath)
-  await fs.promises.unlink(referencePath)
+    await writeGraph(vmafLogPath, frameRate)
 
-  await writeGraph(vmafLogPath, frameRate)
-
-  return metrics
+    return metrics
+  } finally {
+    await fs.promises.unlink(degradedPath)
+    await fs.promises.unlink(referencePath)
+  }
 }
 
 async function writeGraph(vmafLogPath: string, frameRate: number) {
@@ -523,14 +586,18 @@ async function writeGraph(vmafLogPath: string, frameRate: number) {
 
 type Crop = { top?: number; bottom?: number; left?: number; right?: number }
 
-type VmafCrop = {
-  ref?: Crop
-  deg?: Crop
-}
+type VmafCrop = Record<
+  string,
+  {
+    ref?: Crop
+    deg?: Crop
+  }
+>
 
 const cropFilter = (crop?: Crop, suffix = '') => {
   if (!crop) return ''
   const { top, bottom, left, right } = crop
+  if (!top && !bottom && !left && !right) return ''
   const width = (left || 0) + (right || 0)
   const height = (top || 0) + (bottom || 0)
   return `crop=w=iw-${width}:h=ih-${height}:x=${left || 0}:y=${top || 0}:exact=1${suffix}`
@@ -560,7 +627,7 @@ export async function calculateVmafScore(config: VmafConfig): Promise<VmafScore[
     if (!vmafReferencePath) continue
     for (const degradedPath of degraded.get(participantDisplayName) || []) {
       try {
-        const metrics = await runVmaf(vmafReferencePath, degradedPath, vmafPreview, { ...crop })
+        const metrics = await runVmaf(vmafReferencePath, degradedPath, vmafPreview, crop)
         ret.push(metrics)
       } catch (err) {
         log.error(`runVmaf error: ${(err as Error).message}`)
@@ -581,6 +648,7 @@ export async function calculateVmafScore(config: VmafConfig): Promise<VmafScore[
 
 if (require.main === module) {
   ;(async (): Promise<void> => {
+    //return await convertToIvf(process.argv[2])
     //return await writeGraph(process.argv[2], 30)
     await calculateVmafScore({
       vmafPath: process.argv[2],
@@ -588,8 +656,10 @@ if (require.main === module) {
       vmafKeepIntermediateFiles: true,
       vmafKeepSourceFiles: true,
       vmafCrop: json5.stringify({
-        deg: { top: 0, bottom: 0, left: 0, right: 0 },
-        ref: { top: 0, bottom: 0, left: 0, right: 0 },
+        'Participant-000001_recv-by_Participant-000000': {
+          deg: { top: 0, bottom: 0, left: 0, right: 0 },
+          ref: { top: 0, bottom: 0, left: 0, right: 0 },
+        },
       }),
     })
   })()
