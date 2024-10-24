@@ -51,6 +51,7 @@ RUN \
         --enable-libvpx --enable-libx264 --enable-libx265 --enable-libspeex \
         --enable-libtesseract --enable-libfreetype --enable-fontconfig --enable-libzimg \
         --enable-libvmaf --enable-libvorbis --enable-libwebp --enable-libfribidi --enable-libharfbuzz \
+        --enable-libzmq \
     && make -j$(nproc) \
     && make install
 
