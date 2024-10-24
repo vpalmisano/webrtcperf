@@ -5,6 +5,7 @@ import path from 'path'
 
 import { FastStats } from './stats'
 import {
+  analyzeColors,
   buildIvfHeader,
   chunkedPromiseAll,
   ffmpeg,
@@ -41,9 +42,9 @@ export async function parseVideo(fpath: string) {
   return { width, height, frameRate }
 }
 
-export async function convertToIvf(fpath: string, crop?: Crop) {
+export async function convertToIvf(fpath: string, crop?: Crop, keepSourceFile = true) {
   const { width, height, frameRate } = await parseVideo(fpath)
-  const outputPath = fpath.replace(/\.[^.]+$/, '.ivf')
+  const outputPath = fpath.replace(/\.[^.]+$/, '.ivf.raw')
   log.debug(`convertToIvf ${fpath} ${width}x${height}@${frameRate} -> ${outputPath}`)
 
   const fd = await fs.promises.open(outputPath, 'w')
@@ -51,26 +52,32 @@ export async function convertToIvf(fpath: string, crop?: Crop) {
     width - (crop?.left || 0) - (crop?.right || 0),
     height - (crop?.top || 0) - (crop?.bottom || 0),
     frameRate,
+    'VP80',
   )
   await fd.write(header)
 
   let pts = 0
   let pos = header.byteLength
-  const filter = crop ? `-vf ${cropFilter(crop)}` : ''
-  await ffmpeg(`-i ${fpath} -map 0:v -c:v mjpeg -q:v 5 ${filter} -an -f data`, async data => {
-    const { byteLength } = data
-    const frameHeader = Buffer.alloc(12)
-    frameHeader.writeUInt32LE(byteLength, 0)
-    frameHeader.writeBigUInt64LE(BigInt(pts), 4)
-    await fd.write(frameHeader, 0, 12, pos)
-    await fd.write(data, 0, byteLength, pos + 12)
-    pos += 12 + byteLength
-    pts++
-  })
+  const filter = crop ? cropFilter(crop) : ''
+  await ffmpeg(
+    `-y -i ${fpath} -map 0:v -c:v vp8 -quality good -cpu-used 0 -crf 1 -b:v 20M -qmin 1 -qmax 10 -g 1 -threads ${os.cpus().length} -vf '${filter}' -an -f data`,
+    async data => {
+      const { byteLength } = data
+      const frameHeader = Buffer.alloc(12)
+      frameHeader.writeUInt32LE(byteLength, 0)
+      frameHeader.writeBigUInt64LE(BigInt(pts), 4)
+      await fd.write(frameHeader, 0, 12, pos)
+      await fd.write(data, 0, byteLength, pos + 12)
+      pos += 12 + byteLength
+      pts++
+    },
+  )
   header.writeUint32LE(pts, 24)
   await fd.write(header, 0, header.byteLength, 0)
   log.debug(`${outputPath} pts: ${pts} size: ${pos}`)
   await fd.close()
+
+  await fixIvfFrames(outputPath, keepSourceFile)
 }
 
 export async function recognizeFrames(
@@ -225,9 +232,13 @@ ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp -
   }
 }
 
-export async function fixIvfFrames(fpath: string, outDir: string) {
-  const fname = path.basename(fpath)
-  const { width, height, frames, participantDisplayName } = await parseIvf(fpath, true)
+export async function fixIvfFrames(filePath: string, keepSourceFile = true) {
+  const fname = path.basename(filePath)
+  const dirPath = path.dirname(filePath)
+  if (!fname.endsWith('.ivf.raw')) {
+    throw new Error(`fixIvfFrames ${fname}: invalid file extension, expected ".ivf.raw"`)
+  }
+  const { width, height, frames, participantDisplayName } = await parseIvf(filePath, true)
   if (!participantDisplayName) {
     throw new Error(`fixIvfFrames ${fname}: no participant name found`)
   }
@@ -235,12 +246,15 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
     throw new Error(`fixIvfFrames ${fname}: no frames found`)
   }
   log.debug(`fixIvfFrames ${fname} width=${width} height=${height} (${frames.size} frames)`)
-  const fd = await fs.promises.open(fpath, 'r')
+  const fd = await fs.promises.open(filePath, 'r')
 
-  const parts = path.basename(fpath).split('_')
+  const parts = path.basename(filePath).split('_')
+  if (!parts[1].startsWith('send') && !parts[1].startsWith('recv')) {
+    throw new Error(`fixIvfFrames ${fname}: invalid file name, expected "<name>_send" or "<name>_recv"`)
+  }
   const outFilePath = path.join(
-    outDir,
-    parts[1] === 'send' ? `${participantDisplayName}.ivf` : `${participantDisplayName}_recv-by_${parts[0]}.ivf`,
+    dirPath,
+    parts[1].startsWith('send') ? `${participantDisplayName}.ivf` : `${participantDisplayName}_recv-by_${parts[0]}.ivf`,
   )
 
   const fixedFd = await fs.promises.open(outFilePath, 'w')
@@ -271,7 +285,9 @@ export async function fixIvfFrames(fpath: string, outDir: string) {
   await fd.close()
   await fixedFd.close()
 
-  log.debug(`fixIvfFrames ${fname}: frames written: ${writtenFrames}`)
+  if (!keepSourceFile) {
+    await fs.promises.unlink(filePath)
+  }
 
   return { participantDisplayName, outFilePath }
 }
@@ -280,53 +296,52 @@ export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
   const reference = new Map<string, string>()
   const degraded = new Map<string, string[]>()
 
-  const files = await getFiles(directory, '.ivf.raw')
-  if (files.length) {
-    log.info(`fixIvfFiles directory=${directory} files=${files}`)
-    await chunkedPromiseAll(
-      files,
+  const addFile = (participantDisplayName: string, outFilePath: string) => {
+    if (outFilePath.includes('_recv-by_')) {
+      if (!degraded.has(participantDisplayName)) {
+        degraded.set(participantDisplayName, [])
+      }
+      degraded.get(participantDisplayName)?.push(outFilePath)
+    } else {
+      reference.set(participantDisplayName, outFilePath)
+    }
+  }
+
+  const ivfFiles = await getFiles(directory, '.ivf')
+  if (ivfFiles.length) {
+    log.info(`fixIvfFiles directory=${directory} ivfFiles=${ivfFiles}`)
+    for (const outFilePath of ivfFiles) {
+      try {
+        const participantDisplayName = path.basename(outFilePath).replace('.ivf', '').split('_')[0]
+        addFile(participantDisplayName, outFilePath)
+      } catch (err) {
+        log.error(`fixIvfFrames error: ${(err as Error).stack}`)
+      }
+    }
+  }
+
+  const rawFiles = await getFiles(directory, '.ivf.raw')
+  if (rawFiles.length) {
+    log.info(`fixIvfFiles directory=${directory} files=${rawFiles}`)
+    const results = await chunkedPromiseAll<
+      string,
+      { participantDisplayName: string; outFilePath: string } | undefined
+    >(
+      rawFiles,
       async filePath => {
         try {
-          const { participantDisplayName, outFilePath } = await fixIvfFrames(filePath, directory)
-          if (outFilePath.includes('_recv-by_')) {
-            if (!degraded.has(participantDisplayName)) {
-              degraded.set(participantDisplayName, [])
-            }
-            degraded.get(participantDisplayName)?.push(outFilePath)
-          } else {
-            reference.set(participantDisplayName, outFilePath)
-          }
-          if (!keepSourceFiles) {
-            await fs.promises.unlink(filePath)
-          }
+          const { participantDisplayName, outFilePath } = await fixIvfFrames(filePath, keepSourceFiles)
+          return { participantDisplayName, outFilePath }
         } catch (err) {
           log.error(`fixIvfFrames error: ${(err as Error).stack}`)
         }
       },
       Math.ceil(os.cpus().length / 2),
     )
-  }
-
-  const ivfFiles = await getFiles(directory, '.ivf')
-  if (ivfFiles.length) {
-    log.info(`fixIvfFiles directory=${directory} ivfFiles=${ivfFiles}`)
-    for (const filePath of ivfFiles) {
-      try {
-        const participantDisplayName = path.basename(filePath).replace('.ivf', '').split('_')[0]
-        if (filePath.includes('_recv-by_')) {
-          if (!degraded.has(participantDisplayName)) {
-            degraded.set(participantDisplayName, [])
-          }
-          const list = degraded.get(participantDisplayName)
-          if (list && !list?.includes(filePath)) {
-            list.push(filePath)
-          }
-        } else if (!reference.has(participantDisplayName)) {
-          reference.set(participantDisplayName, filePath)
-        }
-      } catch (err) {
-        log.error(`fixIvfFrames error: ${(err as Error).stack}`)
-      }
+    for (const res of results) {
+      if (!res) continue
+      const { participantDisplayName, outFilePath } = res
+      addFile(participantDisplayName, outFilePath)
     }
   }
 
@@ -374,12 +389,16 @@ export async function runVmaf(
   cropConfig: VmafCrop = {},
   cropTimeOverlay = false,
 ) {
-  const comparisonPath = degradedPath.replace(/\.[^.]+$/, '')
-  const cropDest = cropConfig[path.basename(comparisonPath)] || {}
+  const comparisonDir = path.dirname(degradedPath)
+  const comparisonName = path.basename(degradedPath.replace(/\.[^.]+$/, ''))
+  const cropDest = cropConfig[comparisonName] || {}
   const crop = { deg: cropDest.deg ? { ...cropDest.deg } : {}, ref: cropDest.ref ? { ...cropDest.ref } : {} }
+
   log.info('runVmaf', { referencePath, degradedPath, preview, crop })
-  const vmafLogPath = comparisonPath + '.vmaf.json'
-  const psnrLogPath = comparisonPath + '.psnr.log'
+  await fs.promises.mkdir(path.join(comparisonDir, comparisonName), { recursive: true })
+  const vmafLogPath = path.join(comparisonDir, comparisonName, 'vmaf.json')
+  const psnrLogPath = path.join(comparisonDir, comparisonName, 'psnr.log')
+  const comparisonPath = path.join(comparisonDir, comparisonName, 'comparison.mp4')
   const cpus = os.cpus().length
 
   const sender = path.basename(referencePath).replace('.ivf', '')
@@ -451,16 +470,16 @@ export async function runVmaf(
   const ffmpegCmd = `ffmpeg -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
 -i ${referencePath} \
--pix_fmt yuvj420p`
+`
 
   const filter = `\
 [0:v]\
 ${cropFilter(crop.deg, ',')}\
-scale=w=${width}:h=${height}:flags=bicubic\
+${scaleFilter(width, height)}\
 ${preview ? ',split=3[deg1][deg2][deg3]' : 'split=32[deg1][deg2]'};\
 [1:v]\
 ${cropFilter(crop.ref, ',')}\
-scale=w=${width}:h=${height}:flags=bicubic\
+${scaleFilter(width, height)}\
 ${preview ? ',split=3[ref1][ref2][ref3]' : 'split=2[ref1][ref2]'};\
 [deg1][ref1]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1[vmaf];\
 [deg2][ref2]psnr=stats_file=${psnrLogPath}[psnr]\
@@ -471,7 +490,7 @@ ${preview ? ',split=3[ref1][ref2][ref3]' : 'split=2[ref1][ref2]'};\
 -filter_complex "${filter};[ref3][deg3]hstack[stacked]" \
 -map [vmaf] -f null - \
 -map [psnr] -f null - \
--map [stacked] -fps_mode vfr -c:v libx264 -crf 15 -f mp4 -movflags +faststart ${comparisonPath + '_comparison.mp4'} \
+-map [stacked] -fps_mode vfr -c:v libx264 -crf 10 -f mp4 -movflags +faststart ${comparisonPath} \
 `
     : `${ffmpegCmd} \
 -filter_complex "${filter}" \
@@ -493,7 +512,7 @@ ${preview ? ',split=3[ref1][ref2][ref3]' : 'split=2[ref1][ref2]'};\
       ...vmafLog['pooled_metrics']['vmaf'],
     } as VmafScore
 
-    log.info(`VMAF metrics ${comparisonPath}:`, metrics)
+    log.info(`VMAF metrics ${vmafLogPath}:`, metrics)
 
     await writeGraph(vmafLogPath, frameRate)
 
@@ -597,10 +616,14 @@ type VmafCrop = Record<
 const cropFilter = (crop?: Crop, suffix = '') => {
   if (!crop) return ''
   const { top, bottom, left, right } = crop
-  if (!top && !bottom && !left && !right) return ''
+  if (!top && !bottom && !left && !right) return `crop${suffix}`
   const width = (left || 0) + (right || 0)
   const height = (top || 0) + (bottom || 0)
   return `crop=w=iw-${width}:h=ih-${height}:x=${left || 0}:y=${top || 0}:exact=1${suffix}`
+}
+
+const scaleFilter = (width?: number, height?: number, suffix = '') => {
+  return `scale=w=${width || 'in_w'}:h=${height || 'in_h'}:flags=bicubic${suffix}`
 }
 
 type VmafConfig = {
@@ -648,20 +671,33 @@ export async function calculateVmafScore(config: VmafConfig): Promise<VmafScore[
 
 if (require.main === module) {
   ;(async (): Promise<void> => {
-    //return await convertToIvf(process.argv[2])
-    //return await writeGraph(process.argv[2], 30)
-    await calculateVmafScore({
-      vmafPath: process.argv[2],
-      vmafPreview: true,
-      vmafKeepIntermediateFiles: true,
-      vmafKeepSourceFiles: true,
-      vmafCrop: json5.stringify({
-        'Participant-000001_recv-by_Participant-000000': {
-          deg: { top: 0, bottom: 0, left: 0, right: 0 },
-          ref: { top: 0, bottom: 0, left: 0, right: 0 },
-        },
-      }),
-    })
+    switch (process.argv[2]) {
+      case 'convert':
+        await convertToIvf(process.argv[3], json5.parse(process.argv[4]) as Crop, false)
+        break
+      case 'analyze':
+        console.log(JSON.stringify(await analyzeColors(process.argv[3]), null, 2))
+        break
+      case 'graph':
+        await writeGraph(process.argv[3], 30)
+        break
+      case 'vmaf':
+        await calculateVmafScore({
+          vmafPath: process.argv[3],
+          vmafPreview: true,
+          vmafKeepIntermediateFiles: true,
+          vmafKeepSourceFiles: true,
+          vmafCrop: json5.stringify({
+            'Participant-000001_recv-by_Participant-000000': {
+              deg: { top: 0, bottom: 0, left: 0, right: 0 },
+              ref: { top: 0, bottom: 0, left: 0, right: 0 },
+            },
+          }),
+        })
+        break
+      default:
+        throw new Error(`Invalid command: ${process.argv[2]}`)
+    }
   })()
     .catch(err => console.error(err))
     .finally(() => process.exit(0))

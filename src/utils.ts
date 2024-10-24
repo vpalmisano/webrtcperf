@@ -1090,7 +1090,8 @@ export async function chunkedPromiseAll<T, R>(
   for (let index = 0; index < items.length; index += chunkSize) {
     await Promise.allSettled(
       items.slice(index, index + chunkSize).map(async (item, i) => {
-        results[index + i] = await f(item, index + i)
+        const res = await f(item, index + i)
+        if (res !== undefined) results[index + i] = res
       }),
     )
   }
@@ -1227,4 +1228,29 @@ export async function ffmpeg(command = 'video', processFn: (frame: Buffer) => vo
     await processFn(msg)
   }
   sub.close()
+}
+
+export async function analyzeColors(fpath: string) {
+  let Y = 0
+  let U = 0
+  let V = 0
+  let SAT = 0
+  let HUE = 0
+  let count = 0
+  await ffprobe(
+    fpath,
+    'video',
+    'frame=lavfi.signalstats.YAVG,lavfi.signalstats.UAVG,lavfi.signalstats.VAVG,lavfi.signalstats.SATAVG,lavfi.signalstats.HUEAVG',
+    'signalstats',
+    frame => {
+      Y += parseFloat(frame.tag_lavfi_signalstats_YAVG)
+      U += parseFloat(frame.tag_lavfi_signalstats_UAVG)
+      V += parseFloat(frame.tag_lavfi_signalstats_VAVG)
+      SAT += parseFloat(frame.tag_lavfi_signalstats_SATAVG)
+      HUE += parseFloat(frame.tag_lavfi_signalstats_HUEAVG)
+      count++
+      return FFProbeProcess.Skip
+    },
+  )
+  return { YAvg: Y / count, UAvg: U / count, VAvg: V / count, SatAvg: SAT / count, HueAvg: HUE / count }
 }
