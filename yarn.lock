@@ -621,19 +621,12 @@
   resolved "https://registry.yarnpkg.com/@types/node-os-utils/-/node-os-utils-1.3.4.tgz#2a1c34f56b15d89ddfafcec69f60675638400542"
   integrity sha512-BCUYrbdoO4FUbx6MB9atLNFnkxdliFaxdiTJMIPPiecXIApc5zf4NIqV5G1jWv/ReZvtYyHLs40RkBjHX+vykA==
 
-"@types/node@*":
-  version "22.8.5"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.8.5.tgz#a978fb6755dbb32889b0bc3e37554dbc04f261a6"
-  integrity sha512-5iYk6AMPtsMbkZqCO1UGF9W5L38twq11S2pYWkybGHH2ogPUvXWNlQqJBzuEZWKj/WRH+QTeiv6ySWqJtvIEgA==
+"@types/node@*", "@types/node@^22.9.1":
+  version "22.9.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.9.1.tgz#bdf91c36e0e7ecfb7257b2d75bf1b206b308ca71"
+  integrity sha512-p8Yy/8sw1caA8CdRIQBG5tiLHmxtQKObCijiAa9Ez+d4+PRffM4054xbju0msf+cvhJpnFEeNjxmVT/0ipktrg==
   dependencies:
     undici-types "~6.19.8"
-
-"@types/node@^20.16.5":
-  version "20.17.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.4.tgz#98bca755e4551b2a8e7327242a048e5a8eacb719"
-  integrity sha512-Fi1Bj8qTJr4f1FDdHFR7oMlOawEYSzkHNdBJK+aRjcDDNHwEV3jPPjuZP2Lh2QNgXeqzM8Y+U6b6urKAog2rZw==
-  dependencies:
-    undici-types "~6.19.2"
 
 "@types/pidusage@^2.0.5":
   version "2.0.5"
@@ -7366,7 +7359,7 @@ unc-path-regex@^0.1.2:
   resolved "https://registry.yarnpkg.com/unc-path-regex/-/unc-path-regex-0.1.2.tgz#e73dd3d7b0d7c5ed86fbac6b0ae7d8c6a69d50fa"
   integrity sha512-eXL4nmJT7oCpkZsHZUOJo8hcX3GbsiDOa0Qu9F646fi8dT3XuSVopVqAcEiVzSKKH7UoDti23wNX3qGFxcW5Qg==
 
-undici-types@~6.19.2, undici-types@~6.19.8:
+undici-types@~6.19.8:
   version "6.19.8"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-6.19.8.tgz#35111c9d1437ab83a7cdc0abae2f26d88eda0a02"
   integrity sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==
