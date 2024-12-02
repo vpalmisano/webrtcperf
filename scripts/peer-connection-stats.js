@@ -194,6 +194,8 @@ async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false)
               'qualityLimitationDurationsCpu',
               'qualityLimitationDurationsBandwidth',
               'qualityLimitationDurationsTotal',
+              'totalRoundTripTime',
+              'roundTripTimeMeasurements',
             ].forEach(prop => sumOptional(values.outboundRtp, outboundRtp, prop))
             ;[
               'framesSent',
@@ -202,8 +204,6 @@ async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false)
               'framesPerSecond',
               'firCountReceived',
               'pliCountReceived',
-              'totalRoundTripTime',
-              'roundTripTimeMeasurements',
               'jitter',
               'totalEncodeTime',
               'totalPacketSendDelay',
