@@ -71,6 +71,13 @@ export enum PageStatsNames {
 
   cpuPressure = 'cpuPressure',
 
+  videoWidth = 'videoWidth',
+  videoHeight = 'videoHeight',
+  videoBufferedTime = 'videoBufferedTime',
+  videoPlayingTime = 'videoPlayingTime',
+  videoBufferingTime = 'videoBufferingTime',
+  videoBufferingEvents = 'videoBufferingEvents',
+
   /** The throttle upload rate limitation. */
   throttleUpRate = 'throttleUpRate',
   /** The throttle upload delay. */

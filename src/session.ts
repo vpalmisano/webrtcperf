@@ -84,6 +84,14 @@ declare global {
   let collectVideoEndToEndNetworkDelayStats: () => number
   let collectCpuPressure: () => number
   let collectCustomMetrics: () => Promise<Record<string, number | string>>
+  let collectVideoStats: () => {
+    width: number
+    height: number
+    bufferedTime: number
+    playingTime: number
+    bufferingTime: number
+    bufferingEvents: number
+  }
   let getParticipantName: () => string
 }
 
@@ -908,6 +916,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       'https://raw.githubusercontent.com/ggerganov/ggwave/master/bindings/javascript/ggwave.js',
       'scripts/e2e-audio-stats.js',
       'scripts/e2e-video-stats.js',
+      'scripts/video-stats.js',
       'scripts/playout-delay-hint.js',
       'scripts/save-tracks.js',
       'scripts/pressure-stats.js',
@@ -1512,6 +1521,13 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     const pageMemory: Record<string, number> = {}
     const cpuPressureStats: Record<string, number> = {}
 
+    const videoWidth: Record<string, number> = {}
+    const videoHeight: Record<string, number> = {}
+    const videoBufferedTime: Record<string, number> = {}
+    const videoPlayingTime: Record<string, number> = {}
+    const videoBufferingTime: Record<string, number> = {}
+    const videoBufferingEvents: Record<string, number> = {}
+
     const throttleUpValuesRate: Record<string, number> = {}
     const throttleUpValuesDelay: Record<string, number> = {}
     const throttleUpValuesLoss: Record<string, number> = {}
@@ -1533,6 +1549,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             videoEndToEndDelay,
             videoEndToEndNetworkDelay,
             cpuPressure,
+            videoStats,
             customMetrics,
           } = await page.evaluate(async () => ({
             peerConnectionStats: await collectPeerConnectionStats(),
@@ -1540,6 +1557,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             videoEndToEndDelay: collectVideoEndToEndStats(),
             videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
             cpuPressure: collectCpuPressure(),
+            videoStats: collectVideoStats(),
             customMetrics: 'collectCustomMetrics' in window ? collectCustomMetrics() : null,
           }))
           const { participantName } = peerConnectionStats
@@ -1600,6 +1618,14 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
           }
 
           if (cpuPressure !== undefined) cpuPressureStats[pageKey] = cpuPressure
+          if (videoStats) {
+            videoWidth[pageKey] = videoStats.width
+            videoHeight[pageKey] = videoStats.height
+            videoBufferedTime[pageKey] = videoStats.bufferedTime
+            videoPlayingTime[pageKey] = videoStats.playingTime
+            videoBufferingTime[pageKey] = videoStats.bufferingTime
+            videoBufferingEvents[pageKey] = videoStats.bufferingEvents
+          }
 
           // Collect RTC stats.
           for (const s of stats) {
@@ -1694,6 +1720,12 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvLatency = httpRecvLatencyStats
     collectedStats.cpuPressure = cpuPressureStats
+    collectedStats.videoWidth = videoWidth
+    collectedStats.videoHeight = videoHeight
+    collectedStats.videoBufferedTime = videoBufferedTime
+    collectedStats.videoPlayingTime = videoPlayingTime
+    collectedStats.videoBufferingTime = videoBufferingTime
+    collectedStats.videoBufferingEvents = videoBufferingEvents
     collectedStats.pageCpu = pageCpu
     collectedStats.pageMemory = pageMemory
     collectedStats.throttleUpRate = throttleUpValuesRate

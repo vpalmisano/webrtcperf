@@ -15,11 +15,14 @@ webrtcperf.Timer = class {
     this.duration = 0
     this.lastTime = 0
     this.timer = null
+    this.startEvents = 0
+    this.stopEvents = 0
   }
 
   start() {
     if (this.timer) return
     this.lastTime = Date.now()
+    this.startEvents++
     this.timer = setInterval(() => {
       const now = Date.now()
       this.duration += (now - this.lastTime) / 1000
@@ -35,6 +38,7 @@ webrtcperf.Timer = class {
       this.duration += (Date.now() - this.lastTime) / 1000
       this.lastTime = 0
     }
+    this.stopEvents++
   }
 }
 webrtcperf.OnOffTimer = class {

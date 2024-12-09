@@ -242,14 +242,7 @@ webrtcperf.unregisterServiceWorkers = () => {
 }
 
 webrtcperf.MeasuredStats = window.MeasuredStats = class {
-  constructor(
-    { ttl, maxItems, secondsPerSample, storeId } = {
-      ttl: 0,
-      maxItems: 0,
-      secondsPerSample: 1,
-      storeId: '',
-    },
-  ) {
+  constructor({ ttl = 0, maxItems = 0, secondsPerSample = 1, storeId = '' }) {
     /** @type number */
     this.ttl = ttl
     /** @type number */
@@ -264,6 +257,8 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
     this.statsSum = 0
     /** @type number */
     this.statsCount = 0
+    this.statsMin = undefined
+    this.statsMax = undefined
     // Restore from localStorage.
     this.load()
   }
@@ -279,6 +274,8 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
           stats: this.stats,
           statsSum: this.statsSum,
           statsCount: this.statsCount,
+          statsMin: this.statsMin,
+          statsMax: this.statsMax,
         }),
       )
     } catch (err) {
@@ -293,10 +290,12 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
     try {
       const data = localStorage.getItem(`webrtcperf-MeasuredStats-${this.storeId}`)
       if (data) {
-        const { stats, statsSum, statsCount } = JSON.parse(data)
+        const { stats, statsSum, statsCount, statsMin, statsMax } = JSON.parse(data)
         this.stats = stats
         this.statsSum = statsSum
         this.statsCount = statsCount
+        this.statsMin = statsMin
+        this.statsMax = statsMax
       }
     } catch (err) {
       log(`MeasuredStats load error: ${err.message}`)
@@ -307,6 +306,8 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
     this.stats = []
     this.statsSum = 0
     this.statsCount = 0
+    this.statsMin = undefined
+    this.statsMax = undefined
     this.store()
   }
 
@@ -348,21 +349,25 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
    * @param {number} value
    */
   push(timestamp, value) {
-    const last = this.stats[this.stats.length - 1]
-    if (last && timestamp - last.timestamp < this.secondsPerSample * 1000) {
-      last.value += value
-      last.count += 1
-    } else {
-      this.stats.push({ timestamp, value, count: 1 })
+    if (timestamp !== undefined && value !== undefined) {
+      const last = this.stats[this.stats.length - 1]
+      if (last && timestamp - last.timestamp < this.secondsPerSample * 1000) {
+        last.value += value
+        last.count += 1
+      } else {
+        this.stats.push({ timestamp, value, count: 1 })
+      }
+      this.statsSum += value
+      this.statsCount += 1
+      if (this.statsMin === undefined || value < this.statsMin) this.statsMin = value
+      if (this.statsMax === undefined || value > this.statsMax) this.statsMax = value
     }
-    this.statsSum += value
-    this.statsCount += 1
     this.purge()
   }
 
   /**
    * mean
-   * @returns {number | undefined} mean value
+   * @returns {number | undefined} The mean value.
    */
   mean() {
     this.purge()
@@ -371,6 +376,14 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
 
   get size() {
     return this.statsCount
+  }
+
+  get min() {
+    return this.statsMin
+  }
+
+  get max() {
+    return this.statsMax
   }
 }
 
