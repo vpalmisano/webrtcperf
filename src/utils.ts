@@ -293,7 +293,7 @@ export async function randomActivateAudio(
       }
       pages = pages.concat(sessionPages)
     }
-    // Remove pages with not audio tracks.
+    // Remove pages with no audio tracks.
     for (const [i, page] of pages.entries()) {
       if (!page) {
         continue

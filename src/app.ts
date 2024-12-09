@@ -161,7 +161,7 @@ async function main(): Promise<void> {
   }
 
   if (config.vmafPrepareVideo) {
-    await prepareVideo(config.vmafPrepareVideo, config.vmafVideoCrop, true)
+    await prepareVideo(config, true)
     process.exit(0)
   }
 

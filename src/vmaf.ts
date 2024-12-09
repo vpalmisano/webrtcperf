@@ -38,22 +38,41 @@ export async function parseVideo(fpath: string) {
  * @param crop If the video should be cropped.
  * @param keepSourceFile If the source file should be kept.
  */
-export async function prepareVideo(name: string, crop?: string, keepSourceFile = true) {
-  const [fpath, id] = name.split(',')
-  const { width, height, frameRate } = await parseVideo(fpath)
+export async function prepareVideo(
+  {
+    vmafPrepareVideo,
+    vmafVideoCrop,
+    videoWidth,
+    videoHeight,
+    videoFramerate,
+    videoDuration,
+  }: {
+    vmafPrepareVideo: string
+    vmafVideoCrop?: string
+    videoWidth: number
+    videoHeight: number
+    videoFramerate: number
+    videoDuration: number
+  },
+  keepSourceFile = true,
+) {
+  const [fpath, id] = vmafPrepareVideo.split(',')
   const outputPath = path.join(path.dirname(fpath), `${id}_send.mp4`)
-  log.info(`prepareVideo ${fpath} ${width}x${height}@${frameRate} -> ${outputPath} ${crop && `crop: ${crop}`}`)
-
   if (fs.existsSync(outputPath)) {
     throw new Error(`Output file ${outputPath} already exists`)
   }
-  const fontsize = Math.round(height / 18)
+  const { width, height, frameRate } = await parseVideo(fpath)
+  log.info(
+    `prepareVideo ${fpath} ${width}x${height}@${frameRate} -> ${outputPath} ${vmafVideoCrop && `crop: ${vmafVideoCrop}`}`,
+  )
+  const fontsize = Math.round((videoHeight || height) / 18)
   const textHeight = Math.round(fontsize * 1.2)
-  const filter = crop ? cropFilter(json5.parse(crop), 0, ',') : ''
+  const filter = vmafVideoCrop ? cropFilter(json5.parse(vmafVideoCrop), 0, ',') : ''
   await runShellCommand(
     `ffmpeg -hide_banner -loglevel warning -threads ${os.cpus().length} \
+${videoDuration ? `-t ${videoDuration}` : ''} \
 -i ${fpath} \
--filter_complex "[0:v]${filter}\
+-filter_complex "[0:v]scale=w=${videoWidth || width}:h=${videoHeight || height},fps=${videoFramerate || frameRate},${filter}\
 drawbox=x=0:y=0:w=iw:h=${textHeight}:color=black:t=fill,\
 drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf:text='${id || 0}-%{eif\\:t*1000\\:u}':fontcolor=white:fontsize=${fontsize}:x=(w-text_w)/2:y=(${textHeight}-text_h)/2[out]" \
 -map [out] -fps_mode vfr -c:v libx264 -crf 10 -an \
