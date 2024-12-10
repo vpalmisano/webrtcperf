@@ -150,7 +150,6 @@ export interface SessionParams {
   disabledVideoCodecs: string
   getDisplayMediaOverride: string
   getDisplayMediaType: string
-  getDisplayMediaCrop: string
   localStorage: string
   clearCookies: boolean
   scriptPath: string
@@ -222,7 +221,6 @@ export class Session extends EventEmitter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly getDisplayMediaOverride: any | null
   private readonly getDisplayMediaType: string
-  private readonly getDisplayMediaCrop: string | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly localStorage?: any
   private readonly clearCookies: boolean
@@ -355,7 +353,6 @@ export class Session extends EventEmitter {
     disabledVideoCodecs,
     getDisplayMediaOverride,
     getDisplayMediaType,
-    getDisplayMediaCrop,
     localStorage,
     clearCookies,
     scriptPath,
@@ -444,7 +441,6 @@ export class Session extends EventEmitter {
       this.disabledVideoCodecs = []
     }
     this.getDisplayMediaType = getDisplayMediaType
-    this.getDisplayMediaCrop = getDisplayMediaCrop
     if (localStorage) {
       try {
         this.localStorage = JSON5.parse(localStorage)
@@ -840,7 +836,8 @@ export class Session extends EventEmitter {
 
     // Export config to page.
     let cmd = `\
-window.WEBRTC_PERF_START_TIMESTAMP = ${this.startTimestamp};
+webrtcperf = {};
+webrtcperf.elapsedTime = () => Date.now() - ${this.startTimestamp};
 window.WEBRTC_PERF_URL = "${hideAuth(url)}";
 window.WEBRTC_PERF_SESSION = ${this.id};
 window.WEBRTC_PERF_TAB_INDEX = ${tabIndex};
@@ -854,6 +851,7 @@ window.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
 try {
   window.PARAMS = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
 } catch (err) {}
+webrtcperf.GET_DISPLAY_MEDIA_TYPE = "${this.getDisplayMediaType}";
 `
 
     if (this.serverPort) {
@@ -879,11 +877,6 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       cmd += `window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS = JSON.parse('${JSON.stringify(
         this.disabledVideoCodecs,
       )}');\n`
-    }
-
-    if (this.getDisplayMediaCrop) {
-      log.debug('Using getDisplayMedia crop:', this.getDisplayMediaCrop)
-      cmd += `window.GET_DISPLAY_MEDIA_CROP = "${this.getDisplayMediaCrop}";\n`
     }
 
     if (this.localStorage) {

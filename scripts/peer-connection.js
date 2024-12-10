@@ -307,10 +307,11 @@ window.RTCPeerConnection = function (conf, options) {
       webrtcperf
         .waitTrackMedia(receiver.track)
         .then(({ now }) => {
+          const t = webrtcperf.elapsedTime / 1000
           if (receiver.track.kind === 'video') {
-            webrtcperf.videoStartFrameDelayStats.push(now, (now - window.WEBRTC_PERF_START_TIMESTAMP) / 1000)
+            webrtcperf.videoStartFrameDelayStats.push(now, t)
           } else if (receiver.track.kind === 'audio') {
-            webrtcperf.audioStartFrameDelayStats.push(now, (now - window.WEBRTC_PERF_START_TIMESTAMP) / 1000)
+            webrtcperf.audioStartFrameDelayStats.push(now, t)
           }
         })
         .catch(err => log(`waitTrackMedia error: ${err.message}`))

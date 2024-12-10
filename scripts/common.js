@@ -1,5 +1,4 @@
-// Global namespace.
-const webrtcperf = {}
+/* global webrtcperf */
 
 // Capture console messages in a serialized format.
 webrtcperf.safeStringify = obj => {
@@ -421,8 +420,6 @@ webrtcperf.enabledForSession = value => {
 
 // Common page actions
 let actionsStarted = false
-
-webrtcperf.elapsedTime = () => Date.now() - window.WEBRTC_PERF_START_TIMESTAMP
 
 webrtcperf.setupActions = async () => {
   if (!window.PARAMS?.actions || actionsStarted) {

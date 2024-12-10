@@ -50,18 +50,16 @@ function overrideGetDisplayMedia(constraints) {
 }
 
 async function applyGetDisplayMediaCrop(mediaStream) {
-  if (!window.GET_DISPLAY_MEDIA_CROP) {
-    return
-  }
-  const element = document.querySelector(window.GET_DISPLAY_MEDIA_CROP)
+  if (!webrtcperf.GET_DISPLAY_MEDIA_CROP) return
+  const element = document.querySelector(webrtcperf.GET_DISPLAY_MEDIA_CROP)
   const videoTrack = mediaStream.getVideoTracks()[0]
   if (element && videoTrack) {
     if ('RestrictionTarget' in window && 'fromElement' in window.RestrictionTarget) {
-      log(`applyGetDisplayMediaCrop with RestrictionTarget to "${window.GET_DISPLAY_MEDIA_CROP}"`)
+      log(`applyGetDisplayMediaCrop with RestrictionTarget to "${webrtcperf.GET_DISPLAY_MEDIA_CROP}"`)
       const restrictionTarget = await window.RestrictionTarget.fromElement(element)
       await videoTrack.restrictTo(restrictionTarget)
     } else {
-      log(`applyGetDisplayMediaCrop to "${window.GET_DISPLAY_MEDIA_CROP}"`)
+      log(`applyGetDisplayMediaCrop to "${webrtcperf.GET_DISPLAY_MEDIA_CROP}"`)
       element.style.zIndex = 99999
       const cropTarget = await window.CropTarget.fromElement(element)
       await videoTrack.cropTo(cropTarget)
@@ -194,7 +192,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
   navigator.mediaDevices.getDisplayMedia = async function (constraints, ...args) {
     log(`getDisplayMedia:`, JSON.stringify(constraints, null, 2))
     let stopFakeScreenshare = null
-    if (window.PARAMS?.fakeScreenshare) {
+    if (webrtcperf.GET_DISPLAY_MEDIA_TYPE === 'browser') {
       stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(window.PARAMS?.fakeScreenshare)
     }
     overrideGetDisplayMedia(constraints)

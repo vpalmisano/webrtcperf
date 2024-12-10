@@ -3,7 +3,7 @@
 webrtcperf.setupFakeScreenshare = ({
   embed = '',
   slides = 4,
-  delay = 15000,
+  delay = 5000,
   animationDuration = 1000,
   width = 1920,
   height = 1080,
@@ -42,7 +42,7 @@ webrtcperf.setupFakeScreenshare = ({
     `all: unset; position: fixed; top: 0; left: 0; width: ${width}px; height: ${height}px; z-index: -1; background-color: black; isolation: isolate; transform-style: flat;`,
   )
   document.body.appendChild(wrapper)
-  window.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
+  webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
 
   let running = true
   let timeout = 0
