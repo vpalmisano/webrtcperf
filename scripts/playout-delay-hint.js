@@ -33,10 +33,11 @@ window.getPlayoutDelayHint = () => {
 }
 
 const handleTransceiverForJitterBufferTarget = (id, transceiver, event) => {
-  const jitterBufferTarget = window.PARAMS?.jitterBufferTarget
-  if (jitterBufferTarget === undefined) {
-    return
+  let jitterBufferTarget = window.PARAMS?.jitterBufferTarget
+  if (jitterBufferTarget && isNaN(jitterBufferTarget)) {
+    jitterBufferTarget = jitterBufferTarget[transceiver.receiver.track?.kind]
   }
+  if (isNaN(jitterBufferTarget)) return
   if (transceiver.receiver && transceiver.receiver.track?.label !== 'probator') {
     log(
       `RTCPeerConnection-${id} ${event}: set jitterBufferTarget ${transceiver.receiver.track?.kind} ${transceiver.receiver.jitterBufferTarget} -> ${jitterBufferTarget}`,
