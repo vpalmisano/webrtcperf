@@ -34,7 +34,9 @@ webrtcperf.setupFakeScreenshare = ({
     await sleep(delay)
   }
 
-  log(`FakeScreenshare start: slides=${slides} embed=${embed}`)
+  log(
+    `FakeScreenshare start: embed=${embed} slides=${slides} animationDuration=${animationDuration} delay=${delay} width=${width} height=${height}`,
+  )
   const wrapper = document.createElement('div')
   wrapper.setAttribute('id', 'webrtcperf-fake-screenshare')
   wrapper.setAttribute(
