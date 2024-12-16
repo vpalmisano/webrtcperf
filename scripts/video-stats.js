@@ -24,6 +24,14 @@ webrtcperf.videoStats = {
     const playingTimer = new webrtcperf.Timer()
     const bufferingTimer = new webrtcperf.Timer()
     this.collectedVideos.set(video, { playingTimer, bufferingTimer })
+    video.addEventListener(
+      'play',
+      () => {
+        playingTimer.start()
+        bufferingTimer.stop()
+      },
+      { once: true },
+    )
     video.addEventListener('playing', () => {
       playingTimer.start()
       bufferingTimer.stop()
