@@ -129,6 +129,7 @@ window.RTCPeerConnection = function (conf, options) {
     },
     options,
   )
+  debug(`created`, { conf, options, pc })
 
   PeerConnections.set(id, pc)
 
@@ -294,6 +295,24 @@ window.RTCPeerConnection = function (conf, options) {
         checkSaveStream(transceiver)
       }
     }
+  }
+
+  const addTrackNative = pc.addTrack.bind(pc)
+  pc.addTrack = (...args) => {
+    debug(`addTrack`, args)
+    const sender = addTrackNative(...args)
+    for (const transceiver of pc.getTransceivers()) {
+      if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
+        if (encodedInsertableStreams && timestampInsertableStreams) {
+          handleTransceiverForInsertableStreams(id, transceiver)
+        }
+        handleTransceiverForPlayoutDelayHint(id, transceiver, 'addTrack')
+        handleTransceiverForJitterBufferTarget(id, transceiver, 'addTrack')
+
+        checkSaveStream(transceiver)
+      }
+    }
+    return sender
   }
 
   pc.addEventListener('track', async event => {
