@@ -143,7 +143,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"129.0.6668.58"`
+*Default*: `"130.0.6723.69"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -178,7 +178,7 @@ The browser window height.
 ## deviceScaleFactor
 The browser device scale factor.
 
-*Type*: `positive int`
+*Type*: `float`
 
 *Default*: `1`
 
@@ -242,11 +242,11 @@ The start timestamp (in milliseconds). If 0, the value will be calculated using 
 *Default*: `0`
 
 ## enableDetailedStats
-If `true`, each individual participant stats values will be reported.
+If detailed participant metrics values should be collected.
 
-*Type*: `boolean`
+*Type*: `index`
 
-*Default*: `false`
+*Default*: `""`
 
 ## spawnRate
 The pages spawn rate (pages/s).
@@ -326,13 +326,6 @@ The fake display type to use for `getDisplayMedia`. It could be `monitor`, `wind
 
 *Default*: `"monitor"`
 
-## getDisplayMediaCrop
-An HTML selector used for cropping the `getDisplayMedia` video track.
-
-*Type*: `string`
-
-*Default*: `""`
-
 ## localStorage
 A JSON string with the `localStorage` object to be set on page load.
 
@@ -388,6 +381,15 @@ Examples:
 
 *Default*: `""`
 
+## downloadResponses
+An array of url responses that will be saved to the disk, keyed by the url in JSON5 format.
+Example: `[{ urlPattern: "https://url.com/*", output: "save/directory" }]`
+
+
+*Type*: `string`
+
+*Default*: `""`
+
 ## extraCSS
 A string with a CSS styles to inject into each page. Rules containing "important" will be replaced with "!important".
 
@@ -396,7 +398,7 @@ A string with a CSS styles to inject into each page. Rules containing "important
 *Default*: `""`
 
 ## cookies
-A string with the cookies to set into each page in JSON format.
+A string with an array of [CookieParam](https://pptr.dev/api/puppeteer.cookieparam) to set into each page in JSON5 format.
 
 *Type*: `string`
 
@@ -583,6 +585,34 @@ If true, the VMAF source files will not be deleted.
 *Type*: `boolean`
 
 *Default*: `true`
+
+## vmafCrop
+If set, the reference and degraded videos will be cropped using the specified configuration in JSON5 format. Crop configuration should be expressed using the ffmpeg crop filter syntax (https://ffmpeg.org/ffmpeg-filters.html#crop). E.g. `{ "Participant-000001_recv-by_Participant-000000': { ref: { w: "iw-10", h: "ih-5" }, deg: { w: "200", h: "200" } } }`
+
+*Type*: `string`
+
+*Default*: `""`
+
+## vmafPrepareVideo
+When set, it prepares the selected video applying a timestamp overlay on top of it. The filename must be provided in the format `<video path>,<ID>`, where the selected ID will be used unique video identifier in the overlay.
+
+*Type*: `string`
+
+*Default*: `""`
+
+## vmafProcessVideo
+When set, it runs the VMAF video preprocessor, that converts a video file into the IVF format with timestamps matching the overlay recognition. The filename must contain a `recv` or `send` string to identify if the video was a reference (send) or a degraded version (recv), e.g. `Participant1_recv.mp4`.
+
+*Type*: `string`
+
+*Default*: `""`
+
+## vmafVideoCrop
+If set, the vmaf prepared/processed video will be cropped using the specified configuration in JSON5 format. Crop configuration should be expressed using the ffmpeg crop filter syntax (https://ffmpeg.org/ffmpeg-filters.html#crop). E.g. `{ w: "iw-10", h: "ih-5", x: "10", y: '5' }`
+
+*Type*: `string`
+
+*Default*: `""`
 
 ## visqolPath
 When set, it runs the visqol calculator for the audio files saved under the provided directory path.

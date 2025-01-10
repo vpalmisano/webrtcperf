@@ -1376,6 +1376,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       resourcesStats.recvLatency.push(timestamp - request.timestamp)
     })
 
+    log.debug(`Page ${index + 1} "${url}" loading`)
+    const pageLoadTime = Date.now()
+
     // open the page url
     try {
       await page.goto(url, {
@@ -1391,7 +1394,7 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     // add to pages map
     this.pages.set(index, page)
 
-    log.debug(`Page ${index + 1} "${url}" loaded`)
+    log.debug(`Page ${index + 1} "${url}" loaded in ${(Date.now() - pageLoadTime) / 1000}s`)
 
     for (let i = 0; i < this.evaluateAfter.length; i++) {
       await page.evaluate(

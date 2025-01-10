@@ -510,3 +510,18 @@ window.createWorker = fn => {
   const url = URL.createObjectURL(blob)
   return new Worker(url)
 }
+
+/**
+ * It waits until the time is reached.
+ * @param {number} waitUtilTime The time in seconds to wait from the start of the test.
+ * @param {number} waitUtilTimeRate An additional time to wait calcualted as `participant_index / waitUtilTime
+ */
+webrtcperf.waitUtilTime = async (waitUtilTime, waitUtilTimeRate = 0) => {
+  if (!waitUtilTime) return
+  const participantWaitTime = waitUtilTimeRate > 0 ? window.WEBRTC_PERF_INDEX / waitUtilTimeRate : 0
+  const t = waitUtilTime * 1000 + participantWaitTime * 1000 - webrtcperf.elapsedTime()
+  if (t > 0) {
+    webrtcperf.log(`Waiting ${t / 1000}s`)
+    await webrtcperf.sleep(t)
+  }
+}

@@ -23,6 +23,7 @@
   ],
   "typedocOptions": {
     "entryPoints": ["./src"],
+    "entryPointStrategy": "expand",
     "out": "./_docs",
     "readme": "README.md",
     "projectDocuments": "./docs",
