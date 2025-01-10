@@ -91,7 +91,7 @@
     "@types/sprintf-js": "^1.1.4",
     "@types/tar-fs": "^2.0.4",
     "@types/ws": "^8.5.12",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
     "@typescript-eslint/parser": "^8.12.2",
     "eslint": "^9.13.0",
     "eslint-config-prettier": "^9.1.0",
