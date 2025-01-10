@@ -1,0 +1,63 @@
+FROM --platform=$TARGETPLATFORM ubuntu:jammy AS ffmpeg-build
+LABEL org.opencontainers.image.title webrtcperf-ffmpeg
+LABEL org.opencontainers.image.description FFmpeg build with VMAF support.
+LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
+LABEL org.opencontainers.image.authors Vittorio Palmisano <vpalmisano@gmail.com>
+
+RUN \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ninja-build \
+		python3 \
+		python3-pip \
+        build-essential \
+        meson \
+        nasm \
+        yasm \
+        wget \
+        libfontconfig-dev \
+        libfribidi-dev \
+        libharfbuzz-dev \
+        libspeex-dev \
+        libtesseract-dev \
+        libvorbis-dev \
+        libvpx-dev \
+        libwebp-dev \
+        libx264-dev \
+        libzimg-dev \
+        libx265-dev \
+        libssl-dev \
+        libzmq3-dev
+
+ENV VMAF_VERSION=3.0.0
+ENV FFMPEG_VERSION=7.1
+
+RUN \
+    mkdir -p /src \
+    && cd /src \
+    && wget -q https://github.com/Netflix/vmaf/archive/refs/tags/v${VMAF_VERSION}.tar.gz \
+	&& tar -xzf v${VMAF_VERSION}.tar.gz \
+	&& cd vmaf-${VMAF_VERSION}/libvmaf \
+	&& meson build --prefix /usr \
+	&& ninja -vC build \
+	&& ninja -vC build install \
+	&& mkdir -p /usr/share/model \
+	&& cp -R ../model/* /usr/share/model
+
+RUN \
+    mkdir -p /src \
+    && cd /src \
+    && wget -q https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n${FFMPEG_VERSION}.tar.gz \
+	&& tar -xzf n${FFMPEG_VERSION}.tar.gz \
+	&& cd FFmpeg-n${FFMPEG_VERSION} \
+    && ./configure --prefix=/usr \
+        --enable-version3 --disable-shared --enable-gpl --enable-nonfree --enable-static \
+        --enable-pthreads --enable-filters --enable-openssl --enable-runtime-cpudetect \
+        --enable-libvpx --enable-libx264 --enable-libx265 --enable-libspeex \
+        --enable-libtesseract --enable-libfreetype --enable-fontconfig --enable-libzimg \
+        --enable-libvmaf --enable-libvorbis --enable-libwebp --enable-libfribidi --enable-libharfbuzz \
+        --enable-libzmq \
+    && make -j$(nproc) \
+    && make install
+
+RUN rm -rf /src

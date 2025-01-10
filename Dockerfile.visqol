@@ -1,0 +1,27 @@
+
+FROM --platform=$TARGETPLATFORM ubuntu:jammy AS visqol-build
+LABEL org.opencontainers.image.title webrtcperf-visqol
+LABEL org.opencontainers.image.description Visqol build.
+LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
+LABEL org.opencontainers.image.authors Vittorio Palmisano <vpalmisano@gmail.com>
+
+RUN \
+    apt-get update \
+    && apt-get install apt-transport-https curl gnupg git -y \
+    && curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg \
+    && mv bazel-archive-keyring.gpg /usr/share/keyrings \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ninja-build \
+        python3 \
+        python3-pip \
+        build-essential \
+        bazel-5.3.2 \
+        python3-numpy
+RUN \
+    mkdir -p /src \
+    && cd /src \
+    && git clone --depth 1 https://github.com/google/visqol
+RUN cd /src/visqol \
+    && bazel-5.3.2 build :visqol -c opt
