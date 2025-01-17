@@ -127,8 +127,8 @@ COPY --from=ghcr.io/vpalmisano/webrtcperf-ffmpeg:devel /usr/lib/aarch64-linux-gn
 COPY --from=ghcr.io/vpalmisano/webrtcperf-ffmpeg:devel /usr/share/model/* /usr/share/model/
 
 # Optional dependencies.
-#COPY --from=ghcr.io/vpalmisano/webrtcperf-visqol:devel /src/visqol/bazel-bin/visqo[l] /usr/bin/
-#COPY --from=ghcr.io/vpalmisano/webrtcperf-visqol:devel /src/visqol/mode[l] /usr/share/visqol/model
+COPY --from=ghcr.io/vpalmisano/webrtcperf-visqol:devel /src/visqol/bazel-bin/visqol /usr/bin/
+COPY --from=ghcr.io/vpalmisano/webrtcperf-visqol:devel /src/visqol/model /usr/share/visqol/model
 
 # Default test video.
 RUN mkdir -p /app/
