@@ -580,7 +580,7 @@ export class Session extends EventEmitter {
     if (this.enableBrowserLogging && this.pageLogPath) {
       const eventLogPath = path.resolve(path.dirname(this.pageLogPath), `event-logging-${this.id}`)
       fs.mkdirSync(eventLogPath, { recursive: true })
-      args.push('--enable-logging', '--vmodule=*/webrtc/*=1', `--webrtc-event-logging=${eventLogPath}`)
+      args.push('--enable-logging=stderr', '--vmodule=*/webrtc/*=0', '--v=0', `--webrtc-event-logging=${eventLogPath}`)
       fieldTrials = 'WebRTC-RtcEventLogNewFormat/Disabled/' + fieldTrials
     }
 
