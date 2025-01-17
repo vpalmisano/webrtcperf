@@ -549,7 +549,7 @@ export class Session extends EventEmitter {
    * Returns the chromium browser launch args
    * @return the args list
    */
-  getBrowserArgs(): string[] {
+  getBrowserArgs(env: Record<string, string>): string[] {
     // https://peter.sh/experiments/chromium-command-line-switches/
     // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/fieldtrial_testing_config.json;l=8877?q=%20fieldtrial_testing_config.json&ss=chromium
     const args = [
@@ -578,10 +578,12 @@ export class Session extends EventEmitter {
     let fieldTrials = this.chromiumFieldTrials || ''
 
     if (this.enableBrowserLogging && this.pageLogPath) {
-      const eventLogPath = path.resolve(path.dirname(this.pageLogPath), `event-logging-${this.id}`)
+      const pageLogDir = path.dirname(this.pageLogPath)
+      const eventLogPath = path.resolve(pageLogDir, `webrtc-event-logging-${this.id}`)
       fs.mkdirSync(eventLogPath, { recursive: true })
-      args.push('--enable-logging=stderr', '--vmodule=*/webrtc/*=0', '--v=0', `--webrtc-event-logging=${eventLogPath}`)
+      args.push('--enable-logging', '--vmodule=*/webrtc/*=1', '--v=0', `--webrtc-event-logging=${eventLogPath}`)
       fieldTrials = 'WebRTC-RtcEventLogNewFormat/Disabled/' + fieldTrials
+      env.CHROME_LOG_FILE = path.resolve(pageLogDir, `chrome-${this.id}.log`)
     }
 
     if (this.maxVideoDecoders !== -1 && this.id >= this.maxVideoDecodersAt) {
@@ -670,14 +672,14 @@ export class Session extends EventEmitter {
         executablePath = await throttleLauncher(executablePath, this.throttleIndex)
       }
 
-      const env = { ...process.env }
+      const env = { ...process.env } as Record<string, string>
       if (!this.display) {
         delete env.DISPLAY
       } else {
         env.DISPLAY = this.display
       }
 
-      const args = this.getBrowserArgs()
+      const args = this.getBrowserArgs(env)
       const ignoreDefaultArgs = [
         '--disable-dev-shm-usage',
         '--remote-debugging-port',
