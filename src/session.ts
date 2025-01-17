@@ -697,7 +697,7 @@ export class Session extends EventEmitter {
           executablePath,
           handleSIGINT: false,
           env,
-          dumpio: this.enableBrowserLogging,
+          // dumpio: this.enableBrowserLogging,
           // devtools: true,
           defaultViewport: {
             width: this.windowWidth,
