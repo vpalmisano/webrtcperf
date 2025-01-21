@@ -581,7 +581,7 @@ export class Session extends EventEmitter {
       const pageLogDir = path.dirname(this.pageLogPath)
       const eventLogPath = path.resolve(pageLogDir, `webrtc-event-logging-${this.id}`)
       fs.mkdirSync(eventLogPath, { recursive: true })
-      args.push('--enable-logging', '--vmodule=*/webrtc/*=1', '--v=0', `--webrtc-event-logging=${eventLogPath}`)
+      args.push('--enable-logging', '--vmodule=*/webrtc/*=5', '--v=0', `--webrtc-event-logging=${eventLogPath}`)
       fieldTrials = 'WebRTC-RtcEventLogNewFormat/Disabled/' + fieldTrials
       env.CHROME_LOG_FILE = path.resolve(pageLogDir, `chrome-${this.id}.log`)
     }
