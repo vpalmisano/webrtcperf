@@ -348,19 +348,21 @@ webrtcperf.MeasuredStats = window.MeasuredStats = class {
    * @param {number} value
    */
   push(timestamp, value) {
-    if (timestamp !== undefined && value !== undefined) {
-      const last = this.stats[this.stats.length - 1]
-      if (last && timestamp - last.timestamp < this.secondsPerSample * 1000) {
-        last.value += value
-        last.count += 1
-      } else {
-        this.stats.push({ timestamp, value, count: 1 })
-      }
-      this.statsSum += value
-      this.statsCount += 1
-      if (this.statsMin === undefined || value < this.statsMin) this.statsMin = value
-      if (this.statsMax === undefined || value > this.statsMax) this.statsMax = value
+    if (timestamp === undefined || value === undefined || isNaN(timestamp) || isNaN(value)) {
+      webrtcperf.log(`MeasuredStats.push invalid value: timestamp=${timestamp} value=${value}`)
+      return
     }
+    const last = this.stats[this.stats.length - 1]
+    if (last && timestamp - last.timestamp < this.secondsPerSample * 1000) {
+      last.value += value
+      last.count += 1
+    } else {
+      this.stats.push({ timestamp, value, count: 1 })
+    }
+    this.statsSum += value
+    this.statsCount += 1
+    if (this.statsMin === undefined || value < this.statsMin) this.statsMin = value
+    if (this.statsMax === undefined || value > this.statsMax) this.statsMax = value
     this.purge()
   }
 
