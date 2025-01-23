@@ -175,7 +175,10 @@ window.RTCPeerConnection = function (conf, options) {
 
   const createOfferNative = pc.createOffer.bind(pc)
   pc.createOffer = async options => {
-    const offer = await createOfferNative(options)
+    let offer = await createOfferNative(options)
+    if (window.overrideCreateOffer) {
+      offer = window.overrideCreateOffer(offer)
+    }
     debug(`createOffer`, { options, offer })
     return offer
   }
