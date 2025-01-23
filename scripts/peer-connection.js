@@ -185,6 +185,7 @@ window.RTCPeerConnection = function (conf, options) {
     debug(`setLocalDescription`, description)
     if (window.overrideSetLocalDescription) {
       description = window.overrideSetLocalDescription(description)
+      debug(`setLocalDescription override`, description)
     }
     return setLocalDescriptionNative(description)
   }
@@ -194,6 +195,7 @@ window.RTCPeerConnection = function (conf, options) {
     debug(`setRemoteDescription`, description)
     if (window.overrideSetRemoteDescription) {
       description = window.overrideSetRemoteDescription(description)
+      debug(`setRemoteDescription override`, description)
     }
     return setRemoteDescriptionNative(description)
   }
