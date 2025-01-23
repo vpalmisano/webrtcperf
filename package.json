@@ -53,7 +53,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@puppeteer/browsers": "^2.4.0",
-    "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#16c2d008b532b8bbb248d6faba3f5c815676fe1a",
+    "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#8fced975854432b0ae52757a14bac156a2b07d48",
     "axios": "^1.7.7",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
