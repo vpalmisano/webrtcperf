@@ -140,7 +140,7 @@ let timestampInsertableStreamsWorker = null
 
 if (
   timestampInsertableStreams &&
-  !!window.PARAMS?.timestampInsertableStreamsUseWorker
+  !!webrtcperf.params.timestampInsertableStreamsUseWorker
 ) {
   const workerFunction = () => {
     // eslint-disable-next-line no-unused-vars

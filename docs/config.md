@@ -292,7 +292,7 @@ One or more JavaScript file paths (comma-separated). If set, the files contents 
 
 ## scriptParams
 Additional parameters (in JSON format) that will be exposed into
-the page context as `window.PARAMS`.
+the page context as `webrtcperf.params`.
 
 *Type*: `string`
 

@@ -1,7 +1,7 @@
-/* global log, PeerConnections */
+/* global webrtcperf, log, PeerConnections */
 
 const handleTransceiverForPlayoutDelayHint = (id, transceiver, event) => {
-  const playoutDelayHint = window.PARAMS?.playoutDelayHint
+  const playoutDelayHint = webrtcperf.params.playoutDelayHint
   if (playoutDelayHint === undefined) {
     return
   }
@@ -14,7 +14,7 @@ const handleTransceiverForPlayoutDelayHint = (id, transceiver, event) => {
 }
 
 window.setPlayoutDelayHint = value => {
-  window.PARAMS.playoutDelayHint = value
+  webrtcperf.params.playoutDelayHint = value
   ;[...PeerConnections.entries()].forEach(([id, pc]) => {
     pc.getTransceivers().forEach(t => handleTransceiverForPlayoutDelayHint(id, t, 'set'))
   })
@@ -33,7 +33,7 @@ window.getPlayoutDelayHint = () => {
 }
 
 const handleTransceiverForJitterBufferTarget = (id, transceiver, event) => {
-  let jitterBufferTarget = window.PARAMS?.jitterBufferTarget
+  let jitterBufferTarget = webrtcperf.params.jitterBufferTarget
   if (jitterBufferTarget && isNaN(jitterBufferTarget)) {
     jitterBufferTarget = jitterBufferTarget[transceiver.receiver.track?.kind]
   }
@@ -47,7 +47,7 @@ const handleTransceiverForJitterBufferTarget = (id, transceiver, event) => {
 }
 
 window.setJitterBufferTarget = value => {
-  window.PARAMS.jitterBufferTarget = value
+  webrtcperf.params.jitterBufferTarget = value
   ;[...PeerConnections.entries()].forEach(([id, pc]) => {
     pc.getTransceivers().forEach(t => handleTransceiverForJitterBufferTarget(id, t, 'set'))
   })

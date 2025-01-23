@@ -1,6 +1,6 @@
 /* global webrtcperf, log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, saveMediaTrack, stopSaveMediaTrack */
 
-const timestampInsertableStreams = !!window.PARAMS?.timestampInsertableStreams
+const timestampInsertableStreams = !!webrtcperf.params.timestampInsertableStreams
 
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
@@ -77,7 +77,7 @@ webrtcperf.connectionTimer = new webrtcperf.OnOffTimer()
 webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTime = Date.now()) => {
   const { id, kind } = track
   const debug = (...args) => {
-    if (webrtcperf.enabledForSession(window.PARAMS?.peerConnectionDebug)) {
+    if (webrtcperf.enabledForSession(webrtcperf.params.peerConnectionDebug)) {
       log(`waitTrackMedia ${id} (${kind})`, ...args)
     }
   }
@@ -114,7 +114,7 @@ window.RTCPeerConnection = function (conf, options) {
   const id = webrtcperf.peerConnectionNextId++
 
   const debug = (...args) => {
-    if (webrtcperf.enabledForSession(window.PARAMS?.peerConnectionDebug)) {
+    if (webrtcperf.enabledForSession(webrtcperf.params.peerConnectionDebug)) {
       log(`RTCPeerConnection-${id}`, ...args)
     }
   }
@@ -176,18 +176,20 @@ window.RTCPeerConnection = function (conf, options) {
   const createOfferNative = pc.createOffer.bind(pc)
   pc.createOffer = async options => {
     let offer = await createOfferNative(options)
-    if (window.overrideCreateOffer) {
-      offer = window.overrideCreateOffer(offer)
+    if (webrtcperf.overrideCreateOffer) {
+      offer = webrtcperf.overrideCreateOffer(offer)
+      debug(`createOffer override`, offer)
+    } else {
+      debug(`createOffer`, { options, offer })
     }
-    debug(`createOffer`, { options, offer })
     return offer
   }
 
   const setLocalDescriptionNative = pc.setLocalDescription.bind(pc)
   pc.setLocalDescription = description => {
     debug(`setLocalDescription`, description)
-    if (window.overrideSetLocalDescription) {
-      description = window.overrideSetLocalDescription(description)
+    if (webrtcperf.overrideSetLocalDescription) {
+      description = webrtcperf.overrideSetLocalDescription(description)
       debug(`setLocalDescription override`, description)
     }
     return setLocalDescriptionNative(description)
@@ -196,8 +198,8 @@ window.RTCPeerConnection = function (conf, options) {
   const setRemoteDescriptionNative = pc.setRemoteDescription.bind(pc)
   pc.setRemoteDescription = description => {
     debug(`setRemoteDescription`, description)
-    if (window.overrideSetRemoteDescription) {
-      description = window.overrideSetRemoteDescription(description)
+    if (webrtcperf.overrideSetRemoteDescription) {
+      description = webrtcperf.overrideSetRemoteDescription(description)
       debug(`setRemoteDescription override`, description)
     }
     return setRemoteDescriptionNative(description)
@@ -205,22 +207,25 @@ window.RTCPeerConnection = function (conf, options) {
 
   const checkSaveStream = transceiver => {
     if (!transceiver?.sender?.track) return
-    if (transceiver.sender.track.kind === 'video' && webrtcperf.enabledForSession(window.PARAMS?.saveSendVideoTrack)) {
-      saveMediaTrack(
-        transceiver.sender.track,
-        'send',
-        window.PARAMS?.saveVideoTrackEnableStart,
-        window.PARAMS?.saveVideoTrackEnableEnd,
-      ).catch(err => log(`saveMediaTrack error: ${err.message}`))
-    } else if (
-      transceiver.sender.track.kind === 'audio' &&
-      webrtcperf.enabledForSession(window.PARAMS?.saveSendAudioTrack)
+    if (
+      transceiver.sender.track.kind === 'video' &&
+      webrtcperf.enabledForSession(webrtcperf.params.saveSendVideoTrack)
     ) {
       saveMediaTrack(
         transceiver.sender.track,
         'send',
-        window.PARAMS?.saveAudioTrackEnableStart,
-        window.PARAMS?.saveAudioTrackEnableEnd,
+        webrtcperf.params.saveVideoTrackEnableStart,
+        webrtcperf.params.saveVideoTrackEnableEnd,
+      ).catch(err => log(`saveMediaTrack error: ${err.message}`))
+    } else if (
+      transceiver.sender.track.kind === 'audio' &&
+      webrtcperf.enabledForSession(webrtcperf.params.saveSendAudioTrack)
+    ) {
+      saveMediaTrack(
+        transceiver.sender.track,
+        'send',
+        webrtcperf.params.saveAudioTrackEnableStart,
+        webrtcperf.params.saveAudioTrackEnableEnd,
       ).catch(err => log(`saveMediaTrack error: ${err.message}`))
     }
   }
@@ -341,17 +346,17 @@ window.RTCPeerConnection = function (conf, options) {
         .catch(err => log(`waitTrackMedia error: ${err.message}`))
 
       if (receiver.track.kind === 'video') {
-        if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
+        if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
           webrtcperf.recognizeVideoTimestampWatermark(receiver.track)
         }
-        if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvVideoTrack)) {
+        if (webrtcperf.enabledForSession(webrtcperf.params.saveRecvVideoTrack)) {
           saveMediaTrack(receiver.track, 'recv').catch(err => log(`saveMediaTrack error: ${err.message}`))
         }
       } else if (receiver.track.kind === 'audio') {
-        if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+        if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
           webrtcperf.recognizeAudioTimestampWatermark(receiver.track)
         }
-        if (webrtcperf.enabledForSession(window.PARAMS?.saveRecvAudioTrack)) {
+        if (webrtcperf.enabledForSession(webrtcperf.params.saveRecvAudioTrack)) {
           saveMediaTrack(receiver.track, 'recv').catch(err => log(`saveMediaTrack error: ${err.message}`))
         }
       }

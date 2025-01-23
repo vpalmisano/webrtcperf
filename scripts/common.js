@@ -424,13 +424,13 @@ webrtcperf.enabledForSession = value => {
 let actionsStarted = false
 
 webrtcperf.setupActions = async () => {
-  if (!window.PARAMS?.actions || actionsStarted) {
+  if (!webrtcperf.params.actions || actionsStarted) {
     return
   }
   actionsStarted = true
 
   /** @ŧype Array<{ name: string, at: number, every: number, times: number, index: number, params: [] }> */
-  const actions = window.PARAMS.actions
+  const actions = webrtcperf.params.actions
   actions
     .sort((a, b) => (a.at || 0) - (b.at || 0))
     .forEach(action => {

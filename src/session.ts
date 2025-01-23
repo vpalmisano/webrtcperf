@@ -851,8 +851,11 @@ window.VIDEO_FRAMERATE = ${this.videoFramerate};
 window.LOCAL_STORAGE = '${this.localStorage ? JSON.stringify(this.localStorage) : ''}';
 window.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
 try {
-  window.PARAMS = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
-} catch (err) {}
+  webrtcperf.params = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
+} catch (err) {
+  console.error('[webrtcperf] Error parsing scriptParams:', err);
+  webrtcperf.params = {};
+}
 webrtcperf.GET_DISPLAY_MEDIA_TYPE = "${this.getDisplayMediaType}";
 `
 

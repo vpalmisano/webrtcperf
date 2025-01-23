@@ -386,7 +386,7 @@ the following global variables will be attached to the \`window\` object: \
   },
   scriptParams: {
     doc: `Additional parameters (in JSON format) that will be exposed into
-the page context as \`window.PARAMS\`.`,
+the page context as \`webrtcperf.params\`.`,
     format: String,
     nullable: true,
     default: '',

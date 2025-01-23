@@ -158,8 +158,8 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     } catch (err) {
       log(`overrideGetUserMedia error:`, err)
     }
-    if (window.PARAMS?.getUserMediaWaitTime > 0) {
-      await sleep(window.PARAMS?.getUserMediaWaitTime)
+    if (webrtcperf.params.getUserMediaWaitTime > 0) {
+      await sleep(webrtcperf.params.getUserMediaWaitTime)
     }
     let mediaStream = await nativeGetUserMedia(constraints, ...args)
     if (window.overrideGetUserMediaStream !== undefined) {
@@ -175,11 +175,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       log(`collectMediaTracks error:`, err)
     }
 
-    if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+    if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
       mediaStream = webrtcperf.applyAudioTimestampWatermark(mediaStream)
     }
 
-    if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkVideo)) {
+    if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
       mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
     }
 
@@ -193,11 +193,11 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     log(`getDisplayMedia:`, JSON.stringify(constraints, null, 2))
     let stopFakeScreenshare = null
     if (webrtcperf.GET_DISPLAY_MEDIA_TYPE === 'browser') {
-      stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(window.PARAMS?.fakeScreenshare)
+      stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(webrtcperf.params.fakeScreenshare)
     }
     overrideGetDisplayMedia(constraints)
-    if (window.PARAMS?.getDisplayMediaWaitTime > 0) {
-      await sleep(window.PARAMS?.getDisplayMediaWaitTime)
+    if (webrtcperf.params.getDisplayMediaWaitTime > 0) {
+      await sleep(webrtcperf.params.getDisplayMediaWaitTime)
     }
     let mediaStream = await nativeGetDisplayMedia(constraints, ...args)
     await applyGetDisplayMediaCrop(mediaStream)

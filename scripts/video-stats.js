@@ -98,7 +98,7 @@ webrtcperf.videoStats = {
 window.collectVideoStats = () => webrtcperf.videoStats.collect()
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (webrtcperf.enabledForSession(window.PARAMS?.enableVideoStats)) {
+  if (webrtcperf.enabledForSession(webrtcperf.params.enableVideoStats)) {
     webrtcperf.videoStats.scheduleNext()
   }
 })

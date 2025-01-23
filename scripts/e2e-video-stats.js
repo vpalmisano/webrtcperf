@@ -157,7 +157,7 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
       width,
       height,
       participantName,
-      drawGrid: window.PARAMS?.drawWatermarkGrid,
+      drawGrid: webrtcperf.params.drawWatermarkGrid,
     },
     [readable, writable],
   )

@@ -38,11 +38,11 @@ function convertTypedArray(src, type) {
 
 webrtcperf.ggwave = null
 
-if (webrtcperf.enabledForSession(window.PARAMS?.timestampWatermarkAudio)) {
+if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       webrtcperf.ggwave = await ggwave_factory()
-      if (!window.PARAMS?.timestampWatermarkAudioDebug) webrtcperf.ggwave.disableLog()
+      if (!webrtcperf.params.timestampWatermarkAudioDebug) webrtcperf.ggwave.disableLog()
     } catch (e) {
       log(`ggwave error: ${e}`)
     }
