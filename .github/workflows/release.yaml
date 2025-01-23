@@ -59,17 +59,17 @@ jobs:
           webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
           webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
     - name: Archive build
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
         path: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
     - name: Archive build
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
         path: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
     - name: Archive build
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
         path: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
