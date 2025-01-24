@@ -65,7 +65,7 @@ const updateTrackStats = (trackId, track, t, values) => {
 }
 
 /**
- * tracePeerConnection
+ * It gets the PeerConnection stats.
  * @param {number} id
  * @param {RTCPeerConnection} pc
  * @param {number} now
