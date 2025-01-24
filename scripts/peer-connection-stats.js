@@ -520,7 +520,7 @@ webrtcperf.collectPeerConnectionStats = async (raw = false, verbose = false) => 
     activePeerConnections,
     peerConnectionConnectionTime: webrtcperf.connectionTimer.onDuration,
     peerConnectionDisconnectionTime: webrtcperf.connectionTimer.offDuration,
-    peerConnectionsCreated: webrtcperf.peerConnectionNextId,
+    peerConnectionsCreated: webrtcperf.peerConnectionsCreated,
     peerConnectionsConnected: webrtcperf.peerConnectionsConnected,
     peerConnectionsDisconnected: webrtcperf.peerConnectionsDisconnected,
     peerConnectionsFailed: webrtcperf.peerConnectionsFailed,
