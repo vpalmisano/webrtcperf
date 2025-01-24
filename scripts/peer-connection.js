@@ -1,4 +1,4 @@
-/* global webrtcperf, log, PeerConnections, handleTransceiverForInsertableStreams, handleTransceiverForPlayoutDelayHint, handleTransceiverForJitterBufferTarget, saveMediaTrack, stopSaveMediaTrack */
+/* global webrtcperf, PeerConnections */
 
 const timestampInsertableStreams = !!webrtcperf.params.timestampInsertableStreams
 
@@ -78,7 +78,7 @@ webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTim
   const { id, kind } = track
   const debug = (...args) => {
     if (webrtcperf.enabledForSession(webrtcperf.params.peerConnectionDebug)) {
-      log(`waitTrackMedia ${id} (${kind})`, ...args)
+      webrtcperf.log(`waitTrackMedia ${id} (${kind})`, ...args)
     }
   }
   debug('start')
@@ -100,7 +100,7 @@ webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTim
         },
         abort(reason) {
           if (reason === 'done') return
-          log(`waitTrackMedia ${id} ${kind} error:`, reason)
+          webrtcperf.log(`waitTrackMedia ${id} ${kind} error:`, reason)
           reject(reason)
         },
       },
@@ -115,7 +115,7 @@ window.RTCPeerConnection = function (conf, options) {
 
   const debug = (...args) => {
     if (webrtcperf.enabledForSession(webrtcperf.params.peerConnectionDebug)) {
-      log(`RTCPeerConnection-${id}`, ...args)
+      webrtcperf.log(`RTCPeerConnection-${id}`, ...args)
     }
   }
 
@@ -211,22 +211,26 @@ window.RTCPeerConnection = function (conf, options) {
       transceiver.sender.track.kind === 'video' &&
       webrtcperf.enabledForSession(webrtcperf.params.saveSendVideoTrack)
     ) {
-      saveMediaTrack(
-        transceiver.sender.track,
-        'send',
-        webrtcperf.params.saveVideoTrackEnableStart,
-        webrtcperf.params.saveVideoTrackEnableEnd,
-      ).catch(err => log(`saveMediaTrack error: ${err.message}`))
+      webrtcperf
+        .saveMediaTrack(
+          transceiver.sender.track,
+          'send',
+          webrtcperf.params.saveVideoTrackEnableStart,
+          webrtcperf.params.saveVideoTrackEnableEnd,
+        )
+        .catch(err => webrtcperf.log(`saveMediaTrack error: ${err.message}`))
     } else if (
       transceiver.sender.track.kind === 'audio' &&
       webrtcperf.enabledForSession(webrtcperf.params.saveSendAudioTrack)
     ) {
-      saveMediaTrack(
-        transceiver.sender.track,
-        'send',
-        webrtcperf.params.saveAudioTrackEnableStart,
-        webrtcperf.params.saveAudioTrackEnableEnd,
-      ).catch(err => log(`saveMediaTrack error: ${err.message}`))
+      webrtcperf
+        .saveMediaTrack(
+          transceiver.sender.track,
+          'send',
+          webrtcperf.params.saveAudioTrackEnableStart,
+          webrtcperf.params.saveAudioTrackEnableEnd,
+        )
+        .catch(err => webrtcperf.log(`saveMediaTrack error: ${err.message}`))
     }
   }
 
@@ -265,7 +269,7 @@ window.RTCPeerConnection = function (conf, options) {
         await replaceTrackNative(track)
 
         if (encodedInsertableStreams && timestampInsertableStreams) {
-          handleTransceiverForInsertableStreams(id, transceiver)
+          webrtcperf.handleTransceiverForInsertableStreams(id, transceiver)
         }
 
         checkSaveStream(transceiver)
@@ -282,11 +286,11 @@ window.RTCPeerConnection = function (conf, options) {
     }
 
     if (encodedInsertableStreams && timestampInsertableStreams) {
-      handleTransceiverForInsertableStreams(id, transceiver)
+      webrtcperf.handleTransceiverForInsertableStreams(id, transceiver)
     }
 
-    handleTransceiverForPlayoutDelayHint(id, transceiver, 'addTransceiver')
-    handleTransceiverForJitterBufferTarget(id, transceiver, 'addTransceiver')
+    webrtcperf.handleTransceiverForPlayoutDelayHint(id, transceiver, 'addTransceiver')
+    webrtcperf.handleTransceiverForJitterBufferTarget(id, transceiver, 'addTransceiver')
     return transceiver
   }
 
@@ -297,10 +301,10 @@ window.RTCPeerConnection = function (conf, options) {
     for (const transceiver of pc.getTransceivers()) {
       if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
         if (encodedInsertableStreams && timestampInsertableStreams) {
-          handleTransceiverForInsertableStreams(id, transceiver)
+          webrtcperf.handleTransceiverForInsertableStreams(id, transceiver)
         }
-        handleTransceiverForPlayoutDelayHint(id, transceiver, 'addStream')
-        handleTransceiverForJitterBufferTarget(id, transceiver, 'addStream')
+        webrtcperf.handleTransceiverForPlayoutDelayHint(id, transceiver, 'addStream')
+        webrtcperf.handleTransceiverForJitterBufferTarget(id, transceiver, 'addStream')
 
         checkSaveStream(transceiver)
       }
@@ -314,10 +318,10 @@ window.RTCPeerConnection = function (conf, options) {
     for (const transceiver of pc.getTransceivers()) {
       if (['sendonly', 'sendrecv'].includes(transceiver.direction)) {
         if (encodedInsertableStreams && timestampInsertableStreams) {
-          handleTransceiverForInsertableStreams(id, transceiver)
+          webrtcperf.handleTransceiverForInsertableStreams(id, transceiver)
         }
-        handleTransceiverForPlayoutDelayHint(id, transceiver, 'addTrack')
-        handleTransceiverForJitterBufferTarget(id, transceiver, 'addTrack')
+        webrtcperf.handleTransceiverForPlayoutDelayHint(id, transceiver, 'addTrack')
+        webrtcperf.handleTransceiverForJitterBufferTarget(id, transceiver, 'addTrack')
 
         checkSaveStream(transceiver)
       }
@@ -330,7 +334,7 @@ window.RTCPeerConnection = function (conf, options) {
     if (receiver?.track) {
       debug(`ontrack`, { kind: receiver.track.kind, event, streams: event.streams })
       if (encodedInsertableStreams && timestampInsertableStreams) {
-        handleTransceiverForInsertableStreams(id, transceiver)
+        webrtcperf.handleTransceiverForInsertableStreams(id, transceiver)
       }
 
       webrtcperf
@@ -343,26 +347,30 @@ window.RTCPeerConnection = function (conf, options) {
             webrtcperf.audioStartFrameDelayStats.push(now, t)
           }
         })
-        .catch(err => log(`waitTrackMedia error: ${err.message}`))
+        .catch(err => webrtcperf.log(`waitTrackMedia error: ${err.message}`))
 
       if (receiver.track.kind === 'video') {
         if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
           webrtcperf.recognizeVideoTimestampWatermark(receiver.track)
         }
         if (webrtcperf.enabledForSession(webrtcperf.params.saveRecvVideoTrack)) {
-          saveMediaTrack(receiver.track, 'recv').catch(err => log(`saveMediaTrack error: ${err.message}`))
+          webrtcperf
+            .saveMediaTrack(receiver.track, 'recv')
+            .catch(err => webrtcperf.log(`saveMediaTrack error: ${err.message}`))
         }
       } else if (receiver.track.kind === 'audio') {
         if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
           webrtcperf.recognizeAudioTimestampWatermark(receiver.track)
         }
         if (webrtcperf.enabledForSession(webrtcperf.params.saveRecvAudioTrack)) {
-          saveMediaTrack(receiver.track, 'recv').catch(err => log(`saveMediaTrack error: ${err.message}`))
+          webrtcperf
+            .saveMediaTrack(receiver.track, 'recv')
+            .catch(err => webrtcperf.log(`saveMediaTrack error: ${err.message}`))
         }
       }
     }
-    handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
-    handleTransceiverForJitterBufferTarget(id, transceiver, 'track')
+    webrtcperf.handleTransceiverForPlayoutDelayHint(id, transceiver, 'track')
+    webrtcperf.handleTransceiverForJitterBufferTarget(id, transceiver, 'track')
   })
 
   const setConfigurationNative = pc.setConfiguration.bind(pc)
@@ -403,7 +411,7 @@ window.RTCRtpSender.getCapabilities = kind => {
     }
     return true
   })
-  log(`RTCRtpSender getCapabilities custom:`, capabilities)
+  webrtcperf.log(`RTCRtpSender getCapabilities custom:`, capabilities)
   return capabilities
 }
 
@@ -437,13 +445,13 @@ webrtcperf.filterTransceiversTracks = (direction, kind) => {
 
 window.saveTransceiversTracks = async (direction, kind, enableStart = 0, enableEnd = 0) => {
   for (const { track } of webrtcperf.filterTransceiversTracks(direction, kind)) {
-    await saveMediaTrack(track, direction, enableStart, enableEnd)
+    await webrtcperf.saveMediaTrack(track, direction, enableStart, enableEnd)
   }
 }
 
 window.stopSaveTransceiversTracks = (direction, kind) => {
   for (const { track } of webrtcperf.filterTransceiversTracks(direction, kind)) {
-    stopSaveMediaTrack(track)
+    webrtcperf.stopSaveMediaTrack(track)
   }
 }
 

@@ -1,10 +1,10 @@
-/* global webrtcperf, MeasuredStats, stringToBinary */
+/* global webrtcperf */
 
 /**
  * Video end-to-end network delay stats.
  * @type MeasuredStats
  */
-const videoEndToEndNetworkDelayStats = new MeasuredStats({ ttl: 30 })
+const videoEndToEndNetworkDelayStats = new webrtcperf.MeasuredStats({ ttl: 30 })
 
 webrtcperf.collectVideoEndToEndNetworkDelayStats = () => {
   return videoEndToEndNetworkDelayStats.mean()
@@ -38,7 +38,7 @@ async function handleInsertableStreams(data, debug = false) {
     return
   }
   let transformStream = null
-  const insertableStreamsHeader = stringToBinary('WP00')
+  const insertableStreamsHeader = webrtcperf.stringToBinary('WP00')
   const headerSize = 20
   let writer = null
 
@@ -258,8 +258,7 @@ if (
  * @param {string} id
  * @param {RTCRtpTransceiver} transceiver
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const handleTransceiverForInsertableStreams = (id, transceiver) => {
+webrtcperf.handleTransceiverForInsertableStreams = (id, transceiver) => {
   webrtcperf.log(`RTCPeerConnection-${id} handleTransceiverForInsertableStreams ${transceiver.direction}`)
   if (
     ['sendonly', 'sendrecv'].includes(transceiver.direction) &&

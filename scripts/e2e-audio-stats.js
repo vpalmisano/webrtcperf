@@ -1,10 +1,10 @@
-/* global webrtcperf, log, ggwave_factory, MeasuredStats */
+/* global webrtcperf, ggwave_factory */
 
 /**
  * Audio end-to-end delay stats.
  * @type MeasuredStats
  */
-webrtcperf.audioEndToEndDelayStats = new MeasuredStats({ ttl: 15 })
+webrtcperf.audioEndToEndDelayStats = new webrtcperf.MeasuredStats({ ttl: 15 })
 
 webrtcperf.audioStartFrameDelayStats = new webrtcperf.MeasuredStats({ ttl: 60 })
 
@@ -44,7 +44,7 @@ if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
       webrtcperf.ggwave = await ggwave_factory()
       if (!webrtcperf.params.timestampWatermarkAudioDebug) webrtcperf.ggwave.disableLog()
     } catch (e) {
-      log(`ggwave error: ${e}`)
+      webrtcperf.log(`ggwave error: ${e}`)
     }
   })
 }
@@ -56,7 +56,7 @@ webrtcperf.audioDestination = null
 
 webrtcperf.initAudioTimestampWatermarkSender = (interval = 5000) => {
   if (webrtcperf.audioContext) return
-  log(`initAudioTimestampWatermarkSender with interval ${interval}ms`)
+  webrtcperf.log(`initAudioTimestampWatermarkSender with interval ${interval}ms`)
 
   const ggwave = webrtcperf.ggwave
   const AudioContext = window.AudioContext || window.webkitAudioContext
@@ -92,7 +92,7 @@ webrtcperf.applyAudioTimestampWatermark = mediaStream => {
     webrtcperf.initAudioTimestampWatermarkSender()
   }
   const { audioContext, audioDestination } = webrtcperf
-  log(
+  webrtcperf.log(
     `AudioTimestampWatermark tx overrideGetUserMediaStream`,
     mediaStream.getAudioTracks()[0].id,
     '->',
@@ -151,7 +151,7 @@ webrtcperf.recognizeAudioTimestampWatermark = track => {
           parameters.operatingMode = ggwave.GGWAVE_OPERATING_MODE_RX | ggwave.GGWAVE_OPERATING_MODE_USE_DSS
           instance = ggwave.init(parameters)
           if (instance < 0) {
-            log(`AudioTimestampWatermark rx init failed: ${instance}`)
+            webrtcperf.log(`AudioTimestampWatermark rx init failed: ${instance}`)
             return
           }
         }
@@ -177,18 +177,18 @@ webrtcperf.recognizeAudioTimestampWatermark = track => {
               const rxFrames = ggwave.rxDurationFrames(instance) + 4
               const rxFramesDuration = (rxFrames * 1000 * samplesPerFrame) / sampleRate
               const delay = now - ts - rxFramesDuration
-              log(
+              webrtcperf.log(
                 `AudioTimestampWatermark rx delay: ${delay}ms rxFrames: ${rxFrames} rxFramesDuration: ${rxFramesDuration}ms`,
               )
               if (isFinite(delay) && delay > 0 && delay < 30000) {
                 webrtcperf.audioEndToEndDelayStats.push(now, delay / 1000)
               }
             } catch (e) {
-              log(`AudioTimestampWatermark rx failed to parse ${data}: ${e.message}`)
+              webrtcperf.log(`AudioTimestampWatermark rx failed to parse ${data}: ${e.message}`)
             }
           }
         } catch (err) {
-          log(`AudioTimestampWatermark error: ${err.message}`)
+          webrtcperf.log(`AudioTimestampWatermark error: ${err.message}`)
         } finally {
           audioFrame.close()
         }
@@ -198,7 +198,7 @@ webrtcperf.recognizeAudioTimestampWatermark = track => {
         if (instance) ggwave.free(instance)
       },
       abort(err) {
-        log('AudioTimestampWatermark error:', err)
+        webrtcperf.log('AudioTimestampWatermark error:', err)
         webrtcperf.processingAudioTracks.delete(track)
       },
     },
@@ -206,6 +206,6 @@ webrtcperf.recognizeAudioTimestampWatermark = track => {
   )
   const trackProcessor = new window.MediaStreamTrackProcessor({ track })
   trackProcessor.readable.pipeTo(writableStream).catch(err => {
-    log(`recognizeAudioTimestampWatermark pipeTo error: ${err.message}`)
+    webrtcperf.log(`recognizeAudioTimestampWatermark pipeTo error: ${err.message}`)
   })
 }

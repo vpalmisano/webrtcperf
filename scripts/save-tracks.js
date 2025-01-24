@@ -1,7 +1,7 @@
-/* global webrtcperf, log, createWorker */
+/* global webrtcperf */
 
 const saveFileWorkerFn = () => {
-  const log = (...args) => {
+  const debug = (...args) => {
     console.log.apply(null, ['[webrtcperf-savefileworker]', ...args])
   }
 
@@ -44,7 +44,7 @@ const saveFileWorkerFn = () => {
   onmessage = async ({ data }) => {
     const { action, id, url, readable, kind, x, y, width, height, frameRate } = data
     const controller = new AbortController()
-    log(`action=${action} id=${id} kind=${kind} url=${url}`)
+    debug(`action=${action} id=${id} kind=${kind} url=${url}`)
     if (action === 'stop') {
       const controller = websocketControllers.get(id)
       controller?.abort('done')
@@ -77,7 +77,7 @@ const saveFileWorkerFn = () => {
             }
             let pts = Math.round((frameRate * (timestamp - startTimestamp)) / 1000000)
             if (pts <= lastPts) {
-              log(`skip pts: ${pts} <= ${lastPts} timestamp: ${timestamp} lastTimestamp: ${lastTimestamp}`)
+              debug(`skip pts: ${pts} <= ${lastPts} timestamp: ${timestamp} lastTimestamp: ${lastTimestamp}`)
               return
             }
             const data = new ArrayBuffer(byteLength)
@@ -91,14 +91,14 @@ const saveFileWorkerFn = () => {
             lastPts = pts
             lastTimestamp = timestamp
           } catch (err) {
-            log(`saveMediaTrack ${url} error=${err.message}`)
+            debug(`saveMediaTrack ${url} error=${err.message}`)
           }
         },
-        error: e => log(`encoder error: ${e.message}`),
+        error: e => debug(`encoder error: ${e.message}`),
       })
 
       const configureEncoder = (width, height) => {
-        log(`configureEncoder ${width}x${height}@${frameRate}`)
+        debug(`configureEncoder ${width}x${height}@${frameRate}`)
         if (encoder?.state === 'configured') {
           encoder.flush()
           encoder.reset()
@@ -143,13 +143,13 @@ const saveFileWorkerFn = () => {
               }
               encoder.encode(frame, { keyFrame: true })
             } catch (err) {
-              log(`saveMediaTrack ${url} error=${err.message}`)
+              debug(`saveMediaTrack ${url} error=${err.message}`)
             } finally {
               frame.close()
             }
           },
           close() {
-            log(`saveTrack ${url} close`)
+            debug(`saveTrack ${url} close`)
             if (encoder?.state === 'configured') {
               encoder.flush()
             }
@@ -159,7 +159,7 @@ const saveFileWorkerFn = () => {
             postMessage({ name: 'close', id, kind })
           },
           abort(reason) {
-            log(`saveTrack ${url} abort reason:`, reason)
+            debug(`saveTrack ${url} abort reason:`, reason)
             if (encoder?.state === 'configured') {
               encoder.flush()
             }
@@ -172,7 +172,7 @@ const saveFileWorkerFn = () => {
         new CountQueuingStrategy({ highWaterMark: frameRate * 10 }),
       )
       readable.pipeTo(writableStream, { signal: controller.signal }).catch(err => {
-        log(`saveMediaTrack ${url} error=${err.message}`)
+        debug(`saveMediaTrack ${url} error=${err.message}`)
       })
     } else {
       const writableStream = new WritableStream(
@@ -185,19 +185,19 @@ const saveFileWorkerFn = () => {
                 frame.copyTo(data, { planeIndex: 0 })
                 ws.send(data)
               } catch (err) {
-                log(`saveMediaTrack ${url} error=${err.message}`)
+                debug(`saveMediaTrack ${url} error=${err.message}`)
               }
             }
             frame.close()
           },
           close() {
-            log(`saveTrack ${url} close`)
+            debug(`saveTrack ${url} close`)
             ws.close()
             websocketControllers.delete(id)
             postMessage({ name: 'close', id, kind })
           },
           abort(reason) {
-            log(`saveTrack ${url} abort reason:`, reason)
+            debug(`saveTrack ${url} abort reason:`, reason)
             ws.close()
             websocketControllers.delete(id)
             postMessage({ name: 'close', reason, id, kind })
@@ -206,7 +206,7 @@ const saveFileWorkerFn = () => {
         new CountQueuingStrategy({ highWaterMark: 100 }),
       )
       readable.pipeTo(writableStream, { signal: controller.signal }).catch(err => {
-        log(`saveMediaTrack ${url} error=${err.message}`)
+        debug(`saveMediaTrack ${url} error=${err.message}`)
       })
     }
   }
@@ -220,10 +220,10 @@ webrtcperf.savingTracks = {
 
 const getSaveFileWorker = () => {
   if (!webrtcperf.saveFileWorker) {
-    webrtcperf.saveFileWorker = createWorker(saveFileWorkerFn)
+    webrtcperf.saveFileWorker = webrtcperf.createWorker(saveFileWorkerFn)
     webrtcperf.saveFileWorker.onmessage = event => {
       const { name, reason, kind, id } = event.data
-      log(`saveFileWorker event: ${name} kind: ${kind} id: ${id} reason: ${reason}`)
+      webrtcperf.log(`saveFileWorker event: ${name} kind: ${kind} id: ${id} reason: ${reason}`)
       webrtcperf.savingTracks[kind].delete(id)
     }
   }
@@ -243,7 +243,7 @@ const getSaveFileWorker = () => {
  * @param {Number} height The video crop height.
  * @param {Number} frameRate The video frame rate.
  */
-window.saveMediaTrack = async (
+webrtcperf.saveMediaTrack = async (
   track,
   sendrecv,
   enableStart = 0,
@@ -278,7 +278,7 @@ window.saveMediaTrack = async (
     window.SERVER_PORT
   }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`
 
-  log(`saveMediaTrack ${filename}`)
+  webrtcperf.log(`saveMediaTrack ${filename}`)
   getSaveFileWorker().postMessage(
     {
       action: 'start',
@@ -296,12 +296,12 @@ window.saveMediaTrack = async (
   )
 }
 
-window.stopSaveMediaTrack = async track => {
+webrtcperf.stopSaveMediaTrack = async track => {
   const { id, kind } = track
   if (!webrtcperf.savingTracks[kind].has(id)) {
     return
   }
-  log(`stopSaveMediaTrack ${id}`)
+  webrtcperf.log(`stopSaveMediaTrack ${id}`)
   getSaveFileWorker().postMessage({
     action: 'stop',
     id,

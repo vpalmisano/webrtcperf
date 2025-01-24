@@ -1,4 +1,4 @@
-/* global webrtcperf, log, sleep */
+/* global webrtcperf */
 
 webrtcperf.setupFakeScreenshare = ({
   embed = '',
@@ -31,10 +31,10 @@ webrtcperf.setupFakeScreenshare = ({
   }
   const applyAnimation = async (el1, el2, delay) => {
     await Promise.all([animateElement(el1, 'out'), animateElement(el2, 'in')])
-    await sleep(delay)
+    await webrtcperf.sleep(delay)
   }
 
-  log(
+  webrtcperf.log(
     `FakeScreenshare start: embed=${embed} slides=${slides} animationDuration=${animationDuration} delay=${delay} width=${width} height=${height}`,
   )
   const wrapper = document.createElement('div')
@@ -80,7 +80,7 @@ webrtcperf.setupFakeScreenshare = ({
   }
 
   return () => {
-    log(`FakeScreenshare stop`)
+    webrtcperf.log(`FakeScreenshare stop`)
     running = false
     clearTimeout(timeout)
     wrapper.remove()

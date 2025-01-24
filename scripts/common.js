@@ -195,7 +195,7 @@ webrtcperf.watchObjectProperty = window.watchObjectProperty = (object, name, cb)
   })
 }
 
-webrtcperf.loadScript = window.loadScript = (name, src = '', textContent = '') => {
+webrtcperf.loadScript = (name, src = '', textContent = '') => {
   return new Promise((resolve, reject) => {
     let script = document.getElementById(name)
     if (script) {
@@ -493,11 +493,11 @@ webrtcperf.setupActions = async () => {
     })
 }
 
-window.stringToBinary = str => {
+webrtcperf.stringToBinary = str => {
   return str.split('').reduce((prev, cur, index) => prev + (cur.charCodeAt() << (8 * index)), 0)
 }
 
-window.createWorker = fn => {
+webrtcperf.createWorker = fn => {
   const blob = new Blob(
     [
       fn
