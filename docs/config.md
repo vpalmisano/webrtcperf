@@ -397,6 +397,13 @@ A comma-separated list of permissions to grant to the opened url.
 
 *Default*: `""`
 
+## hardwareConcurrency
+When set, it overrides the navigator.hardwareConcurrency property.
+
+*Type*: `positive int`
+
+*Default*: `0`
+
 ## debuggingPort
 The chrome debugging port. If this value != 0, the chrome instance will listen on the provided port + the start-session-id value.
 

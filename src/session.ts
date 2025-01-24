@@ -48,6 +48,9 @@ import {
   waitStopProcess,
 } from './utils'
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const NavigatorHardwareConcurrency = require('puppeteer-extra-plugin-stealth/evasions/navigator.hardwareConcurrency')
+
 const log = logger('webrtcperf:session')
 
 /* const metricsTotalDuration = (metrics: Metrics): number => {
@@ -168,6 +171,7 @@ export interface SessionParams {
   extraCSS: string
   cookies: string
   overridePermissions: string
+  hardwareConcurrency: number
   debuggingPort: number
   debuggingAddress: string
   randomAudioPeriod: number
@@ -248,6 +252,7 @@ export class Session extends EventEmitter {
   private readonly extraCSS: string
   private readonly cookies: CookieParam[] = []
   private readonly overridePermissions: Permission[] = []
+  private readonly hardwareConcurrency: number
   private readonly debuggingPort: number
   private readonly debuggingAddress: string
   private readonly randomAudioPeriod: number
@@ -364,6 +369,7 @@ export class Session extends EventEmitter {
     extraCSS,
     cookies,
     overridePermissions,
+    hardwareConcurrency,
     debuggingPort,
     debuggingAddress,
     randomAudioPeriod,
@@ -519,6 +525,8 @@ export class Session extends EventEmitter {
         .map(s => s.trim())
         .filter(s => s.length) as Permission[]
     }
+
+    this.hardwareConcurrency = hardwareConcurrency
   }
 
   /**
@@ -1348,6 +1356,11 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       const { timestamp } = event
       resourcesStats.recvLatency.push(timestamp - request.timestamp)
     })
+
+    if (this.hardwareConcurrency) {
+      const plugin = NavigatorHardwareConcurrency({ hardwareConcurrency: this.hardwareConcurrency })
+      await plugin.onPageCreated(page)
+    }
 
     log.debug(`Page ${index + 1} "${url}" loading`)
     const pageLoadTime = Date.now()

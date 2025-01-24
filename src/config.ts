@@ -508,6 +508,13 @@ Rules containing "important" will be replaced with "!important".`,
     env: 'OVERRIDE_PERMISSIONS',
     arg: 'override-permissions',
   },
+  hardwareConcurrency: {
+    doc: `When set, it overrides the navigator.hardwareConcurrency property.`,
+    format: 'nat',
+    default: 0,
+    env: 'HARDWARE_CONCURRENCY',
+    arg: 'hardware-concurrency',
+  },
   debuggingPort: {
     doc: `The chrome debugging port. If this value != 0, the chrome instance \
 will listen on the provided port + the start-session-id value.`,
