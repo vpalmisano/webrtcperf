@@ -1,54 +1,5 @@
 /* global webrtcperf, log, sleep */
 
-const applyOverride = (constraints, override) => {
-  if (override) {
-    if (override.video !== undefined) {
-      if (override.video instanceof Object) {
-        if (!(constraints.video instanceof Object)) {
-          constraints.video = {}
-        }
-        Object.assign(constraints.video, override.video)
-      } else {
-        constraints.video = override.video
-      }
-    }
-    if (override.audio !== undefined) {
-      if (override.audio instanceof Object) {
-        if (!(constraints.audio instanceof Object)) {
-          constraints.audio = {}
-        }
-        Object.assign(constraints.audio, override.audio)
-      } else {
-        constraints.audio = override.audio
-      }
-    }
-    log(`applyOverride result:`, constraints)
-  }
-  // Force audio sample rate to 48kHz.
-  if (constraints.audio) {
-    if (!(constraints.audio instanceof Object)) {
-      constraints.audio = {}
-    }
-    constraints.audio.sampleRate = 48000
-  }
-}
-
-/**
- * overrideGetUserMedia
- * @param {*} constraints
- */
-function overrideGetUserMedia(constraints) {
-  applyOverride(constraints, window.GET_USER_MEDIA_OVERRIDE)
-}
-
-/**
- * overrideGetDisplayMedia
- * @param {*} constraints
- */
-function overrideGetDisplayMedia(constraints) {
-  applyOverride(constraints, window.GET_DISPLAY_MEDIA_OVERRIDE)
-}
-
 async function applyGetDisplayMediaCrop(mediaStream) {
   if (!webrtcperf.GET_DISPLAY_MEDIA_CROP) return
   const element = document.querySelector(webrtcperf.GET_DISPLAY_MEDIA_CROP)
@@ -143,8 +94,6 @@ if (navigator.getUserMedia) {
     if (webrtcperf.overrideGetUserMedia) {
       constraints = webrtcperf.overrideGetUserMedia(constraints)
       log(`getUserMedia override:`, JSON.stringify(constraints))
-    } else {
-      overrideGetUserMedia(constraints, ...args)
     }
     return nativeGetUserMedia(constraints, ...args)
   }
@@ -157,8 +106,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     if (webrtcperf.overrideGetUserMedia) {
       constraints = webrtcperf.overrideGetUserMedia(constraints)
       log(`getUserMedia override:`, JSON.stringify(constraints))
-    } else {
-      overrideGetUserMedia(constraints)
     }
     if (webrtcperf.params.getUserMediaWaitTime > 0) {
       await sleep(webrtcperf.params.getUserMediaWaitTime)
@@ -200,8 +147,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     if (webrtcperf.overrideGetDisplayMedia) {
       constraints = webrtcperf.overrideGetDisplayMedia(constraints)
       log(`getDisplayMedia override:`, JSON.stringify(constraints))
-    } else {
-      overrideGetDisplayMedia(constraints)
     }
     if (webrtcperf.params.getDisplayMediaWaitTime > 0) {
       await sleep(webrtcperf.params.getDisplayMediaWaitTime)

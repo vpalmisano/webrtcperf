@@ -143,7 +143,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"130.0.6723.69"`
+*Default*: `"131.0.6778.204"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -293,20 +293,6 @@ One or more JavaScript file paths (comma-separated). If set, the files contents 
 ## scriptParams
 Additional parameters (in JSON format) that will be exposed into
 the page context as `webrtcperf.params`.
-
-*Type*: `string`
-
-*Default*: `""`
-
-## getUserMediaOverride
-A JSON string with the `getUserMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}`
-
-*Type*: `string`
-
-*Default*: `""`
-
-## getDisplayMediaOverride
-A JSON string with the `getDisplayMedia` constraints to override for each tab in each session; e.g. `{"video": {"width": 360, "height": 640}}`
 
 *Type*: `string`
 

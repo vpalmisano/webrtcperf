@@ -393,26 +393,6 @@ the page context as \`webrtcperf.params\`.`,
     env: 'SCRIPT_PARAMS',
     arg: 'script-params',
   },
-  getUserMediaOverride: {
-    doc: `A JSON string with the \`getUserMedia\` constraints to override for \
-each tab in each session; \
-e.g. \`{"video": {"width": 360, "height": 640}}\``,
-    format: String,
-    nullable: true,
-    default: '',
-    env: 'GET_USER_MEDIA_OVERRIDE',
-    arg: 'get-user-media-override',
-  },
-  getDisplayMediaOverride: {
-    doc: `A JSON string with the \`getDisplayMedia\` constraints to override \
-for each tab in each session; \
-e.g. \`{"video": {"width": 360, "height": 640}}\``,
-    format: String,
-    nullable: true,
-    default: '',
-    env: 'GET_DISPLAY_MEDIA_OVERRIDE',
-    arg: 'get-display-media-override',
-  },
   disabledVideoCodecs: {
     doc: `A string with the video codecs to disable (comma-separated); e.g. \`vp9,av1\``,
     format: String,
