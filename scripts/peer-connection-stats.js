@@ -1,4 +1,4 @@
-/* global log, webrtcperf */
+/* global webrtcperf */
 
 const PeerConnections = new Map()
 const TrackStats = new Map()
@@ -73,11 +73,11 @@ const updateTrackStats = (trackId, track, t, values) => {
  * @param {boolean} verbose
  */
 async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false) {
-  // log('getPeerConnectionStats', id, pc);
+  // webrtcperf.log('getPeerConnectionStats', id, pc);
   const ret = {}
   const transceivers = pc.getTransceivers().filter(t => t && t.mid !== 'probator')
   if (verbose) {
-    log('getPeerConnectionStats', { id, pc, transceivers })
+    webrtcperf.log('getPeerConnectionStats', { id, pc, transceivers })
   }
   for (const t of transceivers) {
     // outbound
@@ -261,7 +261,7 @@ async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false)
           }
           values.outboundRtp = filterUndefined(values.outboundRtp)
           if (verbose) {
-            log(`Track ${track.id} (${track.kind}): ${JSON.stringify(values.outboundRtp, null, 2)}`)
+            webrtcperf.log(`Track ${track.id} (${track.kind}): ${JSON.stringify(values.outboundRtp, null, 2)}`)
           }
           ret[trackId] = values
           updateTrackStats(trackId, track, now, values)
@@ -417,7 +417,7 @@ async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false)
           }
           values.inboundRtp = filterUndefined(values.inboundRtp)
           if (verbose) {
-            log(`Track ${track.id} (${track.kind}): ${JSON.stringify(values.inboundRtp, null, 2)}`)
+            webrtcperf.log(`Track ${track.id} (${track.kind}): ${JSON.stringify(values.inboundRtp, null, 2)}`)
           }
           ret[trackId] = values
           updateTrackStats(trackId, track, now, values)
@@ -440,7 +440,7 @@ setInterval(() => {
     }
     const timeDiff = now - item.t
     if (timeDiff > TRACK_STATS_TIMEOUT) {
-      // log(`remove ${trackId} (updated ${timeDiff / 1000}s ago)`)
+      // webrtcperf.log(`remove ${trackId} (updated ${timeDiff / 1000}s ago)`)
       TrackStats.delete(trackId)
       TrackStatsKeys.splice(index, 1)
     } else {
@@ -491,7 +491,7 @@ webrtcperf.isReceiverDisplayTrack = track => {
  * @param {boolean} verbose
  * @return {Object}
  */
-window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
+webrtcperf.collectPeerConnectionStats = async (raw = false, verbose = false) => {
   const stats = []
   const now = Date.now()
   let activePeerConnections = 0
@@ -506,7 +506,7 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
         stats.push(ret)
       }
     } catch (err) {
-      log(`getPeerConnectionStats error: ${err.message}`, err)
+      webrtcperf.log(`getPeerConnectionStats error: ${err.message}`, err)
     }
   }
 
@@ -516,7 +516,7 @@ window.collectPeerConnectionStats = async (raw = false, verbose = false) => {
   return {
     stats,
     signalingHost,
-    participantName: window.getParticipantName(),
+    participantName: webrtcperf.getParticipantName(),
     activePeerConnections,
     peerConnectionConnectionTime: webrtcperf.connectionTimer.onDuration,
     peerConnectionDisconnectionTime: webrtcperf.connectionTimer.offDuration,

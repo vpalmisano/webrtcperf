@@ -95,7 +95,7 @@ webrtcperf.videoStats = {
   },
 }
 
-window.collectVideoStats = () => webrtcperf.videoStats.collect()
+webrtcperf.collectVideoStats = () => webrtcperf.videoStats.collect()
 
 document.addEventListener('DOMContentLoaded', () => {
   if (webrtcperf.enabledForSession(webrtcperf.params.enableVideoStats)) {

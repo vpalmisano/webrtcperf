@@ -53,49 +53,42 @@ const NavigatorHardwareConcurrency = require('puppeteer-extra-plugin-stealth/eva
 
 const log = logger('webrtcperf:session')
 
-/* const metricsTotalDuration = (metrics: Metrics): number => {
-  return (
-    (metrics.LayoutDuration || 0) +
-    (metrics.RecalcStyleCount || 0) +
-    (metrics.ScriptDuration || 0) +
-    (metrics.TaskDuration || 0)
-  )
-} */
-
 declare global {
-  let collectPeerConnectionStats: () => Promise<{
-    stats: RtcStats[]
-    signalingHost?: string
-    participantName?: string
-    activePeerConnections: number
-    peerConnectionConnectionTime: number
-    peerConnectionDisconnectionTime: number
-    peerConnectionsCreated: number
-    peerConnectionsConnected: number
-    peerConnectionsDisconnected: number
-    peerConnectionsFailed: number
-    peerConnectionsClosed: number
-  }>
-  let collectAudioEndToEndStats: () => {
-    delay: number
-    startFrameDelay: number
+  let webrtcperf: {
+    collectPeerConnectionStats: () => Promise<{
+      stats: RtcStats[]
+      signalingHost?: string
+      participantName?: string
+      activePeerConnections: number
+      peerConnectionConnectionTime: number
+      peerConnectionDisconnectionTime: number
+      peerConnectionsCreated: number
+      peerConnectionsConnected: number
+      peerConnectionsDisconnected: number
+      peerConnectionsFailed: number
+      peerConnectionsClosed: number
+    }>
+    collectAudioEndToEndStats: () => {
+      delay: number
+      startFrameDelay: number
+    }
+    collectVideoEndToEndStats: () => {
+      delay: number
+      startFrameDelay: number
+    }
+    collectVideoEndToEndNetworkDelayStats: () => number
+    collectCpuPressure: () => number
+    collectCustomMetrics: () => Promise<Record<string, number | string>>
+    collectVideoStats: () => {
+      width: number
+      height: number
+      bufferedTime: number
+      playingTime: number
+      bufferingTime: number
+      bufferingEvents: number
+    }
+    getParticipantName: () => string
   }
-  let collectVideoEndToEndStats: () => {
-    delay: number
-    startFrameDelay: number
-  }
-  let collectVideoEndToEndNetworkDelayStats: () => number
-  let collectCpuPressure: () => number
-  let collectCustomMetrics: () => Promise<Record<string, number | string>>
-  let collectVideoStats: () => {
-    width: number
-    height: number
-    bufferedTime: number
-    playingTime: number
-    bufferingTime: number
-    bufferingEvents: number
-  }
-  let getParticipantName: () => string
 }
 
 const PageLogColors = {
@@ -1534,13 +1527,13 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             videoStats,
             customMetrics,
           } = await page.evaluate(async () => ({
-            peerConnectionStats: await collectPeerConnectionStats(),
-            audioEndToEndDelay: collectAudioEndToEndStats(),
-            videoEndToEndDelay: collectVideoEndToEndStats(),
-            videoEndToEndNetworkDelay: collectVideoEndToEndNetworkDelayStats(),
-            cpuPressure: collectCpuPressure(),
-            videoStats: collectVideoStats(),
-            customMetrics: 'collectCustomMetrics' in window ? collectCustomMetrics() : null,
+            peerConnectionStats: await webrtcperf.collectPeerConnectionStats(),
+            audioEndToEndDelay: webrtcperf.collectAudioEndToEndStats(),
+            videoEndToEndDelay: webrtcperf.collectVideoEndToEndStats(),
+            videoEndToEndNetworkDelay: webrtcperf.collectVideoEndToEndNetworkDelayStats(),
+            cpuPressure: webrtcperf.collectCpuPressure(),
+            videoStats: webrtcperf.collectVideoStats(),
+            customMetrics: 'collectCustomMetrics' in window ? webrtcperf.collectCustomMetrics() : null,
           }))
           const { participantName } = peerConnectionStats
 

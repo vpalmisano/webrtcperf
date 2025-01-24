@@ -1,4 +1,4 @@
-/* global log, MeasuredStats, stringToBinary */
+/* global webrtcperf, MeasuredStats, stringToBinary */
 
 /**
  * Video end-to-end network delay stats.
@@ -6,7 +6,7 @@
  */
 const videoEndToEndNetworkDelayStats = new MeasuredStats({ ttl: 30 })
 
-window.collectVideoEndToEndNetworkDelayStats = () => {
+webrtcperf.collectVideoEndToEndNetworkDelayStats = () => {
   return videoEndToEndNetworkDelayStats.mean()
 }
 
@@ -19,7 +19,7 @@ function dumpFrame(encodedFrame, direction, offset = 0, end = 32) {
       bytes += (value < 16 ? '0' : '') + value.toString(16) + ' '
     }
   }
-  console.log(
+  console.webrtcperf.log(
     direction,
     'bytes=' + bytes.trim(),
     'len=' + encodedFrame.data.byteLength,
@@ -32,7 +32,7 @@ function dumpFrame(encodedFrame, direction, offset = 0, end = 32) {
 
 async function handleInsertableStreams(data, debug = false) {
   const { operation, track, readable, writable } = data
-  // console.log(`onmessage ${operation} ${track.kind}`)
+  // console.webrtcperf.log(`onmessage ${operation} ${track.kind}`)
   if (track.kind !== 'video') {
     readable.pipeTo(writable)
     return
@@ -57,7 +57,7 @@ async function handleInsertableStreams(data, debug = false) {
         prevPts[synchronizationSource] = pts
 
         if (writer && width === trackWidth && height === trackHeight) {
-          /* log(
+          /* webrtcperf.log(
             'send',
             encodedFrame.type,
             temporalIndex,
@@ -69,7 +69,7 @@ async function handleInsertableStreams(data, debug = false) {
           try {
             writer.write(encodedFrame, pts)
           } catch (err) {
-            log('writer error', err)
+            webrtcperf.log('writer error', err)
           }
         }
 
@@ -105,14 +105,14 @@ async function handleInsertableStreams(data, debug = false) {
             videoEndToEndNetworkDelayStats.push(timestamp, delay / 1000)
             transformStream._lastTimestamp = timestamp
             if (debug) {
-              log(`t: ${timestamp} delay: ${delay}ms`)
+              webrtcperf.log(`t: ${timestamp} delay: ${delay}ms`)
             }
           }
           const newData = encodedFrame.data.slice(0, encodedFrame.data.byteLength - headerSize)
           encodedFrame.data = newData
 
           if (writer) {
-            /* log(
+            /* webrtcperf.log(
               'recv',
               encodedFrame.type,
               pts,
@@ -123,7 +123,7 @@ async function handleInsertableStreams(data, debug = false) {
             try {
               writer.write(encodedFrame, pts)
             } catch (err) {
-              log('writer error', err)
+              webrtcperf.log('writer error', err)
             }
           }
         }
@@ -153,7 +153,7 @@ if (
           bytes += (value < 16 ? '0' : '') + value.toString(16) + ' '
         }
       }
-      console.log(
+      console.webrtcperf.log(
         direction,
         'len=' + encodedFrame.data.byteLength,
         'type=' + (encodedFrame.type || 'audio'),
@@ -165,7 +165,7 @@ if (
     }
     onmessage = ({ data }) => {
       const { operation, kind, readable, writable } = data
-      // console.log(`onmessage ${operation} ${kind}`)
+      // console.webrtcperf.log(`onmessage ${operation} ${kind}`)
       if (kind !== 'video') {
         readable.pipeTo(writable)
         return
@@ -245,11 +245,11 @@ if (
     )
     timestampInsertableStreamsWorker.onmessage = event => {
       const { timestamp, delay } = event.data
-      // log(`t: ${timestamp} delay: ${delay}ms`)
+      // webrtcperf.log(`t: ${timestamp} delay: ${delay}ms`)
       videoEndToEndNetworkDelayStats.push(timestamp, delay / 1000)
     }
   } catch (err) {
-    log(`timestampInsertableStreamsWorker error: ${err.message}`)
+    webrtcperf.log(`timestampInsertableStreamsWorker error: ${err.message}`)
   }
 } */
 
@@ -260,14 +260,14 @@ if (
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleTransceiverForInsertableStreams = (id, transceiver) => {
-  log(`RTCPeerConnection-${id} handleTransceiverForInsertableStreams ${transceiver.direction}`)
+  webrtcperf.log(`RTCPeerConnection-${id} handleTransceiverForInsertableStreams ${transceiver.direction}`)
   if (
     ['sendonly', 'sendrecv'].includes(transceiver.direction) &&
     transceiver.sender &&
     !transceiver.sender._encodedStreams &&
     transceiver.sender.track
   ) {
-    log(`RTCPeerConnection-${id} handleTransceiver sender transformStream ${transceiver.sender.track.kind}`)
+    webrtcperf.log(`RTCPeerConnection-${id} handleTransceiver sender transformStream ${transceiver.sender.track.kind}`)
     transceiver.sender._encodedStreams = transceiver.sender.createEncodedStreams()
     const { readable, writable } = transceiver.sender._encodedStreams
     const data = {
@@ -288,7 +288,9 @@ const handleTransceiverForInsertableStreams = (id, transceiver) => {
     !transceiver.receiver._encodedStreams &&
     transceiver.receiver.track
   ) {
-    log(`RTCPeerConnection-${id} handleTransceiver receiver transformStream ${transceiver.receiver.track.kind}`)
+    webrtcperf.log(
+      `RTCPeerConnection-${id} handleTransceiver receiver transformStream ${transceiver.receiver.track.kind}`,
+    )
     transceiver.receiver._encodedStreams = transceiver.receiver.createEncodedStreams()
     const { readable, writable } = transceiver.receiver._encodedStreams
     const data = {

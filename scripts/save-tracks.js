@@ -1,4 +1,4 @@
-/* global webrtcperf, log, getParticipantNameForSave, createWorker */
+/* global webrtcperf, log, createWorker */
 
 const saveFileWorkerFn = () => {
   const log = (...args) => {
@@ -273,7 +273,7 @@ window.saveMediaTrack = async (
     }, enableEnd)
   }
 
-  const filename = `${getParticipantNameForSave(sendrecv, track)}${kind === 'audio' ? '.f32le.raw' : '.ivf.raw'}`
+  const filename = `${webrtcperf.getParticipantNameForSave(sendrecv, track)}${kind === 'audio' ? '.f32le.raw' : '.ivf.raw'}`
   const url = `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
     window.SERVER_PORT
   }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`

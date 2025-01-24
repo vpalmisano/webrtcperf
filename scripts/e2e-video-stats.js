@@ -18,7 +18,7 @@ window.setVideoStartFrameTime = value => {
   webrtcperf.videoStartFrameTime = value
 }
 
-window.collectVideoEndToEndStats = () => {
+webrtcperf.collectVideoEndToEndStats = () => {
   return {
     delay: webrtcperf.videoEndToEndDelayStats.mean(),
     startFrameDelay:
@@ -125,7 +125,7 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
   const { width, height, frameRate, aspectRatio } = videoTrack.getSettings()
   const isDisplay = webrtcperf.isSenderDisplayTrack(videoTrack)
 
-  let participantName = window.getParticipantName()
+  let participantName = webrtcperf.getParticipantName()
   if (participantName && isDisplay) {
     participantName += '-d'
   }

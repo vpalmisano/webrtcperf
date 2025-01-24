@@ -18,7 +18,7 @@ window.setAudioStartFrameTime = value => {
   webrtcperf.audioStartFrameTime = value
 }
 
-window.collectAudioEndToEndStats = () => {
+webrtcperf.collectAudioEndToEndStats = () => {
   return {
     delay: webrtcperf.audioEndToEndDelayStats.mean(),
     startFrameDelay:

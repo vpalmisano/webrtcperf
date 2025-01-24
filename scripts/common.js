@@ -65,12 +65,12 @@ const sleep = webrtcperf.sleep
 /**
  * getParticipantName
  */
-webrtcperf.getParticipantName = window.getParticipantName = (index = window.WEBRTC_PERF_INDEX || 0) => {
+webrtcperf.getParticipantName = (index = window.WEBRTC_PERF_INDEX || 0) => {
   return `Participant-${index.toString().padStart(6, '0')}`
 }
 
-webrtcperf.getParticipantNameForSave = window.getParticipantNameForSave = (sendrecv, track) => {
-  return `${window.getParticipantName()}_${sendrecv}_${track.id}`
+webrtcperf.getParticipantNameForSave = (sendrecv, track) => {
+  return `${webrtcperf.getParticipantName()}_${sendrecv}_${track.id}`
 }
 
 /**
