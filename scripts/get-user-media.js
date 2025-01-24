@@ -140,10 +140,11 @@ if (navigator.getUserMedia) {
   const nativeGetUserMedia = navigator.getUserMedia.bind(navigator)
   navigator.getUserMedia = async function (constraints, ...args) {
     log(`getUserMedia:`, constraints)
-    try {
+    if (webrtcperf.overrideGetUserMedia) {
+      constraints = webrtcperf.overrideGetUserMedia(constraints)
+      log(`getUserMedia override:`, JSON.stringify(constraints))
+    } else {
       overrideGetUserMedia(constraints, ...args)
-    } catch (err) {
-      log(`overrideGetUserMedia error:`, err)
     }
     return nativeGetUserMedia(constraints, ...args)
   }
@@ -152,11 +153,12 @@ if (navigator.getUserMedia) {
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   const nativeGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices)
   navigator.mediaDevices.getUserMedia = async function (constraints, ...args) {
-    log(`getUserMedia:`, JSON.stringify(constraints, null, 2))
-    try {
+    log(`getUserMedia:`, JSON.stringify(constraints))
+    if (webrtcperf.overrideGetUserMedia) {
+      constraints = webrtcperf.overrideGetUserMedia(constraints)
+      log(`getUserMedia override:`, JSON.stringify(constraints))
+    } else {
       overrideGetUserMedia(constraints)
-    } catch (err) {
-      log(`overrideGetUserMedia error:`, err)
     }
     if (webrtcperf.params.getUserMediaWaitTime > 0) {
       await sleep(webrtcperf.params.getUserMediaWaitTime)
@@ -190,12 +192,17 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
   const nativeGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
   navigator.mediaDevices.getDisplayMedia = async function (constraints, ...args) {
-    log(`getDisplayMedia:`, JSON.stringify(constraints, null, 2))
+    log(`getDisplayMedia:`, JSON.stringify(constraints))
     let stopFakeScreenshare = null
     if (webrtcperf.GET_DISPLAY_MEDIA_TYPE === 'browser') {
       stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(webrtcperf.params.fakeScreenshare)
     }
-    overrideGetDisplayMedia(constraints)
+    if (webrtcperf.overrideGetDisplayMedia) {
+      constraints = webrtcperf.overrideGetDisplayMedia(constraints)
+      log(`getDisplayMedia override:`, JSON.stringify(constraints))
+    } else {
+      overrideGetDisplayMedia(constraints)
+    }
     if (webrtcperf.params.getDisplayMediaWaitTime > 0) {
       await sleep(webrtcperf.params.getDisplayMediaWaitTime)
     }
