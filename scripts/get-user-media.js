@@ -68,8 +68,8 @@ function collectMediaTracks(mediaStream, onEnded = null) {
     const nativeApplyConstraints = track.applyConstraints.bind(track)
     track.applyConstraints = constraints => {
       log(`applyConstraints ${track.id} (${track.kind})`, { track, constraints })
-      if (window.overrideTrackApplyConstraints) {
-        constraints = window.overrideTrackApplyConstraints(track, constraints)
+      if (webrtcperf.overrideTrackApplyConstraints) {
+        constraints = webrtcperf.overrideTrackApplyConstraints(track, constraints)
         log(`applyConstraints ${track.id} (${track.kind}) override:`, { track, constraints })
       }
       return nativeApplyConstraints(constraints)
