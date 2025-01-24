@@ -146,9 +146,7 @@ export interface SessionParams {
   tabsPerSession: number
   spawnPeriod: number
   statsInterval: number
-  getUserMediaOverride: string
   disabledVideoCodecs: string
-  getDisplayMediaOverride: string
   getDisplayMediaType: string
   localStorage: string
   clearCookies: boolean
@@ -215,11 +213,7 @@ export class Session extends EventEmitter {
   private readonly tabsPerSession: number
   private readonly spawnPeriod: number
   private readonly statsInterval: number
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private readonly getUserMediaOverride: any | null
   private readonly disabledVideoCodecs: string[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private readonly getDisplayMediaOverride: any | null
   private readonly getDisplayMediaType: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly localStorage?: any
@@ -349,9 +343,7 @@ export class Session extends EventEmitter {
     tabsPerSession,
     spawnPeriod,
     statsInterval,
-    getUserMediaOverride,
     disabledVideoCodecs,
-    getDisplayMediaOverride,
     getDisplayMediaType,
     localStorage,
     clearCookies,
@@ -416,22 +408,6 @@ export class Session extends EventEmitter {
     assert(this.tabsPerSession >= 1, 'tabsPerSession should be >= 1')
     this.spawnPeriod = spawnPeriod || 1000
     this.statsInterval = statsInterval || 10
-    if (getUserMediaOverride) {
-      try {
-        this.getUserMediaOverride = JSON5.parse(getUserMediaOverride)
-      } catch (err: unknown) {
-        log.error(`error parsing getUserMediaOverride: ${(err as Error).stack}`)
-        this.getUserMediaOverride = null
-      }
-    }
-    if (getDisplayMediaOverride) {
-      try {
-        this.getDisplayMediaOverride = JSON5.parse(getDisplayMediaOverride)
-      } catch (err: unknown) {
-        log.error(`error parsing getDisplayMediaOverride: ${(err as Error).stack}`)
-        this.getDisplayMediaOverride = null
-      }
-    }
     if (disabledVideoCodecs) {
       this.disabledVideoCodecs = disabledVideoCodecs
         .split(',')
@@ -573,6 +549,7 @@ export class Session extends EventEmitter {
       // `--auto-select-tab-capture-source-by-title=about:blank`,
       `--remote-debugging-port=${this.debuggingPort ? this.debuggingPort + this.id : 0}`,
       '--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,VaapiVideoDecodeLinuxGL,ElementCapture',
+      `--window-size=${this.windowWidth},${this.windowHeight}`,
     ]
 
     let fieldTrials = this.chromiumFieldTrials || ''
@@ -685,6 +662,7 @@ export class Session extends EventEmitter {
         '--remote-debugging-port',
         //'--hide-scrollbars',
         '--enable-automation',
+        '--window-size',
       ]
 
       log.debug(`[session ${this.id}] Using args:\n  ${args.join('\n  ')}`)
@@ -865,16 +843,6 @@ window.SERVER_PORT = ${this.serverPort};
 window.SERVER_SECRET = "${this.serverSecret}";
 window.SERVER_USE_HTTPS = ${this.serverUseHttps};
 `
-    }
-
-    if (this.getUserMediaOverride) {
-      log.debug('Using getUserMedia override:', this.getUserMediaOverride)
-      cmd += `window.GET_USER_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(this.getUserMediaOverride)}');\n`
-    }
-
-    if (this.getDisplayMediaOverride) {
-      log.debug('Using getDisplayMedia override:', this.getDisplayMediaOverride)
-      cmd += `window.GET_DISPLAY_MEDIA_OVERRIDE = JSON.parse('${JSON.stringify(this.getDisplayMediaOverride)}');\n`
     }
 
     if (this.disabledVideoCodecs.length) {
