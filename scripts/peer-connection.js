@@ -4,74 +4,11 @@ const timestampInsertableStreams = !!webrtcperf.params.timestampInsertableStream
 
 const NativeRTCPeerConnection = window.RTCPeerConnection
 
-webrtcperf.peerConnectionNextId = 0
+webrtcperf.peerConnectionsCreated = 0
 webrtcperf.peerConnectionsConnected = 0
 webrtcperf.peerConnectionsDisconnected = 0
 webrtcperf.peerConnectionsFailed = 0
 webrtcperf.peerConnectionsClosed = 0
-
-webrtcperf.Timer = class {
-  constructor() {
-    this.duration = 0
-    this.lastTime = 0
-    this.timer = null
-    this.startEvents = 0
-    this.stopEvents = 0
-  }
-
-  start() {
-    if (this.timer) return
-    this.lastTime = Date.now()
-    this.startEvents++
-    this.timer = setInterval(() => {
-      const now = Date.now()
-      this.duration += (now - this.lastTime) / 1000
-      this.lastTime = now
-    }, 1000)
-  }
-
-  stop() {
-    if (!this.timer) return
-    clearInterval(this.timer)
-    this.timer = null
-    if (this.lastTime) {
-      this.duration += (Date.now() - this.lastTime) / 1000
-      this.lastTime = 0
-    }
-    this.stopEvents++
-  }
-}
-webrtcperf.OnOffTimer = class {
-  constructor() {
-    this.onTimer = new webrtcperf.Timer()
-    this.offTimer = new webrtcperf.Timer()
-    this.ids = new Set()
-  }
-
-  get onDuration() {
-    return this.onTimer.duration
-  }
-
-  get offDuration() {
-    return this.offTimer.duration
-  }
-
-  add(id) {
-    if (this.ids.has(id)) return
-    this.ids.add(id)
-    this.offTimer.stop()
-    this.onTimer.start()
-  }
-
-  remove(id) {
-    if (!this.ids.has(id)) return
-    this.ids.delete(id)
-    if (this.ids.size > 0) return
-    this.onTimer.stop()
-    this.offTimer.start()
-  }
-}
-
 webrtcperf.connectionTimer = new webrtcperf.OnOffTimer()
 
 webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTime = Date.now()) => {
@@ -111,7 +48,7 @@ webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTim
 }
 
 window.RTCPeerConnection = function (conf, options) {
-  const id = webrtcperf.peerConnectionNextId++
+  const id = webrtcperf.peerConnectionsCreated++
 
   const debug = (...args) => {
     if (webrtcperf.enabledForSession(webrtcperf.params.peerConnectionDebug)) {
