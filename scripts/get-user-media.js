@@ -65,6 +65,15 @@ function collectMediaTracks(mediaStream, onEnded = null) {
     /* const settings = track.getSettings() */
     /* log(`MediaStream new video track ${track.id} ${
       settings.width}x${settings.height} ${settings.frameRate}fps`); */
+    const nativeApplyConstraints = track.applyConstraints.bind(track)
+    track.applyConstraints = constraints => {
+      log(`applyConstraints ${track.id} (${track.kind})`, { track, constraints })
+      if (window.overrideTrackApplyConstraints) {
+        constraints = window.overrideTrackApplyConstraints(track, constraints)
+        log(`applyConstraints ${track.id} (${track.kind}) override:`, { track, constraints })
+      }
+      return nativeApplyConstraints(constraints)
+    }
     track.addEventListener('ended', () => {
       webrtcperf.videoTracks.delete(track)
       if (onEnded) {
