@@ -4,7 +4,7 @@ set -e
 if [ $1 = '--run-xvfb' ]; then
     shift
     export DISPLAY=:1.0
-    Xvfb $DISPLAY -ac -nocursor -screen 0 1280x720x24 &
+    Xvfb $DISPLAY -ac -nocursor -screen 0 1920x1080x24 &
 fi
 
 if [ $1 = '--run-as-user' ]; then
