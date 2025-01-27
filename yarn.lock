@@ -951,9 +951,9 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.1.tgz#28fa185f67daaf7b7a1a8c1d445132c5d979f8bd"
   integrity sha512-fEzPV3hSkSMltkw152tJKNARhOupqbH96MZWyRjNaYZOMIzbrTeQDG+MTc6Mr2pgzFQzFxAfmhGDNP5QK++2ZA==
 
-"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#8fced975854432b0ae52757a14bac156a2b07d48":
+"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#0d443d4648323a9a75685713faf5f20ba402382f":
   version "0.0.4"
-  resolved "https://github.com/vpalmisano/throttler#8fced975854432b0ae52757a14bac156a2b07d48"
+  resolved "https://github.com/vpalmisano/throttler#0d443d4648323a9a75685713faf5f20ba402382f"
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"
