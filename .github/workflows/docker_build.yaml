@@ -50,7 +50,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Yarn build
-      run: yarn install --prefer-offline --frozen-lockfile
+      run: yarn install --frozen-lockfile --cache-folder ./.yarn-cache
 
     - name: Get package version
       id: get_package_version
