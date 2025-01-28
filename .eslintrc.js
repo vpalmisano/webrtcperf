@@ -44,14 +44,8 @@ module.exports = {
         'sort-imports': 'off',
         'import/order': 'off',
         'unused-imports/no-unused-imports-ts': 'error',
-        'unused-imports/no-unused-vars-ts': [
-          'warn',
-          { argsIgnorePattern: '^_' },
-        ],
-        '@typescript-eslint/no-unused-vars': [
-          'error',
-          { argsIgnorePattern: '^_' },
-        ],
+        'unused-imports/no-unused-vars-ts': ['warn', { argsIgnorePattern: '^_' }],
+        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
         '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-non-null-assertion': ['error'],
         '@typescript-eslint/no-explicit-any': 'error',
