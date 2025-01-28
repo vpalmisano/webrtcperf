@@ -38,7 +38,7 @@ webrtcperf.collectVideoEndToEndStats = () => {
       webrtcperf.videoStartFrameDelayStats.mean() > webrtcperf.videoStartFrameTime
         ? webrtcperf.videoStartFrameDelayStats.mean() - webrtcperf.videoStartFrameTime
         : undefined,
-    screenDelay: webrtcperf.screenStartFrameDelayStats.mean(),
+    screenDelay: webrtcperf.screenEndToEndDelayStats.mean(),
     screenStartFrameDelay:
       webrtcperf.screenStartFrameDelayStats.size &&
       webrtcperf.screenStartFrameTime !== undefined &&
