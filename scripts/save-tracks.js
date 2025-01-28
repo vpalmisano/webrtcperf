@@ -63,7 +63,7 @@ const saveFileWorkerFn = () => {
       const header = new ArrayBuffer(12)
       const view = new DataView(header)
 
-      const encoder = new VideoEncoder({
+      const encoder = new window.VideoEncoder({
         output: chunk => {
           if (ws.readyState !== WebSocket.OPEN) return
           try {
@@ -130,7 +130,7 @@ const saveFileWorkerFn = () => {
                 const buffer = new Uint8Array(frame.allocationSize({ rect, format: 'RGBA' }))
                 await frame.copyTo(buffer, { rect, format: 'RGBA' })
                 frame.close()
-                frame = new VideoFrame(buffer, {
+                frame = new window.VideoFrame(buffer, {
                   timestamp,
                   duration,
                   codedWidth: w,

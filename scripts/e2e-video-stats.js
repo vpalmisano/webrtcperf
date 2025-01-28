@@ -78,7 +78,7 @@ const applyVideoTimestampWatermarkFn = () => {
         ctx.fillText(text, width / 2, fontSize)
 
         const newBitmap = await createImageBitmap(canvas)
-        const newFrame = new VideoFrame(newBitmap, { timestamp })
+        const newFrame = new window.VideoFrame(newBitmap, { timestamp })
         newBitmap.close()
         controller.enqueue(newFrame)
       },
