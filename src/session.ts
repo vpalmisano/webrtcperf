@@ -73,8 +73,10 @@ declare global {
       startFrameDelay: number
     }
     collectVideoEndToEndStats: () => {
-      delay: number
-      startFrameDelay: number
+      videoDelay: number
+      videoStartFrameDelay: number
+      screenDelay: number
+      screenStartFrameDelay: number
     }
     collectVideoEndToEndNetworkDelayStats: () => number
     collectCpuPressure: () => number
@@ -1488,7 +1490,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     const audioEndToEndDelayStats: Record<string, number> = {}
     const audioStartFrameDelayStats: Record<string, number> = {}
     const videoEndToEndDelayStats: Record<string, number> = {}
+    const screenEndToEndDelayStats: Record<string, number> = {}
     const videoStartFrameDelayStats: Record<string, number> = {}
+    const screenStartFrameDelayStats: Record<string, number> = {}
     const videoEndToEndNetworkDelayStats: Record<string, number> = {}
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvLatencyStats: Record<string, number> = {}
@@ -1578,8 +1582,10 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
             audioStartFrameDelayStats[pageKey] = audioEndToEndDelay.startFrameDelay
           }
           if (videoEndToEndDelay) {
-            videoEndToEndDelayStats[pageKey] = videoEndToEndDelay.delay
-            videoStartFrameDelayStats[pageKey] = videoEndToEndDelay.startFrameDelay
+            videoEndToEndDelayStats[pageKey] = videoEndToEndDelay.videoDelay
+            videoStartFrameDelayStats[pageKey] = videoEndToEndDelay.videoStartFrameDelay
+            screenEndToEndDelayStats[pageKey] = videoEndToEndDelay.screenDelay
+            screenStartFrameDelayStats[pageKey] = videoEndToEndDelay.screenStartFrameDelay
           }
           if (videoEndToEndNetworkDelay) {
             videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
@@ -1690,7 +1696,9 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
     collectedStats.audioEndToEndDelay = audioEndToEndDelayStats
     collectedStats.audioStartFrameDelay = audioStartFrameDelayStats
     collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
+    collectedStats.screenEndToEndDelay = screenEndToEndDelayStats
     collectedStats.videoStartFrameDelay = videoStartFrameDelayStats
+    collectedStats.screenStartFrameDelay = screenStartFrameDelayStats
     collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvLatency = httpRecvLatencyStats

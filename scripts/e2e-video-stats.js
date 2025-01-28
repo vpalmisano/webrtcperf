@@ -5,27 +5,45 @@
  * @type MeasuredStats
  */
 webrtcperf.videoEndToEndDelayStats = new webrtcperf.MeasuredStats({ ttl: 15 })
+webrtcperf.screenEndToEndDelayStats = new webrtcperf.MeasuredStats({ ttl: 15 })
 
 webrtcperf.videoStartFrameDelayStats = new webrtcperf.MeasuredStats({ ttl: 60 })
-
 webrtcperf.videoStartFrameTime = undefined
 
+webrtcperf.screenStartFrameDelayStats = new webrtcperf.MeasuredStats({ ttl: 60 })
+webrtcperf.screenStartFrameTime = undefined
+
 /**
- * It sets the start frame time used for calculating the startFrameDelay metric.
+ * It sets the start frame time used for calculating the videoStartFrameDelay metric.
  * @param {number} value The start frame time in seconds.
  */
-window.setVideoStartFrameTime = value => {
+webrtcperf.setVideoStartFrameTime = value => {
   webrtcperf.videoStartFrameTime = value
+}
+
+/**
+ * It sets the start frame time used for calculating the screenStartFrameDelay metric.
+ * @param {number} value The start frame time in seconds.
+ */
+webrtcperf.setScreenStartFrameTime = value => {
+  webrtcperf.screenStartFrameTime = value
 }
 
 webrtcperf.collectVideoEndToEndStats = () => {
   return {
-    delay: webrtcperf.videoEndToEndDelayStats.mean(),
-    startFrameDelay:
+    videoDelay: webrtcperf.videoEndToEndDelayStats.mean(),
+    videoStartFrameDelay:
       webrtcperf.videoStartFrameDelayStats.size &&
       webrtcperf.videoStartFrameTime !== undefined &&
       webrtcperf.videoStartFrameDelayStats.mean() > webrtcperf.videoStartFrameTime
         ? webrtcperf.videoStartFrameDelayStats.mean() - webrtcperf.videoStartFrameTime
+        : undefined,
+    screenDelay: webrtcperf.screenStartFrameDelayStats.mean(),
+    screenStartFrameDelay:
+      webrtcperf.screenStartFrameDelayStats.size &&
+      webrtcperf.screenStartFrameTime !== undefined &&
+      webrtcperf.screenStartFrameDelayStats.mean() > webrtcperf.screenStartFrameTime
+        ? webrtcperf.screenStartFrameDelayStats.mean() - webrtcperf.screenStartFrameTime
         : undefined,
   }
 }
@@ -224,10 +242,9 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
   webrtcperf.log(`recognizeVideoTimestampWatermark ${track.id} ${track.label}`, track.getSettings())
   const { scheduler } = await loadTesseract()
   let lastTimestamp = 0
+  const isReceiverDisplayTrack = webrtcperf.isReceiverDisplayTrack(track)
 
-  const trackProcessor = new window.MediaStreamTrackProcessor({
-    track: track,
-  })
+  const trackProcessor = new window.MediaStreamTrackProcessor({ track })
   const writableStream = new window.WritableStream(
     {
       async write(/** @type VideoFrame */ videoFrame) {
@@ -257,7 +274,11 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
                       data.confidence
                     } elapsed=${elapsed}ms`,
                   )
-                  webrtcperf.videoEndToEndDelayStats.push(now, delay / 1000)
+                  if (isReceiverDisplayTrack) {
+                    webrtcperf.screenEndToEndDelayStats.push(now, delay / 1000)
+                  } else {
+                    webrtcperf.videoEndToEndDelayStats.push(now, delay / 1000)
+                  }
                 }
               }
             })

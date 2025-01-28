@@ -279,7 +279,11 @@ window.RTCPeerConnection = function (conf, options) {
         .then(({ now }) => {
           const t = webrtcperf.elapsedTime() / 1000
           if (receiver.track.kind === 'video') {
-            webrtcperf.videoStartFrameDelayStats.push(now, t)
+            if (webrtcperf.isReceiverDisplayTrack(receiver.track)) {
+              webrtcperf.screenStartFrameDelayStats.push(now, t)
+            } else {
+              webrtcperf.videoStartFrameDelayStats.push(now, t)
+            }
           } else if (receiver.track.kind === 'audio') {
             webrtcperf.audioStartFrameDelayStats.push(now, t)
           }

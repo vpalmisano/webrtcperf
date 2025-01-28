@@ -63,6 +63,12 @@ export enum PageStatsNames {
   videoEndToEndDelay = 'videoEndToEndDelay',
   /** The video start frame delay. */
   videoStartFrameDelay = 'videoStartFrameDelay',
+
+  /** The screen end to end total delay. */
+  screenEndToEndDelay = 'screenEndToEndDelay',
+  /** The screen start frame delay. */
+  screenStartFrameDelay = 'screenStartFrameDelay',
+
   /**
    * The video end to end network delay.
    * It does't include the video encode/decode time and the jitter buffer time.
