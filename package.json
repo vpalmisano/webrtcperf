@@ -35,6 +35,7 @@
     "start": "node app.min.js",
     "start:dev": "tsc -b && node build/src/app.js",
     "test": "",
+    "build": "yarn lint && tsc -b && webpack",
     "build:docker": "yarn && docker build --platform linux/amd64 -t ghcr.io/vpalmisano/webrtcperf:devel .",
     "push:docker": "docker push ghcr.io/vpalmisano/webrtcperf:devel",
     "build:docker-ffmpeg": "docker build --platform linux/amd64 -t ghcr.io/vpalmisano/webrtcperf-ffmpeg:devel -f Dockerfile.ffmpeg .",
@@ -44,16 +45,16 @@
     "clean": "rm -rf app.min.js build _docs",
     "lint": "eslint src scripts examples",
     "lint:fix": "yarn lint --fix",
-    "docs": "tsc -b && node build/src/generate-config-docs.js && typedoc",
+    "docs": "yarn build && node build/src/generate-config-docs.js && typedoc",
     "build:linux": "nexe --make=\"-j$(nproc 2> /dev/null || echo 1)\" --verbose --build -i app.min.js -o webrtcperf -r 'scripts/*' -r package.json && gzip -9 -c webrtcperf > webrtcperf_${npm_package_version}_linux.gz",
     "build:macos": "nexe --target mac-x64-14.15.3 -i app.min.js -o webrtcperf -r 'scripts/*' -r package.json && gzip -9 -c webrtcperf > webrtcperf_${npm_package_version}_macos.gz && rm webrtcperf",
     "build:windows": "nexe --target windows-x64-14.15.3 -i app.min.js -o webrtcperf -r 'scripts/*' -r package.json && zip webrtcperf_${npm_package_version}_windows.zip webrtcperf.exe && rm webrtcperf.exe",
-    "build:all": "yarn && yarn build:linux && yarn build:macos && yarn build:windows"
+    "build:all": "yarn && yarn build && yarn build:linux && yarn build:macos && yarn build:windows"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@puppeteer/browsers": "^2.4.0",
-    "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#3141878acc9675aec06c525b15b4a7ea43ae296e",
+    "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#286bd122a5eeeb7aace01b47f4b0d4d166857ac5",
     "axios": "^1.7.7",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
