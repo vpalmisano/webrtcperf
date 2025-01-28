@@ -144,7 +144,8 @@ ENTRYPOINT ["/app/entrypoint.sh"]
 
 COPY package.json yarn.lock /app/
 ENV PUPPETEER_SKIP_DOWNLOAD=true 
-RUN yarn install --frozen-lockfile --production
+RUN --mount=type=cache,id=webrtcperf-cache-yarn,target=/root/.cache/yarn,sharing=shared \
+    yarn install --frozen-lockfile --production --cache-folder /root/.cache/yarn
 
 COPY scripts /app/scripts/
 COPY app.min.js entrypoint.sh /app/
