@@ -952,9 +952,10 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
 
-"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#286bd122a5eeeb7aace01b47f4b0d4d166857ac5":
-  version "0.0.4"
-  resolved "https://github.com/vpalmisano/throttler#286bd122a5eeeb7aace01b47f4b0d4d166857ac5"
+"@vpalmisano/throttler@^0.0.5":
+  version "0.0.5"
+  resolved "https://npm.pkg.github.com/download/@vpalmisano/throttler/0.0.5/e19fb26c271876bf904e8eb15b1d4befce60e698#e19fb26c271876bf904e8eb15b1d4befce60e698"
+  integrity sha512-PbEJBUF1KowEIaXCafR/2+30pW/+IjgfVGugSGWVwuIpkzv8Yk8LS3thv7ariZuCS9BXXVcjQQM6PDot9igJRw==
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"
@@ -1788,9 +1789,9 @@ camel-case@^4.1.2:
     tslib "^2.0.3"
 
 caniuse-lite@^1.0.30001688:
-  version "1.0.30001695"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001695.tgz#39dfedd8f94851132795fdf9b79d29659ad9c4d4"
-  integrity sha512-vHyLade6wTgI2u1ec3WQBxv+2BrTERV28UXQu9LO6lZ9pYeMk34vjXFLOxo1A4UBA8XTL4njRQZdno/yYaSmWw==
+  version "1.0.30001696"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001696.tgz#00c30a2fc11e3c98c25e5125418752af3ae2f49f"
+  integrity sha512-pDCPkvzfa39ehJtJ+OwGT/2yvT2SbjfHhiIW2LWOAcMQ7BzwxT/XuyUp4OTOd0XFWA6BKw0JalnBHgSi5DGJBQ==
 
 canvas@^2.8.0:
   version "2.11.2"
@@ -4140,10 +4141,6 @@ internal-slot@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/internal-slot/-/internal-slot-1.1.0.tgz#1eac91762947d2f7056bc838d93e13b2e9604961"
   integrity sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==
-  dependencies:
-    es-errors "^1.3.0"
-    hasown "^2.0.2"
-    side-channel "^1.1.0"
 
 interpret@^3.1.1:
   version "3.1.1"
@@ -4438,8 +4435,6 @@ is-shared-array-buffer@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/is-shared-array-buffer/-/is-shared-array-buffer-1.0.4.tgz#9b67844bd9b7f246ba0708c3a93e34269c774f6f"
   integrity sha512-ISWac8drv4ZGfwKl5slpHG9OwPNty4jOWPRIhBpxOoD+hqITiwuipOQ2bNthAzwA3B4fIjO4Nln74N0S9byq8A==
-  dependencies:
-    call-bound "^1.0.3"
 
 is-stream@^1.1.0:
   version "1.1.0"
@@ -6291,11 +6286,6 @@ queue-microtask@^1.2.2:
   resolved "https://registry.yarnpkg.com/queue-microtask/-/queue-microtask-1.2.3.tgz#4929228bbc724dfac43e0efb058caf7b6cfb6243"
   integrity sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==
 
-queue-tick@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/queue-tick/-/queue-tick-1.0.1.tgz#f6f07ac82c1fd60f82e098b417a80e52f1f4c142"
-  integrity sha512-kJt5qhMxoszgU/62PLP1CJytzd2NKetjSRnyuj31fDd3Rlcz3fzlFdFLD1SItunPwyqEOkca6GbV612BWfaBag==
-
 quick-lru@^5.1.1:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
@@ -7159,12 +7149,11 @@ statuses@2.0.1:
   integrity sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==
 
 streamx@^2.15.0, streamx@^2.21.0:
-  version "2.21.1"
-  resolved "https://registry.yarnpkg.com/streamx/-/streamx-2.21.1.tgz#f02979d8395b6b637d08a589fb514498bed55845"
-  integrity sha512-PhP9wUnFLa+91CPy3N6tiQsK+gnYyUNuk15S3YG/zjYE7RuPeCjJngqnzpC31ow0lzBHQ+QGO4cNJnd0djYUsw==
+  version "2.22.0"
+  resolved "https://registry.yarnpkg.com/streamx/-/streamx-2.22.0.tgz#cd7b5e57c95aaef0ff9b2aef7905afa62ec6e4a7"
+  integrity sha512-sLh1evHOzBy/iWRiR6d1zRcLao4gGZr3C1kzNz4fopCOKJb6xD9ub8Mpi9Mr1R6id5o43S+d93fI48UC5uM9aw==
   dependencies:
     fast-fifo "^1.3.2"
-    queue-tick "^1.0.1"
     text-decoder "^1.1.0"
   optionalDependencies:
     bare-events "^2.2.0"
