@@ -69,7 +69,7 @@ process immediately).
 
 ## Configuration options
 
-See the [config documentation](https://vpalmisano.github.io/webrtcperf/types/Config.html).
+See the [config documentation](https://vpalmisano.github.io/webrtcperf/documents/config.html).
 
 ## Statistics
 
