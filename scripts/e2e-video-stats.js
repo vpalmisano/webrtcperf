@@ -243,7 +243,6 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
   webrtcperf.log(`recognizeVideoTimestampWatermark ${track.id} ${track.label}`, track.getSettings())
   const { scheduler } = await loadTesseract()
   let lastTimestamp = 0
-  const isReceiverDisplayTrack = webrtcperf.isReceiverDisplayTrack(track)
 
   const trackProcessor = new window.MediaStreamTrackProcessor({ track })
   const writableStream = new window.WritableStream(
@@ -275,7 +274,7 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
                       data.confidence
                     } elapsed=${elapsed}ms`,
                   )
-                  if (isReceiverDisplayTrack) {
+                  if (webrtcperf.isReceiverDisplayTrack(track)) {
                     webrtcperf.screenEndToEndDelayStats.push(now, delay / 1000)
                   } else {
                     webrtcperf.videoEndToEndDelayStats.push(now, delay / 1000)
