@@ -142,12 +142,7 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
   }
 
   const { width, height, frameRate, aspectRatio } = videoTrack.getSettings()
-  const isDisplay = webrtcperf.isSenderDisplayTrack(videoTrack)
-
-  let participantName = webrtcperf.getParticipantName()
-  if (participantName && isDisplay) {
-    participantName += '-d'
-  }
+  const participantName = webrtcperf.getParticipantName()
 
   const trackProcessor = new window.MediaStreamTrackProcessor({
     track: videoTrack,
@@ -165,6 +160,9 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
       aspectRatio,
     }
   }
+  trackGenerator.applyConstraints = async constraints => {
+    webrtcperf.log(`applyVideoTimestampWatermark applyConstraints`, constraints)
+  }
 
   const { readable } = trackProcessor
   const { writable } = trackGenerator
@@ -181,8 +179,9 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
     [readable, writable],
   )
 
-  const newMediaStream = new MediaStream([trackGenerator, ...mediaStream.getAudioTracks()])
-  return newMediaStream
+  mediaStream.removeTrack(videoTrack)
+  mediaStream.addTrack(trackGenerator)
+  return mediaStream
 }
 
 const TESSERACT_VERSION = '5.1.1'
