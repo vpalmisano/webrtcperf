@@ -26,11 +26,7 @@ webrtcperf.videoTracks = new Set()
  * @return {*} The active audio tracks array.
  */
 window.getActiveAudioTracks = () => {
-  for (const track of webrtcperf.audioTracks.values()) {
-    if (track.readyState === 'ended') {
-      webrtcperf.audioTracks.delete(track)
-    }
-  }
+  webrtcperf.cleanupClosedMediaTracks()
   return [...webrtcperf.audioTracks.values()]
 }
 
@@ -39,19 +35,28 @@ window.getActiveAudioTracks = () => {
  * @return {*} The active video tracks array.
  */
 window.getActiveVideoTracks = () => {
+  webrtcperf.cleanupClosedMediaTracks()
+  return [...webrtcperf.videoTracks.values()]
+}
+
+webrtcperf.cleanupClosedMediaTracks = () => {
+  for (const track of webrtcperf.audioTracks.values()) {
+    if (track.readyState === 'ended') {
+      webrtcperf.audioTracks.delete(track)
+    }
+  }
   for (const track of webrtcperf.videoTracks.values()) {
     if (track.readyState === 'ended') {
       webrtcperf.videoTracks.delete(track)
     }
   }
-  return [...webrtcperf.videoTracks.values()]
 }
 
 /**
  * It collects MediaTracks from MediaStream.
  * @param {MediaStream} mediaStream
  */
-function collectMediaTracks(mediaStream, onEnded = null) {
+webrtcperf.collectMediaTracks = (mediaStream, onEnded = null) => {
   const audioTracks = mediaStream.getAudioTracks()
   if (audioTracks.length) {
     const track = audioTracks[0]
@@ -82,6 +87,7 @@ function collectMediaTracks(mediaStream, onEnded = null) {
     })
     webrtcperf.videoTracks.add(track)
   }
+  webrtcperf.cleanupClosedMediaTracks()
   // Log applyConstraints calls.
   mediaStream.getTracks().forEach(track => {
     const applyConstraintsNative = track.applyConstraints.bind(track)
@@ -127,20 +133,15 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         webrtcperf.log(`overrideGetUserMediaStream error:`, err)
       }
     }
-    try {
-      collectMediaTracks(mediaStream)
-    } catch (err) {
-      webrtcperf.log(`collectMediaTracks error:`, err)
-    }
 
     if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
       mediaStream = webrtcperf.applyAudioTimestampWatermark(mediaStream)
     }
-
     if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
       mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
     }
 
+    webrtcperf.collectMediaTracks(mediaStream)
     return mediaStream
   }
 }
@@ -169,12 +170,17 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
         webrtcperf.log(`overrideGetDisplayMediaStream error:`, err)
       }
     }
-    collectMediaTracks(mediaStream, () => {
-      if (stopFakeScreenshare) stopFakeScreenshare()
-    })
+
+    if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
+      mediaStream = webrtcperf.applyAudioTimestampWatermark(mediaStream)
+    }
     if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
       mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
     }
+
+    webrtcperf.collectMediaTracks(mediaStream, () => {
+      if (stopFakeScreenshare) stopFakeScreenshare()
+    })
     return mediaStream
   }
 }

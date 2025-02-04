@@ -451,29 +451,20 @@ setInterval(() => {
 
 /**
  * isSenderDisplayTrack
- * @param {MediaStreamTrack} videoTrack
+ * @param {MediaStreamTrack} track
  * @return {Boolean}
  */
-webrtcperf.isSenderDisplayTrack = videoTrack => {
-  if (['detail', 'text'].indexOf(videoTrack.contentHint) !== -1) {
-    return true
-  }
+webrtcperf.isSenderDisplayTrack = track => {
+  if (track.kind !== 'video') return false
 
-  if (videoTrack instanceof window.BrowserCaptureMediaStreamTrack) {
-    return true
-  }
+  if (['detail', 'text'].indexOf(track.contentHint) !== -1) return true
+  if (track instanceof window.BrowserCaptureMediaStreamTrack) return true
 
-  if (!navigator.mediaDevices) return false
+  const trackSettings = track.getSettings()
+  const trackConstraints = track.getConstraints()
 
-  const trackSettings = videoTrack.getSettings()
-  const trackConstraints = videoTrack.getConstraints()
-
-  const supportedConstraints = navigator.mediaDevices.getSupportedConstraints
-    ? navigator.mediaDevices.getSupportedConstraints()
-    : undefined
-
-  if (supportedConstraints?.mediaSource) {
-    // supports mediaSource constraint (firefox)
+  //webrtcperf.log(`isSenderDisplayTrack`, { track, trackSettings, trackConstraints })
+  if (trackConstraints?.mediaSource !== undefined) {
     return trackConstraints.mediaSource === 'window' || trackConstraints.mediaSource === 'screen'
   } else if (trackSettings.displaySurface || trackSettings.logicalSurface) {
     return true

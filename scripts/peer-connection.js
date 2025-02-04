@@ -267,24 +267,27 @@ window.RTCPeerConnection = function (conf, options) {
   }
 
   pc.addEventListener('track', async event => {
-    const { receiver, transceiver } = event
-    if (receiver?.track) {
-      debug(`ontrack`, { kind: receiver.track.kind, event, streams: event.streams })
+    const { receiver, transceiver, streams } = event
+    if (receiver?.track && receiver.track.label !== 'probator') {
+      debug(`ontrack ${receiver.track.kind} ${receiver.track.id}`, { streams })
       if (encodedInsertableStreams && timestampInsertableStreams) {
         webrtcperf.handleTransceiverForInsertableStreams(id, transceiver)
       }
 
       webrtcperf
         .waitTrackMedia(receiver.track)
-        .then(({ now }) => {
+        .then(async ({ now, elapsedTime }) => {
           const t = webrtcperf.elapsedTime() / 1000
           if (receiver.track.kind === 'video') {
             if (webrtcperf.isReceiverDisplayTrack(receiver.track)) {
+              debug(`ontrack screen ${receiver.track.id} elapsedTime: ${elapsedTime}ms, from start: ${t}s`)
               webrtcperf.screenStartFrameDelayStats.push(now, t)
             } else {
+              debug(`ontrack video ${receiver.track.id} elapsedTime: ${elapsedTime}ms, from start: ${t}s`)
               webrtcperf.videoStartFrameDelayStats.push(now, t)
             }
           } else if (receiver.track.kind === 'audio') {
+            debug(`ontrack audio ${receiver.track.id} elapsedTime: ${elapsedTime}ms, from start: ${t}s`)
             webrtcperf.audioStartFrameDelayStats.push(now, t)
           }
         })

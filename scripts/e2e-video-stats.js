@@ -136,33 +136,28 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
     webrtcperf.log(`unsupported MediaStreamTrackProcessor and MediaStreamTrackGenerator`)
     return mediaStream
   }
-  const videoTrack = mediaStream.getVideoTracks()[0]
-  if (!videoTrack) {
+  const track = mediaStream.getVideoTracks()[0]
+  if (!track) {
     return mediaStream
   }
 
-  const { width, height, frameRate, aspectRatio } = videoTrack.getSettings()
+  const trackSettings = track.getSettings()
+  const trackConstraints = track.getConstraints()
+
+  const { width, height } = trackSettings
   const participantName = webrtcperf.getParticipantName()
 
-  const trackProcessor = new window.MediaStreamTrackProcessor({
-    track: videoTrack,
+  webrtcperf.log(`applyVideoTimestampWatermark ${track.id}`, { track, trackSettings, trackConstraints })
+
+  const trackProcessor = new window.MediaStreamTrackProcessor({ track })
+  const trackGenerator = new window.MediaStreamTrackGenerator({ kind: 'video' })
+  trackGenerator.getSettings = () => trackSettings
+  trackGenerator.getConstraints = () => trackConstraints
+  trackGenerator.applyConstraints = async () => {}
+  track.addEventListener('ended', () => {
+    trackGenerator.close()
+    trackProcessor.close()
   })
-  const trackGenerator = new window.MediaStreamTrackGenerator({
-    kind: 'video',
-  })
-  const nativeGetSettings = trackGenerator.getSettings.bind(trackGenerator)
-  trackGenerator.getSettings = () => {
-    return {
-      ...nativeGetSettings(),
-      width,
-      height,
-      frameRate,
-      aspectRatio,
-    }
-  }
-  trackGenerator.applyConstraints = async constraints => {
-    webrtcperf.log(`applyVideoTimestampWatermark applyConstraints`, constraints)
-  }
 
   const { readable } = trackProcessor
   const { writable } = trackGenerator
@@ -179,12 +174,12 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
     [readable, writable],
   )
 
-  mediaStream.removeTrack(videoTrack)
+  mediaStream.removeTrack(track)
   mediaStream.addTrack(trackGenerator)
   return mediaStream
 }
 
-const TESSERACT_VERSION = '5.1.1'
+const TESSERACT_VERSION = '6.0.0'
 
 async function loadTesseract() {
   if (window._tesseractData) {
@@ -234,11 +229,9 @@ webrtcperf.processingVideoTracks = new Set()
  * @param {number} measureInterval
  */
 webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5) => {
-  if (webrtcperf.processingVideoTracks.has(track)) return
+  if (track.ended || track.kind !== 'video' || webrtcperf.processingVideoTracks.has(track)) return
   webrtcperf.processingVideoTracks.add(track)
-  track.addEventListener('ended', () => {
-    webrtcperf.processingVideoTracks.delete(track)
-  })
+  track.addEventListener('ended', () => webrtcperf.processingVideoTracks.delete(track))
   webrtcperf.log(`recognizeVideoTimestampWatermark ${track.id} ${track.label}`, track.getSettings())
   const { scheduler } = await loadTesseract()
   let lastTimestamp = 0
@@ -261,7 +254,7 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
 
           scheduler
             .addJob('recognize', canvas)
-            .then(({ data }) => {
+            .then(async ({ data }) => {
               const cleanText = data.text.trim()
               if (cleanText && data.confidence > 50) {
                 const recognizedTimestamp = parseInt(cleanText.split('-')[1])
@@ -273,7 +266,7 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
                       data.confidence
                     } elapsed=${elapsed}ms`,
                   )
-                  if (webrtcperf.isReceiverDisplayTrack(track)) {
+                  if (await webrtcperf.isReceiverDisplayTrack(track)) {
                     webrtcperf.screenEndToEndDelayStats.push(now, delay / 1000)
                   } else {
                     webrtcperf.videoEndToEndDelayStats.push(now, delay / 1000)
@@ -295,7 +288,7 @@ webrtcperf.recognizeVideoTimestampWatermark = async (track, measureInterval = 5)
         webrtcperf.processingVideoTracks.delete(track)
       },
     },
-    new CountQueuingStrategy({ highWaterMark: 15 }),
+    new CountQueuingStrategy({ highWaterMark: 30 }),
   )
   trackProcessor.readable.pipeTo(writableStream).catch(err => {
     webrtcperf.log(`recognizeVideoTimestampWatermark error: ${err.message}`)
