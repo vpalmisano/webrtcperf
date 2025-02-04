@@ -122,10 +122,8 @@ webrtcperf.applyAudioTimestampWatermark = mediaStream => {
 webrtcperf.processingAudioTracks = new Set()
 
 webrtcperf.recognizeAudioTimestampWatermark = track => {
-  if (webrtcperf.processingAudioTracks.has(track)) return
-  if (webrtcperf.processingAudioTracks.size > 4) {
-    return
-  }
+  if (webrtcperf.processingAudioTracks.has(track) || webrtcperf.processingAudioTracks.size > 10 || track.ended) return
+  webrtcperf.log(`AudioTimestampWatermark rx ${track.id}`)
   webrtcperf.processingAudioTracks.add(track)
   track.addEventListener('ended', () => {
     webrtcperf.processingAudioTracks.delete(track)

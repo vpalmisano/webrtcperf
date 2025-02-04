@@ -172,6 +172,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     collectMediaTracks(mediaStream, () => {
       if (stopFakeScreenshare) stopFakeScreenshare()
     })
+    if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
+      mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
+    }
     return mediaStream
   }
 }
