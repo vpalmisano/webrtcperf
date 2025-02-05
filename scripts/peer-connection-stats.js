@@ -272,7 +272,7 @@ async function getPeerConnectionStats(id, pc, now, raw = false, verbose = false)
     if (t.receiver && t.receiver.track) {
       const track = t.receiver.track
       if (track) {
-        const trackId = window.getReceiverParticipantName(track)
+        const trackId = webrtcperf.getReceiverParticipantName(track)
         const stats = await pc.getStats(track)
         const values = {
           enabled: window.isRecvTrackEnabled(track),

@@ -117,7 +117,7 @@ async function handleInsertableStreams(data, debug = false) {
               encodedFrame.type,
               pts,
               encodedFrame.timestamp / 90000,
-              pts / window.VIDEO_FRAMERATE,
+              pts / webrtcperf.VIDEO_FRAMERATE,
               encodedFrame.getMetadata(),
             ) */
             try {

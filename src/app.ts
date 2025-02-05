@@ -60,7 +60,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
   }
 
   // Prepare fake video and audio.
-  const videoPaths: { video: string; audio: string }[] = []
+  const videoPaths: { video: string; audio: string; mp4: string }[] = []
   if (config.videoPath) {
     for (const videoPath of config.videoPath.split(',')) {
       const ret = await prepareFakeMedia({ ...config, videoPath })

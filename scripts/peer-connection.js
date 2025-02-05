@@ -346,11 +346,13 @@ const NativeRTCRtpSenderGetCapabilities = window.RTCRtpSender.getCapabilities
 
 window.RTCRtpSender.getCapabilities = kind => {
   const capabilities = NativeRTCRtpSenderGetCapabilities(kind)
-  if (!window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS?.length || kind !== 'video') {
+  if (!webrtcperf.GET_CAPABILITIES_DISABLED_VIDEO_CODECS?.length || kind !== 'video') {
     return capabilities
   }
   capabilities.codecs = capabilities.codecs.filter(codec => {
-    if (window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS.includes(codec.mimeType.replace('video/', '').toLowerCase())) {
+    if (
+      webrtcperf.GET_CAPABILITIES_DISABLED_VIDEO_CODECS.includes(codec.mimeType.replace('video/', '').toLowerCase())
+    ) {
       return false
     }
     return true

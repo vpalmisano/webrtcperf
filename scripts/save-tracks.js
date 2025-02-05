@@ -254,7 +254,7 @@ webrtcperf.saveMediaTrack = async (
   y = 0,
   width = 0,
   height = 0,
-  frameRate = window.VIDEO_FRAMERATE,
+  frameRate = webrtcperf.VIDEO_FRAMERATE,
 ) => {
   const { id, kind } = track
   if (webrtcperf.savingTracks[kind].has(id)) {
@@ -276,9 +276,9 @@ webrtcperf.saveMediaTrack = async (
   }
 
   const filename = `${webrtcperf.getParticipantNameForSave(sendrecv, track)}${kind === 'audio' ? '.f32le.raw' : '.ivf.raw'}`
-  const url = `ws${window.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
-    window.SERVER_PORT
-  }/?auth=${window.SERVER_SECRET}&action=write-stream&filename=${filename}`
+  const url = `ws${webrtcperf.SERVER_USE_HTTPS ? 's' : ''}://localhost:${
+    webrtcperf.SERVER_PORT
+  }/?auth=${webrtcperf.SERVER_SECRET}&action=write-stream&filename=${filename}`
 
   webrtcperf.log(`saveMediaTrack ${filename}`)
   getSaveFileWorker().postMessage(

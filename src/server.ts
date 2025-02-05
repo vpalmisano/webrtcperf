@@ -2,7 +2,6 @@ import compression from 'compression'
 import { timingSafeEqual } from 'crypto'
 import express, { json } from 'express'
 import fs from 'fs'
-import basicAuth from 'express-basic-auth'
 import { Server as HttpServer, createServer } from 'http'
 import { Server as HttpsServer, createServer as _createServer } from 'https'
 import os from 'os'
@@ -10,6 +9,7 @@ import path from 'path'
 import tar from 'tar-fs'
 import { WebSocketServer } from 'ws'
 import zlib from 'zlib'
+import auth from 'basic-auth'
 
 import { loadConfig } from './config'
 import { Session, SessionParams } from './session'
@@ -34,6 +34,8 @@ export class Server {
   serverData: string
   /** The file path that will be used to serve the \`/view/page.log\` requests. */
   pageLogPath: string
+  /** The path that will be used to serve the \`/cache\` requests. */
+  videoCachePath: string
   /** A {@link Stats} class instance. */
   stats: Stats
 
@@ -50,10 +52,18 @@ export class Server {
    * @param serverUseHttps If HTTPS protocol should be used.
    * @param serverData An optional path that the HTTP server will expose with the /data endpoint.
    * @param pageLogPath The file path that will be used to serve the \`/view/page.log\` requests.
+   * @param videoCachePath The path that will be used to serve the \`/cache\` requests.
    * @param stats A {@link Stats} class instance.
    */
   constructor(
-    { serverPort = 5000, serverSecret = 'secret', serverUseHttps = false, serverData = '', pageLogPath = '' } = {},
+    {
+      serverPort = 5000,
+      serverSecret = 'secret',
+      serverUseHttps = false,
+      serverData = '',
+      pageLogPath = '',
+      videoCachePath = '',
+    } = {},
     stats: Stats,
   ) {
     this.serverPort = serverPort
@@ -61,6 +71,7 @@ export class Server {
     this.serverUseHttps = serverUseHttps
     this.serverData = serverData
     this.pageLogPath = pageLogPath
+    this.videoCachePath = videoCachePath
     this.stats = stats
     //
     this.app = express()
@@ -71,12 +82,18 @@ export class Server {
       }),
     )
 
-    this.app.use(
-      basicAuth({
-        challenge: true,
-        users: { admin: this.serverSecret },
-      }),
-    )
+    this.app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (req.query.auth === this.serverSecret) {
+        return next()
+      }
+      const credentials = auth(req)
+      if (!credentials || credentials.name !== 'admin' || credentials.pass !== this.serverSecret) {
+        res.setHeader('WWW-Authenticate', 'Basic realm="Restricted Area"')
+        res.status(401).send('Unauthorized')
+        return
+      }
+      next()
+    })
 
     this.app.get('/', (_req, res) => {
       res.send('')
@@ -96,7 +113,6 @@ export class Server {
     this.app.get('/download/stats', this.getStatsFile.bind(this))
     this.app.get('/download/detailed-stats', this.getDetailedStatsFile.bind(this))
     this.app.get('/empty-page', this.getEmptyPage.bind(this))
-
     if (this.serverData) {
       log.debug(`using serverData: ${this.serverData}`)
       fs.promises.mkdir(this.serverData, { recursive: true }).catch(err => {
@@ -104,6 +120,13 @@ export class Server {
       })
       this.app.get('/data', this.getDataArchive.bind(this))
       this.app.get('/data/*', this.getData.bind(this))
+    }
+    if (this.videoCachePath) {
+      log.debug(`using videoCachePath: ${this.videoCachePath}`)
+      fs.promises.mkdir(this.videoCachePath, { recursive: true }).catch(err => {
+        log.error(`mkdir ${this.videoCachePath} error: ${err.message}`)
+      })
+      this.app.get('/cache/*', this.getCache.bind(this))
     }
 
     this.app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -428,6 +451,19 @@ export class Server {
     res.header('Content-Disposition', `attachment; filename="${path.basename(fpath)}.tar.gz"`)
     res.setHeader('content-type', 'application/gzip')
     tar.pack(fpath).pipe(zlib.createGzip()).pipe(res)
+  }
+
+  private getCache(req: express.Request, res: express.Response, next: express.NextFunction): void {
+    const paramPath = path.normalize(req.params[0]).replace(/^(\.\.(\/|\\|$))+/, '')
+    log.debug(`GET /cache/${paramPath}`, req.query)
+    const fpath = path.resolve(this.videoCachePath, paramPath)
+    if (!fs.existsSync(fpath)) {
+      return next(new Error(`${paramPath} not found`))
+    }
+    if (req.query.range && !req.headers.range) {
+      req.headers.range = `bytes=${req.query.range}`
+    }
+    res.sendFile(fpath)
   }
 
   /**

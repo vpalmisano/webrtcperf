@@ -90,6 +90,8 @@ declare global {
       bufferingEvents: number
     }
     getParticipantName: () => string
+    startFakeScreenshare: () => void
+    stopFakeScreenshare: () => void
   }
 }
 
@@ -133,10 +135,11 @@ export interface SessionParams {
   /** Custom URL handler. */
   customUrlHandler: string
   customUrlHandlerFn?: CustomUrlHandlerFn
-  videoPath?: { video: string; audio: string }
+  videoPath?: { video: string; audio: string; mp4: string }
   videoWidth: number
   videoHeight: number
   videoFramerate: number
+  useFakeMedia: boolean
   enableGpu: string
   enableBrowserLogging: string
   startTimestamp: number
@@ -201,10 +204,11 @@ export class Session extends EventEmitter {
   private readonly deviceScaleFactor: number
   private readonly display: string
   /* private readonly audioRedForOpus: boolean */
-  public readonly videoPath?: { video: string; audio: string }
+  public readonly videoPath?: { video: string; audio: string; mp4: string }
   private readonly videoWidth: number
   private readonly videoHeight: number
   private readonly videoFramerate: number
+  private readonly useFakeMedia: boolean
   private readonly enableGpu: string
   private readonly enableBrowserLogging: boolean
   private readonly startTimestamp: number
@@ -313,6 +317,7 @@ export class Session extends EventEmitter {
   pageWarnings = 0
   /** The page errors count. */
   pageErrors = 0
+  private screensharePage?: Page
 
   private static readonly jsonFetchCache = new NodeCache({
     stdTTL: 30,
@@ -336,6 +341,7 @@ export class Session extends EventEmitter {
     videoWidth,
     videoHeight,
     videoFramerate,
+    useFakeMedia,
     enableGpu,
     enableBrowserLogging,
     startTimestamp,
@@ -401,6 +407,7 @@ export class Session extends EventEmitter {
     this.videoWidth = videoWidth
     this.videoHeight = videoHeight
     this.videoFramerate = videoFramerate
+    this.useFakeMedia = useFakeMedia
     this.enableGpu = enableGpu
     this.enableBrowserLogging = enabledForSession(this.id, enableBrowserLogging)
     this.startTimestamp = startTimestamp || Date.now()
@@ -545,11 +552,6 @@ export class Session extends EventEmitter {
       '--disable-site-isolation-trials',
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
-      '--auto-accept-this-tab-capture',
-      '--use-fake-ui-for-media-stream',
-      `--use-fake-device-for-media-stream=display-media-type=${this.getDisplayMediaType || 'monitor'},fps=30`,
-      // '--auto-select-desktop-capture-source=Entire screen',
-      // `--auto-select-tab-capture-source-by-title=about:blank`,
       `--remote-debugging-port=${this.debuggingPort ? this.debuggingPort + this.id : 0}`,
       '--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,VaapiVideoDecodeLinuxGL,ElementCapture',
       `--window-size=${this.windowWidth},${this.windowHeight}`,
@@ -574,11 +576,21 @@ export class Session extends EventEmitter {
     }
 
     if (this.videoPath) {
-      log.debug(`${this.id} using ${this.videoPath} as fake source`)
-      args.push(
-        `--use-file-for-fake-video-capture=${this.videoPath.video}`,
-        `--use-file-for-fake-audio-capture=${this.videoPath.audio}`,
-      )
+      if (this.useFakeMedia) {
+        log.debug(`${this.id} using ${this.videoPath} as fake source`)
+        args.push(
+          '--use-fake-ui-for-media-stream',
+          `--use-fake-device-for-media-stream=display-media-type=${this.getDisplayMediaType || 'monitor'},fps=30`,
+          `--use-file-for-fake-video-capture=${this.videoPath.video}`,
+          `--use-file-for-fake-audio-capture=${this.videoPath.audio}`,
+        )
+      } else {
+        args.push(
+          '--auto-accept-camera-and-microphone-capture',
+          `--auto-select-tab-capture-source-by-title=webrtcperf-screenshare`,
+          '--mute-audio',
+        )
+      }
     }
 
     if (this.enableGpu) {
@@ -740,6 +752,52 @@ export class Session extends EventEmitter {
     }
   }
 
+  private setupPageCmd(index: number, tabIndex: number, url: string) {
+    let cmd = `\
+webrtcperf = {};
+webrtcperf.elapsedTime = () => Date.now() - ${this.startTimestamp};
+webrtcperf.WEBRTC_PERF_URL = "${hideAuth(url)}";
+webrtcperf.WEBRTC_PERF_SESSION = ${this.id};
+webrtcperf.WEBRTC_PERF_TAB_INDEX = ${tabIndex};
+webrtcperf.WEBRTC_PERF_INDEX = ${index};
+webrtcperf.STATS_INTERVAL = ${this.statsInterval};
+webrtcperf.VIDEO_WIDTH = ${this.videoWidth};
+webrtcperf.VIDEO_HEIGHT = "${this.videoHeight}";
+webrtcperf.VIDEO_FRAMERATE = ${this.videoFramerate};
+webrtcperf.LOCAL_STORAGE = '${this.localStorage ? JSON.stringify(this.localStorage) : ''}';
+webrtcperf.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
+try {
+  webrtcperf.params = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
+} catch (err) {
+  console.error('[webrtcperf] Error parsing scriptParams:', err);
+  webrtcperf.params = {};
+}
+webrtcperf.GET_DISPLAY_MEDIA_TYPE = "${this.getDisplayMediaType}";
+  `
+
+    if (this.serverPort) {
+      cmd += `\
+webrtcperf.SERVER_PORT = ${this.serverPort};
+webrtcperf.SERVER_SECRET = "${this.serverSecret}";
+webrtcperf.SERVER_USE_HTTPS = ${this.serverUseHttps};
+    `
+      if (this.videoPath && !this.useFakeMedia) {
+        cmd += `\
+webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.videoPath.mp4)}?auth=${this.serverSecret}";
+    `
+      }
+    }
+
+    if (this.disabledVideoCodecs.length) {
+      log.debug('Using disabledVideoCodecs:', this.disabledVideoCodecs)
+      cmd += `webrtcperf.GET_CAPABILITIES_DISABLED_VIDEO_CODECS = JSON.parse('${JSON.stringify(
+        this.disabledVideoCodecs,
+      )}');\n`
+    }
+
+    return cmd
+  }
+
   /**
    * openPage
    * @param tabIndex
@@ -818,50 +876,13 @@ export class Session extends EventEmitter {
     )
 
     // Export config to page.
-    let cmd = `\
-webrtcperf = {};
-webrtcperf.elapsedTime = () => Date.now() - ${this.startTimestamp};
-window.WEBRTC_PERF_URL = "${hideAuth(url)}";
-window.WEBRTC_PERF_SESSION = ${this.id};
-window.WEBRTC_PERF_TAB_INDEX = ${tabIndex};
-window.WEBRTC_PERF_INDEX = ${index};
-window.STATS_INTERVAL = ${this.statsInterval};
-window.VIDEO_WIDTH = ${this.videoWidth};
-window.VIDEO_HEIGHT = "${this.videoHeight}";
-window.VIDEO_FRAMERATE = ${this.videoFramerate};
-window.LOCAL_STORAGE = '${this.localStorage ? JSON.stringify(this.localStorage) : ''}';
-window.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
-try {
-  webrtcperf.params = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
-} catch (err) {
-  console.error('[webrtcperf] Error parsing scriptParams:', err);
-  webrtcperf.params = {};
-}
-webrtcperf.GET_DISPLAY_MEDIA_TYPE = "${this.getDisplayMediaType}";
-`
-
-    if (this.serverPort) {
-      cmd += `\
-window.SERVER_PORT = ${this.serverPort};
-window.SERVER_SECRET = "${this.serverSecret}";
-window.SERVER_USE_HTTPS = ${this.serverUseHttps};
-`
-    }
-
-    if (this.disabledVideoCodecs.length) {
-      log.debug('Using disabledVideoCodecs:', this.disabledVideoCodecs)
-      cmd += `window.GET_CAPABILITIES_DISABLED_VIDEO_CODECS = JSON.parse('${JSON.stringify(
-        this.disabledVideoCodecs,
-      )}');\n`
-    }
-
+    let cmd = this.setupPageCmd(index, tabIndex, url)
     if (this.localStorage) {
       log.debug('Using localStorage:', this.localStorage)
       Object.entries(this.localStorage).map(([key, value]) => {
         cmd += `localStorage.setItem('${key}', JSON.parse('${JSON.stringify(value)}'));\n`
       })
     }
-
     await page.evaluateOnNewDocument(cmd)
 
     // Clear cookies.
@@ -1309,9 +1330,37 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
       })
     }
 
-    await page.exposeFunction('WebRtcPerf_sdpParse', (sdpStr: string) => sdpTransform.parse(sdpStr))
+    await page.exposeFunction('webrtcperf_sdpParse', (sdpStr: string) => sdpTransform.parse(sdpStr))
 
-    await page.exposeFunction('WebRtcPerf_sdpWrite', (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp))
+    await page.exposeFunction('webrtcperf_sdpWrite', (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp))
+
+    await page.exposeFunction('webrtcperf_startFakeScreenshare', async () => {
+      if (!this.browser) return
+      let screensharePage = page
+      if (!this.useFakeMedia) {
+        if (!this.screensharePage) {
+          this.screensharePage = await this.browser.newPage()
+          await this.screensharePage.setContent(
+            `<!DOCTYPE html><head><title>webrtcperf-screenshare</title></head><html><body></body></html>`,
+          )
+          await this.screensharePage.evaluate(this.setupPageCmd(index, tabIndex, 'about:blank'))
+          for (const name of ['scripts/common.js', 'scripts/screenshare.js']) {
+            await this.screensharePage.evaluate(fs.readFileSync(resolvePackagePath(name), 'utf8'))
+          }
+        }
+        screensharePage = this.screensharePage
+      }
+      await screensharePage.evaluate(() => webrtcperf.startFakeScreenshare())
+    })
+
+    await page.exposeFunction('webrtcperf_stopFakeScreenshare', async () => {
+      if (!this.useFakeMedia && this.screensharePage) {
+        await this.screensharePage.close()
+        this.screensharePage = undefined
+      } else {
+        await page.evaluate(() => webrtcperf.stopFakeScreenshare())
+      }
+    })
 
     // HTTP stats.
     const resourcesStats = {
@@ -1762,6 +1811,11 @@ window.SERVER_USE_HTTPS = ${this.serverUseHttps};
         if (this.pages.size > 0) {
           log.warn(`${this.id} timeout closing ${this.pages.size} pages`)
         }
+      }
+
+      if (this.screensharePage) {
+        await this.screensharePage.close()
+        this.screensharePage = undefined
       }
 
       this.browser.removeAllListeners()

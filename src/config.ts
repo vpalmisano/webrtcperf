@@ -155,6 +155,14 @@ multiple runs.`,
     env: 'VIDEO_FORMAT',
     arg: 'video-format',
   },
+  useFakeMedia: {
+    doc: `If true, the audio/video and screenshare will be generated using the browser fake device.`,
+    format: 'Boolean',
+    default: true,
+    env: 'USE_FAKE_MEDIA',
+    arg: 'use-fake-media',
+  },
+  //
   runDuration: {
     doc: `If greater than 0, the test will stop after the provided number of \
 seconds.`,

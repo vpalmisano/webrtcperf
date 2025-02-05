@@ -1,13 +1,16 @@
 /* global webrtcperf */
 
-webrtcperf.setupFakeScreenshare = ({
-  embed = '',
-  slides = 4,
-  delay = 5000,
-  animationDuration = 1000,
-  width = 1920,
-  height = 1080,
-} = {}) => {
+webrtcperf.startFakeScreenshare = (
+  {
+    embed = '',
+    slides = 4,
+    images = [],
+    delay = 5000,
+    animationDuration = 1000,
+    width = 1920,
+    height = 1080,
+  } = webrtcperf.params.fakeScreenshare,
+) => {
   if (document.querySelector('#webrtcperf-fake-screenshare')) {
     return
   }
@@ -41,13 +44,11 @@ webrtcperf.setupFakeScreenshare = ({
   wrapper.setAttribute('id', 'webrtcperf-fake-screenshare')
   wrapper.setAttribute(
     'style',
-    `all: unset; position: fixed; top: 0; left: 0; width: ${width}px; height: ${height}px; z-index: -1; background-color: black; isolation: isolate; transform-style: flat;`,
+    `all: unset; position: fixed; top: 0; left: 0; width: ${width}px; height: ${height}px; z-index: 99999; background-color: black; isolation: isolate; transform-style: flat;`,
   )
   document.body.appendChild(wrapper)
-  webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
+  //webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
 
-  let running = true
-  let timeout = 0
   if (embed) {
     const el = document.createElement('iframe')
     el.setAttribute('src', embed)
@@ -59,7 +60,11 @@ webrtcperf.setupFakeScreenshare = ({
     const slidesElements = []
     for (let i = 0; i < slides; i++) {
       const img = document.createElement('img')
-      img.setAttribute('src', `https://picsum.photos/seed/${i + 1}/${width}/${height}`)
+      if ((images || [])[i]) {
+        img.setAttribute('src', images[i])
+      } else {
+        img.setAttribute('src', `https://picsum.photos/seed/${i + 1}/${width}/${height}`)
+      }
       img.setAttribute(
         'style',
         `all: unset; position: absolute; width: ${width}px; height: ${height}px; transform: translateX(100%); opacity: 0;`,
@@ -69,20 +74,18 @@ webrtcperf.setupFakeScreenshare = ({
     }
     let cur = 0
     const loopIteration = async () => {
+      if (!document.querySelector('#webrtcperf-fake-screenshare')) return
       const next = cur === slidesElements.length - 1 ? 0 : cur + 1
       await applyAnimation(slidesElements[cur], slidesElements[next], delay)
       cur = next
-      if (running) {
-        timeout = setTimeout(() => loopIteration())
-      }
+      setTimeout(() => loopIteration())
     }
     loopIteration()
   }
+}
 
-  return () => {
-    webrtcperf.log(`FakeScreenshare stop`)
-    running = false
-    clearTimeout(timeout)
-    wrapper.remove()
-  }
+webrtcperf.stopFakeScreenshare = () => {
+  const wrapper = document.querySelector('#webrtcperf-fake-screenshare')
+  if (!wrapper) return
+  wrapper.remove()
 }

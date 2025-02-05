@@ -1,4 +1,4 @@
-/* global webrtcperf */
+/* global webrtcperf, webrtcperf_startFakeScreenshare */
 
 async function applyGetDisplayMediaCrop(mediaStream) {
   if (!webrtcperf.GET_DISPLAY_MEDIA_CROP) return
@@ -114,6 +114,40 @@ if (navigator.getUserMedia) {
   }
 }
 
+webrtcperf.getFakeTrack = async kind => {
+  if (!webrtcperf.fakeStream) {
+    webrtcperf.log(`Creating fake media stream`)
+    webrtcperf.fakeStream = new Promise((resolve, reject) => {
+      const video = (webrtcperf.fakeVideo = document.createElement('video'))
+      video.src = webrtcperf.VIDEO_URL
+      video.loop = true
+      video.crossOrigin = 'anonymous'
+      video.autoplay = true
+      video.width = 0
+      video.height = 0
+      video.play()
+      video.addEventListener(
+        'canplay',
+        () => {
+          resolve(video.captureStream())
+        },
+        { once: true },
+      )
+      video.addEventListener(
+        'error',
+        err => {
+          webrtcperf.log(`Create fake media stream error:`, err)
+          reject(err)
+        },
+        { once: true },
+      )
+    })
+  }
+  const stream = await webrtcperf.fakeStream
+  const track = stream.getTracks().find(track => track.kind === kind)
+  return track?.clone()
+}
+
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   const nativeGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices)
   navigator.mediaDevices.getUserMedia = async function (constraints, ...args) {
@@ -125,7 +159,21 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     if (webrtcperf.params.getUserMediaWaitTime > 0) {
       await webrtcperf.sleep(webrtcperf.params.getUserMediaWaitTime)
     }
-    let mediaStream = await nativeGetUserMedia(constraints, ...args)
+
+    let mediaStream = new MediaStream()
+    if (webrtcperf.VIDEO_URL) {
+      if (constraints.audio) {
+        const audioTrack = await webrtcperf.getFakeTrack('audio')
+        mediaStream.addTrack(audioTrack)
+      }
+      if (constraints.video) {
+        const videoTrack = await webrtcperf.getFakeTrack('video')
+        mediaStream.addTrack(videoTrack)
+      }
+    } else {
+      mediaStream = await nativeGetUserMedia(constraints, ...args)
+    }
+
     if (window.overrideGetUserMediaStream !== undefined) {
       try {
         mediaStream = await window.overrideGetUserMediaStream(mediaStream)
@@ -150,10 +198,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
   const nativeGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
   navigator.mediaDevices.getDisplayMedia = async function (constraints, ...args) {
     webrtcperf.log(`getDisplayMedia:`, JSON.stringify(constraints))
-    let stopFakeScreenshare = null
-    if (webrtcperf.GET_DISPLAY_MEDIA_TYPE === 'browser') {
-      stopFakeScreenshare = await webrtcperf.setupFakeScreenshare(webrtcperf.params.fakeScreenshare)
-    }
+
+    await webrtcperf_startFakeScreenshare()
+
     if (webrtcperf.overrideGetDisplayMedia) {
       constraints = webrtcperf.overrideGetDisplayMedia(constraints)
       webrtcperf.log(`getDisplayMedia override:`, JSON.stringify(constraints))
@@ -178,9 +225,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
       mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
     }
 
-    webrtcperf.collectMediaTracks(mediaStream, () => {
-      if (stopFakeScreenshare) stopFakeScreenshare()
-    })
+    webrtcperf.collectMediaTracks(mediaStream)
     return mediaStream
   }
 }
@@ -190,5 +235,30 @@ if (navigator.mediaDevices && navigator.mediaDevices.setCaptureHandleConfig) {
   navigator.mediaDevices.setCaptureHandleConfig = config => {
     webrtcperf.log('setCaptureHandleConfig', config)
     return setCaptureHandleConfig(config)
+  }
+}
+
+if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+  const NativeEnumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices)
+  navigator.mediaDevices.enumerateDevices = async () => {
+    if (webrtcperf.VIDEO_URL) {
+      return [
+        {
+          deviceId: 'webrtcperf-audio',
+          kind: 'audioinput',
+          label: 'WebRTCPerf Audio',
+          groupId: 'webrtcperf',
+        },
+        {
+          deviceId: 'webrtcperf-video',
+          kind: 'videoinput',
+          label: 'WebRTCPerf Video',
+          groupId: 'webrtcperf',
+        },
+      ]
+    }
+    const devices = await NativeEnumerateDevices()
+    // webrtcperf.log('enumerateDevices', devices)
+    return devices
   }
 }
