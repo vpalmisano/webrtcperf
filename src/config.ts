@@ -156,7 +156,9 @@ multiple runs.`,
     arg: 'video-format',
   },
   useFakeMedia: {
-    doc: `If true, the audio/video and screenshare will be generated using the browser fake device.`,
+    doc: `If true, the audio/video/screenshare will be generated using the browser fake device.
+Otherwise, the audio and video streams will be captured from a video element attached to the page, 
+while the screenshare will be captured from a new browser tab.`,
     format: 'Boolean',
     default: true,
     env: 'USE_FAKE_MEDIA',
@@ -382,7 +384,7 @@ on console. Regexp string allowed.`,
   scriptPath: {
     doc: `One or more JavaScript file paths (comma-separated). \
 If set, the files contents will be executed inside each opened tab page; \
-the following global variables will be attached to the \`window\` object: \
+the following global variables will be attached to the \`webrtcperf\` global object: \
 \`WEBRTC_PERF_SESSION\` the session number (0-indexed); \
 \`WEBRTC_PERF_TAB\` the tab number inside the same session (0-indexed); \
 \`WEBRTC_PERF_INDEX\` the page absolute index (0-indexed). \
@@ -410,7 +412,8 @@ the page context as \`webrtcperf.params\`.`,
     arg: 'disabled-video-codecs',
   },
   getDisplayMediaType: {
-    doc: `The fake display type to use for \`getDisplayMedia\`. It could be \`monitor\`, \`window\` or \`browser\`,`,
+    doc: `The fake display type to use for \`getDisplayMedia\` when \`useFakeMedia\` is \`true\`. 
+It could be \`monitor\`, \`window\` or \`browser\`,`,
     format: String,
     default: 'monitor',
     env: 'GET_DISPLAY_MEDIA_TYPE',
