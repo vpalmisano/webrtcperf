@@ -59,7 +59,7 @@ jobs:
     #      ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Yarn build
       run: |
-        yarn install --frozen-lockfile
+        yarn install
         yarn docs
 
     - name: Setup Pages
