@@ -2,7 +2,7 @@
 # WebRTC Perf
 [GitHub page](https://github.com/vpalmisano/webrtcperf) | [Documentation](https://vpalmisano.github.io/webrtcperf)
 
-[![Build Docker image](https://github.com/vpalmisano/webrtcperf/actions/workflows/docker_build.yaml/badge.svg)](https://github.com/vpalmisano/webrtcperf/actions/workflows/docker_build.yaml)
+[![Build Docker image](https://github.com/vpalmisano/webrtcperf/actions/workflows/build.yaml/badge.svg)](https://github.com/vpalmisano/webrtcperf/actions/workflows/build.yaml)
 
 WebRTC performance and quality evaluation tool.
 It allows to validate the audio/video quality and the client CPU/memory usage
