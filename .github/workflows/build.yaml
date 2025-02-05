@@ -48,18 +48,17 @@ jobs:
       with:
         node-version: 20
         cache: 'yarn'
-    #- name: Cache modules
-    #  uses: actions/cache@v4
-    #  with:
-    #    path: |
-    #     node_modules
-    #     .yarn-cache
-    #    key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
-    #    restore-keys: |
-    #      ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
+    - name: Cache modules
+      uses: actions/cache@v4
+      with:
+        path: |
+         node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('./yarn.lock') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-${{ hashFiles('./yarn.lock') }}-
     - name: Yarn build
       run: |
-        yarn install
+        yarn install --frozen-lockfile
         yarn docs
 
     - name: Setup Pages
