@@ -59,7 +59,7 @@ jobs:
     - name: Yarn build
       run: |
         export YARN_CACHE_FOLDER=$(pwd)/.yarn-cache
-        yarn install --frozen-lockfile
+        yarn install --frozen-lockfile || yarn install --frozen-lockfile
         yarn docs
 
     - name: Setup Pages
