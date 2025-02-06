@@ -158,6 +158,12 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
     trackGenerator.close()
     trackProcessor.close()
   })
+  const trackGeneratorStop = trackGenerator.stop.bind(trackGenerator)
+  trackGenerator.stop = () => {
+    webrtcperf.log(`applyVideoTimestampWatermark ${track.id} stop`)
+    trackGeneratorStop()
+    track.stop()
+  }
 
   const { readable } = trackProcessor
   const { writable } = trackGenerator

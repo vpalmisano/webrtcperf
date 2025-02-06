@@ -116,7 +116,7 @@ if (navigator.getUserMedia) {
 
 webrtcperf.getFakeTrack = async kind => {
   if (!webrtcperf.fakeStream) {
-    webrtcperf.log(`Creating fake media stream`)
+    webrtcperf.log(`[getFakeTrack] Creating fake media stream`)
     webrtcperf.fakeStream = new Promise((resolve, reject) => {
       const video = (webrtcperf.fakeVideo = document.createElement('video'))
       video.src = webrtcperf.VIDEO_URL
@@ -129,6 +129,7 @@ webrtcperf.getFakeTrack = async kind => {
       video.addEventListener(
         'canplay',
         () => {
+          webrtcperf.fakeVideo._refcount = 0
           resolve(video.captureStream())
         },
         { once: true },
@@ -136,7 +137,7 @@ webrtcperf.getFakeTrack = async kind => {
       video.addEventListener(
         'error',
         err => {
-          webrtcperf.log(`Create fake media stream error:`, err)
+          webrtcperf.log(`[getFakeTrack] Create fake media stream error:`, err)
           reject(err)
         },
         { once: true },
@@ -145,7 +146,25 @@ webrtcperf.getFakeTrack = async kind => {
   }
   const stream = await webrtcperf.fakeStream
   const track = stream.getTracks().find(track => track.kind === kind)
-  return track?.clone()
+  if (!track) {
+    throw new Error(`[getFakeTrack] track ${kind} not found`)
+  }
+  webrtcperf.fakeVideo._refcount++
+  if (webrtcperf.fakeVideo.paused) {
+    await webrtcperf.fakeVideo.play()
+  }
+  const clonedTrack = track.clone()
+  webrtcperf.log(`[getFakeTrack] new ${kind} track ${clonedTrack.id} count: ${webrtcperf.fakeVideo._refcount}`)
+  const clonedTrackStop = clonedTrack.stop.bind(clonedTrack)
+  clonedTrack.stop = () => {
+    clonedTrackStop()
+    webrtcperf.fakeVideo._refcount--
+    webrtcperf.log(`[getFakeTrack] stop ${kind} track ${clonedTrack.id} count: ${webrtcperf.fakeVideo._refcount}`)
+    if (webrtcperf.fakeVideo._refcount === 0) {
+      webrtcperf.fakeVideo.pause()
+    }
+  }
+  return clonedTrack
 }
 
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
