@@ -45,10 +45,13 @@ webrtcperf.startFakeScreenshare = (
   wrapper.setAttribute('id', 'webrtcperf-fake-screenshare')
   wrapper.setAttribute(
     'style',
-    `all: unset; position: fixed; top: 0; left: 0; width: ${width}px; height: ${height}px; z-index: 99999; background-color: black; isolation: isolate; transform-style: flat;`,
+    `all: unset; position: fixed; top: 0; left: 0; width: ${width}px; height: ${height}px; z-index: ${webrtcperf.USE_FAKE_MEDIA ? '-1' : '1'}; background-color: black; isolation: isolate; transform-style: flat;`,
   )
   document.body.appendChild(wrapper)
-  //webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
+
+  if (webrtcperf.USE_FAKE_MEDIA) {
+    webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
+  }
 
   if (pointerAnimation) {
     const el = document.createElement('div')
