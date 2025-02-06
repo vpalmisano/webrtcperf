@@ -89,11 +89,14 @@ webrtcperf.startFakeScreenshare = (
     el.setAttribute('frameborder', '0')
     wrapper.appendChild(el)
 
+    let cur = 0
     advanceSlide = async () => {
-      try {
-        await window.keypressText('iframe', ' ') //0x24
-      } catch (e) {
-        console.error(e)
+      if (cur >= slides) {
+        cur = 0
+        await window.keypressText('iframe', String.fromCharCode(0x24))
+      } else {
+        await window.keypressText('iframe', ' ')
+        cur++
       }
     }
   } else {
@@ -130,6 +133,7 @@ webrtcperf.startFakeScreenshare = (
       wrapper.appendChild(img)
       slidesElements.push(img)
     }
+
     let cur = 0
     advanceSlide = async () => {
       const next = cur === slidesElements.length - 1 ? 0 : cur + 1
