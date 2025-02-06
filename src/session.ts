@@ -1343,22 +1343,18 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       let screensharePage = page
       if (!this.useFakeMedia) {
         if (!this.screensharePage) {
-          this.screensharePage = await this.browser.newPage()
+          screensharePage = this.screensharePage = await this.browser.newPage()
           await this.screensharePage.evaluateOnNewDocument(this.setupPageCmd(index, tabIndex, 'about:blank'))
           for (const name of ['scripts/common.js', 'scripts/screenshare.js']) {
             await this.screensharePage.evaluateOnNewDocument(fs.readFileSync(resolvePackagePath(name), 'utf8'))
           }
-          await this.screensharePage.exposeFunction(
-            'keypressText',
-            async (selector: string, text: string, delay = 20) => {
-              await page.type(selector, text, { delay })
-            },
-          )
-          await this.screensharePage.goto(
+          await screensharePage.exposeFunction('keypressText', async (selector: string, text: string, delay = 20) => {
+            await screensharePage.type(selector, text, { delay })
+          })
+          await screensharePage.goto(
             `http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/empty-page?auth=${this.serverSecret}&title=webrtcperf-screenshare`,
           )
         }
-        screensharePage = this.screensharePage
       } else if (this.getDisplayMediaType === 'monitor') {
         return
       }
