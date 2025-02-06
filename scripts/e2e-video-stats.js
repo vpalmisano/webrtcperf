@@ -151,9 +151,6 @@ webrtcperf.applyVideoTimestampWatermark = mediaStream => {
 
   const trackProcessor = new window.MediaStreamTrackProcessor({ track })
   const trackGenerator = new window.MediaStreamTrackGenerator({ kind: 'video' })
-  trackGenerator.getSettings = () => trackSettings
-  trackGenerator.getConstraints = () => trackConstraints
-  trackGenerator.applyConstraints = async () => {}
   track.addEventListener('ended', () => {
     trackGenerator.close()
     trackProcessor.close()

@@ -776,7 +776,7 @@ try {
   webrtcperf.params = {};
 }
 webrtcperf.GET_DISPLAY_MEDIA_TYPE = "${this.getDisplayMediaType}";
-webrtcperf.USE_FAKE_MEDIA = "${this.useFakeMedia}";
+webrtcperf.USE_FAKE_MEDIA = ${this.useFakeMedia};
   `
 
     if (this.serverPort) {
@@ -1339,7 +1339,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     await page.exposeFunction('webrtcperf_sdpWrite', (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp))
 
     await page.exposeFunction('webrtcperf_startFakeScreenshare', async () => {
-      if (!this.browser || this.getDisplayMediaType === 'monitor') return
+      if (!this.browser) return
       let screensharePage = page
       if (!this.useFakeMedia) {
         if (!this.screensharePage) {
@@ -1348,11 +1348,19 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
           for (const name of ['scripts/common.js', 'scripts/screenshare.js']) {
             await this.screensharePage.evaluateOnNewDocument(fs.readFileSync(resolvePackagePath(name), 'utf8'))
           }
+          await this.screensharePage.exposeFunction(
+            'keypressText',
+            async (selector: string, text: string, delay = 20) => {
+              await page.type(selector, text, { delay })
+            },
+          )
           await this.screensharePage.goto(
             `http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/empty-page?auth=${this.serverSecret}&title=webrtcperf-screenshare`,
           )
         }
         screensharePage = this.screensharePage
+      } else if (this.getDisplayMediaType === 'monitor') {
+        return
       }
       await screensharePage.evaluate(() => webrtcperf.startFakeScreenshare())
     })

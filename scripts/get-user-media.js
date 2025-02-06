@@ -238,9 +238,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
     if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkAudio)) {
       mediaStream = webrtcperf.applyAudioTimestampWatermark(mediaStream)
     }
-    if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
-      mediaStream = webrtcperf.applyVideoTimestampWatermark(mediaStream)
-    }
 
     webrtcperf.collectMediaTracks(mediaStream)
     return mediaStream

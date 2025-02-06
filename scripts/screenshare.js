@@ -15,29 +15,6 @@ webrtcperf.startFakeScreenshare = (
   if (document.querySelector('#webrtcperf-fake-screenshare')) {
     return
   }
-
-  const animateElement = async (el, direction) => {
-    const slideIn = [
-      { transform: 'translateX(100%)', opacity: 0 },
-      { transform: 'translateX(0%)', opacity: 1 },
-    ]
-    const slideOut = [
-      { transform: 'translateX(0%)', opacity: 1 },
-      { transform: 'translateX(-100%)', opacity: 0 },
-    ]
-    return new Promise(resolve => {
-      el.animate(direction === 'in' ? slideIn : slideOut, {
-        duration: animationDuration,
-        iterations: 1,
-        fill: 'forwards',
-      }).addEventListener('finish', () => resolve())
-    })
-  }
-  const applyAnimation = async (el1, el2, delay) => {
-    await Promise.all([animateElement(el1, 'out'), animateElement(el2, 'in')])
-    await webrtcperf.sleep(delay)
-  }
-
   webrtcperf.log(
     `FakeScreenshare start: embed=${embed} slides=${slides} animationDuration=${animationDuration} delay=${delay} width=${width} height=${height}`,
   )
@@ -53,6 +30,7 @@ webrtcperf.startFakeScreenshare = (
     webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
   }
 
+  // Pointer animation.
   if (pointerAnimation) {
     const el = document.createElement('div')
     el.setAttribute(
@@ -74,6 +52,34 @@ webrtcperf.startFakeScreenshare = (
     )
   }
 
+  // Draw overlay with timestamp.
+  let drawTimestamp = null
+  if (webrtcperf.enabledForSession(webrtcperf.params.timestampWatermarkVideo)) {
+    const canvas = document.createElement('canvas')
+    const fontSize = Math.round(height / 18)
+    const textHeight = Math.round(height / 15)
+    canvas.width = width
+    canvas.height = textHeight
+    canvas.setAttribute(
+      'style',
+      `all: unset; position: absolute; top: 0; left: 0; z-index: 1; width: 100%; height: ${textHeight}px;`,
+    )
+    wrapper.appendChild(canvas)
+    const ctx = canvas.getContext('2d')
+    ctx.font = `${fontSize}px Noto Mono`
+    ctx.textAlign = 'center'
+    const participantNameIndex = parseInt(webrtcperf.getParticipantName().split('-')[1]) || 0
+    drawTimestamp = () => {
+      ctx.fillStyle = 'black'
+      ctx.fillRect(0, 0, width, textHeight)
+      ctx.fillStyle = 'white'
+      const text = `${participantNameIndex}-${Date.now()}`
+      ctx.fillText(text, width / 2, fontSize)
+    }
+  }
+
+  // Slides animation.
+  let advanceSlide = null
   if (embed) {
     const el = document.createElement('iframe')
     el.setAttribute('src', embed)
@@ -82,7 +88,33 @@ webrtcperf.startFakeScreenshare = (
     el.setAttribute('style', 'padding: 0; margin: 0; border: none;')
     el.setAttribute('frameborder', '0')
     wrapper.appendChild(el)
+
+    advanceSlide = async () => {
+      try {
+        await window.keypressText('iframe', ' ') //0x24
+      } catch (e) {
+        console.error(e)
+      }
+    }
   } else {
+    const animateElement = async (el, direction) => {
+      const slideIn = [
+        { transform: 'translateX(100%)', opacity: 0 },
+        { transform: 'translateX(0%)', opacity: 1 },
+      ]
+      const slideOut = [
+        { transform: 'translateX(0%)', opacity: 1 },
+        { transform: 'translateX(-100%)', opacity: 0 },
+      ]
+      return new Promise(resolve => {
+        el.animate(direction === 'in' ? slideIn : slideOut, {
+          duration: animationDuration,
+          iterations: 1,
+          fill: 'forwards',
+        }).addEventListener('finish', () => resolve())
+      })
+    }
+
     const slidesElements = []
     for (let i = 0; i < slides; i++) {
       const img = document.createElement('img')
@@ -99,15 +131,20 @@ webrtcperf.startFakeScreenshare = (
       slidesElements.push(img)
     }
     let cur = 0
-    const loopIteration = async () => {
-      if (!document.querySelector('#webrtcperf-fake-screenshare')) return
+    advanceSlide = async () => {
       const next = cur === slidesElements.length - 1 ? 0 : cur + 1
-      await applyAnimation(slidesElements[cur], slidesElements[next], delay)
+      await Promise.all([animateElement(slidesElements[cur], 'out'), animateElement(slidesElements[next], 'in')])
       cur = next
-      setTimeout(() => loopIteration())
     }
-    loopIteration()
   }
+
+  const loopIteration = async () => {
+    if (!document.querySelector('#webrtcperf-fake-screenshare')) return
+    if (drawTimestamp) drawTimestamp()
+    if (advanceSlide) await advanceSlide()
+    setTimeout(() => loopIteration(), delay)
+  }
+  loopIteration()
 }
 
 webrtcperf.stopFakeScreenshare = () => {
