@@ -9,6 +9,7 @@ webrtcperf.startFakeScreenshare = (
     animationDuration = 1000,
     width = 1920,
     height = 1080,
+    pointerAnimation = 0,
   } = webrtcperf.params.fakeScreenshare,
 ) => {
   if (document.querySelector('#webrtcperf-fake-screenshare')) {
@@ -49,12 +50,34 @@ webrtcperf.startFakeScreenshare = (
   document.body.appendChild(wrapper)
   //webrtcperf.GET_DISPLAY_MEDIA_CROP = '#webrtcperf-fake-screenshare'
 
+  if (pointerAnimation) {
+    const el = document.createElement('div')
+    el.setAttribute(
+      'style',
+      'all: unset; position: absolute; width: 10px; height: 10px; background-color: red; border-radius: 50%; opacity: 0;',
+    )
+    wrapper.appendChild(el)
+    el.animate(
+      [
+        { transform: 'translate(50px, 0px)', opacity: 0, offset: 0.0 },
+        { transform: 'translate(25px, 25px)', opacity: 1, offset: 100 / pointerAnimation },
+        { transform: 'translate(0px, 50px)', opacity: 0, offset: 200 / pointerAnimation },
+      ],
+      {
+        duration: pointerAnimation,
+        iterations: Infinity,
+        easing: 'ease-in-out',
+      },
+    )
+  }
+
   if (embed) {
     const el = document.createElement('iframe')
     el.setAttribute('src', embed)
     el.setAttribute('width', width)
     el.setAttribute('height', height)
     el.setAttribute('style', 'padding: 0; margin: 0; border: none;')
+    el.setAttribute('frameborder', '0')
     wrapper.appendChild(el)
   } else {
     const slidesElements = []

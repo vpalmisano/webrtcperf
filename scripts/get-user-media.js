@@ -123,8 +123,6 @@ webrtcperf.getFakeTrack = async kind => {
       video.loop = true
       video.crossOrigin = 'anonymous'
       video.autoplay = true
-      video.width = 0
-      video.height = 0
       video.play()
       video.addEventListener(
         'canplay',

@@ -548,7 +548,10 @@ export class Session extends EventEmitter {
       '--allow-running-insecure-content',
       `--unsafely-treat-insecure-origin-as-secure=http://${new URL(this.url || 'http://localhost').host}`,
       '--disable-web-security',
-      '--disable-features=IsolateOrigins',
+      '--disable-features=IsolateOrigins,Translate,CalculateNativeWinOcclusion',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
       '--disable-site-isolation-trials',
       '--enable-usermedia-screen-capturing',
       '--allow-http-screen-capture',
@@ -1340,13 +1343,13 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       if (!this.useFakeMedia) {
         if (!this.screensharePage) {
           this.screensharePage = await this.browser.newPage()
-          await this.screensharePage.setContent(
-            `<!DOCTYPE html><head><title>webrtcperf-screenshare</title></head><html><body></body></html>`,
-          )
-          await this.screensharePage.evaluate(this.setupPageCmd(index, tabIndex, 'about:blank'))
+          await this.screensharePage.evaluateOnNewDocument(this.setupPageCmd(index, tabIndex, 'about:blank'))
           for (const name of ['scripts/common.js', 'scripts/screenshare.js']) {
-            await this.screensharePage.evaluate(fs.readFileSync(resolvePackagePath(name), 'utf8'))
+            await this.screensharePage.evaluateOnNewDocument(fs.readFileSync(resolvePackagePath(name), 'utf8'))
           }
+          await this.screensharePage.goto(
+            `http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/empty-page?auth=${this.serverSecret}&title=webrtcperf-screenshare`,
+          )
         }
         screensharePage = this.screensharePage
       }

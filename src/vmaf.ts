@@ -456,7 +456,6 @@ export async function runVmaf(
   if (refFrameRate !== degFrameRate) {
     throw new Error(`runVmaf: frame rates do not match: ref=${refFrameRate} deg=${degFrameRate}`)
   }
-  const frameRate = refFrameRate
 
   // Find common frames.
   const commonRefFrames = []
@@ -523,7 +522,7 @@ ${splitFilter(['ref_vmaf', 'ref_psnr', preview ? 'ref_preview' : ''])};\
 
     log.info(`VMAF metrics ${vmafLogPath}:`, metrics)
 
-    await writeGraph(vmafLogPath, frameRate)
+    await writeGraph(vmafLogPath)
 
     return metrics
   } finally {
@@ -532,7 +531,7 @@ ${splitFilter(['ref_vmaf', 'ref_psnr', preview ? 'ref_preview' : ''])};\
   }
 }
 
-async function writeGraph(vmafLogPath: string, frameRate: number) {
+async function writeGraph(vmafLogPath: string) {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { ChartJSNodeCanvas } = require('chartjs-node-canvas')
 
@@ -556,7 +555,7 @@ async function writeGraph(vmafLogPath: string, frameRate: number) {
       (prev, cur) => {
         if (cur.frameNum % decimation === 0) {
           prev.push({
-            x: Math.round((100 * cur.frameNum) / frameRate) / 100,
+            x: cur.frameNum,
             y: cur.metrics.vmaf,
             count: 1,
           })
@@ -706,7 +705,7 @@ if (require.main === module) {
         console.log(JSON.stringify(await analyzeColors(process.argv[3]), null, 2))
         break
       case 'graph':
-        await writeGraph(process.argv[3], 30)
+        await writeGraph(process.argv[3])
         break
       case 'vmaf':
         await calculateVmafScore({

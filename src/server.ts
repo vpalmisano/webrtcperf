@@ -411,14 +411,14 @@ export class Server {
    */
   private getEmptyPage(req: express.Request, res: express.Response): void {
     log.debug(`GET /empty-page`, req.query)
+    const title = req.query.title || 'EmptyPage'
     res.send(`<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Empty Page</title>
+<title>${title}</title>
 </head>
-<body>
-</body>
+<body></body>
 </html>`)
   }
 
