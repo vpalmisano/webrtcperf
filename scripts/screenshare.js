@@ -1,4 +1,4 @@
-/* global webrtcperf, webrtcperf_mouseClick, webrtcperf_keyPress */
+/* global webrtcperf, webrtcperf_keypressText,  webrtcperf_keyPress */
 
 webrtcperf.startFakeScreenshare = (
   {
@@ -91,11 +91,12 @@ webrtcperf.startFakeScreenshare = (
 
     let cur = 0
     advanceSlide = async () => {
+      webrtcperf.log(`advanceSlide embed: ${cur}/${slides}`)
       if (cur >= slides) {
         await webrtcperf_keyPress('Home')
         cur = 0
       } else {
-        await webrtcperf_mouseClick('iframe', width / 2, height / 2)
+        await webrtcperf_keypressText('iframe', ' ')
         cur++
       }
     }
@@ -136,6 +137,7 @@ webrtcperf.startFakeScreenshare = (
 
     let cur = 0
     advanceSlide = async () => {
+      webrtcperf.log(`advanceSlide: ${cur}/${slides}`)
       const next = cur === slidesElements.length - 1 ? 0 : cur + 1
       await Promise.all([animateElement(slidesElements[cur], 'out'), animateElement(slidesElements[next], 'in')])
       cur = next
@@ -144,8 +146,12 @@ webrtcperf.startFakeScreenshare = (
 
   const loopIteration = async () => {
     if (!document.querySelector('#webrtcperf-fake-screenshare')) return
-    if (drawTimestamp) drawTimestamp()
-    if (advanceSlide) await advanceSlide()
+    try {
+      if (drawTimestamp) drawTimestamp()
+      if (advanceSlide) await advanceSlide()
+    } catch (e) {
+      webrtcperf.log(`loopIteration error: ${e}`)
+    }
     setTimeout(() => loopIteration(), delay)
   }
   loopIteration()

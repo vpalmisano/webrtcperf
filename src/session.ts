@@ -1349,9 +1349,12 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
           for (const name of ['scripts/common.js', 'scripts/screenshare.js']) {
             await this.screensharePage.evaluateOnNewDocument(fs.readFileSync(resolvePackagePath(name), 'utf8'))
           }
-          await screensharePage.exposeFunction('webrtcperf_mouseClick', async (selector: string, x = 0, y = 0) => {
-            await screensharePage.click(selector, { offset: { x, y } })
-          })
+          await screensharePage.exposeFunction(
+            'webrtcperf_keypressText',
+            async (selector: string, text: string, delay = 20) => {
+              await screensharePage.type(selector, text, { delay })
+            },
+          )
           await screensharePage.exposeFunction('webrtcperf_keyPress', async (key: KeyInput) => {
             await screensharePage.keyboard.press(key)
           })
