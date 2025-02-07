@@ -1,4 +1,4 @@
-/* global webrtcperf */
+/* global webrtcperf, webrtcperf_mouseClick, webrtcperf_keyPress */
 
 webrtcperf.startFakeScreenshare = (
   {
@@ -93,9 +93,9 @@ webrtcperf.startFakeScreenshare = (
     advanceSlide = async () => {
       if (cur >= slides) {
         cur = 0
-        await window.keypressText('iframe', String.fromCharCode(0x24))
+        await webrtcperf_keyPress('Home')
       } else {
-        await window.keypressText('iframe', ' ')
+        await webrtcperf_mouseClick('iframe', 100, 100)
         cur++
       }
     }
