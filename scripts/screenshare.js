@@ -92,10 +92,10 @@ webrtcperf.startFakeScreenshare = (
     let cur = 0
     advanceSlide = async () => {
       if (cur >= slides) {
-        cur = 0
         await webrtcperf_keyPress('Home')
+        cur = 0
       } else {
-        await webrtcperf_mouseClick('iframe', 100, 100)
+        await webrtcperf_mouseClick('iframe', width / 2, height / 2)
         cur++
       }
     }
