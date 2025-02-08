@@ -9,6 +9,8 @@ import { FastStats } from './stats'
 const log = logger('webrtcperf:vmaf')
 
 export interface IvfFrame {
+  pts: number
+  recognizedPts?: number
   index: number
   position: number
   size: number
@@ -204,7 +206,7 @@ async function parseIvf(fpath: string, runRecognizer = false) {
   let index = 0
   let position = 32
   let bytesRead = 0
-  let frames = new Map<number, IvfFrame>()
+  const frames = new Map<number, IvfFrame>()
   let firstTimestamp = 0
   let lastTimestamp = 0
   do {
@@ -222,7 +224,7 @@ async function parseIvf(fpath: string, runRecognizer = false) {
       /* log.debug(`IVF file ${fname}: pts ${pts} already present, skipping`) */
       skipped++
     } else {
-      frames.set(pts, { index, position, size: size + 12 })
+      frames.set(pts, { pts, index, position, size: size + 12 })
       index++
       if (!firstTimestamp) {
         firstTimestamp = pts / frameRate
@@ -242,19 +244,11 @@ ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp -
   if (runRecognizer) {
     const { frames: ptsToRecognized, participantDisplayName: name } = await recognizeFrames(fpath)
     participantDisplayName = name
-    const recognizedFrames = new Map<number, IvfFrame>()
-    //log.debug(path.basename(fpath), 'frames', [...frames.keys()])
-    for (const [pts, frame] of frames) {
-      let recognizedPts = ptsToRecognized.get(pts)
+    for (const [pts, frame] of frames.entries()) {
+      const recognizedPts = ptsToRecognized.get(pts)
       if (!recognizedPts) continue
-      while (recognizedFrames.has(recognizedPts)) {
-        recognizedPts += 1
-      }
-      recognizedFrames.set(recognizedPts, frame)
+      frame.recognizedPts = recognizedPts
     }
-    //log.debug(path.basename(fpath), 'recognizedFrames', [...recognizedFrames.keys()])
-    frames.clear()
-    frames = recognizedFrames
   }
 
   return {
@@ -299,15 +293,21 @@ export async function fixIvfFrames(filePath: string, keepSourceFile = true) {
   let writtenFrames = 0
 
   const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
+  const writtenPts = new Set<number>()
   for (const pts of ptsIndex) {
     const frame = frames.get(pts)
-    if (!frame) {
+    if (!frame || !frame.recognizedPts) {
       log.warn(`fixIvfFrames ${fname}: pts ${pts} not found, skipping`)
       continue
     }
+    let recognizedPts = frame.recognizedPts
+    while (writtenPts.has(recognizedPts)) {
+      recognizedPts += 1
+    }
+    writtenPts.add(recognizedPts)
     const frameView = new DataView(new ArrayBuffer(frame.size))
     await fd.read(frameView, 0, frame.size, frame.position)
-    frameView.setBigUint64(4, BigInt(pts), true)
+    frameView.setBigUint64(4, BigInt(recognizedPts), true)
     await fixedFd.write(new Uint8Array(frameView.buffer), 0, frameView.byteLength, position)
     position += frameView.byteLength
     writtenFrames++
@@ -716,9 +716,11 @@ if (require.main === module) {
       case 'convert':
         await convertToIvf(process.argv[3], process.argv[4], false)
         break
-      case 'parse':
-        await parseIvf(process.argv[3], true)
+      case 'parse': {
+        const { frames } = await parseIvf(process.argv[3], true)
+        console.log(frames)
         break
+      }
       case 'fix':
         await fixIvfFrames(process.argv[3], true)
         break
