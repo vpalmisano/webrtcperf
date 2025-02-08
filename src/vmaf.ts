@@ -236,19 +236,23 @@ async function parseIvf(fpath: string, runRecognizer = false) {
   log.debug(
     `parseIvf ${fname}: ${width}x${height}@${frameRate} \
 frames: ${frames.size} skipped: ${skipped} \
-ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp - firstTimestamp).toFixed(2)})`,
+ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp - firstTimestamp).toFixed(2)}s)`,
   )
 
   if (runRecognizer) {
     const { frames: ptsToRecognized, participantDisplayName: name } = await recognizeFrames(fpath)
     participantDisplayName = name
     const recognizedFrames = new Map<number, IvfFrame>()
+    //log.debug(path.basename(fpath), 'frames', [...frames.keys()])
     for (const [pts, frame] of frames) {
-      const recognizedPts = ptsToRecognized.get(pts)
-      if (recognizedPts) {
-        recognizedFrames.set(recognizedPts, frame)
+      let recognizedPts = ptsToRecognized.get(pts)
+      if (!recognizedPts) continue
+      while (recognizedFrames.has(recognizedPts)) {
+        recognizedPts += 1
       }
+      recognizedFrames.set(recognizedPts, frame)
     }
+    //log.debug(path.basename(fpath), 'recognizedFrames', [...recognizedFrames.keys()])
     frames.clear()
     frames = recognizedFrames
   }
@@ -460,18 +464,29 @@ export async function runVmaf(
   // Find common frames.
   const commonRefFrames = []
   const commonDegFrames = []
+  let firstPts = 0
+  let lastPts = 0
   for (const [pts, refFrame] of refFrames.entries()) {
     const degFrame = degFrames.get(pts)
     if (degFrame) {
       commonRefFrames.push(refFrame)
       commonDegFrames.push(degFrame)
+      if (!firstPts) {
+        firstPts = pts
+      }
+      lastPts = pts
     }
   }
+  const duration = (lastPts - firstPts) / refFrameRate
+
   referencePath = await filterIvfFrames(referencePath, commonRefFrames)
   degradedPath = await filterIvfFrames(degradedPath, commonDegFrames)
-  log.debug(`common frames: ${commonRefFrames.length} ref: ${refFrames.size} deg: ${degFrames.size}`, {
-    crop,
-  })
+  log.debug(
+    `common frames: ${commonRefFrames.length} ref: ${refFrames.size} deg: ${degFrames.size} duration: ${duration}s`,
+    {
+      crop,
+    },
+  )
 
   const ffmpegCmd = `ffmpeg -hide_banner -loglevel warning -y -threads ${cpus} \
 -i ${degradedPath} \
@@ -700,6 +715,12 @@ if (require.main === module) {
     switch (process.argv[2]) {
       case 'convert':
         await convertToIvf(process.argv[3], process.argv[4], false)
+        break
+      case 'parse':
+        await parseIvf(process.argv[3], true)
+        break
+      case 'fix':
+        await fixIvfFrames(process.argv[3], true)
         break
       case 'analyze':
         console.log(JSON.stringify(await analyzeColors(process.argv[3]), null, 2))
