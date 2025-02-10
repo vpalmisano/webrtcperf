@@ -1,6 +1,6 @@
 /* global webrtcperf, webrtcperf_keypressText,  webrtcperf_keyPress */
 
-webrtcperf.startFakeScreenshare = (
+webrtcperf.startFakeScreenshare = async (
   {
     embed = '',
     slides = 4,
@@ -103,12 +103,12 @@ webrtcperf.startFakeScreenshare = (
   } else {
     const animateElement = async (el, direction) => {
       const slideIn = [
-        { transform: 'translateX(100%)', opacity: 0 },
+        { transform: 'translateX(100%)', opacity: 1 },
         { transform: 'translateX(0%)', opacity: 1 },
       ]
       const slideOut = [
         { transform: 'translateX(0%)', opacity: 1 },
-        { transform: 'translateX(-100%)', opacity: 0 },
+        { transform: 'translateX(-100%)', opacity: 1 },
       ]
       return new Promise(resolve => {
         el.animate(direction === 'in' ? slideIn : slideOut, {
@@ -129,9 +129,10 @@ webrtcperf.startFakeScreenshare = (
       }
       img.setAttribute(
         'style',
-        `all: unset; position: absolute; width: ${width}px; height: ${height}px; transform: translateX(100%); opacity: 0;`,
+        `all: unset; position: absolute; width: ${width}px; height: auto; transform: translateX(100%); opacity: 0; overflow: hidden;`,
       )
       wrapper.appendChild(img)
+      await new Promise(resolve => img.addEventListener('load', resolve, { once: true }))
       slidesElements.push(img)
     }
 
@@ -139,8 +140,13 @@ webrtcperf.startFakeScreenshare = (
     advanceSlide = async () => {
       webrtcperf.log(`advanceSlide: ${cur}/${slides}`)
       const next = cur === slidesElements.length - 1 ? 0 : cur + 1
+      let timer = null
+      if (animationDuration) {
+        timer = setInterval(() => requestAnimationFrame(() => drawTimestamp()), 1000 / 30)
+      }
       await Promise.all([animateElement(slidesElements[cur], 'out'), animateElement(slidesElements[next], 'in')])
       cur = next
+      if (timer) clearInterval(timer)
     }
   }
 

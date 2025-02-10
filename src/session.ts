@@ -91,7 +91,7 @@ declare global {
       bufferingEvents: number
     }
     getParticipantName: () => string
-    startFakeScreenshare: () => void
+    startFakeScreenshare: () => Promise<void>
     stopFakeScreenshare: () => void
   }
 }
