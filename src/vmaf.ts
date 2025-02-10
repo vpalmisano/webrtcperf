@@ -292,22 +292,35 @@ export async function fixIvfFrames(filePath: string, keepSourceFile = true) {
   let position = 32
   let writtenFrames = 0
 
-  const ptsIndex = Array.from(frames.keys()).sort((a, b) => a - b)
-  const writtenPts = new Set<number>()
-  for (const pts of ptsIndex) {
+  const ptsIndex = Array.from(frames.keys())
+    .filter(pts => frames.get(pts)?.recognizedPts)
+    .sort((a, b) => {
+      if (a === b) return (frames.get(a)?.recognizedPts || 0) - (frames.get(b)?.recognizedPts || 0)
+      return a - b
+    })
+  for (const [i, pts] of ptsIndex.entries()) {
     const frame = frames.get(pts)
     if (!frame || !frame.recognizedPts) {
       log.warn(`fixIvfFrames ${fname}: pts ${pts} not found, skipping`)
       continue
     }
-    let recognizedPts = frame.recognizedPts
-    while (writtenPts.has(recognizedPts)) {
-      recognizedPts += 1
+
+    const prevFrame = frames.get(ptsIndex[i - 1])
+    const nextFrame = frames.get(ptsIndex[i + 1])
+    // Skip frames that are not in the correct order.
+    if (nextFrame?.recognizedPts && (nextFrame?.recognizedPts || 0) < frame.recognizedPts) {
+      continue
     }
-    writtenPts.add(recognizedPts)
+    // Keep duplicated frames.
+    if (prevFrame?.recognizedPts && frame.recognizedPts === prevFrame.recognizedPts) {
+      /* log.warn(
+        `${frame.index} pts=${pts}:${frame.recognizedPts} prev ${prevFrame.pts}(${pts - prevFrame.pts}):${prevFrame.recognizedPts}(${frame.recognizedPts - prevFrame.recognizedPts}) next ${nextFrame?.pts}(${(nextFrame?.pts || 0) - pts}):${nextFrame?.recognizedPts}(${(nextFrame?.recognizedPts || 0) - frame.recognizedPts})`,
+      ) */
+      frame.recognizedPts = prevFrame.recognizedPts + 1
+    }
     const frameView = new DataView(new ArrayBuffer(frame.size))
     await fd.read(frameView, 0, frame.size, frame.position)
-    frameView.setBigUint64(4, BigInt(recognizedPts), true)
+    frameView.setBigUint64(4, BigInt(frame.recognizedPts), true)
     await fixedFd.write(new Uint8Array(frameView.buffer), 0, frameView.byteLength, position)
     position += frameView.byteLength
     writtenFrames++
