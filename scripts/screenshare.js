@@ -4,7 +4,7 @@ webrtcperf.startFakeScreenshare = async (
   {
     embed = '',
     slides = 4,
-    images = [],
+    urls = [],
     delay = 5000,
     animationDuration = 1000,
     width = 1920,
@@ -121,19 +121,28 @@ webrtcperf.startFakeScreenshare = async (
 
     const slidesElements = []
     for (let i = 0; i < slides; i++) {
-      const img = document.createElement('img')
-      if ((images || [])[i]) {
-        img.setAttribute('src', images[i])
+      const url = urls[i]
+      let el = null
+      if (!url) {
+        el = document.createElement('img')
+        el.setAttribute('src', `https://picsum.photos/seed/${i + 1}/${width}/${height}`)
       } else {
-        img.setAttribute('src', `https://picsum.photos/seed/${i + 1}/${width}/${height}`)
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(url.split('.').pop())) {
+          el = document.createElement('img')
+        } else {
+          el = document.createElement('iframe')
+          el.setAttribute('frameborder', '0')
+          el.setAttribute('scrolling', 'no')
+        }
+        el.setAttribute('src', url)
       }
-      img.setAttribute(
+      el.setAttribute(
         'style',
-        `all: unset; position: absolute; width: ${width}px; height: auto; transform: translateX(100%); opacity: 0; overflow: hidden;`,
+        `all: unset; position: absolute; width: 100%; height: ${el instanceof HTMLIFrameElement ? `${height}px` : 'auto'}; transform: translateX(100%); opacity: 0; overflow: hidden;`,
       )
-      wrapper.appendChild(img)
-      await new Promise(resolve => img.addEventListener('load', resolve, { once: true }))
-      slidesElements.push(img)
+      wrapper.appendChild(el)
+      await new Promise(resolve => el.addEventListener('load', resolve, { once: true }))
+      slidesElements.push(el)
     }
 
     let cur = 0
