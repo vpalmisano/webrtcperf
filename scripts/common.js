@@ -5,7 +5,7 @@ webrtcperf.safeStringify = obj => {
   const values = new Set()
   try {
     const ret = JSON.stringify(obj, (_, v) => {
-      if (v instanceof Error) return v.message
+      if (v instanceof Error) return `Error: ${v.message}`
       if (typeof v !== 'object' || v === null || v === undefined) return v
       if (values.has(v)) return
       values.add(v)
@@ -24,10 +24,10 @@ webrtcperf.safeStringify = obj => {
 ;['error', 'warn', 'info', 'log', 'debug'].forEach(method => {
   const nativeFn = console[method].bind(console)
   console[method] = function (...args) {
-    const customArgs = args
+    const msg = args
       .map(arg => {
         if (arg instanceof Error) {
-          return arg.message
+          return `Error: ${arg.message}`
         } else if (typeof arg === 'object') {
           return webrtcperf.safeStringify(arg)
         } else if (typeof arg === 'string') {
@@ -41,7 +41,7 @@ webrtcperf.safeStringify = obj => {
       .filter(arg => arg.length > 0)
       .join(' ')
     if (window.serializedConsoleLog) {
-      void window.serializedConsoleLog(method, customArgs)
+      void window.serializedConsoleLog(method, msg)
     }
 
     return nativeFn(...args)
