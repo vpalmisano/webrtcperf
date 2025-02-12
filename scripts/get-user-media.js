@@ -123,10 +123,10 @@ webrtcperf.getFakeTrack = async kind => {
       video.loop = true
       video.crossOrigin = 'anonymous'
       video.autoplay = true
-      video.play()
       video.addEventListener(
-        'canplay',
+        'canplaythrough',
         () => {
+          webrtcperf.log(`[getFakeTrack] Creating fake media stream done`)
           webrtcperf.fakeVideo._refcount = 0
           resolve(video.captureStream())
         },
@@ -140,6 +140,7 @@ webrtcperf.getFakeTrack = async kind => {
         },
         { once: true },
       )
+      video.play()
     })
   }
   const stream = await webrtcperf.fakeStream
