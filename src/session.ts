@@ -1538,8 +1538,10 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
 
     try {
       const processStats = await getProcessStats()
-      collectedStats.nodeCpu = processStats.cpu
-      collectedStats.nodeMemory = processStats.memory
+      Object.assign(collectedStats, {
+        nodeCpu: processStats.cpu,
+        nodeMemory: processStats.memory,
+      })
     } catch (err) {
       log.error(`node getProcessStats error: ${(err as Error).stack}`)
     }
@@ -1784,49 +1786,50 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       }),
     )
 
-    collectedStats.pages = pages
-    if (this.pageErrors) collectedStats.errors = this.pageErrors
-    if (this.pageWarnings) collectedStats.warnings = this.pageWarnings
-    collectedStats.peerConnections = peerConnections
-    collectedStats.peerConnectionConnectionTime = peerConnectionConnectionTime
-    collectedStats.peerConnectionDisconnectionTime = peerConnectionDisconnectionTime
-    collectedStats.peerConnectionsConnected = peerConnectionsConnected
-    collectedStats.peerConnectionsCreated = peerConnectionsCreated
-    collectedStats.peerConnectionsClosed = peerConnectionsClosed
-    collectedStats.peerConnectionsDisconnected = peerConnectionsDisconnected
-    collectedStats.peerConnectionsFailed = peerConnectionsFailed
-    collectedStats.audioEndToEndDelay = audioEndToEndDelayStats
-    collectedStats.audioStartFrameDelay = audioStartFrameDelayStats
-    collectedStats.videoEndToEndDelay = videoEndToEndDelayStats
-    collectedStats.screenEndToEndDelay = screenEndToEndDelayStats
-    collectedStats.videoStartFrameDelay = videoStartFrameDelayStats
-    collectedStats.screenStartFrameDelay = screenStartFrameDelayStats
-    collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
-    collectedStats.httpSentBytes = httpSentBytesStats
-    collectedStats.httpRecvBytes = httpRecvBytesStats
-    collectedStats.httpRecvLatency = httpRecvLatencyStats
-    collectedStats.wsSentBytes = wsSentBytesStats
-    collectedStats.wsRecvBytes = wsRecvBytesStats
-    collectedStats.wsRecvLatency = wsRecvLatencyStats
-    collectedStats.cpuPressure = cpuPressureStats
-    collectedStats.videoWidth = videoWidth
-    collectedStats.videoHeight = videoHeight
-    collectedStats.videoBufferedTime = videoBufferedTime
-    collectedStats.videoPlayingTime = videoPlayingTime
-    collectedStats.videoBufferingTime = videoBufferingTime
-    collectedStats.videoBufferingEvents = videoBufferingEvents
-    collectedStats.pageCpu = pageCpu
-    collectedStats.pageMemory = pageMemory
-    collectedStats.throttleUpRate = throttleUpValuesRate
-    collectedStats.throttleUpDelay = throttleUpValuesDelay
-    collectedStats.throttleUpLoss = throttleUpValuesLoss
-    collectedStats.throttleUpQueue = throttleUpValuesQueue
-    collectedStats.throttleDownRate = throttleDownValuesRate
-    collectedStats.throttleDownDelay = throttleDownValuesDelay
-    collectedStats.throttleDownLoss = throttleDownValuesLoss
-    collectedStats.throttleDownQueue = throttleDownValuesQueue
-
-    Object.assign(collectedStats, customStats)
+    Object.assign(collectedStats, {
+      pages,
+      errors: this.pageErrors,
+      warnings: this.pageWarnings,
+      peerConnections,
+      peerConnectionConnectionTime,
+      peerConnectionDisconnectionTime,
+      peerConnectionsConnected,
+      peerConnectionsCreated,
+      peerConnectionsClosed,
+      peerConnectionsDisconnected,
+      peerConnectionsFailed,
+      audioEndToEndDelay: audioEndToEndDelayStats,
+      audioStartFrameDelay: audioStartFrameDelayStats,
+      videoEndToEndDelay: videoEndToEndDelayStats,
+      videoStartFrameDelay: videoStartFrameDelayStats,
+      screenEndToEndDelay: screenEndToEndDelayStats,
+      screenStartFrameDelay: screenStartFrameDelayStats,
+      videoEndToEndNetworkDelay: videoEndToEndNetworkDelayStats,
+      httpSentBytes: httpSentBytesStats,
+      httpRecvBytes: httpRecvBytesStats,
+      httpRecvLatency: httpRecvLatencyStats,
+      wsSentBytes: wsSentBytesStats,
+      wsRecvBytes: wsRecvBytesStats,
+      wsRecvLatency: wsRecvLatencyStats,
+      cpuPressure: cpuPressureStats,
+      videoWidth,
+      videoHeight,
+      videoBufferedTime,
+      videoPlayingTime,
+      videoBufferingTime,
+      videoBufferingEvents,
+      pageCpu,
+      pageMemory,
+      throttleUpRate: throttleUpValuesRate,
+      throttleUpDelay: throttleUpValuesDelay,
+      throttleUpLoss: throttleUpValuesLoss,
+      throttleUpQueue: throttleUpValuesQueue,
+      throttleDownRate: throttleDownValuesRate,
+      throttleDownDelay: throttleDownValuesDelay,
+      throttleDownLoss: throttleDownValuesLoss,
+      throttleDownQueue: throttleDownValuesQueue,
+      ...customStats,
+    })
 
     if (pages.size < this.pages.size) {
       log.warn(`updateStats collected pages ${pages.size} < ${this.pages.size}`)
