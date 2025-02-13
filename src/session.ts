@@ -311,7 +311,7 @@ export class Session extends EventEmitter {
   stats: SessionStats = {}
   /** The browser opened pages. */
   readonly pages = new Map<number, Page>()
-  readonly httpResourcesStats = new Map<number, { recvBytes: number; recvLatency: FastStats }>()
+  readonly httpResourcesStats = new Map<number, { sentBytes: number; recvBytes: number; recvLatency: FastStats }>()
   /** The browser opened pages metrics. */
   readonly pagesMetrics = new Map<number, Metrics>()
   /** The page warnings count. */
@@ -1202,14 +1202,6 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       },
     )
 
-    /* pageCDPSession.on('Network.webSocketFrameSent', ({requestId, timestamp, response}) => {
-      log('Network.webSocketFrameSent', requestId, timestamp, response.payloadData)
-    })
-
-    pageCDPSession.on('Network.webSocketFrameReceived', ({requestId, timestamp, response}) => {
-      log('Network.webSocketFrameReceived', requestId, timestamp, response.payloadData)
-    }) */
-
     // Simulate keypress
     await page.exposeFunction('keypressText', async (selector: string, text: string, delay = 20) => {
       await page.type(selector, text, { delay })
@@ -1379,16 +1371,20 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
 
     // HTTP stats.
     const resourcesStats = {
+      sentBytes: 0,
       recvBytes: 0,
       recvLatency: new FastStats({ store_data: false }),
     }
     this.httpResourcesStats.set(index, resourcesStats)
 
-    const pendingRequests = new Map<string, { timestamp: number }>()
+    const pendingRequests = new Map<string, { url: string; timestamp: number }>()
     pageCDPSession.on('Network.requestWillBeSent', event => {
       if (event.request.url.startsWith('data:')) return
-      const { requestId, timestamp } = event
-      pendingRequests.set(requestId, { timestamp })
+      const { requestId, request, timestamp } = event
+      const sentBytes = request.postDataEntries?.reduce((acc, entry) => acc + (entry.bytes?.length || 0), 0)
+      //log.log('Network.requestWillBeSent', event.type, request.url, sentBytes)
+      if (sentBytes) resourcesStats.sentBytes += sentBytes
+      pendingRequests.set(requestId, { url: request.url, timestamp })
     })
 
     pageCDPSession.on('Network.responseReceived', event => {
@@ -1413,9 +1409,32 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       if (!request) return
       pendingRequests.delete(event.requestId)
       const { timestamp } = event
+      //log.log('Network.loadingFinished', request.url, (timestamp - request.timestamp) / 1000)
       resourcesStats.recvLatency.push(timestamp - request.timestamp)
     })
 
+    pageCDPSession.on('Network.webSocketCreated', event => {
+      //log.log('Network.webSocketCreated', event.url)
+      pendingRequests.set(event.requestId, { url: event.url, timestamp: Date.now() })
+    })
+
+    pageCDPSession.on('Network.webSocketHandshakeResponseReceived', event => {
+      const request = pendingRequests.get(event.requestId)
+      if (!request) return
+      pendingRequests.delete(event.requestId)
+      //log.log('Network.webSocketHandshakeResponseReceived', (Date.now() - request.timestamp) / 1000)
+      resourcesStats.recvLatency.push((Date.now() - request.timestamp) / 1000)
+    })
+
+    pageCDPSession.on('Network.webSocketFrameSent', event => {
+      resourcesStats.sentBytes += event.response.payloadData.length
+    })
+
+    pageCDPSession.on('Network.webSocketFrameReceived', event => {
+      resourcesStats.recvBytes += event.response.payloadData.length
+    })
+
+    // hardware concurrency
     if (this.hardwareConcurrency) {
       const plugin = NavigatorHardwareConcurrency({ hardwareConcurrency: this.hardwareConcurrency })
       await plugin.onPageCreated(page)
@@ -1558,6 +1577,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     const videoStartFrameDelayStats: Record<string, number> = {}
     const screenStartFrameDelayStats: Record<string, number> = {}
     const videoEndToEndNetworkDelayStats: Record<string, number> = {}
+    const httpSentBytesStats: Record<string, number> = {}
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvLatencyStats: Record<string, number> = {}
     const pageCpu: Record<string, number> = {}
@@ -1657,6 +1677,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
 
           // HTTP stats.
           if (httpResourcesStats) {
+            if (httpResourcesStats.sentBytes > 0) httpSentBytesStats[pageKey] = httpResourcesStats.sentBytes
             if (httpResourcesStats.recvBytes > 0) httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
             if (httpResourcesStats.recvLatency.length)
               httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency.amean()
@@ -1764,6 +1785,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     collectedStats.videoStartFrameDelay = videoStartFrameDelayStats
     collectedStats.screenStartFrameDelay = screenStartFrameDelayStats
     collectedStats.videoEndToEndNetworkDelay = videoEndToEndNetworkDelayStats
+    collectedStats.httpSentBytes = httpSentBytesStats
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvLatency = httpRecvLatencyStats
     collectedStats.cpuPressure = cpuPressureStats

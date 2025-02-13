@@ -49,6 +49,8 @@ export enum PageStatsNames {
   /** The page warnings count. */
   warnings = 'warnings',
 
+  /** The page total HTTP sent bytes. */
+  httpSentBytes = 'httpSentBytes',
   /** The page total HTTP received bytes. */
   httpRecvBytes = 'httpRecvBytes',
   /** The page HTTP receive latency. */
