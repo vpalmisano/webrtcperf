@@ -1716,15 +1716,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
           for (const s of stats) {
             for (const [trackId, value] of Object.entries(s)) {
               try {
-                updateRtcStats(
-                  collectedStats as RtcStats,
-                  pageIndex,
-                  trackId,
-
-                  value,
-                  signalingHost,
-                  participantName,
-                )
+                updateRtcStats(collectedStats as RtcStats, pageIndex, trackId, value, signalingHost, participantName)
               } catch (err) {
                 log.error(`updateRtcStats error for ${trackId}: ${(err as Error).stack}`, err)
               }
