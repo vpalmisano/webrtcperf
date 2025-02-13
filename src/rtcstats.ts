@@ -56,6 +56,13 @@ export enum PageStatsNames {
   /** The page HTTP receive latency. */
   httpRecvLatency = 'httpRecvLatency',
 
+  /** The page total WebSocket sent bytes. */
+  wsSentBytes = 'wsSentBytes',
+  /** The page total WebSocket received bytes. */
+  wsRecvBytes = 'wsRecvBytes',
+  /** The page WebSocket receive latency. */
+  wsRecvLatency = 'wsRecvLatency',
+
   /** The audio end to end total delay. */
   audioEndToEndDelay = 'audioEndToEndDelay',
   /** The audio start frame delay. */

@@ -311,7 +311,17 @@ export class Session extends EventEmitter {
   stats: SessionStats = {}
   /** The browser opened pages. */
   readonly pages = new Map<number, Page>()
-  readonly httpResourcesStats = new Map<number, { sentBytes: number; recvBytes: number; recvLatency: FastStats }>()
+  readonly httpResourcesStats = new Map<
+    number,
+    {
+      sentBytes: number
+      recvBytes: number
+      recvLatency: FastStats
+      wsSentBytes: number
+      wsRecvBytes: number
+      wsRecvLatency: FastStats
+    }
+  >()
   /** The browser opened pages metrics. */
   readonly pagesMetrics = new Map<number, Metrics>()
   /** The page warnings count. */
@@ -1374,6 +1384,9 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       sentBytes: 0,
       recvBytes: 0,
       recvLatency: new FastStats({ store_data: false }),
+      wsSentBytes: 0,
+      wsRecvBytes: 0,
+      wsRecvLatency: new FastStats({ store_data: false }),
     }
     this.httpResourcesStats.set(index, resourcesStats)
 
@@ -1409,12 +1422,10 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       if (!request) return
       pendingRequests.delete(event.requestId)
       const { timestamp } = event
-      //log.log('Network.loadingFinished', request.url, (timestamp - request.timestamp) / 1000)
       resourcesStats.recvLatency.push(timestamp - request.timestamp)
     })
 
     pageCDPSession.on('Network.webSocketCreated', event => {
-      //log.log('Network.webSocketCreated', event.url)
       pendingRequests.set(event.requestId, { url: event.url, timestamp: Date.now() })
     })
 
@@ -1422,16 +1433,15 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       const request = pendingRequests.get(event.requestId)
       if (!request) return
       pendingRequests.delete(event.requestId)
-      //log.log('Network.webSocketHandshakeResponseReceived', (Date.now() - request.timestamp) / 1000)
-      resourcesStats.recvLatency.push((Date.now() - request.timestamp) / 1000)
+      resourcesStats.wsRecvLatency.push((Date.now() - request.timestamp) / 1000)
     })
 
     pageCDPSession.on('Network.webSocketFrameSent', event => {
-      resourcesStats.sentBytes += event.response.payloadData.length
+      resourcesStats.wsSentBytes += event.response.payloadData.length
     })
 
     pageCDPSession.on('Network.webSocketFrameReceived', event => {
-      resourcesStats.recvBytes += event.response.payloadData.length
+      resourcesStats.wsRecvBytes += event.response.payloadData.length
     })
 
     // hardware concurrency
@@ -1580,6 +1590,9 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     const httpSentBytesStats: Record<string, number> = {}
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvLatencyStats: Record<string, number> = {}
+    const wsSentBytesStats: Record<string, number> = {}
+    const wsRecvBytesStats: Record<string, number> = {}
+    const wsRecvLatencyStats: Record<string, number> = {}
     const pageCpu: Record<string, number> = {}
     const pageMemory: Record<string, number> = {}
     const cpuPressureStats: Record<string, number> = {}
@@ -1681,6 +1694,10 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
             if (httpResourcesStats.recvBytes > 0) httpRecvBytesStats[pageKey] = httpResourcesStats.recvBytes
             if (httpResourcesStats.recvLatency.length)
               httpRecvLatencyStats[pageKey] = httpResourcesStats.recvLatency.amean()
+            if (httpResourcesStats.wsSentBytes > 0) wsSentBytesStats[pageKey] = httpResourcesStats.wsSentBytes
+            if (httpResourcesStats.wsRecvBytes > 0) wsRecvBytesStats[pageKey] = httpResourcesStats.wsRecvBytes
+            if (httpResourcesStats.wsRecvLatency.length)
+              wsRecvLatencyStats[pageKey] = httpResourcesStats.wsRecvLatency.amean()
           }
 
           if (cpuPressure !== undefined) cpuPressureStats[pageKey] = cpuPressure
@@ -1788,6 +1805,9 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     collectedStats.httpSentBytes = httpSentBytesStats
     collectedStats.httpRecvBytes = httpRecvBytesStats
     collectedStats.httpRecvLatency = httpRecvLatencyStats
+    collectedStats.wsSentBytes = wsSentBytesStats
+    collectedStats.wsRecvBytes = wsRecvBytesStats
+    collectedStats.wsRecvLatency = wsRecvLatencyStats
     collectedStats.cpuPressure = cpuPressureStats
     collectedStats.videoWidth = videoWidth
     collectedStats.videoHeight = videoHeight
