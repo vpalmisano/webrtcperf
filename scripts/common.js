@@ -5,7 +5,7 @@ webrtcperf.safeStringify = obj => {
   const values = new Set()
   try {
     const ret = JSON.stringify(obj, (_, v) => {
-      if (v instanceof Error) return `Error: ${v.message}`
+      if (v instanceof Error) return `Error: ${v.stack}`
       if (typeof v !== 'object' || v === null || v === undefined) return v
       if (values.has(v)) return
       values.add(v)
@@ -27,7 +27,7 @@ webrtcperf.safeStringify = obj => {
     const msg = args
       .map(arg => {
         if (arg instanceof Error) {
-          return `Error: ${arg.message}`
+          return `Error: ${arg.stack}`
         } else if (typeof arg === 'object') {
           return webrtcperf.safeStringify(arg)
         } else if (typeof arg === 'string') {
