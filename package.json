@@ -121,7 +121,7 @@
     "yarn-upgrade-minor": "^1.0.13"
   },
   "optionalDependencies": {
-    "chart.js": "^3.5.1",
+    "chart.js": "^4.4.8",
     "chartjs-node-canvas": "^4.1.6",
     "zeromq": "^6.1.1"
   }
