@@ -31,6 +31,7 @@ export async function prepareFakeMedia({
   videoCacheRaw,
   videoCachePath,
   videoFormat,
+  useFakeMedia,
 }: {
   videoPath: string
   videoWidth: number
@@ -41,6 +42,7 @@ export async function prepareFakeMedia({
   videoCacheRaw: boolean
   videoCachePath: string
   videoFormat: string
+  useFakeMedia: boolean
 }): Promise<{ video: string; audio: string; mp4: string }> {
   log.debug('prepareFakeMedia', {
     videoPath,
@@ -52,6 +54,7 @@ export async function prepareFakeMedia({
     videoCacheRaw,
     videoCachePath,
     videoFormat,
+    useFakeMedia,
   })
   if (!videoPath) {
     throw new Error('empty video path')
@@ -66,13 +69,22 @@ export async function prepareFakeMedia({
 
   const destVideoPath = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.${videoFormat}`
   const destAudioPath = `${videoCachePath}/${name}.wav`
-  const destMp4Path = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.mp4`
+  const destMp4Path = useFakeMedia
+    ? ''
+    : `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.mp4`
 
-  if (!existsSync(destVideoPath) || !existsSync(destAudioPath) || !existsSync(destMp4Path) || !videoCacheRaw) {
-    log.info(`Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}`)
+  if (
+    !existsSync(destVideoPath) ||
+    !existsSync(destAudioPath) ||
+    (destMp4Path && !existsSync(destMp4Path)) ||
+    !videoCacheRaw
+  ) {
+    log.info(`Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}${destMp4Path ? `, ${destMp4Path}` : ''}`)
     const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
     const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
-    const destMp4PathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.mp4`
+    const destMp4PathTmp = useFakeMedia
+      ? ''
+      : `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.mp4`
 
     try {
       let source = `-i "${videoPath}"`
@@ -94,16 +106,22 @@ export async function prepareFakeMedia({
           ` -ss ${videoSeek} -t ${videoDuration} -shortest -af apad` +
           ` ${videoMap} ${destVideoPathTmp}` +
           ` ${audioMap} -ar 48000 ${destAudioPathTmp}` +
-          ` ${videoMap} ${audioMap} -c:v libx264 -crf 10 -f mp4 -movflags faststart ${destMp4PathTmp}`,
+          (destMp4PathTmp
+            ? ` ${videoMap} ${audioMap} -c:v libx264 -crf 10 -f mp4 -movflags faststart ${destMp4PathTmp}`
+            : ''),
       )
       await fs.rename(destVideoPathTmp, destVideoPath)
       await fs.rename(destAudioPathTmp, destAudioPath)
-      await fs.rename(destMp4PathTmp, destMp4Path)
+      if (destMp4PathTmp) {
+        await fs.rename(destMp4PathTmp, destMp4Path)
+      }
     } catch (err) {
       log.error(`Error converting video: ${(err as Error).stack}`)
       fs.unlink(destVideoPathTmp).catch(e => log.debug(e.message))
       fs.unlink(destAudioPathTmp).catch(e => log.debug(e.message))
-      fs.unlink(destMp4PathTmp).catch(e => log.debug(e.message))
+      if (destMp4PathTmp) {
+        fs.unlink(destMp4PathTmp).catch(e => log.debug(e.message))
+      }
       throw err
     }
   }

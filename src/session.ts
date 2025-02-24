@@ -796,7 +796,7 @@ webrtcperf.SERVER_PORT = ${this.serverPort};
 webrtcperf.SERVER_SECRET = "${this.serverSecret}";
 webrtcperf.SERVER_USE_HTTPS = ${this.serverUseHttps};
     `
-      if (this.videoPath && !this.useFakeMedia) {
+      if (this.videoPath?.mp4 && !this.useFakeMedia) {
         cmd += `\
 webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.videoPath.mp4)}?auth=${this.serverSecret}";
     `
