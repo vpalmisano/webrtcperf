@@ -439,7 +439,7 @@ webrtcperf.setupActions = async () => {
   actions
     .sort((a, b) => (a.at || 0) - (b.at || 0))
     .forEach(action => {
-      const { name, at, every, times, index, params } = action
+      const { name, at, relaxedAt, every, times, index, params } = action
       const fn = window[name] || webrtcperf[name]
       if (!fn) {
         log(`setupActions undefined action: "${name}"`)
@@ -455,11 +455,18 @@ webrtcperf.setupActions = async () => {
       const setupTime = webrtcperf.elapsedTime()
       let startTime = at > 0 ? at * 1000 - setupTime : 0
       if (startTime < 0) {
-        log(`setupActions action "${name}" already passed (setupTime: ${setupTime / 1000} at: ${at})`)
-        if (every > 0) {
-          startTime = Math.ceil(-startTime / (every * 1000)) * every * 1000 + startTime
+        if (relaxedAt) {
+          log(
+            `setupActions action "${name}" already passed (setupTime: ${setupTime / 1000} at: ${at}), running immediately`,
+          )
+          startTime = 0
         } else {
-          return
+          log(`setupActions action "${name}" already passed (setupTime: ${setupTime / 1000} at: ${at})`)
+          if (every > 0) {
+            startTime = Math.ceil(-startTime / (every * 1000)) * every * 1000 + startTime
+          } else {
+            return
+          }
         }
       }
       log(
