@@ -132,10 +132,6 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 
       stopRandomActivateAudio()
 
-      if (server) {
-        server.stop()
-      }
-
       await stats.stop()
 
       if (config.throttleConfig) {
@@ -143,7 +139,6 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
       }
 
       stopTimers()
-      log.debug('Stopped')
 
       // vmaf score.
       if (config.vmafPath) {
@@ -173,6 +168,12 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
           log.debug(`docker logs not found: ${(err as Error).message}`)
         }
       }
+
+      if (server) {
+        server.stop()
+      }
+
+      log.debug('Stopped')
     },
   }
 }
