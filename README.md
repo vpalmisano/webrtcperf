@@ -266,30 +266,30 @@ DEBUG_LEVEL=DEBUG:* yarn start \
 ```
 
 ## Using the VMAF calculator
-1. Run a test adding the following options:
-   ```sh
-   --script-params="{timestampWatermarkVideo:true,saveSendVideoTrack:'0',saveRecvVideoTrack:'1'}" \
-   --server-port=5000 \
-   --server-use-https=true \
-   --server-data=/data \
-   --vmaf-path /data
-   ```
-   With `saveSendVideoTrack` and `saveRecvVideoTrack` you can specify the sessions that will be saved at sender and receiver side (in this example it will save all the video streams sent in the session with index `0` and received in session `1`).
-   The sent/received videos will be saved in the `/data` directory.
-   The tool will generate a `.vmaf.json` and a `.vmaf.png` files in the `data/vmaf` directory. Adding the `--vmaf-preview` option, a `.mp4` file containing the side-by-side video comparison will be generated.
+Run a test adding the following options:
+```sh
+--script-params="{timestampWatermarkVideo:true,saveSendVideoTrack:'0',saveRecvVideoTrack:'1'}" \
+--server-port=5000 \
+--server-use-https=true \
+--server-data=/data \
+--vmaf-path /data
+```
+With `saveSendVideoTrack` and `saveRecvVideoTrack` you can specify the sessions that will be saved at sender and receiver side (in this example it will save all the video streams sent in the session with index `0` and received in session `1`).
+The sent/received videos will be saved in the `/data` directory.
+The tool will generate a `.vmaf.json` and a `.vmaf.png` files in the `data/vmaf` directory. Adding the `--vmaf-preview` option, a `.mp4` file containing the side-by-side video comparison will be generated.
 
 ## Using the VISQOL calculator
-1. Run a test adding the following options:
-   ```sh
-   --script-params="{saveSendAudioTrack:'0',saveRecvAudioTrack:'1'}" \
-   --server-port=5000 \
-   --server-use-https=true \
-   --server-data=/data \
-   --visqol-path /data
-   ```
-   With `saveSendAudioTrack` and `saveRecvAudioTrack` you can specify the sessions that will be saved at sender and receiver side (in this example it will save all the audio streams sent in the session with index `0` and received in session `1`).
-   The sent/received audio files will be saved in the `/data` directory.
-   The tool will generate a `visqol.csv` file in the `data` directory.
+Run a test adding the following options:
+```sh
+--script-params="{saveSendAudioTrack:'0',saveRecvAudioTrack:'1'}" \
+--server-port=5000 \
+--server-use-https=true \
+--server-data=/data \
+--visqol-path /data
+```
+With `saveSendAudioTrack` and `saveRecvAudioTrack` you can specify the sessions that will be saved at sender and receiver side (in this example it will save all the audio streams sent in the session with index `0` and received in session `1`).
+The sent/received audio files will be saved in the `/data` directory.
+The tool will generate a `visqol.csv` file in the `data` directory.
 
 ## Authors
 - Vittorio Palmisano [[github](https://github.com/vpalmisano)]
