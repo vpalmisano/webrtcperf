@@ -436,12 +436,12 @@ export async function downloadUrl(
       }
       response.data.pipe(writer)
       let error: Error | null = null
-      writer.on('error', err => {
+      writer.once('error', err => {
         error = err
         if (writer) writer.close()
         reject(err)
       })
-      writer.on('close', () => {
+      writer.once('close', () => {
         if (!error) {
           resolve()
         }
@@ -1279,4 +1279,13 @@ export async function waitStopProcess(pid: number, timeout = 5000): Promise<bool
     return true
   }
   return false
+}
+
+export async function getDockerLogsPath(): Promise<string> {
+  const containerId = await fs.promises.readFile(`${os.homedir()}/.webrtcperf/docker.id`, 'utf-8')
+  const logPath = `/var/lib/docker/containers/${containerId}/${containerId}-json.log`
+  if (!fs.existsSync(logPath)) {
+    throw new Error(`docker logs path ${logPath} not found`)
+  }
+  return logPath
 }

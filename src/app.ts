@@ -11,6 +11,7 @@ import { Session } from './session'
 import { Stats } from './stats'
 import {
   checkChromeExecutable,
+  getDockerLogsPath,
   logger,
   registerExitHandler,
   resolvePackagePath,
@@ -21,6 +22,7 @@ import {
 } from './utils'
 import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore, convertToIvf, prepareVideo } from './vmaf'
+import path from 'path'
 
 const log = logger('webrtcperf')
 
@@ -142,6 +144,35 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 
       stopTimers()
       log.debug('Stopped')
+
+      // vmaf score.
+      if (config.vmafPath) {
+        try {
+          await calculateVmafScore(config)
+        } catch (err: unknown) {
+          log.error(`vmaf score error: ${(err as Error).stack}`)
+        }
+      }
+
+      // visqol score
+      if (config.visqolPath) {
+        try {
+          await calculateVisqolScore(config)
+        } catch (err: unknown) {
+          log.error(`visqol score error: ${(err as Error).stack}`)
+        }
+      }
+
+      // Copy docker logs to data directory.
+      if (config.pageLogPath) {
+        try {
+          const logPath = await getDockerLogsPath()
+          const dataDir = path.dirname(config.pageLogPath)
+          await fs.promises.cp(logPath, path.resolve(dataDir, 'docker.log'))
+        } catch (err: unknown) {
+          log.debug(`docker logs not found: ${(err as Error).message}`)
+        }
+      }
     },
   }
 }
@@ -154,12 +185,6 @@ async function main(): Promise<void> {
 
   const config = loadConfig(process.argv[2])
 
-  // vmaf score.
-  if (config.vmafPath) {
-    await calculateVmafScore(config)
-    process.exit(0)
-  }
-
   if (config.vmafPrepareVideo) {
     await prepareVideo(config, true)
     process.exit(0)
@@ -167,12 +192,6 @@ async function main(): Promise<void> {
 
   if (config.vmafProcessVideo) {
     await convertToIvf(config.vmafProcessVideo, config.vmafVideoCrop, false)
-    process.exit(0)
-  }
-
-  // visqol score
-  if (config.visqolPath) {
-    await calculateVisqolScore(config)
     process.exit(0)
   }
 

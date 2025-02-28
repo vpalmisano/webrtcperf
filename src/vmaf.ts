@@ -8,6 +8,8 @@ import { FastStats } from './stats'
 
 const log = logger('webrtcperf:vmaf')
 
+const cpus = Math.min(os.cpus().length, 16)
+
 export interface IvfFrame {
   pts: number
   recognizedPts?: number
@@ -71,7 +73,7 @@ export async function prepareVideo(
   const textHeight = Math.round(fontsize * 1.2)
   const filter = vmafVideoCrop ? cropFilter(json5.parse(vmafVideoCrop), 0, ',') : ''
   await runShellCommand(
-    `ffmpeg -hide_banner -loglevel warning -threads ${os.cpus().length} \
+    `ffmpeg -hide_banner -loglevel warning -threads ${cpus} \
 ${videoDuration ? `-t ${videoDuration}` : ''} \
 -i ${fpath} \
 -filter_complex "[0:v]scale=w=${videoWidth || width}:h=${videoHeight || height},fps=${videoFramerate || frameRate},${filter}\
@@ -102,7 +104,7 @@ export async function convertToIvf(fpath: string, crop?: string, keepSourceFile 
   await runShellCommand(
     `ffmpeg -y -hide_banner -y -loglevel warning -i ${fpath} -map 0:v \
       -c:v vp8 -quality best -cpu-used 0 -crf 1 -b:v 20M -qmin 1 -qmax 10 \
-      -g 1 -threads ${os.cpus().length} ${filter} -an \
+      -g 1 -threads ${cpus} ${filter} -an \
       -f ivf ${outputPath}`,
     true,
   )
@@ -385,7 +387,7 @@ export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
           log.error(`fixIvfFrames error: ${(err as Error).stack}`)
         }
       },
-      Math.ceil(os.cpus().length / 4),
+      Math.ceil(cpus / 4),
     )
     for (const res of results) {
       if (!res) continue
@@ -448,7 +450,6 @@ export async function runVmaf(
   const vmafLogPath = path.join(comparisonDir, comparisonName, 'vmaf.json')
   const psnrLogPath = path.join(comparisonDir, comparisonName, 'psnr.log')
   const comparisonPath = path.join(comparisonDir, comparisonName, 'comparison.mp4')
-  const cpus = os.cpus().length
 
   const sender = path.basename(referencePath).replace('.ivf', '')
   const receiver = path.basename(degradedPath).replace('.ivf', '').split('_recv-by_')[1]

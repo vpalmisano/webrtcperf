@@ -14,7 +14,7 @@ import auth from 'basic-auth'
 import { loadConfig } from './config'
 import { Session, SessionParams } from './session'
 import { Stats } from './stats'
-import { logger, runShellCommand } from './utils'
+import { logger, runShellCommand, getDockerLogsPath } from './utils'
 
 const log = logger('webrtcperf:server')
 
@@ -379,8 +379,7 @@ export class Server {
   private async getDockerLog(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`GET /view/docker.log`, req.query)
     try {
-      const containerId = await fs.promises.readFile(`${os.homedir()}/.webrtcperf/docker.id`, 'utf-8')
-      const logPath = `/var/lib/docker/containers/${containerId}/${containerId}-json.log`
+      const logPath = await getDockerLogsPath()
       if (req.query.range && !req.headers.range) {
         req.headers.range = `bytes=${req.query.range}`
       }
