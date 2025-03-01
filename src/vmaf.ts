@@ -8,7 +8,7 @@ import { FastStats } from './stats'
 
 const log = logger('webrtcperf:vmaf')
 
-const cpus = Math.min(os.cpus().length, 16)
+const cpus = os.cpus().length
 
 export interface IvfFrame {
   pts: number
@@ -73,7 +73,7 @@ export async function prepareVideo(
   const textHeight = Math.round(fontsize * 1.2)
   const filter = vmafVideoCrop ? cropFilter(json5.parse(vmafVideoCrop), 0, ',') : ''
   await runShellCommand(
-    `ffmpeg -hide_banner -loglevel warning -threads ${cpus} \
+    `ffmpeg -hide_banner -loglevel warning -threads ${Math.min(cpus, 16)} \
 ${videoDuration ? `-t ${videoDuration}` : ''} \
 -i ${fpath} \
 -filter_complex "[0:v]scale=w=${videoWidth || width}:h=${videoHeight || height},fps=${videoFramerate || frameRate},${filter}\
@@ -104,7 +104,7 @@ export async function convertToIvf(fpath: string, crop?: string, keepSourceFile 
   await runShellCommand(
     `ffmpeg -y -hide_banner -y -loglevel warning -i ${fpath} -map 0:v \
       -c:v vp8 -quality best -cpu-used 0 -crf 1 -b:v 20M -qmin 1 -qmax 10 \
-      -g 1 -threads ${cpus} ${filter} -an \
+      -g 1 -threads ${Math.min(cpus, 16)} ${filter} -an \
       -f ivf ${outputPath}`,
     true,
   )
@@ -502,7 +502,7 @@ export async function runVmaf(
     },
   )
 
-  const ffmpegCmd = `ffmpeg -hide_banner -loglevel warning -y -threads ${cpus} \
+  const ffmpegCmd = `ffmpeg -hide_banner -loglevel warning -y -threads ${Math.min(cpus, 16)} \
 -i ${degradedPath} \
 -i ${referencePath} \
 `
