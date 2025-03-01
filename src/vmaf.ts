@@ -447,7 +447,7 @@ export async function runVmaf(
 
   log.info('runVmaf', { referencePath, degradedPath, preview, crop })
   await fs.promises.mkdir(path.join(comparisonDir, comparisonName), { recursive: true })
-  const vmafLogPath = path.join(comparisonDir, comparisonName, 'vmaf.json')
+  const vmafLogPath = path.join(comparisonDir, comparisonName, 'vmaf-log.json')
   const psnrLogPath = path.join(comparisonDir, comparisonName, 'psnr.log')
   const comparisonPath = path.join(comparisonDir, comparisonName, 'comparison.mp4')
 
