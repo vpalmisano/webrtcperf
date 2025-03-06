@@ -11,6 +11,12 @@ webrtcperf.peerConnectionsFailed = 0
 webrtcperf.peerConnectionsClosed = 0
 webrtcperf.connectionTimer = new webrtcperf.OnOffTimer()
 
+/**
+ * PeerConnections created stats.
+ * @type MeasuredStats
+ */
+webrtcperf.peerConnectionsDelayStats = new webrtcperf.MeasuredStats({ ttl: 15 })
+
 webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTime = Date.now()) => {
   const { id, kind } = track
   const debug = (...args) => {
@@ -49,6 +55,8 @@ webrtcperf.waitTrackMedia = async (/** @type MediaStreamTrack */ track, startTim
 
 window.RTCPeerConnection = function (conf, options) {
   const id = webrtcperf.peerConnectionsCreated++
+  const startTime = Date.now()
+  let peerConnectionsDelayStatsDone = false
 
   const debug = (...args) => {
     if (webrtcperf.enabledForSession(webrtcperf.params.peerConnectionDebug)) {
@@ -84,6 +92,11 @@ window.RTCPeerConnection = function (conf, options) {
       case 'connected': {
         webrtcperf.peerConnectionsConnected++
         webrtcperf.connectionTimer.add(id)
+        if (!peerConnectionsDelayStatsDone) {
+          const now = Date.now()
+          webrtcperf.peerConnectionsDelayStats.push(now, (now - startTime) / 1000)
+          peerConnectionsDelayStatsDone = true
+        }
         break
       }
       case 'disconnected': {

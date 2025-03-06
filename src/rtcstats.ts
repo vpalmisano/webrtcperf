@@ -43,6 +43,8 @@ export enum PageStatsNames {
   peerConnectionsDisconnected = 'peerConnectionsDisconnected',
   /** The total failed PeerConnections. */
   peerConnectionsFailed = 'peerConnectionsFailed',
+  /** The total delay from PeerConnections creation to connection. */
+  peerConnectionsDelay = 'peerConnectionsDelay',
 
   /** The page errors count. */
   errors = 'errors',

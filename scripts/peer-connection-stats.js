@@ -516,5 +516,6 @@ webrtcperf.collectPeerConnectionStats = async (raw = false, verbose = false) => 
     peerConnectionsDisconnected: webrtcperf.peerConnectionsDisconnected,
     peerConnectionsFailed: webrtcperf.peerConnectionsFailed,
     peerConnectionsClosed: webrtcperf.peerConnectionsClosed,
+    peerConnectionsDelay: webrtcperf.peerConnectionsDelayStats.mean(),
   }
 }

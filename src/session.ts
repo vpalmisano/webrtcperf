@@ -68,6 +68,7 @@ declare global {
       peerConnectionsDisconnected: number
       peerConnectionsFailed: number
       peerConnectionsClosed: number
+      peerConnectionsDelay: number
     }>
     collectAudioEndToEndStats: () => {
       delay: number
@@ -1582,6 +1583,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     const peerConnectionsConnected: Record<string, number> = {}
     const peerConnectionsDisconnected: Record<string, number> = {}
     const peerConnectionsFailed: Record<string, number> = {}
+    const peerConnectionsDelay: Record<string, number> = {}
     const audioEndToEndDelayStats: Record<string, number> = {}
     const audioStartFrameDelayStats: Record<string, number> = {}
     const videoEndToEndDelayStats: Record<string, number> = {}
@@ -1674,6 +1676,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
           increaseKey(peerConnectionsConnected, pageKey, peerConnectionStats.peerConnectionsConnected)
           increaseKey(peerConnectionsDisconnected, pageKey, peerConnectionStats.peerConnectionsDisconnected)
           increaseKey(peerConnectionsFailed, pageKey, peerConnectionStats.peerConnectionsFailed)
+          increaseKey(peerConnectionsDelay, pageKey, peerConnectionStats.peerConnectionsDelay)
 
           // E2E stats.
           if (audioEndToEndDelay) {
@@ -1790,6 +1793,7 @@ webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       peerConnectionsClosed,
       peerConnectionsDisconnected,
       peerConnectionsFailed,
+      peerConnectionsDelay,
       audioEndToEndDelay: audioEndToEndDelayStats,
       audioStartFrameDelay: audioStartFrameDelayStats,
       videoEndToEndDelay: videoEndToEndDelayStats,
