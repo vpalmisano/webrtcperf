@@ -140,6 +140,7 @@ WORKDIR /app
 ENV DEBUG_LEVEL=WARN
 ENV VIDEO_PATH=/app/video.mp4
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser-unstable
+ENV NODE_ENV=production
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 COPY package.json yarn.lock /app/
