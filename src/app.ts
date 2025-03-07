@@ -5,7 +5,7 @@ import json5 from 'json5'
 import wrap from 'word-wrap'
 
 import { Config, getConfigDocs, loadConfig } from './config'
-import { prepareFakeMedia } from './media'
+import { MediaPath, prepareFakeMedia } from './media'
 import { Server } from './server'
 import { Session } from './session'
 import { Stats } from './stats'
@@ -62,11 +62,11 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
   }
 
   // Prepare fake video and audio.
-  const videoPaths: { video: string; audio: string; mp4: string }[] = []
+  const mediaPaths: MediaPath[] = []
   if (config.videoPath) {
     for (const videoPath of config.videoPath.split(',')) {
       const ret = await prepareFakeMedia({ ...config, videoPath })
-      videoPaths.push(ret)
+      mediaPaths.push(ret)
     }
   }
 
@@ -83,10 +83,10 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
   // Start session function.
   const startLocalSession = async (id: number, spawnPeriod: number): Promise<void> => {
     const throttleIndex = getSessionThrottleIndex(id)
-    const videoPath = videoPaths.length ? videoPaths[id % videoPaths.length] : undefined
+    const mediaPath = mediaPaths.length ? mediaPaths[id % mediaPaths.length] : undefined
     const session = new Session({
       ...config,
-      videoPath,
+      mediaPath,
       spawnPeriod,
       id,
       throttleIndex,

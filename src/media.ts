@@ -6,6 +6,13 @@ const log = logger('webrtcperf:media')
 
 const DEFAULT_VIDEO_PATH = 'https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4'
 
+export type MediaPath = {
+  video: string
+  audio: string
+  mp4: string
+  m4a: string
+}
+
 /**
  * Converts the video file into raw audio and video files.
  * @param {*} config
@@ -43,7 +50,7 @@ export async function prepareFakeMedia({
   videoCachePath: string
   videoFormat: string
   useFakeMedia: boolean
-}): Promise<{ video: string; audio: string; mp4: string }> {
+}): Promise<MediaPath> {
   log.debug('prepareFakeMedia', {
     videoPath,
     videoWidth,
@@ -72,19 +79,24 @@ export async function prepareFakeMedia({
   const destMp4Path = useFakeMedia
     ? ''
     : `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.mp4`
+  const destM4aPath = useFakeMedia ? '' : `${videoCachePath}/${name}.m4a`
 
   if (
     !existsSync(destVideoPath) ||
     !existsSync(destAudioPath) ||
     (destMp4Path && !existsSync(destMp4Path)) ||
+    (destM4aPath && !existsSync(destM4aPath)) ||
     !videoCacheRaw
   ) {
-    log.info(`Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}${destMp4Path ? `, ${destMp4Path}` : ''}`)
+    log.info(
+      `Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}${destMp4Path ? `, ${destMp4Path}` : ''}${destM4aPath ? `, ${destM4aPath}` : ''}`,
+    )
     const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
     const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
     const destMp4PathTmp = useFakeMedia
       ? ''
       : `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.mp4`
+    const destM4aPathTmp = useFakeMedia ? '' : `${videoCachePath}/${name}.tmp.m4a`
 
     try {
       let source = `-i "${videoPath}"`
@@ -107,13 +119,17 @@ export async function prepareFakeMedia({
           ` ${videoMap} ${destVideoPathTmp}` +
           ` ${audioMap} -ar 48000 ${destAudioPathTmp}` +
           (destMp4PathTmp
-            ? ` ${videoMap} ${audioMap} -c:v libx264 -crf 10 -f mp4 -movflags faststart ${destMp4PathTmp}`
+            ? ` ${videoMap} -c:v libx264 -crf 10 -f mp4 -movflags faststart ${destMp4PathTmp}` +
+              ` ${audioMap} -c:a aac -b:a 192k ${destM4aPathTmp}`
             : ''),
       )
       await fs.rename(destVideoPathTmp, destVideoPath)
       await fs.rename(destAudioPathTmp, destAudioPath)
       if (destMp4PathTmp) {
         await fs.rename(destMp4PathTmp, destMp4Path)
+      }
+      if (destM4aPathTmp) {
+        await fs.rename(destM4aPathTmp, destM4aPath)
       }
     } catch (err) {
       log.error(`Error converting video: ${(err as Error).stack}`)
@@ -130,5 +146,6 @@ export async function prepareFakeMedia({
     video: destVideoPath,
     audio: destAudioPath,
     mp4: destMp4Path,
+    m4a: destM4aPath,
   }
 }

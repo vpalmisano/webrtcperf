@@ -48,6 +48,7 @@ import {
   sleep,
   waitStopProcess,
 } from './utils'
+import { MediaPath } from './media'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const NavigatorHardwareConcurrency = require('puppeteer-extra-plugin-stealth/evasions/navigator.hardwareConcurrency')
@@ -137,7 +138,7 @@ export interface SessionParams {
   /** Custom URL handler. */
   customUrlHandler: string
   customUrlHandlerFn?: CustomUrlHandlerFn
-  videoPath?: { video: string; audio: string; mp4: string }
+  mediaPath?: MediaPath
   videoWidth: number
   videoHeight: number
   videoFramerate: number
@@ -206,7 +207,7 @@ export class Session extends EventEmitter {
   private readonly deviceScaleFactor: number
   private readonly display: string
   /* private readonly audioRedForOpus: boolean */
-  public readonly videoPath?: { video: string; audio: string; mp4: string }
+  public readonly mediaPath?: MediaPath
   private readonly videoWidth: number
   private readonly videoHeight: number
   private readonly videoFramerate: number
@@ -349,7 +350,7 @@ export class Session extends EventEmitter {
     urlQuery,
     customUrlHandler,
     customUrlHandlerFn,
-    videoPath,
+    mediaPath,
     videoWidth,
     videoHeight,
     videoFramerate,
@@ -415,7 +416,7 @@ export class Session extends EventEmitter {
     }
     this.customUrlHandler = customUrlHandler
     this.customUrlHandlerFn = customUrlHandlerFn
-    this.videoPath = videoPath
+    this.mediaPath = mediaPath
     this.videoWidth = videoWidth
     this.videoHeight = videoHeight
     this.videoFramerate = videoFramerate
@@ -590,14 +591,14 @@ export class Session extends EventEmitter {
       args.push(`--force-fieldtrials=${fieldTrials}`)
     }
 
-    if (this.videoPath) {
+    if (this.mediaPath) {
       if (this.useFakeMedia) {
-        log.debug(`${this.id} using ${this.videoPath} as fake source`)
+        log.debug(`${this.id} using ${this.mediaPath} as fake source`)
         args.push(
           '--use-fake-ui-for-media-stream',
           `--use-fake-device-for-media-stream=display-media-type=${this.getDisplayMediaType || 'monitor'},fps=30`,
-          `--use-file-for-fake-video-capture=${this.videoPath.video}`,
-          `--use-file-for-fake-audio-capture=${this.videoPath.audio}`,
+          `--use-file-for-fake-video-capture=${this.mediaPath.video}`,
+          `--use-file-for-fake-audio-capture=${this.mediaPath.audio}`,
         )
       } else {
         args.push(
@@ -797,9 +798,10 @@ webrtcperf.SERVER_PORT = ${this.serverPort};
 webrtcperf.SERVER_SECRET = "${this.serverSecret}";
 webrtcperf.SERVER_USE_HTTPS = ${this.serverUseHttps};
     `
-      if (this.videoPath?.mp4 && !this.useFakeMedia) {
+      if (this.mediaPath?.mp4 && !this.useFakeMedia) {
         cmd += `\
-webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.videoPath.mp4)}?auth=${this.serverSecret}";
+webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.mp4)}?auth=${this.serverSecret}";
+webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.m4a)}?auth=${this.serverSecret}";
     `
       }
     }
