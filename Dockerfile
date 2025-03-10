@@ -84,8 +84,8 @@ RUN \
         libx264-163 \
         libzimg2 \
         libx265-199 \
-        openssl \
-        libzmq5
+        libzmq5 \
+        xz-utils
 
 RUN \
     mkdir -p /etc/apt/keyrings; \
