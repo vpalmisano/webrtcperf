@@ -138,7 +138,7 @@ webrtcperf.FakeStream = class {
   createStream() {
     return new Promise((resolve, reject) => {
       this.element.addEventListener(
-        'canplaythrough',
+        'canplay',
         () => {
           webrtcperf.log(`[FakeStream] Create fake ${this.kind} stream done`)
           resolve(this.element.captureStream())
@@ -153,7 +153,9 @@ webrtcperf.FakeStream = class {
         },
         { once: true },
       )
-      this.element.play()
+      this.element.play().catch(err => {
+        webrtcperf.log(`[FakeStream] Create fake ${this.kind} play error:`, err)
+      })
     })
   }
 
