@@ -153,7 +153,7 @@ webrtcperf.FakeStream = class {
         },
         { once: true },
       )
-      this.element.load()
+      this.element.play()
     })
   }
 
