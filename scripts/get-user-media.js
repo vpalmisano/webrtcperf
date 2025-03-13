@@ -135,7 +135,7 @@ webrtcperf.FakeStream = class {
     })
   }
 
-  async createStream() {
+  createStream() {
     return new Promise((resolve, reject) => {
       this.element.addEventListener(
         'canplaythrough',
