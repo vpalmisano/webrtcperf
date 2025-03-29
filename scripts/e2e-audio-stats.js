@@ -21,7 +21,7 @@ webrtcperf.collectAudioEndToEndStats = () => {
   return {
     delay: webrtcperf.audioEndToEndDelayStats.mean(),
     startFrameDelay:
-      webrtcperf.videoStartFrameDelayStats.size &&
+      webrtcperf.audioStartFrameDelayStats.size &&
       webrtcperf.audioStartFrameTime !== undefined &&
       webrtcperf.audioStartFrameDelayStats.mean() > webrtcperf.audioStartFrameTime
         ? webrtcperf.audioStartFrameDelayStats.mean() - webrtcperf.audioStartFrameTime
