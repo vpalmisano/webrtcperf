@@ -551,7 +551,11 @@ ${splitFilter(['ref_vmaf', 'ref_psnr', preview ? 'ref_preview' : ''])};\
 
     log.info(`VMAF metrics ${vmafLogPath}:`, metrics)
 
-    await writeGraph(vmafLogPath)
+    try {
+      await writeGraph(vmafLogPath)
+    } catch (err) {
+      log.error(`writeGraph error: ${(err as Error).stack}`)
+    }
 
     return metrics
   } finally {
