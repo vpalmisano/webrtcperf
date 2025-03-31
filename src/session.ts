@@ -153,6 +153,7 @@ export interface SessionParams {
   disabledVideoCodecs: string
   getDisplayMediaType: string
   localStorage: string
+  sessionStorage: string
   clearCookies: boolean
   scriptPath: string
   showPageLog: boolean
@@ -223,6 +224,8 @@ export class Session extends EventEmitter {
   private readonly getDisplayMediaType: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly localStorage?: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private readonly sessionStorage?: any
   private readonly clearCookies: boolean
   private readonly scriptPath: string
   private readonly showPageLog: boolean
@@ -365,6 +368,7 @@ export class Session extends EventEmitter {
     disabledVideoCodecs,
     getDisplayMediaType,
     localStorage,
+    sessionStorage,
     clearCookies,
     scriptPath,
     showPageLog,
@@ -444,6 +448,14 @@ export class Session extends EventEmitter {
       } catch (err: unknown) {
         log.error(`error parsing localStorage: ${(err as Error).stack}`)
         this.localStorage = null
+      }
+    }
+    if (sessionStorage) {
+      try {
+        this.sessionStorage = JSON5.parse(sessionStorage)
+      } catch (err: unknown) {
+        log.error(`error parsing sessionStorage: ${(err as Error).stack}`)
+        this.sessionStorage = null
       }
     }
     this.clearCookies = clearCookies
@@ -780,7 +792,6 @@ webrtcperf.STATS_INTERVAL = ${this.statsInterval};
 webrtcperf.VIDEO_WIDTH = ${this.videoWidth};
 webrtcperf.VIDEO_HEIGHT = "${this.videoHeight}";
 webrtcperf.VIDEO_FRAMERATE = ${this.videoFramerate};
-webrtcperf.LOCAL_STORAGE = '${this.localStorage ? JSON.stringify(this.localStorage) : ''}';
 webrtcperf.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
 try {
   webrtcperf.params = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
@@ -898,9 +909,16 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     if (this.localStorage) {
       log.debug('Using localStorage:', this.localStorage)
       Object.entries(this.localStorage).map(([key, value]) => {
-        cmd += `localStorage.setItem('${key}', JSON.parse('${JSON.stringify(value)}'));\n`
+        cmd += `localStorage.setItem('${key}', '${JSON.stringify(value)}');\n`
       })
     }
+    if (this.sessionStorage) {
+      log.debug('Using sessionStorage:', this.sessionStorage)
+      Object.entries(this.sessionStorage).map(([key, value]) => {
+        cmd += `sessionStorage.setItem('${key}', '${JSON.stringify(value)}');\n`
+      })
+    }
+    log.debug('init command:', cmd)
     await page.evaluateOnNewDocument(cmd)
 
     // Clear cookies.

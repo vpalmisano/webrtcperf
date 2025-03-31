@@ -428,6 +428,15 @@ load.`,
     env: 'LOCAL_STORAGE',
     arg: 'local-storage',
   },
+  sessionStorage: {
+    doc: `A JSON string with the \`sessionStorage\` object to be set on page \
+load.`,
+    format: String,
+    nullable: true,
+    default: '',
+    env: 'SESSION_STORAGE',
+    arg: 'session-storage',
+  },
   clearCookies: {
     doc: `If true, all the page cookies are cleared.`,
     format: 'Boolean',

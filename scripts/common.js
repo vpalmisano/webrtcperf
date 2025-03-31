@@ -160,20 +160,6 @@ webrtcperf.simulateMouseClick = element => {
   )
 }
 
-/**
- * overrideLocalStorage
- */
-webrtcperf.overrideLocalStorage = () => {
-  if (webrtcperf.LOCAL_STORAGE) {
-    try {
-      const values = JSON.parse(webrtcperf.LOCAL_STORAGE)
-      Object.entries(values).map(([key, value]) => localStorage.setItem(key, value))
-    } catch (err) {
-      log(`overrideLocalStorage error: ${err.message}`)
-    }
-  }
-}
-
 webrtcperf.injectCss = (css, id = 'custom') => {
   id = `webrtcperf-css-${id}`
   let style = document.getElementById(id)
