@@ -53,8 +53,8 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@puppeteer/browsers": "^2.8.0",
-    "@vpalmisano/throttler": "github:vpalmisano/throttler#2a1f7ecf85cb0b39711f01a2ee4d94facc52d486",
-    "@vpalmisano/webrtcperf-js": "github:vpalmisano/webrtcperf-js#90ec15d74c66a0c88a543c9b2f6440f662f9c695",
+    "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#2a1f7ecf85cb0b39711f01a2ee4d94facc52d486",
+    "@vpalmisano/webrtcperf-js": "https://github.com/vpalmisano/webrtcperf-js#90ec15d74c66a0c88a543c9b2f6440f662f9c695",
     "axios": "^1.8.4",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",

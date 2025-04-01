@@ -1016,9 +1016,9 @@
   resolved "https://registry.yarnpkg.com/@vpalmisano/ggwave/-/ggwave-0.4.3-2.tgz#b2e7fc0b2b46579e066dc1e7452988e647b5c782"
   integrity sha512-VJ9glQjCRDA/Wrx6bmmikpr5JLVb7uWOPVp1ok2IiCy+ET3J8ymIwL5z+KKZVBWvOSePigz+VBXIS6qWeuCjKw==
 
-"@vpalmisano/throttler@github:vpalmisano/throttler#2a1f7ecf85cb0b39711f01a2ee4d94facc52d486":
+"@vpalmisano/throttler@https://github.com/vpalmisano/throttler#2a1f7ecf85cb0b39711f01a2ee4d94facc52d486":
   version "0.0.6"
-  resolved "https://codeload.github.com/vpalmisano/throttler/tar.gz/2a1f7ecf85cb0b39711f01a2ee4d94facc52d486"
+  resolved "https://github.com/vpalmisano/throttler#2a1f7ecf85cb0b39711f01a2ee4d94facc52d486"
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"
@@ -1027,9 +1027,9 @@
     json5 "^2.2.3"
     word-wrap "^1.2.5"
 
-"@vpalmisano/webrtcperf-js@github:vpalmisano/webrtcperf-js#90ec15d74c66a0c88a543c9b2f6440f662f9c695":
+"@vpalmisano/webrtcperf-js@https://github.com/vpalmisano/webrtcperf-js#90ec15d74c66a0c88a543c9b2f6440f662f9c695":
   version "1.0.0"
-  resolved "https://codeload.github.com/vpalmisano/webrtcperf-js/tar.gz/90ec15d74c66a0c88a543c9b2f6440f662f9c695"
+  resolved "https://github.com/vpalmisano/webrtcperf-js#90ec15d74c66a0c88a543c9b2f6440f662f9c695"
   dependencies:
     "@vpalmisano/ggwave" "0.4.3-2"
 
