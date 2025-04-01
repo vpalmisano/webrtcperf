@@ -91,6 +91,10 @@ export function resolvePackagePath(relativePath: string): string {
   if (process.env.WEBPACK) {
     return path.join(path.dirname(__filename), relativePath)
   }
+  const libPath = require.resolve(relativePath)
+  if (fs.existsSync(libPath)) {
+    return libPath
+  }
   for (const d of ['..', '../..']) {
     const p = path.join(__dirname, d, relativePath)
     if (fs.existsSync(p)) {

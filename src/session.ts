@@ -927,7 +927,7 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
     }
 
     // Load scripts.
-    for (const name of ['node_modules/@vpalmisano/webrtcperf-js/dist/webrtcperf.js']) {
+    for (const name of ['@vpalmisano/webrtcperf-js']) {
       const filePath = resolvePackagePath(name)
       if (!fs.existsSync(filePath)) {
         throw new Error(`${name} script not found: ${filePath}`)
@@ -1342,7 +1342,7 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
           screensharePage = this.screensharePage = await this.browser.newPage()
           await this.screensharePage.evaluateOnNewDocument(this.setupPageCmd(index, tabIndex, 'about:blank'))
           await this.screensharePage.evaluateOnNewDocument(
-            fs.readFileSync(resolvePackagePath('node_modules/@vpalmisano/webrtcperf-js/dist/webrtcperf.js'), 'utf8'),
+            fs.readFileSync(resolvePackagePath('@vpalmisano/webrtcperf-js'), 'utf8'),
           )
           await screensharePage.exposeFunction(
             'webrtcperf_keypressText',
