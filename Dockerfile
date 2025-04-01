@@ -147,11 +147,5 @@ COPY package.json yarn.lock /app/
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN \
     --mount=type=cache,id=webrtcperf-cache-yarn,target=/root/.cache/yarn,sharing=shared \
-    --mount=type=secret,id=github_token,env=GITHUB_TOKEN \
-    echo "@vpalmisano:registry=https://npm.pkg.github.com" > ~/.npmrc; \
-    echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> ~/.npmrc; \
-    echo "//npm.pkg.github.com/:always-auth=true" >> ~/.npmrc; \
-    yarn config set registry "https://npm.pkg.github.com"; \
-    yarn install --frozen-lockfile --production --network-timeout 60000 --network-concurrency 1 --cache-folder /root/.cache/yarn; \
-    rm ~/.npmrc
+    yarn install --frozen-lockfile --production --network-timeout 60000 --network-concurrency 1 --cache-folder /root/.cache/yarn
 COPY app.min.js entrypoint.sh /app/

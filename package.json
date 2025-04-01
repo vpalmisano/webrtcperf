@@ -35,7 +35,7 @@
     "start:dev": "tsc -b && node build/src/app.js",
     "test": "",
     "build": "yarn lint && tsc -b && webpack",
-    "build:docker": "yarn && docker build --platform linux/amd64 -t ghcr.io/vpalmisano/webrtcperf:devel --secret id=github_token,env=GITHUB_TOKEN .",
+    "build:docker": "yarn && docker build --platform linux/amd64 -t ghcr.io/vpalmisano/webrtcperf:devel .",
     "push:docker": "docker push ghcr.io/vpalmisano/webrtcperf:devel",
     "build:docker-ffmpeg": "docker build --platform linux/amd64 -t ghcr.io/vpalmisano/webrtcperf-ffmpeg:devel -f Dockerfile.ffmpeg .",
     "push:docker-ffmpeg": "docker push ghcr.io/vpalmisano/webrtcperf-ffmpeg:devel",
@@ -54,7 +54,7 @@
   "dependencies": {
     "@puppeteer/browsers": "^2.8.0",
     "@vpalmisano/throttler": "https://github.com/vpalmisano/throttler#2a1f7ecf85cb0b39711f01a2ee4d94facc52d486",
-    "@vpalmisano/webrtcperf-js": "https://github.com/vpalmisano/webrtcperf-js#6629806124a73239f5f09304469c825c51569903",
+    "@vpalmisano/webrtcperf-js": "https://github.com/vpalmisano/webrtcperf-js#90ec15d74c66a0c88a543c9b2f6440f662f9c695",
     "axios": "^1.8.4",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
