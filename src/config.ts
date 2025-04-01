@@ -411,14 +411,6 @@ the page context as \`webrtcperf.params\`.`,
     env: 'DISABLED_VIDEO_CODECS',
     arg: 'disabled-video-codecs',
   },
-  getDisplayMediaType: {
-    doc: `The fake display type to use for \`getDisplayMedia\` when \`useFakeMedia\` is \`true\`. 
-It could be \`monitor\`, \`window\` or \`browser\`,`,
-    format: String,
-    default: 'monitor',
-    env: 'GET_DISPLAY_MEDIA_TYPE',
-    arg: 'get-display-media-type',
-  },
   localStorage: {
     doc: `A JSON string with the \`localStorage\` object to be set on page \
 load.`,

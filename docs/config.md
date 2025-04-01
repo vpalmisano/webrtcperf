@@ -96,6 +96,15 @@ The fake video file format presented to the browser.
 
 *Default*: `"y4m"`
 
+## useFakeMedia
+If true, the audio/video/screenshare will be generated using the browser fake device.
+Otherwise, the audio and video streams will be captured from a video element attached to the page, 
+while the screenshare will be captured from a new browser tab.
+
+*Type*: `boolean`
+
+*Default*: `true`
+
 ## runDuration
 If greater than 0, the test will stop after the provided number of seconds.
 
@@ -284,7 +293,7 @@ The user agent override.
 *Default*: `""`
 
 ## scriptPath
-One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `window` object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
+One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `webrtcperf` global object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
 
 *Type*: `string`
 
@@ -305,15 +314,15 @@ A string with the video codecs to disable (comma-separated); e.g. `vp9,av1`
 
 *Default*: `""`
 
-## getDisplayMediaType
-The fake display type to use for `getDisplayMedia`. It could be `monitor`, `window` or `browser`,
+## localStorage
+A JSON string with the `localStorage` object to be set on page load.
 
 *Type*: `string`
 
-*Default*: `"monitor"`
+*Default*: `""`
 
-## localStorage
-A JSON string with the `localStorage` object to be set on page load.
+## sessionStorage
+A JSON string with the `sessionStorage` object to be set on page load.
 
 *Type*: `string`
 

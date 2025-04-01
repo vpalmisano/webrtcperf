@@ -101,6 +101,8 @@ jobs:
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=WebRTC performance and quality evaluation tool.
+        secrets: |
+          "github_token=${{ secrets.GITHUB_TOKEN }}"
 
     - name: Docker build and push new version
       if: startsWith(github.event.ref, 'refs/tags/v')
@@ -113,6 +115,8 @@ jobs:
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=WebRTC performance and quality evaluation tool.
+        secrets: |
+          "github_token=${{ secrets.GITHUB_TOKEN }}"
 
     - name: Move cache
       run: |

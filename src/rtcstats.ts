@@ -80,12 +80,6 @@ export enum PageStatsNames {
   /** The screen start frame delay. */
   screenStartFrameDelay = 'screenStartFrameDelay',
 
-  /**
-   * The video end to end network delay.
-   * It does't include the video encode/decode time and the jitter buffer time.
-   */
-  videoEndToEndNetworkDelay = 'videoEndToEndNetworkDelay',
-
   cpuPressure = 'cpuPressure',
 
   videoWidth = 'videoWidth',

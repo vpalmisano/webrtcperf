@@ -81,7 +81,6 @@ declare global {
       screenDelay: number
       screenStartFrameDelay: number
     }
-    collectVideoEndToEndNetworkDelayStats: () => number
     collectCpuPressure: () => number
     collectCustomMetrics: () => Promise<Record<string, number | string>>
     collectVideoStats: () => {
@@ -151,7 +150,6 @@ export interface SessionParams {
   spawnPeriod: number
   statsInterval: number
   disabledVideoCodecs: string
-  getDisplayMediaType: string
   localStorage: string
   sessionStorage: string
   clearCookies: boolean
@@ -221,7 +219,6 @@ export class Session extends EventEmitter {
   private readonly spawnPeriod: number
   private readonly statsInterval: number
   private readonly disabledVideoCodecs: string[]
-  private readonly getDisplayMediaType: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly localStorage?: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -366,7 +363,6 @@ export class Session extends EventEmitter {
     spawnPeriod,
     statsInterval,
     disabledVideoCodecs,
-    getDisplayMediaType,
     localStorage,
     sessionStorage,
     clearCookies,
@@ -441,7 +437,6 @@ export class Session extends EventEmitter {
     } else {
       this.disabledVideoCodecs = []
     }
-    this.getDisplayMediaType = getDisplayMediaType
     if (localStorage) {
       try {
         this.localStorage = JSON5.parse(localStorage)
@@ -605,14 +600,15 @@ export class Session extends EventEmitter {
 
     if (this.mediaPath) {
       if (this.useFakeMedia) {
-        log.debug(`${this.id} using ${this.mediaPath} as fake source`)
+        log.debug(`${this.id} using chromium as fake media source`)
         args.push(
           '--use-fake-ui-for-media-stream',
-          `--use-fake-device-for-media-stream=display-media-type=${this.getDisplayMediaType || 'monitor'},fps=30`,
+          `--use-fake-device-for-media-stream=display-media-type=browser,fps=30`,
           `--use-file-for-fake-video-capture=${this.mediaPath.video}`,
           `--use-file-for-fake-audio-capture=${this.mediaPath.audio}`,
         )
       } else {
+        log.debug(`${this.id} using ${this.mediaPath} as fake media source`)
         args.push(
           '--auto-accept-camera-and-microphone-capture',
           `--auto-select-tab-capture-source-by-title=webrtcperf-screenshare`,
@@ -783,43 +779,42 @@ export class Session extends EventEmitter {
   private setupPageCmd(index: number, tabIndex: number, url: string) {
     let cmd = `\
 webrtcperf = {};
-webrtcperf.elapsedTime = () => Date.now() - ${this.startTimestamp};
-webrtcperf.WEBRTC_PERF_URL = "${hideAuth(url)}";
-webrtcperf.WEBRTC_PERF_SESSION = ${this.id};
-webrtcperf.WEBRTC_PERF_TAB_INDEX = ${tabIndex};
-webrtcperf.WEBRTC_PERF_INDEX = ${index};
-webrtcperf.STATS_INTERVAL = ${this.statsInterval};
-webrtcperf.VIDEO_WIDTH = ${this.videoWidth};
-webrtcperf.VIDEO_HEIGHT = "${this.videoHeight}";
-webrtcperf.VIDEO_FRAMERATE = ${this.videoFramerate};
-webrtcperf.RANDOM_AUDIO_PERIOD = ${this.randomAudioPeriod};
+webrtcperf.config = {
+  START_TIMESTAMP: ${this.startTimestamp},
+  WEBRTC_PERF_URL: "${hideAuth(url)}",
+  WEBRTC_PERF_SESSION: ${this.id},
+  WEBRTC_PERF_TAB_INDEX: ${tabIndex},
+  WEBRTC_PERF_INDEX: ${index},
+  STATS_INTERVAL: ${this.statsInterval},
+  VIDEO_WIDTH: ${this.videoWidth},
+  VIDEO_HEIGHT: ${this.videoHeight},
+  VIDEO_FRAMERATE: ${this.videoFramerate},
+  RANDOM_AUDIO_PERIOD: ${this.randomAudioPeriod},
+  USE_FAKE_MEDIA: ${this.useFakeMedia},
+};
 try {
   webrtcperf.params = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
 } catch (err) {
   console.error('[webrtcperf] Error parsing scriptParams:', err);
   webrtcperf.params = {};
 }
-webrtcperf.GET_DISPLAY_MEDIA_TYPE = "${this.getDisplayMediaType}";
-webrtcperf.USE_FAKE_MEDIA = ${this.useFakeMedia};
   `
 
     if (this.serverPort) {
       cmd += `\
-webrtcperf.SERVER_PORT = ${this.serverPort};
-webrtcperf.SERVER_SECRET = "${this.serverSecret}";
-webrtcperf.SERVER_USE_HTTPS = ${this.serverUseHttps};
+webrtcperf.config.SAVE_MEDIA_URL = "ws${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/?auth=${this.serverSecret}&action=write-stream";
     `
       if (this.mediaPath?.mp4 && !this.useFakeMedia) {
         cmd += `\
-webrtcperf.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.mp4)}?auth=${this.serverSecret}";
-webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.m4a)}?auth=${this.serverSecret}";
+webrtcperf.config.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.mp4)}?auth=${this.serverSecret}";
+webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.m4a)}?auth=${this.serverSecret}";
     `
       }
     }
 
     if (this.disabledVideoCodecs.length) {
       log.debug('Using disabledVideoCodecs:', this.disabledVideoCodecs)
-      cmd += `webrtcperf.GET_CAPABILITIES_DISABLED_VIDEO_CODECS = JSON.parse('${JSON.stringify(
+      cmd += `webrtcperf.config.GET_CAPABILITIES_DISABLED_VIDEO_CODECS = JSON.parse('${JSON.stringify(
         this.disabledVideoCodecs,
       )}');\n`
     }
@@ -932,36 +927,13 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     }
 
     // Load scripts.
-    for (const name of [
-      'scripts/common.js',
-      'scripts/screenshare.js',
-      'scripts/get-user-media.js',
-      'scripts/peer-connection-stats.js',
-      `scripts/peer-connection${process.env.EXTERNAL_PEER_CONNECTION === 'true' ? '-external' : ''}.js`,
-      'scripts/e2e-network-stats.js',
-      'https://raw.githubusercontent.com/ggerganov/ggwave/master/bindings/javascript/ggwave.js',
-      'scripts/e2e-audio-stats.js',
-      'scripts/e2e-video-stats.js',
-      'scripts/video-stats.js',
-      'scripts/playout-delay-hint.js',
-      'scripts/save-tracks.js',
-      'scripts/pressure-stats.js',
-    ]) {
-      if (name.startsWith('http')) {
-        log.debug(`loading ${name} script`)
-        const res = await downloadUrl(name)
-        if (!res?.data) {
-          throw new Error(`Failed to download script from: ${name}`)
-        }
-        await page.evaluateOnNewDocument(res.data)
-      } else {
-        const filePath = resolvePackagePath(name)
-        if (!fs.existsSync(filePath)) {
-          throw new Error(`${name} script not found: ${filePath}`)
-        }
-        log.debug(`loading ${name} script from: ${filePath}`)
-        await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
+    for (const name of ['node_modules/@vpalmisano/webrtcperf-js/dist/webrtcperf.js']) {
+      const filePath = resolvePackagePath(name)
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`${name} script not found: ${filePath}`)
       }
+      log.debug(`loading ${name} script from: ${filePath}`)
+      await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
     }
 
     // Execute external script(s).
@@ -1331,7 +1303,7 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       }
     }
 
-    await page.exposeFunction('serializedConsoleLog', async (type: PageLogColorsKey, text: string) => {
+    await page.exposeFunction('webrtcperf_serializedConsoleLog', async (type: PageLogColorsKey, text: string) => {
       if (this.showPageLog || saveFile) {
         try {
           await this.onPageMessage(index, type, text, saveFile)
@@ -1369,9 +1341,9 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
         if (!this.screensharePage) {
           screensharePage = this.screensharePage = await this.browser.newPage()
           await this.screensharePage.evaluateOnNewDocument(this.setupPageCmd(index, tabIndex, 'about:blank'))
-          for (const name of ['scripts/common.js', 'scripts/screenshare.js']) {
-            await this.screensharePage.evaluateOnNewDocument(fs.readFileSync(resolvePackagePath(name), 'utf8'))
-          }
+          await this.screensharePage.evaluateOnNewDocument(
+            fs.readFileSync(resolvePackagePath('node_modules/@vpalmisano/webrtcperf-js/dist/webrtcperf.js'), 'utf8'),
+          )
           await screensharePage.exposeFunction(
             'webrtcperf_keypressText',
             async (selector: string, text: string, delay = 20) => {
@@ -1385,8 +1357,6 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
             `http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/empty-page?auth=${this.serverSecret}&title=webrtcperf-screenshare`,
           )
         }
-      } else if (this.getDisplayMediaType === 'monitor') {
-        return
       }
       await screensharePage.evaluate(() => webrtcperf.startFakeScreenshare())
     })
@@ -1610,7 +1580,6 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
     const screenEndToEndDelayStats: Record<string, number> = {}
     const videoStartFrameDelayStats: Record<string, number> = {}
     const screenStartFrameDelayStats: Record<string, number> = {}
-    const videoEndToEndNetworkDelayStats: Record<string, number> = {}
     const httpSentBytesStats: Record<string, number> = {}
     const httpRecvBytesStats: Record<string, number> = {}
     const httpRecvLatencyStats: Record<string, number> = {}
@@ -1647,7 +1616,6 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
             peerConnectionStats,
             audioEndToEndDelay,
             videoEndToEndDelay,
-            videoEndToEndNetworkDelay,
             cpuPressure,
             videoStats,
             customMetrics,
@@ -1655,7 +1623,6 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
             peerConnectionStats: await webrtcperf.collectPeerConnectionStats(),
             audioEndToEndDelay: webrtcperf.collectAudioEndToEndStats(),
             videoEndToEndDelay: webrtcperf.collectVideoEndToEndStats(),
-            videoEndToEndNetworkDelay: webrtcperf.collectVideoEndToEndNetworkDelayStats(),
             cpuPressure: webrtcperf.collectCpuPressure(),
             videoStats: webrtcperf.collectVideoStats(),
             customMetrics: 'collectCustomMetrics' in window ? webrtcperf.collectCustomMetrics() : null,
@@ -1708,9 +1675,6 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
             videoStartFrameDelayStats[pageKey] = videoEndToEndDelay.videoStartFrameDelay
             screenEndToEndDelayStats[pageKey] = videoEndToEndDelay.screenDelay
             screenStartFrameDelayStats[pageKey] = videoEndToEndDelay.screenStartFrameDelay
-          }
-          if (videoEndToEndNetworkDelay) {
-            videoEndToEndNetworkDelayStats[pageKey] = videoEndToEndNetworkDelay
           }
 
           // HTTP stats.
@@ -1820,7 +1784,6 @@ webrtcperf.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this
       videoStartFrameDelay: videoStartFrameDelayStats,
       screenEndToEndDelay: screenEndToEndDelayStats,
       screenStartFrameDelay: screenStartFrameDelayStats,
-      videoEndToEndNetworkDelay: videoEndToEndNetworkDelayStats,
       httpSentBytes: httpSentBytesStats,
       httpRecvBytes: httpRecvBytesStats,
       httpRecvLatency: httpRecvLatencyStats,
