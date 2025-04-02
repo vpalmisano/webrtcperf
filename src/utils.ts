@@ -86,18 +86,22 @@ const log = logger('webrtcperf:utils')
  */
 export function resolvePackagePath(relativePath: string): string {
   if ('__nexe' in process) {
+    log.debug('resolvePackagePath (nexe)', relativePath)
     return relativePath
   }
   if (process.env.WEBPACK) {
-    return path.normalize(path.join(path.dirname(__filename), relativePath))
+    const p = path.normalize(path.join(path.dirname(__filename), relativePath))
+    log.debug('resolvePackagePath (webpack)', p)
+    return p
   }
   for (const d of ['.', '..', '../..']) {
     const p = path.normalize(path.join(__dirname, d, relativePath))
     if (fs.existsSync(p)) {
+      log.debug(`resolvePackagePath (dirname: ${__dirname})`, p)
       return p
     }
   }
-  throw new Error(`resolvePackagePath: ${relativePath} not found`)
+  throw new Error(`resolvePackagePath: ${relativePath} not found (dirname: ${__dirname})`)
 }
 
 /**
