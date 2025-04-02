@@ -88,7 +88,7 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.NPM_TOKEN }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Docker build and push develop version
       if: ${{ !startsWith(github.event.ref, 'refs/tags/v') }}
