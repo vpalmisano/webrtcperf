@@ -57,6 +57,7 @@ const log = logger('webrtcperf:session')
 
 declare global {
   let webrtcperf: {
+    getActiveAudioTracks: () => MediaStreamTrack[]
     collectPeerConnectionStats: () => Promise<{
       stats: RtcStats[]
       signalingHost?: string

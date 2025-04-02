@@ -245,8 +245,6 @@ export function sleep(ms: number): Promise<void> {
 }
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let getActiveAudioTracks: () => any[]
   let publisherSetMuted: (muted: boolean) => Promise<void>
 }
 
@@ -304,7 +302,7 @@ export async function randomActivateAudio(
       }
       let active = 0
       try {
-        active = await page.evaluate(() => getActiveAudioTracks().length)
+        active = await page.evaluate(() => webrtcperf.getActiveAudioTracks().length)
       } catch (err) {
         log.error(`randomActivateAudio error: ${(err as Error).stack}`)
       }
@@ -330,7 +328,7 @@ export async function randomActivateAudio(
             if (typeof publisherSetMuted !== 'undefined') {
               await publisherSetMuted(!enable)
             } else {
-              getActiveAudioTracks().forEach(track => {
+              webrtcperf.getActiveAudioTracks().forEach(track => {
                 track.enabled = enable
                 // track.dispatchEvent(new Event('custom-enabled'));
               })
@@ -341,7 +339,7 @@ export async function randomActivateAudio(
             if (typeof publisherSetMuted !== 'undefined') {
               await publisherSetMuted(true)
             } else {
-              getActiveAudioTracks().forEach(track => {
+              webrtcperf.getActiveAudioTracks().forEach(track => {
                 track.enabled = false
                 // track.dispatchEvent(new Event('custom-enabled'));
               })
