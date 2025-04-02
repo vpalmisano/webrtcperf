@@ -927,47 +927,6 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
       }
     }
 
-    // Load page script.
-    {
-      const filePath = resolvePackagePath('node_modules/@vpalmisano/webrtcperf-js/dist/webrtcperf.js')
-      if (!fs.existsSync(filePath)) {
-        throw new Error(`@vpalmisano/webrtcperf-js script not found: ${filePath}`)
-      }
-      log.debug(`loading @vpalmisano/webrtcperf-js script from: ${filePath}`)
-      await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
-    }
-
-    // Execute external script(s).
-    if (this.scriptPath) {
-      if (this.scriptPath.startsWith('base64:gzip:')) {
-        const data = Buffer.from(this.scriptPath.replace('base64:gzip:', ''), 'base64')
-        const code = gunzipSync(data).toString()
-        log.debug(`loading script from ${code.length} bytes`)
-        await page.evaluateOnNewDocument(code)
-      } else {
-        for (const filePath of this.scriptPath.split(',')) {
-          if (!filePath.trim()) {
-            continue
-          }
-          if (filePath.startsWith('http')) {
-            log.debug(`loading custom script from url: ${filePath}`)
-            const res = await downloadUrl(filePath)
-            if (!res?.data) {
-              throw new Error(`Failed to download script from: ${filePath}`)
-            }
-            await page.evaluateOnNewDocument(res.data)
-          } else {
-            if (!fs.existsSync(filePath)) {
-              log.warn(`custom script not found: ${filePath}`)
-              continue
-            }
-            log.debug(`loading custom script from file: ${filePath}`)
-            await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
-          }
-        }
-      }
-    }
-
     page.on('dialog', async dialog => {
       log.debug(`page ${index + 1} dialog ${dialog.type()}: ${dialog.message()}`)
       try {
@@ -1440,6 +1399,47 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
     if (this.hardwareConcurrency) {
       const plugin = NavigatorHardwareConcurrency({ hardwareConcurrency: this.hardwareConcurrency })
       await plugin.onPageCreated(page)
+    }
+
+    // Load page script.
+    {
+      const filePath = resolvePackagePath('node_modules/@vpalmisano/webrtcperf-js/dist/webrtcperf.js')
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`@vpalmisano/webrtcperf-js script not found: ${filePath}`)
+      }
+      log.debug(`loading @vpalmisano/webrtcperf-js script from: ${filePath}`)
+      await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
+    }
+
+    // Execute external script(s).
+    if (this.scriptPath) {
+      if (this.scriptPath.startsWith('base64:gzip:')) {
+        const data = Buffer.from(this.scriptPath.replace('base64:gzip:', ''), 'base64')
+        const code = gunzipSync(data).toString()
+        log.debug(`loading script from ${code.length} bytes`)
+        await page.evaluateOnNewDocument(code)
+      } else {
+        for (const filePath of this.scriptPath.split(',')) {
+          if (!filePath.trim()) {
+            continue
+          }
+          if (filePath.startsWith('http')) {
+            log.debug(`loading custom script from url: ${filePath}`)
+            const res = await downloadUrl(filePath)
+            if (!res?.data) {
+              throw new Error(`Failed to download script from: ${filePath}`)
+            }
+            await page.evaluateOnNewDocument(res.data)
+          } else {
+            if (!fs.existsSync(filePath)) {
+              log.warn(`custom script not found: ${filePath}`)
+              continue
+            }
+            log.debug(`loading custom script from file: ${filePath}`)
+            await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
+          }
+        }
+      }
     }
 
     log.debug(`Page ${index + 1} "${url}" loading`)
