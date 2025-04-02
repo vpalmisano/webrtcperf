@@ -926,13 +926,13 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
       }
     }
 
-    // Load scripts.
-    for (const name of ['@vpalmisano/webrtcperf-js']) {
-      const filePath = resolvePackagePath(name)
+    // Load page script.
+    {
+      const filePath = resolvePackagePath('@vpalmisano/webrtcperf-js')
       if (!fs.existsSync(filePath)) {
-        throw new Error(`${name} script not found: ${filePath}`)
+        throw new Error(`@vpalmisano/webrtcperf-js script not found: ${filePath}`)
       }
-      log.debug(`loading ${name} script from: ${filePath}`)
+      log.debug(`loading @vpalmisano/webrtcperf-js script from: ${filePath}`)
       await page.evaluateOnNewDocument(fs.readFileSync(filePath, 'utf8'))
     }
 
