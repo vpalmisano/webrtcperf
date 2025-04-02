@@ -89,12 +89,12 @@ export function resolvePackagePath(relativePath: string): string {
     return relativePath
   }
   if (process.env.WEBPACK) {
-    return path.join(path.dirname(__filename), relativePath)
+    return path.normalize(path.join(path.dirname(__filename), relativePath))
   }
-  for (const d of ['..', '../..']) {
-    const p = path.join(__dirname, d, relativePath)
+  for (const d of ['.', '..', '../..']) {
+    const p = path.normalize(path.join(__dirname, d, relativePath))
     if (fs.existsSync(p)) {
-      return require.resolve(p)
+      return p
     }
   }
   throw new Error(`resolvePackagePath: ${relativePath} not found`)
