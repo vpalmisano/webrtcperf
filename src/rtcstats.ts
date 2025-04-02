@@ -275,6 +275,7 @@ export enum RtcStatsMetricNames {
   videoRecvRetransmittedPackets = 'videoRecvRetransmittedPackets',
   videoRecvNackCountSent = 'videoRecvNackCountSent',
   videoRecvWidth = 'videoRecvWidth',
+  videoRecvFrameRate = 'videoRecvFrameRate',
   //'videoTotalDecodeTime',
   videoTotalFreezesDuration = 'videoTotalFreezesDuration',
   // inbound screen,
@@ -298,6 +299,7 @@ export enum RtcStatsMetricNames {
   screenRecvRetransmittedPackets = 'screenRecvRetransmittedPackets',
   screenRecvNackCountSent = 'screenRecvNackCountSent',
   screenRecvWidth = 'screenRecvWidth',
+  screenRecvFrameRate = 'screenRecvFrameRate',
   //'screenTotalDecodeTime',
   screenTotalFreezesDuration = 'screenTotalFreezesDuration',
 
@@ -437,6 +439,7 @@ export function updateRtcStats(
         setStats(stats, (prefix + 'RecvFps') as RtcStatsMetricNames, key, inboundRtp.framesPerSecond)
         setStats(stats, (prefix + 'RecvHeight') as RtcStatsMetricNames, key, inboundRtp.frameHeight)
         setStats(stats, (prefix + 'RecvWidth') as RtcStatsMetricNames, key, inboundRtp.frameWidth)
+        setStats(stats, (prefix + 'RecvFrameRate') as RtcStatsMetricNames, key, inboundRtp.frameRate)
         //setStats(stats, prefix + 'TotalDecodeTime', key, inboundRtp.totalDecodeTime)
         setStats(stats, (prefix + 'FirCountSent') as RtcStatsMetricNames, key, inboundRtp.firCount)
         setStats(stats, (prefix + 'PliCountSent') as RtcStatsMetricNames, key, inboundRtp.pliCount)
