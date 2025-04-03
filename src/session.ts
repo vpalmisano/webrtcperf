@@ -402,7 +402,7 @@ export class Session extends EventEmitter {
     this.chromiumPath = chromiumPath || undefined
     this.chromiumFieldTrials = chromiumFieldTrials || undefined
     this.windowWidth = windowWidth || 1920
-    this.windowHeight = windowHeight || 1080
+    this.windowHeight = (windowHeight || 1080) + 140 // Include info bars.
     this.deviceScaleFactor = deviceScaleFactor || 1
     this.debuggingPort = debuggingPort || 0
     this.debuggingAddress = debuggingAddress || ''
