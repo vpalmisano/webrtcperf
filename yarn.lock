@@ -1016,10 +1016,10 @@
   resolved "https://registry.yarnpkg.com/@vpalmisano/ggwave/-/ggwave-0.4.3-2.tgz#b2e7fc0b2b46579e066dc1e7452988e647b5c782"
   integrity sha512-VJ9glQjCRDA/Wrx6bmmikpr5JLVb7uWOPVp1ok2IiCy+ET3J8ymIwL5z+KKZVBWvOSePigz+VBXIS6qWeuCjKw==
 
-"@vpalmisano/throttler@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@vpalmisano/throttler/-/throttler-0.0.7.tgz#f304a620ee61280aecfb13d759c76535957f11b3"
-  integrity sha512-hgOAys+K3vQ9j+3n/kmeUP1G3h03W/ct4lBoweCABzz5aKwZsI8/5kmGbdCj1HBURtgyE81TcE1D3XalZnA5Ug==
+"@vpalmisano/throttler@0.0.8":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@vpalmisano/throttler/-/throttler-0.0.8.tgz#31493fb9435038b640fca9c3fe78a568810848b7"
+  integrity sha512-k/0DMoTLQ5LQdMEuWjY91AK5QD0kup5ae/St1xDeT3I1Y437BJznBEisYaG1XsZieKn6qGXQIe7PmWM8sfElkA==
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"
