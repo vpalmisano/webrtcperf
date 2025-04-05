@@ -120,7 +120,7 @@ export async function prepareFakeMedia({
           ` ${audioMap} -ar 48000 ${destAudioPathTmp}` +
           (destMp4PathTmp
             ? ` ${videoMap} -c:v libx264 -crf 10 -f mp4 -movflags faststart ${destMp4PathTmp}` +
-              ` ${audioMap} -c:a aac -b:a 192k ${destM4aPathTmp}`
+              ` ${audioMap} -c:a aac -ar 48000 -b:a 192k -f mp4 -movflags faststart ${destM4aPathTmp}`
             : ''),
       )
       await fs.rename(destVideoPathTmp, destVideoPath)

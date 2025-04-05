@@ -790,8 +790,6 @@ webrtcperf.config = {
   VIDEO_WIDTH: ${this.videoWidth},
   VIDEO_HEIGHT: ${this.videoHeight},
   VIDEO_FRAMERATE: ${this.videoFramerate},
-  RANDOM_AUDIO_PERIOD: ${this.randomAudioPeriod},
-  USE_FAKE_MEDIA: ${this.useFakeMedia},
 };
 try {
   webrtcperf.params = JSON.parse('${JSON.stringify(this.scriptParams)}' || '{}');
