@@ -1028,10 +1028,10 @@
     json5 "^2.2.3"
     word-wrap "^1.2.5"
 
-"@vpalmisano/webrtcperf-js@1.0.6":
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.0.6.tgz#b63d50cdb716ef34124566759487117e87d6dc10"
-  integrity sha512-OgUA6eV7aiJg7xSWvrfcFLVVl3Ih9gk12ioKecRxREzEAmdYNZEzpUmP52UTZXvdUA7dUxW1JdXVASOtvG9q0Q==
+"@vpalmisano/webrtcperf-js@1.0.9":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.0.9.tgz#57a455f56fa03db1285c5da94a61671ffc056cae"
+  integrity sha512-Yeq32cRbwyqMCh4a8pmfw0RtbcNJ9GsNDmoLag6vuZAqHmPz/lBfeEZDz4ZeCJpIPqvgwLgLBneSBiu0/vMfJQ==
   dependencies:
     "@vpalmisano/ggwave" "0.4.3-2"
 
