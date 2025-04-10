@@ -83,7 +83,6 @@ declare global {
       screenStartFrameDelay: number
     }
     collectCpuPressure: () => number
-    collectCustomMetrics: () => Promise<Record<string, number | string>>
     collectVideoStats: () => {
       width: number
       height: number
@@ -96,6 +95,7 @@ declare global {
     startFakeScreenshare: () => Promise<void>
     stopFakeScreenshare: () => void
   }
+  let collectCustomMetrics: () => Promise<Record<string, number | string>>
 }
 
 const PageLogColors = {
@@ -1624,7 +1624,7 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
             videoEndToEndDelay: webrtcperf.collectVideoEndToEndStats(),
             cpuPressure: webrtcperf.collectCpuPressure(),
             videoStats: webrtcperf.collectVideoStats(),
-            customMetrics: 'collectCustomMetrics' in window ? webrtcperf.collectCustomMetrics() : null,
+            customMetrics: 'collectCustomMetrics' in window ? collectCustomMetrics() : null,
           }))
           const { participantName } = peerConnectionStats
 
