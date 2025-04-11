@@ -143,6 +143,14 @@ ENV CHROMIUM_PATH=/usr/bin/chromium-browser-unstable
 ENV NODE_ENV=production
 ENTRYPOINT ["/app/entrypoint.sh"]
 
+RUN \
+    mkdir -p /etc/chromium/policies/managed/ && \
+    cat <<'EOF' > /etc/chromium/policies/managed/managed_policies.json
+{
+  "CommandLineFlagSecurityWarningsEnabled": false
+}
+EOF
+
 COPY package.json yarn.lock /app/
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN \

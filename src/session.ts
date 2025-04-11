@@ -402,7 +402,7 @@ export class Session extends EventEmitter {
     this.chromiumPath = chromiumPath || undefined
     this.chromiumFieldTrials = chromiumFieldTrials || undefined
     this.windowWidth = windowWidth || 1920
-    this.windowHeight = (windowHeight || 1080) + 140 // Include info bars.
+    this.windowHeight = windowHeight || 1080
     this.deviceScaleFactor = deviceScaleFactor || 1
     this.debuggingPort = debuggingPort || 0
     this.debuggingAddress = debuggingAddress || ''
@@ -566,6 +566,7 @@ export class Session extends EventEmitter {
       '--no-user-gesture-required',
       '--autoplay-policy=no-user-gesture-required',
       '--disable-infobars',
+      '--no-default-browser-check',
       '--allow-running-insecure-content',
       `--unsafely-treat-insecure-origin-as-secure=http://${new URL(this.url || 'http://localhost').host}`,
       '--disable-web-security',
