@@ -254,6 +254,7 @@ export enum RtcStatsMetricNames {
   audioRecvConcealmentEvents = 'audioRecvConcealmentEvents',
   audioRecvInsertedSamplesForDeceleration = 'audioRecvInsertedSamplesForDeceleration',
   audioRecvRemovedSamplesForAcceleration = 'audioRecvRemovedSamplesForAcceleration',
+  audioRecvEndToEndDelay = 'audioRecvEndToEndDelay',
   // inbound video,
   videoRecvCodec = 'videoRecvCodec',
   videoFirCountSent = 'videoFirCountSent',
@@ -278,6 +279,7 @@ export enum RtcStatsMetricNames {
   videoRecvFrameRate = 'videoRecvFrameRate',
   //'videoTotalDecodeTime',
   videoTotalFreezesDuration = 'videoTotalFreezesDuration',
+  videoRecvEndToEndDelay = 'videoRecvEndToEndDelay',
   // inbound screen,
   screenRecvCodec = 'screenRecvCodec',
   screenFirCountSent = 'screenFirCountSent',
@@ -302,7 +304,7 @@ export enum RtcStatsMetricNames {
   screenRecvFrameRate = 'screenRecvFrameRate',
   //'screenTotalDecodeTime',
   screenTotalFreezesDuration = 'screenTotalFreezesDuration',
-
+  screenRecvEndToEndDelay = 'screenRecvEndToEndDelay',
   /** The transport availableOutgoingBitrate stat. */
   transportSentAvailableOutgoingBitrate = 'transportSentAvailableOutgoingBitrate',
 }
@@ -416,6 +418,7 @@ export function updateRtcStats(
       setStats(stats, (prefix + 'RecvPacketsLossRate') as RtcStatsMetricNames, key, inboundRtp.packetsLossRate)
       setStats(stats, (prefix + 'RecvLostPackets') as RtcStatsMetricNames, key, inboundRtp.packetsLost)
       setStats(stats, (prefix + 'RecvNackCountSent') as RtcStatsMetricNames, key, inboundRtp.nackCount)
+      setStats(stats, (prefix + 'RecvEndToEndDelay') as RtcStatsMetricNames, key, inboundRtp.endToEndDelay)
       if (inboundRtp.kind === 'audio') {
         ;[
           'audioLevel',
