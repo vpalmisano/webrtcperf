@@ -1028,12 +1028,13 @@
     json5 "^2.2.3"
     word-wrap "^1.2.5"
 
-"@vpalmisano/webrtcperf-js@1.1.3":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.1.3.tgz#ee3ebd071bde3c2f98ff9a5af2ba64f64b65ba59"
-  integrity sha512-nfWCWt5RcOt2Jh4fRT7nckiktWOwQ5dnvlZVT+Hvzl3HZKHfbco4pLiPPy/BIS19VVakaRHgl05irj2BBH32Eg==
+"@vpalmisano/webrtcperf-js@1.1.4":
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.1.4.tgz#f194f58a72b5126c542b469b56aa6fcada5c9a1b"
+  integrity sha512-N7krYa3//JkCtHW6c/I/BeuH1bxPlP7IV0jnx+smPJBVDdnsWZExkhTAmZjKngSKeMH016M2fwxAJ1/crgD00Q==
   dependencies:
     "@vpalmisano/ggwave" "0.4.3-2"
+    sdp-transform "^2.15.0"
 
 "@webassemblyjs/ast@1.14.1", "@webassemblyjs/ast@^1.14.1":
   version "1.14.1"
@@ -6526,6 +6527,11 @@ schema-utils@^4.3.0:
     ajv "^8.9.0"
     ajv-formats "^2.1.1"
     ajv-keywords "^5.1.0"
+
+sdp-transform@^2.15.0:
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/sdp-transform/-/sdp-transform-2.15.0.tgz#79d37a2481916f36a0534e07b32ceaa87f71df42"
+  integrity sha512-KrOH82c/W+GYQ0LHqtr3caRpM3ITglq3ljGUIb8LTki7ByacJZ9z+piSGiwZDsRyhQbYBOBJgr2k6X4BZXi3Kw==
 
 seek-bzip@^1.0.5:
   version "1.0.6"
