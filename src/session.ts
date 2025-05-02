@@ -25,7 +25,6 @@ import {
   RequestInterceptionManager,
   getUrlPatternRegExp,
 } from 'puppeteer-intercept-and-modify-requests'
-import * as sdpTransform from 'sdp-transform'
 import { gunzipSync } from 'zlib'
 
 import { RtcStats, rtcStatKey, updateRtcStats } from './rtcstats'
@@ -1288,10 +1287,6 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
         await this.onPageMessage(index, 'requestfailed', text, saveFile)
       })
     }
-
-    await page.exposeFunction('webrtcperf_sdpParse', (sdpStr: string) => sdpTransform.parse(sdpStr))
-
-    await page.exposeFunction('webrtcperf_sdpWrite', (sdp: sdpTransform.SessionDescription) => sdpTransform.write(sdp))
 
     await page.exposeFunction('webrtcperf_startFakeScreenshare', async () => {
       if (!this.browser) return

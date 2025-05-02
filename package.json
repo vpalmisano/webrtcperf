@@ -1,6 +1,6 @@
 {
   "name": "@vpalmisano/webrtcperf",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/vpalmisano/webrtcperf.git"
@@ -55,7 +55,7 @@
   "dependencies": {
     "@puppeteer/browsers": "^2.8.0",
     "@vpalmisano/throttler": "0.0.8",
-    "@vpalmisano/webrtcperf-js": "1.1.3",
+    "@vpalmisano/webrtcperf-js": "1.1.4",
     "axios": "^1.8.4",
     "chalk": "^4.1.2",
     "change-case": "^4.1.2",
@@ -80,7 +80,6 @@
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-intercept-and-modify-requests": "^1.3.1",
-    "sdp-transform": "^2.14.2",
     "sprintf-js": "^1.1.3",
     "tar-fs": "^3.0.6",
     "word-wrap": "^1.2.5",
