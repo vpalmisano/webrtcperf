@@ -45,6 +45,26 @@ ${wrap(value.doc, { width: 72, indent: '        ' })}
   }
 }
 
+async function postTest(config: Config): Promise<void> {
+  // vmaf score.
+  if (config.vmafPath) {
+    try {
+      await calculateVmafScore(config)
+    } catch (err: unknown) {
+      log.error(`vmaf score error: ${(err as Error).stack}`)
+    }
+  }
+
+  // visqol score
+  if (config.visqolPath) {
+    try {
+      await calculateVisqolScore(config)
+    } catch (err: unknown) {
+      log.error(`visqol score error: ${(err as Error).stack}`)
+    }
+  }
+}
+
 export async function setupApplication(config: Config): Promise<{ stats: Stats; stop: () => Promise<void> }> {
   if (!config.startTimestamp) {
     config.startTimestamp = Date.now()
@@ -140,23 +160,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 
       stopTimers()
 
-      // vmaf score.
-      if (config.vmafPath) {
-        try {
-          await calculateVmafScore(config)
-        } catch (err: unknown) {
-          log.error(`vmaf score error: ${(err as Error).stack}`)
-        }
-      }
-
-      // visqol score
-      if (config.visqolPath) {
-        try {
-          await calculateVisqolScore(config)
-        } catch (err: unknown) {
-          log.error(`visqol score error: ${(err as Error).stack}`)
-        }
-      }
+      await postTest(config)
 
       // Copy docker logs to data directory.
       if (config.pageLogPath) {
@@ -196,40 +200,44 @@ async function main(): Promise<void> {
     process.exit(0)
   }
 
-  const { stop: stopApplication } = await setupApplication(config)
+  if (config.url || config.customUrlHandler) {
+    const { stop: stopApplication } = await setupApplication(config)
 
-  const stop = async (): Promise<void> => {
-    console.log('Exiting...')
+    const stop = async (): Promise<void> => {
+      console.log('Exiting...')
 
-    await stopApplication()
+      await stopApplication()
 
-    process.exit(0)
-  }
-  registerExitHandler(() => stop())
+      process.exit(0)
+    }
+    registerExitHandler(() => stop())
 
-  // Stop after a configured duration.
-  if (config.runDuration > 0) {
-    setTimeout(stop, config.runDuration * 1000)
-  }
+    // Stop after a configured duration.
+    if (config.runDuration > 0) {
+      setTimeout(stop, config.runDuration * 1000)
+    }
 
-  // Command line interface.
-  if (process.stdin && process.stdin.setRawMode) {
-    console.log('Press [q] to quit')
-    process.stdin.setRawMode(true)
-    process.stdin.resume()
-    process.stdin.on('data', async data => {
-      log.debug('[stdin]', data[0])
-      if (data[0] === 'q'.charCodeAt(0)) {
-        try {
-          await stop()
-        } catch (err: unknown) {
-          log.error(`stop error: ${(err as Error).stack}`)
+    // Command line interface.
+    if (process.stdin && process.stdin.setRawMode) {
+      console.log('Press [q] to quit')
+      process.stdin.setRawMode(true)
+      process.stdin.resume()
+      process.stdin.on('data', async data => {
+        log.debug('[stdin]', data[0])
+        if (data[0] === 'q'.charCodeAt(0)) {
+          try {
+            await stop()
+          } catch (err: unknown) {
+            log.error(`stop error: ${(err as Error).stack}`)
+            process.exit(1)
+          }
+        } else if (data[0] === 'x'.charCodeAt(0)) {
           process.exit(1)
         }
-      } else if (data[0] === 'x'.charCodeAt(0)) {
-        process.exit(1)
-      }
-    })
+      })
+    }
+  } else {
+    await postTest(config)
   }
 }
 
