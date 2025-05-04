@@ -83,7 +83,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 
   // Prepare fake video and audio.
   const mediaPaths: MediaPath[] = []
-  if (config.videoPath) {
+  if (config.videoPath && config.sessions > 0) {
     for (const videoPath of config.videoPath.split(',')) {
       const ret = await prepareFakeMedia({ ...config, videoPath })
       mediaPaths.push(ret)
@@ -96,7 +96,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
   }
 
   // Download browser if necessary.
-  if (!config.chromiumUrl && !config.chromiumPath) {
+  if (!config.chromiumUrl && !config.chromiumPath && config.sessions > 0) {
     await checkChromeExecutable()
   }
 
@@ -200,44 +200,38 @@ async function main(): Promise<void> {
     process.exit(0)
   }
 
-  if (config.url || config.customUrlHandler) {
-    const { stop: stopApplication } = await setupApplication(config)
+  const { stop: stopApplication } = await setupApplication(config)
 
-    const stop = async (): Promise<void> => {
-      console.log('Exiting...')
+  const stop = async (): Promise<void> => {
+    console.log('Exiting...')
 
-      await stopApplication()
+    await stopApplication()
 
-      process.exit(0)
-    }
-    registerExitHandler(() => stop())
+    process.exit(0)
+  }
+  registerExitHandler(() => stop())
 
-    // Stop after a configured duration.
-    if (config.runDuration > 0) {
-      setTimeout(stop, config.runDuration * 1000)
-    }
+  // Stop after a configured duration.
+  setTimeout(stop, config.runDuration * 1000)
 
-    // Command line interface.
-    if (process.stdin && process.stdin.setRawMode) {
-      console.log('Press [q] to quit')
-      process.stdin.setRawMode(true)
-      process.stdin.resume()
-      process.stdin.on('data', async data => {
-        log.debug('[stdin]', data[0])
-        if (data[0] === 'q'.charCodeAt(0)) {
-          try {
-            await stop()
-          } catch (err: unknown) {
-            log.error(`stop error: ${(err as Error).stack}`)
-            process.exit(1)
-          }
-        } else if (data[0] === 'x'.charCodeAt(0)) {
+  // Command line interface.
+  if (process.stdin && process.stdin.setRawMode) {
+    console.log('Press [q] to quit')
+    process.stdin.setRawMode(true)
+    process.stdin.resume()
+    process.stdin.on('data', async data => {
+      log.debug('[stdin]', data[0])
+      if (data[0] === 'q'.charCodeAt(0)) {
+        try {
+          await stop()
+        } catch (err: unknown) {
+          log.error(`stop error: ${(err as Error).stack}`)
           process.exit(1)
         }
-      })
-    }
-  } else {
-    await postTest(config)
+      } else if (data[0] === 'x'.charCodeAt(0)) {
+        process.exit(1)
+      }
+    })
   }
 }
 
