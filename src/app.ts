@@ -75,52 +75,53 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
   await stats.start()
 
   // Control server.
-  let server: Server
+  let server: Server | undefined
   if (config.serverPort) {
     server = new Server(config, stats)
     await server.start()
   }
 
-  // Prepare fake video and audio.
-  const mediaPaths: MediaPath[] = []
-  if (config.videoPath && config.sessions > 0) {
-    for (const videoPath of config.videoPath.split(',')) {
-      const ret = await prepareFakeMedia({ ...config, videoPath })
-      mediaPaths.push(ret)
-    }
-  }
-
-  // Network throttle.
-  if (config.throttleConfig) {
-    await startThrottle(config.throttleConfig)
-  }
-
-  // Download browser if necessary.
-  if (!config.chromiumUrl && !config.chromiumPath && config.sessions > 0) {
-    await checkChromeExecutable()
-  }
-
-  // Start session function.
-  const startLocalSession = async (id: number, spawnPeriod: number): Promise<void> => {
-    const throttleIndex = getSessionThrottleIndex(id)
-    const mediaPath = mediaPaths.length ? mediaPaths[id % mediaPaths.length] : undefined
-    const session = new Session({
-      ...config,
-      mediaPath,
-      spawnPeriod,
-      id,
-      throttleIndex,
-    })
-    session.once('stop', () => {
-      console.warn(`Session ${id} stopped, reloading...`)
-      setTimeout(startLocalSession, spawnPeriod, id)
-    })
-    stats.addSession(session)
-    await session.start()
-  }
-
-  // Start the local sessions.
+  // If sessions are set, prepare fake video/audio and start sessions.
   if (config.sessions > 0) {
+    // Prepare fake video and audio.
+    const mediaPaths: MediaPath[] = []
+    if (config.videoPath) {
+      for (const videoPath of config.videoPath.split(',')) {
+        const ret = await prepareFakeMedia({ ...config, videoPath })
+        mediaPaths.push(ret)
+      }
+    }
+
+    // Network throttle.
+    if (config.throttleConfig) {
+      await startThrottle(config.throttleConfig)
+    }
+
+    // Download browser if necessary.
+    if (!config.chromiumUrl && !config.chromiumPath) {
+      await checkChromeExecutable()
+    }
+
+    // Start session function.
+    const startLocalSession = async (id: number, spawnPeriod: number): Promise<void> => {
+      const throttleIndex = getSessionThrottleIndex(id)
+      const mediaPath = mediaPaths.length ? mediaPaths[id % mediaPaths.length] : undefined
+      const session = new Session({
+        ...config,
+        mediaPath,
+        spawnPeriod,
+        id,
+        throttleIndex,
+      })
+      session.once('stop', () => {
+        console.warn(`Session ${id} stopped, reloading...`)
+        setTimeout(startLocalSession, spawnPeriod, id)
+      })
+      stats.addSession(session)
+      await session.start()
+    }
+
+    // Start the local sessions.
     if (config.randomAudioPeriod) {
       startRandomActivateAudio(
         stats.sessions,
@@ -173,9 +174,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
         }
       }
 
-      if (server) {
-        server.stop()
-      }
+      server?.stop()
 
       log.debug('Stopped')
     },
