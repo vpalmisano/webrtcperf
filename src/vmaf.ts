@@ -75,7 +75,7 @@ export async function prepareVideo(
   await runShellCommand(
     `ffmpeg -hide_banner -loglevel warning -threads ${Math.min(cpus, 16)} \
 ${videoDuration ? `-t ${videoDuration}` : ''} \
--i ${fpath} \
+-stream_loop -1 -i ${fpath} \
 -filter_complex "[0:v]scale=w=${videoWidth || width}:h=${videoHeight || height},fps=${videoFramerate || frameRate},${filter}\
 drawbox=x=0:y=0:w=iw:h=${textHeight}:color=black:t=fill,\
 drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf:text='${id || 0}-%{eif\\:t*1000\\:u}':fontcolor=white:fontsize=${fontsize}:x=(w-text_w)/2:y=(${textHeight}-text_h)/2[out]" \
