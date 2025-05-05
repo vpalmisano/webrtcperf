@@ -1142,6 +1142,18 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
       return fs.promises.readFile(filePath, encoding)
     })
 
+    await page.exposeFunction(
+      'webrtcperf_writeFile',
+      (paramPath: string, data: string | Buffer | Uint8Array, append = false) => {
+        const filePath = path.resolve(this.pageLogPath, paramPath)
+        if (append) {
+          return fs.promises.appendFile(filePath, data)
+        } else {
+          return fs.promises.writeFile(filePath, data)
+        }
+      },
+    )
+
     // PeerConnectionExternal
     await page.exposeFunction(
       'createPeerConnectionExternal',
