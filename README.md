@@ -44,6 +44,7 @@ brew install ffmpeg # MacOS
 # Run a Jitsi test:
 webrtcperf \
     --url="https://meet.jit.si/${JITSI_ROOM_URL}#config.prejoinPageEnabled=false" \
+    --sessions=1 \
     --display='' \
     --show-page-log=false
 # Press <q> to stop.

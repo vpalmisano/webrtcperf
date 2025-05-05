@@ -308,7 +308,7 @@ On Linux, set it to a valid X server \`DISPLAY\` string (e.g. \`:0\`).`,
   sessions: {
     doc: `The number of browser sessions to start.`,
     format: 'nat',
-    default: 1,
+    default: 0,
     env: 'SESSIONS',
     arg: 'sessions',
   },
