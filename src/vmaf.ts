@@ -109,8 +109,11 @@ export async function convertToIvf(fpath: string, crop?: string, keepSourceFile 
       -f ivf ${outputPath}`,
     true,
   )
+  if (!keepSourceFile) {
+    await fs.promises.unlink(fpath)
+  }
 
-  await fixIvfFrames(outputPath, keepSourceFile, skipDuplicated)
+  await fixIvfFrames(outputPath, false, skipDuplicated)
 }
 
 /**
