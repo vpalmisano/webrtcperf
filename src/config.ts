@@ -728,6 +728,13 @@ the reference and degraded versions.`,
     env: 'VMAF_KEEP_SOURCE_FILES',
     arg: 'vmaf-keep-source-files',
   },
+  vmafSkipDuplicated: {
+    doc: `If true, the VMAF will skip duplicated recognized frames.`,
+    format: 'Boolean',
+    default: false,
+    env: 'VMAF_SKIP_DUPLICATED',
+    arg: 'vmaf-skip-duplicated',
+  },
   vmafCrop: {
     doc: `If set, the reference and degraded videos will be cropped using the specified configuration in JSON5 format. \
 Crop configuration should be expressed using the ffmpeg crop filter syntax (https://ffmpeg.org/ffmpeg-filters.html#crop). \

@@ -48,6 +48,7 @@ ${wrap(value.doc, { width: 72, indent: '        ' })}
 async function postTest(config: Config): Promise<void> {
   // vmaf score.
   if (config.vmafPath) {
+    console.log('Calculating VMAF score...')
     try {
       await calculateVmafScore(config)
     } catch (err: unknown) {
@@ -57,6 +58,7 @@ async function postTest(config: Config): Promise<void> {
 
   // visqol score
   if (config.visqolPath) {
+    console.log('Calculating Visqol score...')
     try {
       await calculateVisqolScore(config)
     } catch (err: unknown) {
@@ -195,7 +197,12 @@ async function main(): Promise<void> {
   }
 
   if (config.vmafProcessVideo) {
-    await convertToIvf(config.vmafProcessVideo, config.vmafVideoCrop, false)
+    await convertToIvf(
+      config.vmafProcessVideo,
+      config.vmafVideoCrop,
+      config.vmafKeepSourceFiles,
+      config.vmafSkipDuplicated,
+    )
     process.exit(0)
   }
 
@@ -215,7 +222,7 @@ async function main(): Promise<void> {
 
   // Command line interface.
   if (process.stdin && process.stdin.setRawMode) {
-    console.log('Press [q] to quit')
+    console.log('Press [q] to quit or [x] to exit immediately')
     process.stdin.setRawMode(true)
     process.stdin.resume()
     process.stdin.on('data', async data => {

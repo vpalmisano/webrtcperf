@@ -94,8 +94,9 @@ drawtext=fontfile=/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf:text='${id
  * @param fpath The input video file path.
  * @param crop The crop filter.
  * @param keepSourceFile If the source file should be kept.
+ * @param skipDuplicated If the duplicated recognized frames should be skipped.
  */
-export async function convertToIvf(fpath: string, crop?: string, keepSourceFile = true) {
+export async function convertToIvf(fpath: string, crop?: string, keepSourceFile = true, skipDuplicated = false) {
   const { width, height, frameRate } = await parseVideo(fpath)
   const outputPath = fpath.replace(/\.[^.]+$/, '.ivf.raw')
   log.debug(`convertToIvf ${fpath} ${width}x${height}@${frameRate} -> ${outputPath} crop:`, crop)
@@ -109,7 +110,7 @@ export async function convertToIvf(fpath: string, crop?: string, keepSourceFile 
     true,
   )
 
-  await fixIvfFrames(outputPath, keepSourceFile)
+  await fixIvfFrames(outputPath, keepSourceFile, skipDuplicated)
 }
 
 /**
@@ -223,7 +224,7 @@ async function parseIvf(fpath: string, runRecognizer = false) {
       log.warn(`IVF file ${fname}: pts ${pts} <= prev ${ptsIndex[ptsIndex.length - 1]}`)
     } */
     if (frames.has(pts)) {
-      /* log.debug(`IVF file ${fname}: pts ${pts} already present, skipping`) */
+      log.debug(`IVF file ${fname}: pts ${pts} already present, skipping`)
       skipped++
     } else {
       frames.set(pts, { pts, index, position, size: size + 12 })
@@ -262,8 +263,9 @@ ts: ${firstTimestamp.toFixed(2)}-${lastTimestamp.toFixed(2)} (${(lastTimestamp -
   }
 }
 
-export async function fixIvfFrames(filePath: string, keepSourceFile = true) {
+export async function fixIvfFrames(filePath: string, keepSourceFile = true, skipDuplicated = false) {
   const fname = path.basename(filePath)
+  log.debug(`fixIvfFrames ${fname} keepSourceFile=${keepSourceFile} skipDuplicated=${skipDuplicated}`)
   const dirPath = path.dirname(filePath)
   if (!fname.endsWith('.ivf.raw')) {
     throw new Error(`fixIvfFrames ${fname}: invalid file extension, expected ".ivf.raw"`)
@@ -313,12 +315,16 @@ export async function fixIvfFrames(filePath: string, keepSourceFile = true) {
     if (nextFrame?.recognizedPts && (nextFrame?.recognizedPts || 0) < frame.recognizedPts) {
       continue
     }
-    // Keep duplicated frames.
+    // Duplicated recognized frame.
     if (prevFrame?.recognizedPts && frame.recognizedPts === prevFrame.recognizedPts) {
-      /* log.warn(
-        `${frame.index} pts=${pts}:${frame.recognizedPts} prev ${prevFrame.pts}(${pts - prevFrame.pts}):${prevFrame.recognizedPts}(${frame.recognizedPts - prevFrame.recognizedPts}) next ${nextFrame?.pts}(${(nextFrame?.pts || 0) - pts}):${nextFrame?.recognizedPts}(${(nextFrame?.recognizedPts || 0) - frame.recognizedPts})`,
-      ) */
-      frame.recognizedPts = prevFrame.recognizedPts + 1
+      log.debug(
+        `${fname}: duplicate recognized frame pts=${pts}:${frame.recognizedPts} prev=${prevFrame.pts}:${prevFrame.recognizedPts} next=${nextFrame?.pts}:${nextFrame?.recognizedPts} (${skipDuplicated ? 'skipped' : 'fixed'})`,
+      )
+      if (skipDuplicated) {
+        continue
+      } else {
+        frame.recognizedPts += frame.pts - prevFrame.pts
+      }
     }
     const frameView = new DataView(new ArrayBuffer(frame.size))
     await fd.read(frameView, 0, frame.size, frame.position)
@@ -343,7 +349,8 @@ export async function fixIvfFrames(filePath: string, keepSourceFile = true) {
   return { participantDisplayName, outFilePath }
 }
 
-export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
+export async function fixIvfFiles(directory: string, keepSourceFiles = true, skipDuplicated = false) {
+  log.debug(`fixIvfFiles ${directory} keepSourceFiles=${keepSourceFiles} skipDuplicated=${skipDuplicated}`)
   const reference = new Map<string, string>()
   const degraded = new Map<string, string[]>()
 
@@ -381,7 +388,7 @@ export async function fixIvfFiles(directory: string, keepSourceFiles = true) {
       rawFiles,
       async filePath => {
         try {
-          const { participantDisplayName, outFilePath } = await fixIvfFrames(filePath, keepSourceFiles)
+          const { participantDisplayName, outFilePath } = await fixIvfFrames(filePath, keepSourceFiles, skipDuplicated)
           return { participantDisplayName, outFilePath }
         } catch (err) {
           log.error(`fixIvfFrames error: ${(err as Error).stack}`)
@@ -690,16 +697,17 @@ interface VmafConfig {
   vmafKeepIntermediateFiles: boolean
   vmafKeepSourceFiles: boolean
   vmafCrop?: string
+  vmafSkipDuplicated?: boolean
 }
 
 export async function calculateVmafScore(config: VmafConfig): Promise<VmafScore[]> {
-  const { vmafPath, vmafPreview, vmafKeepIntermediateFiles, vmafKeepSourceFiles, vmafCrop } = config
+  const { vmafPath, vmafPreview, vmafKeepIntermediateFiles, vmafKeepSourceFiles, vmafCrop, vmafSkipDuplicated } = config
   if (!fs.existsSync(config.vmafPath)) {
     throw new Error(`VMAF path ${config.vmafPath} does not exist`)
   }
   log.debug(`calculateVmafScore referencePath=${vmafPath}`)
 
-  const { reference, degraded } = await fixIvfFiles(vmafPath, vmafKeepSourceFiles)
+  const { reference, degraded } = await fixIvfFiles(vmafPath, vmafKeepSourceFiles, vmafSkipDuplicated)
 
   const crop: VmafCrop | undefined = vmafCrop ? json5.parse(vmafCrop) : undefined
 
