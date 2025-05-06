@@ -543,6 +543,13 @@ will listen on the provided port + the start-session-id value.`,
     env: 'DEBUGGING_ADDRESS',
     arg: 'debugging-address',
   },
+  emulateCpuThrottling: {
+    doc: `The emulated CPU throttling factor. If set, the page will be throttled to the specified factor.`,
+    format: 'nat',
+    default: 0,
+    env: 'EMULATE_CPU_THROTTLING',
+    arg: 'emulate-cpu-throttling',
+  },
   // stats config
   showStats: {
     doc: `If the statistics should be displayed on the console output.`,

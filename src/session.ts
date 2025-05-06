@@ -181,6 +181,7 @@ export interface SessionParams {
   serverPort: number
   serverSecret: string
   serverUseHttps: boolean
+  emulateCpuThrottling: number
 }
 
 export type CustomUrlHandlerFn = (params: {
@@ -264,6 +265,7 @@ export class Session extends EventEmitter {
   private readonly serverPort: number
   private readonly serverSecret: string
   private readonly serverUseHttps: boolean
+  private readonly emulateCpuThrottling: number
 
   private running = false
   private browser?: Browser
@@ -393,6 +395,7 @@ export class Session extends EventEmitter {
     serverPort,
     serverSecret,
     serverUseHttps,
+    emulateCpuThrottling,
   }: SessionParams) {
     super()
     log.debug('constructor', { id })
@@ -466,6 +469,7 @@ export class Session extends EventEmitter {
     this.serverPort = serverPort
     this.serverSecret = serverSecret
     this.serverUseHttps = serverUseHttps
+    this.emulateCpuThrottling = emulateCpuThrottling
 
     this.throttleIndex = throttleIndex
     this.evaluateAfter = evaluateAfter || []
@@ -1142,17 +1146,29 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
       return fs.promises.readFile(filePath, encoding)
     })
 
-    await page.exposeFunction(
-      'webrtcperf_writeFile',
-      (paramPath: string, data: string | Buffer | Uint8Array, append = false) => {
-        const filePath = path.resolve(this.pageLogPath, paramPath)
-        if (append) {
-          return fs.promises.appendFile(filePath, data)
-        } else {
-          return fs.promises.writeFile(filePath, data)
-        }
-      },
-    )
+    if (this.pageLogPath) {
+      const dirPath = path.dirname(this.pageLogPath)
+      await page.exposeFunction(
+        'webrtcperf_writeFile',
+        (paramPath: string, data: string | Buffer | Uint8Array, append = false) => {
+          const filePath = path.resolve(dirPath, paramPath)
+          if (append) {
+            return fs.promises.appendFile(filePath, data)
+          } else {
+            return fs.promises.writeFile(filePath, data)
+          }
+        },
+      )
+    }
+
+    await page.exposeFunction('webrtcperf_emulateCpuThrottling', (factor: number | null) => {
+      return page.emulateCPUThrottling(factor)
+    })
+
+    if (this.emulateCpuThrottling) {
+      log.debug(`emulateCpuThrottling: ${this.emulateCpuThrottling}`)
+      await page.emulateCPUThrottling(this.emulateCpuThrottling)
+    }
 
     // PeerConnectionExternal
     await page.exposeFunction(
