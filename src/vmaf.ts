@@ -464,7 +464,12 @@ export async function runVmaf(
   const sender = path.basename(referencePath).replace('.ivf', '')
   const receiver = path.basename(degradedPath).replace('.ivf', '').split('_recv-by_')[1]
 
-  const { frameRate: refFrameRate, frames: refFrames } = await parseIvf(referencePath, false)
+  const {
+    width: refWidth,
+    height: refHeight,
+    frameRate: refFrameRate,
+    frames: refFrames,
+  } = await parseIvf(referencePath, false)
   const {
     width: degWidth,
     height: degHeight,
@@ -517,13 +522,20 @@ export async function runVmaf(
 -i ${referencePath} \
 `
 
+  let cropWidth = 0
+  const refFactor = refWidth / refHeight
+  const degFactor = degWidth / degHeight
+  if (refFactor > degFactor) {
+    cropWidth = Math.round(degFactor * refHeight)
+  }
+
   const filter = `\
 [0:v]\
-scale=w=-1:h=${degHeight}:flags=bicubic,\
+scale=w=-1:h=${refHeight}:flags=bicubic,${cropWidth ? `crop=w=${cropWidth}:x=(iw-${cropWidth})/2,` : ''}\
 ${cropFilter(crop.deg, 0, ',')}\
 ${splitFilter(['deg_vmaf', 'deg_psnr', preview ? 'deg_preview' : ''])};\
 [1:v]\
-scale=w=-1:h=${degHeight}:flags=bicubic,crop=w=${degWidth}:x=(iw-${degWidth})/2,\
+scale=w=-1:h=${refHeight}:flags=bicubic,\
 ${cropFilter(crop.ref, 0, ',')}\
 ${splitFilter(['ref_vmaf', 'ref_psnr', preview ? 'ref_preview' : ''])};\
 [deg_vmaf][ref_vmaf]libvmaf=model='path=/usr/share/model/vmaf_v0.6.1.json':log_fmt=json:log_path=${vmafLogPath}:n_subsample=1:n_threads=${cpus}:shortest=1[vmaf];\
