@@ -245,7 +245,7 @@ export class Session extends EventEmitter {
   private readonly responseModifiers: Record<
     string,
     {
-      search?: RegExp
+      search?: string | RegExp
       replace?: string
       file?: string
       headers?: Record<string, string>
@@ -511,8 +511,8 @@ export class Session extends EventEmitter {
               `responseModifiers replacements should be an array of { search, replace, body, headers } objects: ${replacements}`,
             )
           }
-          this.responseModifiers[url] = replacements.map(({ search, replace, file, headers }) => ({
-            search: search ? new RegExp(search, 'g') : undefined,
+          this.responseModifiers[url] = replacements.map(({ search, regexp, replace, file, headers }) => ({
+            search: regexp ? new RegExp(regexp, 'g') : search,
             replace,
             file,
             headers,
