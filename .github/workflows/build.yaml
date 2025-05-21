@@ -95,7 +95,7 @@ jobs:
         context: .
         push: true
         platforms: ${{ matrix.platform }}
-        tags: ghcr.io/${{ github.repository }}:devel
+        tags: ghcr.io/${{ github.repository }}:devel,ghcr.io/${{ github.repository }}:${{ github.sha }}
         cache-from: type=local,src=/tmp/.buildx-cache
         cache-to: type=local,dest=/tmp/.buildx-cache-new
         outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=WebRTC performance and quality evaluation tool.
