@@ -20,7 +20,7 @@ import os, { networkInterfaces } from 'os'
 import path, { dirname } from 'path'
 import pidtree from 'pidtree'
 import pidusage from 'pidusage'
-import puppeteer, { Page } from 'puppeteer-core'
+import puppeteer, { ImageFormat, Page } from 'puppeteer-core'
 
 import { Session } from './session'
 
@@ -1037,7 +1037,8 @@ export async function pageScreenshot(
     if (!element) {
       throw new Error(`pageScreenshot selector "${selector}" not found`)
     }
-    await element.screenshot({ path: filePath })
+    const path = filePath as `${string}.${ImageFormat}`
+    await element.screenshot({ path })
   } catch (err) {
     log.error(`pageScreenshot error: ${(err as Error).message}`)
   } finally {

@@ -587,8 +587,19 @@ ${splitFilter(['ref_vmaf', 'ref_psnr', preview ? 'ref_preview' : ''])};\
 }
 
 async function writeGraph(vmafLogPath: string) {
+  const {
+    CategoryScale,
+    Chart,
+    LinearScale,
+    LineController,
+    LineElement,
+    PointElement,
+    Legend,
+    Title,
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+  } = require('chart.js')
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { ChartJSNodeCanvas } = require('chartjs-node-canvas')
+  const { Canvas } = require('skia-canvas')
 
   const vmafLog = JSON.parse(await fs.promises.readFile(vmafLogPath, 'utf-8')) as {
     frames: {
@@ -625,13 +636,9 @@ async function writeGraph(vmafLogPath: string) {
     )
     .map(d => ({ x: d.x, y: d.y / d.count }))
 
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({
-    width: 1280,
-    height: 720,
-    backgroundColour: 'white',
-  })
-
-  const buffer = await chartJSNodeCanvas.renderToBuffer({
+  Chart.register([CategoryScale, LineController, LineElement, LinearScale, PointElement, Legend, Title])
+  const canvas = new Canvas(1280, 720)
+  const chart = new Chart(canvas, {
     type: 'line',
     data: {
       labels: data.map(d => d.x),
@@ -652,7 +659,7 @@ async function writeGraph(vmafLogPath: string) {
       plugins: {
         title: {
           display: true,
-          text: path.basename(vmafLogPath).replace('.vmaf.json', '').replace(/_/g, ' '),
+          text: path.basename(path.dirname(vmafLogPath)).replace(/_/g, ' '),
         },
       },
       scales: {
@@ -663,8 +670,8 @@ async function writeGraph(vmafLogPath: string) {
       },
     },
   })
-
-  await fs.promises.writeFile(fpath, buffer)
+  await canvas.saveAs(fpath, { format: 'png', matte: 'white' })
+  chart.destroy()
 }
 
 interface Crop {

@@ -15,6 +15,7 @@ import puppeteer, {
   CDPSession,
   CookieParam,
   ElementHandle,
+  ImageFormat,
   KeyInput,
   Metrics,
   Page,
@@ -1921,7 +1922,7 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
     if (!page) {
       throw new Error(`Page ${index} not found`)
     }
-    const filePath = `/tmp/screenshot-${index}.${format}`
+    const filePath = `/tmp/screenshot-${index}.${format}` as `${string}.${ImageFormat}`
     await page.screenshot({
       path: filePath,
       fullPage: true,
