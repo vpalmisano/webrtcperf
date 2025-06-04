@@ -119,14 +119,14 @@ export class Server {
         log.error(`mkdir ${this.serverData} error: ${err.message}`)
       })
       this.app.get('/data', this.getDataArchive.bind(this))
-      this.app.get('/data/*', this.getData.bind(this))
+      this.app.get('/data/:path', this.getData.bind(this))
     }
     if (this.videoCachePath) {
       log.debug(`using videoCachePath: ${this.videoCachePath}`)
       fs.promises.mkdir(this.videoCachePath, { recursive: true }).catch(err => {
         log.error(`mkdir ${this.videoCachePath} error: ${err.message}`)
       })
-      this.app.get('/cache/*', this.getCache.bind(this))
+      this.app.get('/cache/:path', this.getCache.bind(this))
     }
 
     this.app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -429,7 +429,7 @@ export class Server {
    * content in tar.gz format.
    */
   private getData(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    const paramPath = path.normalize(req.params[0]).replace(/^(\.\.(\/|\\|$))+/, '')
+    const paramPath = path.normalize(req.params.path).replace(/^(\.\.(\/|\\|$))+/, '')
     log.debug(`GET /data/${paramPath}`, req.query)
     const fpath = path.resolve(this.serverData, paramPath)
     if (!fs.existsSync(fpath)) {
@@ -453,7 +453,7 @@ export class Server {
   }
 
   private getCache(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    const paramPath = path.normalize(req.params[0]).replace(/^(\.\.(\/|\\|$))+/, '')
+    const paramPath = path.normalize(req.params.path).replace(/^(\.\.(\/|\\|$))+/, '')
     log.debug(`GET /cache/${paramPath}`, req.query)
     const fpath = path.resolve(this.videoCachePath, paramPath)
     if (!fs.existsSync(fpath)) {
