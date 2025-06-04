@@ -6,7 +6,7 @@ export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
 export PATH="$PATH:${BUILDDIR}/depot_tools"
 
-export DEFAULT_BRANCH="tags/138.0.7162.1"
+export DEFAULT_BRANCH="tags/139.0.7219.1"
 
 function setup() {
     which gperf || sudo apt install -y gperf
@@ -18,7 +18,7 @@ function setup() {
     fi
     mkdir -p cd ${BUILDDIR}/src/chromium
     cd ${BUILDDIR}/src/chromium
-    fetch --nohooks chromium
+    fetch --nohooks --no-history chromium
     cd src
     ./build/install-build-deps.sh
     gclient runhooks
