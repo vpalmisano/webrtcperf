@@ -70,9 +70,16 @@ session, \`$i\` the tab absolute index.`,
   },
   customUrlHandler: {
     doc: `This argument specifies the file path for the custom page URL handler that will be exported by default. \
-The custom page URL handler allows you to define custom URLs that can be used to open your application, \
-and provides the following variables for customization: \`$p\`: the process pid, \`$s\`: the session index, \
-\`$S\`: the total sessions, \`$t\`: the tab index, \`$T\`: the total tabs per session, \`$i\`: the tab absolute index.
+The custom page URL handler allows you to define custom URLs that can be used to open your application. \
+The handler function will be called with the following variables: \
+- sessions: the total number of sessions; \
+- tabsPerSession: the total number of tabs per session; \
+- id: the session global index (0-indexed); \
+- index: the tab global index (0-indexed); \
+- tabIndex: the tab index in the current session (0-indexed); \
+- pid: the process pid; \
+- env: the environment variables object; \
+- params: the script parameters object. \
 You can use these variables to create custom URL schemes that suit your application's needs.`,
     format: String,
     default: '',
