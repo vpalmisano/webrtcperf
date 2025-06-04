@@ -45,6 +45,7 @@ brew install ffmpeg # MacOS
 webrtcperf \
     --url="https://meet.jit.si/${JITSI_ROOM_URL}#config.prejoinPageEnabled=false" \
     --sessions=1 \
+    --run-duration=60 \
     --display='' \
     --show-page-log=false
 # Press <q> to stop.
@@ -60,7 +61,7 @@ docker run -it --rm \
     --url="https://meet.jit.si/$JITSI_ROOM_URL#config.prejoinPageEnabled=false" \
     --show-page-log=false \
     --sessions=1 \
-    --tabs-per-session=1
+    --run-duration=60
 ```
 
 Stop the tool pressing `q` (normal browser close) or `x` (it will close the
@@ -155,7 +156,7 @@ docker run -it --rm --name=webrtcperf-publisher \
     --url=$MEDIASOUP_DEMO_URL \
     --url-query='roomId=test&displayName=Publisher($s-$t)' \
     --sessions=1 \
-    --tabs-per-session=1
+    --run-duration=60
 ```
 
 Starts 10 receive-only participants:
@@ -167,7 +168,8 @@ docker run -it --rm --name=webrtcperf-viewer \
     --url=$MEDIASOUP_DEMO_URL \
     --url-query='roomId=test&displayName=Viewer($s-$t)&produce=false' \
     --sessions=1 \
-    --tabs-per-session=10
+    --tabs-per-session=10 \
+    --run-duration=60
 ```
 
 ### Edumeet
@@ -183,7 +185,7 @@ docker run -it --rm \
     --url-query='displayName=Publisher($s-$t)' \
     --script-path=/scripts/edumeet-sendrecv.js \
     --sessions=1 \
-    --tabs-per-session=1
+    --run-duration=60
 ```
 
 Starts 10 receive-only participants:
@@ -197,7 +199,8 @@ docker run -it --rm \
     --url-query='displayName=Viewer($s-$t)' \
     --script-path=/scripts/edumeet-recv.js \
     --sessions=1 \
-    --tabs-per-session=10
+    --tabs-per-session=10 \
+    --run-duration=60
 ```
 
 ### Jitsi
@@ -211,7 +214,7 @@ docker run -it --rm \
     --url=$JITSI_ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
-    --tabs-per-session=1
+    --run-duration=60
 ```
 
 Starts 10 receive-only participants:
@@ -223,7 +226,8 @@ docker run -it --rm \
     --url=$ROOM_URL \
     --url-query='#config.prejoinPageEnabled=false&userInfo.displayName=Participant($s-$t)' \
     --sessions=1 \
-    --tabs-per-session=10
+    --tabs-per-session=10 \
+    --run-duration=60
 ```
 
 ## Running from source code
@@ -253,7 +257,7 @@ DEBUG_LEVEL=DEBUG:* yarn start \
     --url-query='displayName=SendRecv($s/$S-$t/$T)' \
     --script-path=./examples/edumeet-sendrecv.js \
     --sessions=1 \
-    --tabs-per-session=1
+    --run-duration=60
 
 # recv only
 DEBUG_LEVEL=DEBUG:* yarn start \
@@ -261,7 +265,8 @@ DEBUG_LEVEL=DEBUG:* yarn start \
     --url-query='displayName=Recv($s/$S-$t/$T)' \
     --script-path=./examples/edumeet-recv.js \
     --sessions=1 \
-    --tabs-per-session=10
+    --tabs-per-session=10 \
+    --run-duration=60
 ```
 
 ## Using the VMAF calculator
