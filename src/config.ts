@@ -376,7 +376,7 @@ on console. Regexp string allowed.`,
   userAgent: {
     doc: `The user agent override.`,
     format: String,
-    default: '',
+    default: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
     nullable: true,
     env: 'USER_AGENT',
     arg: 'user-agent',
