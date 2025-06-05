@@ -14,6 +14,10 @@ async function initGoogleMeet() {
   joinButton.click()
 }
 
+window.muteParticipant = muted => {
+  return webrtcperf.clickOn(`button[aria-label^="Turn ${muted ? 'off' : 'on'} microphone"]`, 100)
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   if (!document.location.href.startsWith('https://meet.google.com/')) {
     return
