@@ -177,7 +177,7 @@ export interface SessionParams {
   debuggingAddress: string
   randomAudioPeriod: number
   maxVideoDecoders: number
-  maxVideoDecodersAt: number
+  maxVideoDecodersRange: string
   incognito: boolean
   serverPort: number
   serverSecret: string
@@ -261,7 +261,7 @@ export class Session extends EventEmitter {
   private readonly debuggingAddress: string
   private readonly randomAudioPeriod: number
   private readonly maxVideoDecoders: number
-  private readonly maxVideoDecodersAt: number
+  private readonly maxVideoDecodersRange: string
   private readonly incognito: boolean
   private readonly serverPort: number
   private readonly serverSecret: string
@@ -391,7 +391,7 @@ export class Session extends EventEmitter {
     debuggingAddress,
     randomAudioPeriod,
     maxVideoDecoders,
-    maxVideoDecodersAt,
+    maxVideoDecodersRange,
     incognito,
     serverPort,
     serverSecret,
@@ -465,7 +465,7 @@ export class Session extends EventEmitter {
     this.userAgent = userAgent
     this.randomAudioPeriod = randomAudioPeriod
     this.maxVideoDecoders = maxVideoDecoders
-    this.maxVideoDecodersAt = maxVideoDecodersAt
+    this.maxVideoDecodersRange = maxVideoDecodersRange
     this.incognito = incognito
     this.serverPort = serverPort
     this.serverSecret = serverSecret
@@ -597,7 +597,7 @@ export class Session extends EventEmitter {
       env.CHROME_LOG_FILE = path.resolve(pageLogDir, `chrome-${this.id}.log`)
     }
 
-    if (this.maxVideoDecoders !== -1 && this.id >= this.maxVideoDecodersAt) {
+    if (this.maxVideoDecoders !== -1 && enabledForSession(this.id, this.maxVideoDecodersRange)) {
       fieldTrials = `WebRTC-MaxVideoDecoders/${this.maxVideoDecoders}/` + fieldTrials
     }
     if (fieldTrials.length) {

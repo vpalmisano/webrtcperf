@@ -282,12 +282,13 @@ The total decoders count is stored into the virtual file \`/dev/shm/chromium-vid
     env: 'MAX_VIDEO_DECODERS',
     arg: 'max-video-decoders',
   },
-  maxVideoDecodersAt: {
-    doc: `Applies the maxVideoDecoders option starting from this session \`ID\`.`,
-    format: Number,
-    default: -1,
-    env: 'MAX_VIDEO_DECODERS_AT',
-    arg: 'max-video-decoders-at',
+  maxVideoDecodersRange: {
+    doc: `It applies the max video decoders option to the sessions included into this list (default: include all the sessions)`,
+    format: 'index',
+    default: 'true',
+    nullable: true,
+    env: 'MAX_VIDEO_DECODERS_RANGE',
+    arg: 'max-video-decoders-range',
   },
   incognito: {
     doc: `Runs the browser in incognito mode.`,

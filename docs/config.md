@@ -22,8 +22,7 @@ The query string to append to the page url; the following template variables are
 *Default*: `""`
 
 ## customUrlHandler
-This argument specifies the file path for the custom page URL handler that will be exported by default. The custom page URL handler allows you to define custom URLs that can be used to open your application, and provides the following variables for customization: `$p`: the process pid, `$s`: the session index, `$S`: the total sessions, `$t`: the tab index, `$T`: the total tabs per session, `$i`: the tab absolute index.
-You can use these variables to create custom URL schemes that suit your application's needs.
+This argument specifies the file path for the custom page URL handler that will be exported by default. The custom page URL handler allows you to define custom URLs that can be used to open your application. The handler function will be called with the following variables: - sessions: the total number of sessions; - tabsPerSession: the total number of tabs per session; - id: the session global index (0-indexed); - index: the tab global index (0-indexed); - tabIndex: the tab index in the current session (0-indexed); - pid: the process pid; - env: the environment variables object; - params: the script parameters object. You can use these variables to create custom URL schemes that suit your application's needs.
 
 *Type*: `string`
 
@@ -120,7 +119,7 @@ A JSON5 string with a valid throtter configuration (https://github.com/vpalmisan
 *Default*: `""`
 
 ## randomAudioPeriod
-If not zero, it specifies the maximum period in seconds after which a new random active tab is selected, enabling the getUserMedia audio tracks in that tab and disabling all of the other tabs.
+If not zero, it specifies the maximum period in seconds after which a new random active session is selected, enabling the getUserMedia audio tracks in that session and disabling all of the others.
 
 *Type*: `positive int`
 
@@ -134,11 +133,11 @@ When using random audio period, it defines the probability % that the selected a
 *Default*: `100`
 
 ## randomAudioRange
-When using random audio period, it defines the number of pages to be included into the random selection.
+When using random audio period, it defines the session indexes to be included into the random selection (default: include all the sessions).
 
-*Type*: `positive int`
+*Type*: `index`
 
-*Default*: `0`
+*Default*: `"true"`
 
 ## chromiumPath
 The Chromium executable path.
@@ -152,7 +151,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"131.0.6778.204"`
+*Default*: `"136.0.7103.94"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -199,12 +198,12 @@ If set it will disable the received video resolution and jitter buffer stats. Th
 
 *Default*: `-1`
 
-## maxVideoDecodersAt
-Applies the maxVideoDecoders option starting from this session `ID`.
+## maxVideoDecodersRange
+Applies the maxVideoDecoders option to the sessions included into this list (default: include all the sessions).
 
-*Type*: `number`
+*Type*: `index`
 
-*Default*: `-1`
+*Default*: `"true"`
 
 ## incognito
 Runs the browser in incognito mode.
@@ -227,7 +226,7 @@ The number of browser sessions to start.
 
 *Type*: `positive int`
 
-*Default*: `1`
+*Default*: `0`
 
 ## tabsPerSession
 The number of tabs to open in each browser session.
@@ -255,7 +254,7 @@ If detailed participant metrics values should be collected.
 
 *Type*: `index`
 
-*Default*: `""`
+*Default*: `"0-24"`
 
 ## spawnRate
 The pages spawn rate (pages/s).
@@ -290,7 +289,7 @@ The user agent override.
 
 *Type*: `string`
 
-*Default*: `""`
+*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"`
 
 ## scriptPath
 One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `webrtcperf` global object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
@@ -426,6 +425,13 @@ The chrome debugging listening address. If unset, the network default interface 
 *Type*: `string`
 
 *Default*: `"127.0.0.1"`
+
+## emulateCpuThrottling
+The emulated CPU throttling factor. If set, the page will be throttled to the specified factor.
+
+*Type*: `positive int`
+
+*Default*: `0`
 
 ## showStats
 If the statistics should be displayed on the console output.
@@ -587,6 +593,13 @@ If true, the VMAF source files will not be deleted.
 *Type*: `boolean`
 
 *Default*: `true`
+
+## vmafSkipDuplicated
+If true, the VMAF will skip duplicated recognized frames.
+
+*Type*: `boolean`
+
+*Default*: `false`
 
 ## vmafCrop
 If set, the reference and degraded videos will be cropped using the specified configuration in JSON5 format. Crop configuration should be expressed using the ffmpeg crop filter syntax (https://ffmpeg.org/ffmpeg-filters.html#crop). E.g. `{ "Participant-000001_recv-by_Participant-000000': { ref: { w: "iw-10", h: "ih-5" }, deg: { w: "200", h: "200" } } }`
