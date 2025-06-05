@@ -1,8 +1,8 @@
 diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
-index c7c1c30175..43bc46b203 100644
+index 7d307c6d2c..5fa1e4d7b1 100644
 --- a/video/video_receive_stream2.cc
 +++ b/video/video_receive_stream2.cc
-@@ -106,6 +106,31 @@ namespace {
+@@ -66,6 +66,31 @@ namespace {
  constexpr TimeDelta kMinBaseMinimumDelay = TimeDelta::Zero();
  constexpr TimeDelta kMaxBaseMinimumDelay = TimeDelta::Seconds(10);
  
@@ -34,16 +34,16 @@ index c7c1c30175..43bc46b203 100644
  // Concrete instance of RecordableEncodedFrame wrapping needed content
  // from EncodedFrame.
  class WebRtcRecordableEncodedFrame : public RecordableEncodedFrame {
-@@ -183,7 +208,7 @@ class NullVideoDecoder : public VideoDecoder {
+@@ -135,7 +160,7 @@ class NullVideoDecoder : public webrtc::VideoDecoder {
  
-   int32_t Decode(const EncodedImage& input_image,
+   int32_t Decode(const webrtc::EncodedImage& input_image,
                   int64_t render_time_ms) override {
 -    RTC_LOG(LS_ERROR) << "The NullVideoDecoder doesn't support decoding.";
 +    RTC_LOG(LS_WARNING) << "The NullVideoDecoder doesn't support decoding.";
      return WEBRTC_VIDEO_CODEC_OK;
    }
  
-@@ -394,6 +419,20 @@ void VideoReceiveStream2::Start() {
+@@ -349,6 +374,20 @@ void VideoReceiveStream2::Start() {
      renderer = this;
    }
  
@@ -64,7 +64,7 @@ index c7c1c30175..43bc46b203 100644
    for (const Decoder& decoder : config_.decoders) {
      VideoDecoder::Settings settings;
      settings.set_codec_type(
-@@ -472,6 +511,9 @@ void VideoReceiveStream2::Stop() {
+@@ -427,6 +466,9 @@ void VideoReceiveStream2::Stop() {
      stats_proxy_.DecoderThreadStopped();
  
      UpdateHistograms();
@@ -74,7 +74,7 @@ index c7c1c30175..43bc46b203 100644
    }
  
    // TODO(bugs.webrtc.org/11993): Make these calls on the network thread.
-@@ -563,8 +605,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+@@ -518,8 +560,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
      const Decoder& decoder) {
    TRACE_EVENT0("webrtc",
                 "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
@@ -87,10 +87,10 @@ index c7c1c30175..43bc46b203 100644
    // that ignores all calls. The reason we can get into this state is that the
    // old decoder factory interface doesn't have a way to query supported
 diff --git a/video/video_receive_stream2.h b/video/video_receive_stream2.h
-index aae2b3e239..bc64478ffb 100644
+index 05e719c39c..80e151bed3 100644
 --- a/video/video_receive_stream2.h
 +++ b/video/video_receive_stream2.h
-@@ -299,6 +299,7 @@ class VideoReceiveStream2
+@@ -278,6 +278,7 @@ class VideoReceiveStream2
    RtpStreamsSynchronizer rtp_stream_sync_;
  
    std::unique_ptr<VideoStreamBufferController> buffer_;

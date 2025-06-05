@@ -6,7 +6,7 @@ export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
 export PATH="$PATH:${BUILDDIR}/depot_tools"
 
-export DEFAULT_BRANCH="tags/139.0.7219.1"
+export DEFAULT_BRANCH="tags/139.0.7220.1"
 
 function setup() {
     which gperf || sudo apt install -y gperf
@@ -73,7 +73,7 @@ function apply_patch() {
     local branch=${1:-${DEFAULT_BRANCH}}
     local filepath=${DIR}/max-video-decoders_$(echo ${branch} | sed s/'tags\/'//).patch
     if [ ! -f ${filepath} ]; then
-        echo "WARN: patch file not found: ${filepath}, using patch for main branch"
+        echo "INFO: patch file not found: ${filepath}, using default patch"
         filepath=${DIR}/max-video-decoders_main.patch
     fi
     cd ${CHROMIUM_SRC}/third_party/webrtc
@@ -93,12 +93,10 @@ function update() {
     git checkout main
     git pull
     cd ${CHROMIUM_SRC}
-    git checkout main
-    git pull
     git fetch --tags
     git checkout ${branch}
     git pull origin ${branch}
-    gclient sync -D --force --reset
+    gclient sync -D --force --reset --no-history --revision=${branch}
     apply_patch ${branch}
 }
 
