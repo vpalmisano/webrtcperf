@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!document.location.href.startsWith('https://meet.google.com/')) {
     return
   }
+  await webrtcperf.setupActions()
   while (true) {
     await initGoogleMeet()
     await webrtcperf.sleep(2000)
