@@ -190,8 +190,8 @@ seconds.`,
   },
   randomAudioPeriod: {
     doc: `If not zero, it specifies the maximum period in seconds after which \
-a new random active tab is selected, enabling the getUserMedia audio tracks in \
-that tab and disabling all of the other tabs.`,
+a new random active session is selected, enabling the getUserMedia audio tracks in \
+that session and disabling all of the others.`,
     format: 'nat',
     default: 0,
     env: 'RANDOM_AUDIO_PERIOD',
@@ -206,10 +206,11 @@ the selected audio will be activated (value: 0-100).`,
     arg: 'random-audio-probability',
   },
   randomAudioRange: {
-    doc: `When using random audio period, it defines the number of pages \
-to be included into the random selection.`,
-    format: 'nat',
-    default: 0,
+    doc: `When using random audio period, it defines the session indexes \
+to be included into the random selection (default: include all the sessions).`,
+    format: 'index',
+    default: 'true',
+    nullable: true,
     env: 'RANDOM_AUDIO_RANGE',
     arg: 'random-audio-range',
   },
@@ -344,7 +345,7 @@ calculated using \`Date.now()\``,
   enableDetailedStats: {
     doc: `If detailed participant metrics values should be collected.`,
     format: 'index',
-    default: '',
+    default: '0-24',
     nullable: true,
     env: 'ENABLE_DETAILED_STATS',
     arg: 'enable-detailed-stats',

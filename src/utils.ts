@@ -255,7 +255,7 @@ export function startRandomActivateAudio(
   sessions: Map<number, Session>,
   randomAudioPeriod: number,
   randomAudioProbability: number,
-  randomAudioRange: number,
+  randomAudioRange: string,
 ): void {
   if (randomActivateAudioRunning) return
   randomActivateAudioRunning = true
@@ -272,13 +272,13 @@ export function stopRandomActivateAudio(): void {
  * @param sessions The sessions Map
  * @param randomAudioPeriod If set, the function will be called in loop
  * @param randomAudioProbability The activation probability
- * @param randomAudioRange The number of pages to include into the automation
+ * @param randomAudioRange The page indexes to include into the automation
  */
 export async function randomActivateAudio(
   sessions: Map<number, Session>,
   randomAudioPeriod: number,
   randomAudioProbability: number,
-  randomAudioRange: number,
+  randomAudioRange: string,
 ): Promise<void> {
   if (!randomAudioPeriod || !randomActivateAudioRunning) {
     return
@@ -287,13 +287,9 @@ export async function randomActivateAudio(
     let pages: (Page | null)[] = []
     for (const session of sessions.values()) {
       const sessionPages = [...session.pages.values()]
-      if (randomAudioRange) {
-        if (session.id > randomAudioRange) {
-          break
-        }
-        sessionPages.splice(randomAudioRange - session.id)
+      if (enabledForSession(session.id, randomAudioRange)) {
+        pages = pages.concat(sessionPages)
       }
-      pages = pages.concat(sessionPages)
     }
     // Remove pages with no audio tracks.
     for (const [i, page] of pages.entries()) {
