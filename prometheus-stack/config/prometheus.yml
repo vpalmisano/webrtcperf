@@ -24,7 +24,7 @@ scrape_configs:
   static_configs:
   - targets: ['process-exporter:9256']
 - job_name: 'pushgateway'
-  scrape_interval: 15s
+  scrape_interval: 5s
   honor_labels: true
   scheme: http
   static_configs:
