@@ -795,10 +795,12 @@ export class Stats extends events.EventEmitter {
     this.collectedStatsConfig.pages = 0
     this.collectedStatsConfig.startTime = this.startTimestamp
     // Reset collectedStats object.
-    Object.values(this.collectedStats).forEach(stats => {
+    const prevByParticipantAndTrackStats = {} as Record<string, Set<string>>
+    Object.entries(this.collectedStats).forEach(([name, stats]) => {
       stats.all.reset()
       Object.values(stats.byHost).forEach(s => s.reset())
       Object.values(stats.byCodec).forEach(s => s.reset())
+      prevByParticipantAndTrackStats[name] = new Set(Object.keys(stats.byParticipantAndTrack))
       stats.byParticipantAndTrack = {}
     })
     for (const [sessionId, session] of this.sessions.entries()) {
@@ -812,6 +814,7 @@ export class Stats extends events.EventEmitter {
         //log.log(name, obj)
         try {
           const collectedStats = this.collectedStats[name]
+          const prevByParticipantAndTrack = prevByParticipantAndTrackStats[name]
           if (typeof obj === 'number' && isFinite(obj)) {
             collectedStats.all.push(obj)
           } else {
@@ -828,7 +831,9 @@ export class Stats extends events.EventEmitter {
                 stats.push(value)
                 // Push participant and track values.
                 if (enabledForSession(sessionId, this.enableDetailedStats) && participantName) {
-                  collectedStats.byParticipantAndTrack[`${participantName}:${trackId || ''}`] = value
+                  const label = `${participantName}:${trackId || ''}`
+                  collectedStats.byParticipantAndTrack[label] = value
+                  prevByParticipantAndTrack.delete(label)
                 }
               } else if (typeof value === 'string') {
                 // Codec stats.
@@ -869,6 +874,7 @@ export class Stats extends events.EventEmitter {
           return
         }
         const collectedStats = this.collectedStats[name]
+        const prevByParticipantAndTrack = prevByParticipantAndTrackStats[name]
         collectedStats.all.push(stats.all)
         Object.entries(stats.byHost).forEach(([host, values]) => {
           if (!collectedStats.byHost[host]) {
@@ -884,6 +890,7 @@ export class Stats extends events.EventEmitter {
         })
         Object.entries(stats.byParticipantAndTrack).forEach(([label, value]) => {
           collectedStats.byParticipantAndTrack[label] = value
+          prevByParticipantAndTrack.delete(label)
         })
       })
     }
@@ -930,7 +937,7 @@ export class Stats extends events.EventEmitter {
     await Promise.allSettled([
       this.writeStats(),
       this.writeDetailedStats(),
-      this.sendToPushGateway(),
+      this.sendToPushGateway(prevByParticipantAndTrackStats),
       this.writeAlertRulesReport(),
     ])
   }
@@ -1062,7 +1069,7 @@ export class Stats extends events.EventEmitter {
   /**
    * sendToPushGateway
    */
-  async sendToPushGateway(): Promise<void> {
+  async sendToPushGateway(removedByParticipantAndTrackStats: Record<string, Set<string>>): Promise<void> {
     if (!this.gateway || !this.running) {
       return
     }
@@ -1107,6 +1114,20 @@ export class Stats extends events.EventEmitter {
             value,
           )
         })
+      }
+
+      // Remove metrics for removed participants and tracks.
+      const removedByParticipantAndTrack = removedByParticipantAndTrackStats[name]
+      if (removedByParticipantAndTrack) {
+        for (const label of removedByParticipantAndTrack) {
+          const [participantName, trackId] = label.split(':', 2)
+          metric.value?.remove({
+            participantName,
+            trackId,
+            datetime,
+            ...this.customMetricsLabels,
+          })
+        }
       }
 
       // Set alerts metrics.
