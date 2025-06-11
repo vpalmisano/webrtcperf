@@ -1,0 +1,29 @@
+sessions: 2
+runDuration: 300
+url: 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345&displayName=Participant-$i'
+debuggingPort: 9000
+prometheusPushgateway: 'http://localhost:9091'
+showPageLog: false
+showStats: false
+statsInterval: 5
+throttleConfig: |
+    [{
+        sessions: "0",
+        protocol: "udp",
+        down: [
+            { rate: 1000, delay: 100, queue: 50 },
+        ]
+    }]
+alertRules: |
+    {
+        peerConnections: {
+            tags: ["connectivity"],
+            sum: { "$eq": 4, "$after": 30 },
+        },
+        videoRecvBitrates: {
+            tags: ["quality"],
+            length: { "$eq": 2, "$after": 30 },
+            p5: { "$gt": 400000, "$lt": 1000000, "$after": 30 },
+        },
+    }
+alertRulesFilename: 'results.json'
