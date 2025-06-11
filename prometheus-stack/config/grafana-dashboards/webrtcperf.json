@@ -2150,7 +2150,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -2232,7 +2232,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -2314,7 +2314,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -2396,7 +2396,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -3661,7 +3661,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -3743,7 +3743,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -3825,7 +3825,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -5150,7 +5150,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -5232,7 +5232,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -5314,7 +5314,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -6764,7 +6764,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -6860,7 +6860,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -6956,7 +6956,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -7038,7 +7038,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -7120,7 +7120,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -7183,11 +7183,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -7196,6 +7198,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -7285,11 +7288,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
-          "pluginVersion": "8.1.2",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -7330,11 +7334,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -7343,6 +7349,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -7394,10 +7401,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -7426,11 +7435,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -7439,6 +7450,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -7598,10 +7610,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -7667,11 +7681,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -7680,6 +7696,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -7832,11 +7849,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
-          "pluginVersion": "8.1.2",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -7902,11 +7920,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -7915,6 +7935,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -8063,10 +8084,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -8120,11 +8143,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -8133,6 +8158,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -8251,10 +8277,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -8348,16 +8376,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -8427,16 +8458,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -8506,16 +8540,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -8545,11 +8582,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -8558,6 +8597,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -8713,10 +8753,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -8782,11 +8824,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -8795,6 +8839,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -8950,10 +8995,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9019,11 +9066,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -9032,6 +9081,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -9187,10 +9237,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9256,11 +9308,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -9269,6 +9323,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -9402,10 +9457,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9471,11 +9528,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -9484,6 +9543,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -9615,10 +9675,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9684,11 +9746,13 @@
                 "mode": "palette-classic"
               },
               "custom": {
+                "axisBorderShow": false,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
                 "barAlignment": 0,
+                "barWidthFactor": 0.6,
                 "drawStyle": "line",
                 "fillOpacity": 0,
                 "gradientMode": "none",
@@ -9697,6 +9761,7 @@
                   "tooltip": false,
                   "viz": false
                 },
+                "insertNulls": false,
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
@@ -9747,11 +9812,12 @@
               "showLegend": true
             },
             "tooltip": {
+              "hideZeros": false,
               "mode": "single",
               "sort": "none"
             }
           },
-          "pluginVersion": "8.1.2",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9833,16 +9899,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9912,16 +9981,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -9991,16 +10063,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -10070,16 +10145,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -10149,16 +10227,19 @@
             "graphMode": "area",
             "justifyMode": "auto",
             "orientation": "auto",
+            "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
             },
-            "textMode": "name"
+            "showPercentChange": false,
+            "textMode": "name",
+            "wideLayout": true
           },
-          "pluginVersion": "9.3.1",
+          "pluginVersion": "12.0.1",
           "targets": [
             {
               "datasource": {
@@ -11505,7 +11586,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -11588,7 +11669,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -11670,7 +11751,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -11766,7 +11847,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -11848,7 +11929,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -12295,6 +12376,34 @@
                     10
                   ],
                   "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "P5",
+                  "min",
+                  "max",
+                  "videoRecvBitrates p5 <",
+                  "videoRecvBitrates p5 >"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
                 }
               }
             ]
@@ -13211,7 +13320,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -13293,7 +13402,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -13389,7 +13498,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -13485,7 +13594,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -13567,7 +13676,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -14844,7 +14953,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -14940,7 +15049,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -15036,7 +15145,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -15142,7 +15251,7 @@
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "mean"
           ],
           "fields": "",
           "values": false
@@ -15278,7 +15387,7 @@
             "h": 6,
             "w": 4,
             "x": 0,
-            "y": 57
+            "y": 71
           },
           "id": 137,
           "options": {
@@ -15387,7 +15496,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 57
+            "y": 71
           },
           "id": 140,
           "options": {
@@ -15587,7 +15696,7 @@
             "h": 6,
             "w": 4,
             "x": 8,
-            "y": 57
+            "y": 71
           },
           "id": 141,
           "options": {
@@ -15828,7 +15937,7 @@
             "h": 6,
             "w": 4,
             "x": 12,
-            "y": 57
+            "y": 71
           },
           "id": 142,
           "options": {
@@ -16069,7 +16178,7 @@
             "h": 6,
             "w": 4,
             "x": 16,
-            "y": 57
+            "y": 71
           },
           "id": 143,
           "options": {
@@ -16310,7 +16419,7 @@
             "h": 6,
             "w": 4,
             "x": 20,
-            "y": 57
+            "y": 71
           },
           "id": 144,
           "options": {
@@ -16425,7 +16534,7 @@
             "h": 1,
             "w": 4,
             "x": 0,
-            "y": 63
+            "y": 77
           },
           "id": 138,
           "options": {
@@ -16435,7 +16544,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -16504,7 +16613,7 @@
             "h": 1,
             "w": 4,
             "x": 8,
-            "y": 63
+            "y": 77
           },
           "id": 145,
           "options": {
@@ -16514,7 +16623,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -16583,7 +16692,7 @@
             "h": 1,
             "w": 4,
             "x": 12,
-            "y": 63
+            "y": 77
           },
           "id": 104,
           "options": {
@@ -16593,7 +16702,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -16662,7 +16771,7 @@
             "h": 1,
             "w": 4,
             "x": 16,
-            "y": 63
+            "y": 77
           },
           "id": 147,
           "options": {
@@ -16672,7 +16781,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -16741,7 +16850,7 @@
             "h": 1,
             "w": 4,
             "x": 20,
-            "y": 63
+            "y": 77
           },
           "id": 148,
           "options": {
@@ -16751,7 +16860,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -16947,7 +17056,7 @@
             "h": 6,
             "w": 4,
             "x": 0,
-            "y": 64
+            "y": 78
           },
           "id": 139,
           "options": {
@@ -17189,7 +17298,7 @@
             "h": 6,
             "w": 4,
             "x": 4,
-            "y": 64
+            "y": 78
           },
           "id": 150,
           "options": {
@@ -17431,7 +17540,7 @@
             "h": 6,
             "w": 4,
             "x": 8,
-            "y": 64
+            "y": 78
           },
           "id": 152,
           "options": {
@@ -17588,7 +17697,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 64
+            "y": 78
           },
           "id": 153,
           "options": {
@@ -17679,7 +17788,7 @@
             "h": 1,
             "w": 4,
             "x": 0,
-            "y": 70
+            "y": 84
           },
           "id": 149,
           "options": {
@@ -17689,7 +17798,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -17758,7 +17867,7 @@
             "h": 1,
             "w": 4,
             "x": 4,
-            "y": 70
+            "y": 84
           },
           "id": 151,
           "options": {
@@ -17768,7 +17877,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -17837,7 +17946,7 @@
             "h": 1,
             "w": 4,
             "x": 8,
-            "y": 70
+            "y": 84
           },
           "id": 156,
           "options": {
@@ -17847,7 +17956,7 @@
             "orientation": "auto",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -18073,7 +18182,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 58
+            "y": 72
           },
           "id": 197,
           "options": {
@@ -18296,7 +18405,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 58
+            "y": 72
           },
           "id": 220,
           "options": {
@@ -18519,7 +18628,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 58
+            "y": 72
           },
           "id": 224,
           "options": {
@@ -18705,7 +18814,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 58
+            "y": 72
           },
           "id": 239,
           "options": {
@@ -18934,7 +19043,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 58
+            "y": 72
           },
           "id": 225,
           "options": {
@@ -19135,7 +19244,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 58
+            "y": 72
           },
           "id": 211,
           "options": {
@@ -19387,7 +19496,7 @@
             "h": 6,
             "w": 3,
             "x": 0,
-            "y": 66
+            "y": 80
           },
           "id": 174,
           "options": {
@@ -19626,7 +19735,7 @@
             "h": 6,
             "w": 3,
             "x": 3,
-            "y": 66
+            "y": 80
           },
           "id": 168,
           "options": {
@@ -19865,7 +19974,7 @@
             "h": 6,
             "w": 3,
             "x": 6,
-            "y": 66
+            "y": 80
           },
           "id": 180,
           "options": {
@@ -20013,7 +20122,7 @@
             "h": 7,
             "w": 3,
             "x": 9,
-            "y": 66
+            "y": 80
           },
           "id": 184,
           "options": {
@@ -20238,7 +20347,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 66
+            "y": 80
           },
           "id": 196,
           "options": {
@@ -20469,7 +20578,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 66
+            "y": 80
           },
           "id": 208,
           "options": {
@@ -20740,7 +20849,7 @@
             "h": 6,
             "w": 4,
             "x": 20,
-            "y": 66
+            "y": 80
           },
           "id": 206,
           "options": {
@@ -20890,7 +20999,7 @@
             "h": 1,
             "w": 3,
             "x": 0,
-            "y": 72
+            "y": 86
           },
           "id": 176,
           "options": {
@@ -20901,7 +21010,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -20972,7 +21081,7 @@
             "h": 1,
             "w": 3,
             "x": 3,
-            "y": 72
+            "y": 86
           },
           "id": 177,
           "options": {
@@ -20983,7 +21092,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -21054,7 +21163,7 @@
             "h": 1,
             "w": 3,
             "x": 6,
-            "y": 72
+            "y": 86
           },
           "id": 181,
           "options": {
@@ -21065,7 +21174,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -21136,7 +21245,7 @@
             "h": 1,
             "w": 4,
             "x": 20,
-            "y": 72
+            "y": 86
           },
           "id": 248,
           "options": {
@@ -21147,7 +21256,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -21350,7 +21459,7 @@
             "h": 6,
             "w": 3,
             "x": 0,
-            "y": 73
+            "y": 87
           },
           "id": 169,
           "options": {
@@ -21647,7 +21756,7 @@
             "h": 6,
             "w": 3,
             "x": 3,
-            "y": 73
+            "y": 87
           },
           "id": 175,
           "options": {
@@ -21959,7 +22068,7 @@
             "h": 6,
             "w": 3,
             "x": 6,
-            "y": 73
+            "y": 87
           },
           "id": 182,
           "options": {
@@ -22117,7 +22226,7 @@
             "h": 7,
             "w": 3,
             "x": 9,
-            "y": 73
+            "y": 87
           },
           "id": 185,
           "options": {
@@ -22307,7 +22416,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 73
+            "y": 87
           },
           "id": 223,
           "options": {
@@ -22596,7 +22705,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 73
+            "y": 87
           },
           "id": 221,
           "options": {
@@ -22885,7 +22994,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 73
+            "y": 87
           },
           "id": 222,
           "options": {
@@ -23084,7 +23193,7 @@
             "h": 1,
             "w": 3,
             "x": 0,
-            "y": 79
+            "y": 93
           },
           "id": 178,
           "options": {
@@ -23095,7 +23204,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -23166,7 +23275,7 @@
             "h": 1,
             "w": 3,
             "x": 3,
-            "y": 79
+            "y": 93
           },
           "id": 179,
           "options": {
@@ -23177,7 +23286,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -23248,7 +23357,7 @@
             "h": 1,
             "w": 3,
             "x": 6,
-            "y": 79
+            "y": 93
           },
           "id": 183,
           "options": {
@@ -23259,7 +23368,7 @@
             "percentChangeColorMode": "standard",
             "reduceOptions": {
               "calcs": [
-                "lastNotNull"
+                "mean"
               ],
               "fields": "",
               "values": false
@@ -23299,8 +23408,7 @@
     "list": [
       {
         "current": {
-          "isNone": true,
-          "text": "None",
+          "text": "",
           "value": ""
         },
         "datasource": {
@@ -23324,8 +23432,7 @@
       },
       {
         "current": {
-          "isNone": true,
-          "text": "None",
+          "text": "",
           "value": ""
         },
         "datasource": {
@@ -23356,5 +23463,5 @@
   "timezone": "",
   "title": "WebrtcPerf",
   "uid": "webrtcperf",
-  "version": 1
+  "version": 2
 }
