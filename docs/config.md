@@ -199,7 +199,7 @@ If set it will disable the received video resolution and jitter buffer stats. Th
 *Default*: `-1`
 
 ## maxVideoDecodersRange
-Applies the maxVideoDecoders option to the sessions included into this list (default: include all the sessions).
+It applies the max video decoders option to the sessions included into this list (default: include all the sessions)
 
 *Type*: `index`
 
@@ -213,7 +213,7 @@ Runs the browser in incognito mode.
 *Default*: `false`
 
 ## display
-If unset, the browser will run in headless mode.
+If unset, the browser will run in headless mode, otherwise it will run in normal windowed mode.
 When running on MacOS or Windows, set it to any not-empty string.
 On Linux, set it to a valid X server `DISPLAY` string (e.g. `:0`).
 
@@ -271,16 +271,23 @@ If `true`, the pages console logs will be shown on console.
 *Default*: `true`
 
 ## pageLogFilter
-If set, only the logs with the matching text will be printed on console. Regexp string allowed.
+If set, only the logs with the matching text will be printed on the console. Regexp string allowed.
 
 *Type*: `string`
 
 *Default*: `""`
 
 ## pageLogPath
-If set, page console logs will be saved on the selected file path.
+If set, the page console logs will be saved on the selected file path.
 
 *Type*: `string`
+
+*Default*: `""`
+
+## enableBrowserLogging
+It enables the Chromium browser logging for the specified session indexes. It requires the page log path option to be set. 
+
+*Type*: `index`
 
 *Default*: `""`
 
@@ -338,13 +345,6 @@ If true, all the page cookies are cleared.
 It enables the GPU acceleration (experimental). Set to "desktop" to use the host X server instance.
 
 *Type*: `string`
-
-*Default*: `""`
-
-## enableBrowserLogging
-It enables the Chromium browser logging for the specified session indexes.
-
-*Type*: `index`
 
 *Default*: `""`
 
@@ -510,8 +510,8 @@ Alert rules definition (in JSON format).
 
 *Default*: `""`
 
-## alertRulesFilename
-The alert rules report output filename.
+## alertRulesOutput
+The alert rules report output filename. If the file ends with .log extension, a detailed log will be generated, otherwise a JSON report will be generated.
 
 *Type*: `string`
 

@@ -657,13 +657,13 @@ service (example: "http://127.0.0.1:9091").`,
     env: 'ALERT_RULES',
     arg: 'alert-rules',
   },
-  alertRulesFilename: {
-    doc: `The alert rules report output filename.`,
+  alertRulesOutput: {
+    doc: `The alert rules report output filename. If the file ends with .log extension, a detailed log will be generated, otherwise a JSON report will be generated.`,
     format: String,
     nullable: true,
     default: '',
-    env: 'ALERT_RULES_FILENAME',
-    arg: 'alert-rules-filename',
+    env: 'ALERT_RULES_OUTPUT',
+    arg: 'alert-rules-output',
   },
   alertRulesFailPercentile: {
     doc: `The alert rules report fails percentile (0-100). With the default value the \

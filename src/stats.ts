@@ -331,7 +331,7 @@ export class Stats extends events.EventEmitter {
   private scheduler?: Scheduler
 
   private alertRules: Record<string, AlertRule> | null = null
-  readonly alertRulesFilename: string
+  readonly alertRulesOutput: string
   private readonly alertRulesFailPercentile: number
   private readonly pushStatsUrl: string
   private readonly pushStatsId: string
@@ -414,7 +414,7 @@ export class Stats extends events.EventEmitter {
     rtcStatsTimeout,
     customMetrics,
     alertRules,
-    alertRulesFilename,
+    alertRulesOutput,
     alertRulesFailPercentile,
     pushStatsUrl,
     pushStatsId,
@@ -436,7 +436,7 @@ export class Stats extends events.EventEmitter {
     rtcStatsTimeout: number
     customMetrics: string
     alertRules: string
-    alertRulesFilename: string
+    alertRulesOutput: string
     alertRulesFailPercentile: number
     pushStatsUrl: string
     pushStatsId: string
@@ -487,7 +487,7 @@ export class Stats extends events.EventEmitter {
       this.alertRules = json5.parse(alertRules)
       log.debug(`using alertRules: ${JSON.stringify(this.alertRules, undefined, 2)}`)
     }
-    this.alertRulesFilename = alertRulesFilename
+    this.alertRulesOutput = alertRulesOutput
     this.alertRulesFailPercentile = alertRulesFailPercentile
     this.pushStatsUrl = pushStatsUrl
     this.pushStatsId = pushStatsId
@@ -1616,12 +1616,12 @@ export class Stats extends events.EventEmitter {
    * writeAlertRulesReport
    */
   async writeAlertRulesReport(): Promise<void> {
-    if (!this.alertRules || !this.alertRulesFilename || !this.running) {
+    if (!this.alertRules || !this.alertRulesOutput || !this.running) {
       return
     }
-    log.debug(`writeAlertRulesReport writing in ${this.alertRulesFilename}`)
+    log.debug(`writeAlertRulesReport writing in ${this.alertRulesOutput}`)
     try {
-      const ext = this.alertRulesFilename.split('.').slice(-1)[0]
+      const ext = this.alertRulesOutput.split('.').slice(-1)[0]
       const report = this.formatAlertRulesReport(ext)
       if (!report.length) {
         return
@@ -1641,10 +1641,10 @@ export class Stats extends events.EventEmitter {
       } else {
         out = report
       }
-      await fs.promises.mkdir(path.dirname(this.alertRulesFilename), {
+      await fs.promises.mkdir(path.dirname(this.alertRulesOutput), {
         recursive: true,
       })
-      await fs.promises.writeFile(this.alertRulesFilename, out)
+      await fs.promises.writeFile(this.alertRulesOutput, out)
     } catch (err) {
       log.error(`writeAlertRulesReport error: ${(err as Error).stack}`)
     }

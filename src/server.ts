@@ -392,14 +392,14 @@ export class Server {
   /**
    * GET /download/alert-rules endpoint.
    *
-   * Downloads the alert rules report stored into the {@link Stats.alertRulesFilename}.
+   * Downloads the alert rules report stored into the {@link Stats.alertRulesOutput}.
    */
   private getAlertRules(req: express.Request, res: express.Response, next: express.NextFunction): void {
     log.debug(`GET /download/alert-rules`, req.query)
-    if (!this.stats.alertRulesFilename) {
-      return next(new Error('Stats alertRulesFilename not set'))
+    if (!this.stats.alertRulesOutput) {
+      return next(new Error('Stats alertRulesOutput not set'))
     }
-    res.download(this.stats.alertRulesFilename)
+    res.download(this.stats.alertRulesOutput)
   }
 
   /**
