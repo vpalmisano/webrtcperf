@@ -376,6 +376,8 @@ export interface DownloadData {
   end: number
   /** Total returned size. */
   total: number
+  /** Content type. */
+  contentType: string
 }
 
 /**
@@ -448,12 +450,13 @@ export async function downloadUrl(
   } else {
     /* log.debug(`downloadUrl ${response.data.length} bytes, headers=${
       JSON.stringify(response.headers)}`); */
+    const contentType = response.headers['content-type']
     let start = 0
     let end = 0
     let total = 0
     if (response.headers['content-range']) {
-      log.debug(`downloadUrl ${response.data.length} bytes, content-range=${response.headers['content-range']}`)
       const contentRange = response.headers['content-range'].split('/')
+      log.debug(`downloadUrl ${response.data.length} bytes, contentType=${contentType}, contentRange=${contentRange}`)
       const rangeParts = contentRange[0].split('-')
       total = parseInt(contentRange[1])
       if (rangeParts.length === 2) {
@@ -471,6 +474,7 @@ export async function downloadUrl(
       start,
       end,
       total,
+      contentType,
     }
   }
 }

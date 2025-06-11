@@ -868,7 +868,16 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
     if (filePath.startsWith('http')) {
       log.debug(`Loading config from url: ${filePath}`)
       const res = await downloadUrl(filePath)
-      configSchema.load(res)
+      if (!res?.data) {
+        throw new Error(`Failed to download configuration from: ${filePath}`)
+      }
+      const values =
+        res.contentType === 'application/x-yaml'
+          ? yaml.parse(res.data)
+          : res.contentType === 'application/toml'
+            ? toml.parse(res.data)
+            : json5.parse(res.data)
+      configSchema.load(values)
     } else if (existsSync(filePath)) {
       log.debug(`Loading config from local file: ${filePath}`)
       configSchema.loadFile(filePath)
