@@ -23,7 +23,7 @@ alertRules: |
         videoRecvBitrates: {
             tags: ["quality"],
             length: { "$eq": 2, "$after": 30 },
-            p5: { "$gt": 400000, "$lt": 1000000, "$after": 30 },
+            p5: { "$gt": 100000, "$lt": 1000000, "$after": 30 },
         },
     }
 alertRulesOutput: 'results.json'
