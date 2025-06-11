@@ -307,13 +307,12 @@ The total decoders count is stored into the virtual file \`/dev/shm/chromium-vid
     arg: 'incognito',
   },
   display: {
-    doc: `If unset, the browser will run in headless mode.
+    doc: `If unset, the browser will run in headless mode, otherwise it will run in normal windowed mode.
 When running on MacOS or Windows, set it to any not-empty string.
 On Linux, set it to a valid X server \`DISPLAY\` string (e.g. \`:0\`).`,
     format: String,
     default: '',
     nullable: true,
-    env: 'DISPLAY',
     arg: 'display',
   },
   /* audioRedForOpus: {
