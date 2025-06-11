@@ -189,7 +189,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 async function main(): Promise<void> {
   showHelpOrVersion()
 
-  const config = loadConfig(process.argv[2])
+  const config = await loadConfig(process.argv[2])
 
   if (config.vmafPrepareVideo) {
     await prepareVideo(config, true)

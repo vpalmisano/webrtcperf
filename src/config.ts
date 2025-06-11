@@ -3,11 +3,14 @@ import { ipaddress, url } from 'convict-format-with-validator'
 import { existsSync } from 'fs'
 import os from 'os'
 import { join } from 'path'
+import json5 from 'json5'
+import yaml from 'yaml'
+import toml from 'toml'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const puppeteer = require('puppeteer-core')
 
-import { logger } from './utils'
+import { downloadUrl, logger } from './utils'
 const log = logger('webrtcperf:config')
 
 const float = {
@@ -46,6 +49,12 @@ const index = {
 }
 
 addFormats({ ipaddress, url, float, index })
+
+convict.addParser([
+  { extension: 'json', parse: json5.parse },
+  { extension: ['yml', 'yaml'], parse: yaml.parse },
+  { extension: 'toml', parse: toml.parse },
+])
 
 // config schema
 const configSchema = convict({
@@ -855,15 +864,21 @@ export type Config = typeof _schemaProperties
  * Loads the config object.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function loadConfig(filePath?: string, values?: any): Config {
-  if (filePath && existsSync(filePath)) {
-    log.debug(`Loading config from ${filePath}`)
-    configSchema.loadFile(filePath)
+export async function loadConfig(filePath?: string, values?: any): Promise<Config> {
+  if (filePath) {
+    if (filePath.startsWith('http')) {
+      log.debug(`Loading config from url: ${filePath}`)
+      const res = await downloadUrl(filePath)
+      configSchema.load(res)
+    } else if (existsSync(filePath)) {
+      log.debug(`Loading config from local file: ${filePath}`)
+      configSchema.loadFile(filePath)
+    }
   } else if (values) {
     log.debug('Loading config from values.')
     configSchema.load(values)
   } else {
-    log.debug('Using default values.')
+    log.debug('Loading config from default values.')
     configSchema.load({})
   }
 

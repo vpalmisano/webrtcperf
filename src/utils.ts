@@ -609,7 +609,7 @@ SIGNALS.forEach(event =>
 export async function checkChromeExecutable(): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { loadConfig } = require('./config')
-  const config = loadConfig()
+  const config = await loadConfig()
   const cacheDir = path.join(os.homedir(), '.webrtcperf/chrome')
 
   const fixSemVer = (v: string) => v.split('.').slice(0, 3).join('.')
