@@ -38,7 +38,7 @@ yarn start --help
 ## Command line usage
 
 The command line arguments can be explicitly provided using the lower snake case format (e.g. `--run-duration=` or setting the corresponding environment variable in upper snake case format (`RUN_DURATION=`). The command line params have precedence over the corresponding environment variables. Alternatively, it is possible to load the configuration variables saved in lower camel case into a local JSON/JSON5, YAML or TOML file; the file can also be stored remotely and loaded using its public HTTP URL.   
-Example running a simple scenario with Mediasoup demo ([https://github.com/vpalmisano/webrtcperf/blob/devel/examples/scenarios/mediasoup.json](https://github.com/vpalmisano/webrtcperf/blob/devel/examples/scenarios/mediasoup.json)):
+Example running a simple scenario with [Mediasoup demo](https://github.com/vpalmisano/webrtcperf/blob/devel/examples/scenarios/mediasoup.json):
 
 ```bash
 webrtcperf https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/scenarios/mediasoup.json
