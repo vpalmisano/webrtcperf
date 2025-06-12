@@ -30,6 +30,10 @@
     "theme": "default",
     "excludeNotDocumented": true,
     "hideGenerator": true,
-    "cleanOutputDir": true
+    "cleanOutputDir": true,
+    "plugin": [
+      "typedoc-plugin-ga"
+    ],
+    "gaID": "G-05SF29M4QB",
   }
 }
