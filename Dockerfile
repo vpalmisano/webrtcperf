@@ -132,7 +132,7 @@ COPY --from=ghcr.io/vpalmisano/webrtcperf-visqol:devel /src/visqol/model /usr/sh
 
 # Default test video.
 RUN mkdir -p /app/
-RUN curl -s -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/v2.0.4/video.mp4" \
+RUN curl -s -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/releases/download/videos-1.0/kt.mp4" \
     && ffprobe /app/video.mp4
 
 #
