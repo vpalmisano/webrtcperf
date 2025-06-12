@@ -1,10 +1,10 @@
-![logo](media/logo.svg "WebRTC Perf")
-# WebRTC Perf
+![logo](media/logo.svg "WebRtcPerf")
+# WebRtcPerf
 [GitHub page](https://github.com/vpalmisano/webrtcperf) | [Documentation](https://vpalmisano.github.io/webrtcperf)
 
 [![Build Docker image](https://github.com/vpalmisano/webrtcperf/actions/workflows/build.yaml/badge.svg)](https://github.com/vpalmisano/webrtcperf/actions/workflows/build.yaml)
 
-Webrtcperf is an open-source tool designed for testing WebRTC services with multiple concurrent client connections, measuring the most important RTC statistics and collecting them in an easy way. This documentation will dive into its multiple features and configuration options, showing you how to leverage this tool to gain valuable insights into your real-time communication solutions.
+WebRtcPerf is an open-source tool designed for testing WebRTC services with multiple concurrent client connections, measuring the most important RTC statistics and collecting them in an easy way. This documentation will dive into its multiple features and configuration options, showing you how to leverage this tool to gain valuable insights into your real-time communication solutions.
 
 ## Prerequisites and installation
 
