@@ -762,7 +762,7 @@ the reference and degraded versions.`,
   vmafCrop: {
     doc: `If set, the reference and degraded videos will be cropped using the specified configuration in JSON5 format. \
 Crop configuration should be expressed using the ffmpeg crop filter syntax (https://ffmpeg.org/ffmpeg-filters.html#crop). \
-E.g. \`{ "Participant-000001_recv-by_Participant-000000': { ref: { w: "iw-10", h: "ih-5" }, deg: { w: "200", h: "200" } } }\``,
+E.g. \`{ "Participant-000001_recv-by_Participant-000000": { ref: { w: "iw-10", h: "ih-5" }, deg: { w: "200", h: "200" } } }\``,
     format: String,
     nullable: true,
     default: '',
