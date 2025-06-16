@@ -2,7 +2,7 @@ import convict, { addFormats } from 'convict'
 import { ipaddress, url } from 'convict-format-with-validator'
 import { existsSync } from 'fs'
 import os from 'os'
-import { join } from 'path'
+import path, { join } from 'path'
 import json5 from 'json5'
 import yaml from 'yaml'
 import toml from 'toml'
@@ -880,7 +880,12 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
       configSchema.load(values)
     } else if (existsSync(filePath)) {
       log.debug(`Loading config from local file: ${filePath}`)
-      configSchema.loadFile(filePath)
+      if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
+        const module = await import(/* webpackIgnore: true */ path.resolve(filePath))
+        configSchema.load(await module.default(process.argv.slice(2)))
+      } else {
+        configSchema.loadFile(filePath)
+      }
     }
   } else if (values) {
     log.debug('Loading config from values.')

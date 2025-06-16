@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+config=$1
+configName=$(basename $config)
+output=${2:-$PWD/logs}
+
+export DEBUGGING_PORT=9000
+export PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091
+export SHOW_PAGE_LOG=false
+export SHOW_STATS=false
+export STATS_INTERVAL=5
+export SERVER_PORT=5000
+export SERVER_USE_HTTPS=true
+export SERVER_DATA=/data
+export VMAF_PATH=/data
+export VMAF_PREVIEW=true
+#export VMAF_KEEP_SOURCE_FILES=false
+
+echo "Running webrtcperf with config: $config and output: $output"
+
+if [ ! -f "$config" ]; then
+    echo "Config file $config does not exist."
+    exit 1
+fi
+if [ ! -d "$output" ]; then
+    mkdir -p "$output"
+fi
+
+docker pull ghcr.io/vpalmisano/webrtcperf:devel
+exec docker run -it --rm --name=webrtcperf \
+    -v /dev/shm:/dev/shm \
+    --cap-add=NET_ADMIN \
+    --net=prometheus-stack_default \
+    -p ${DEBUGGING_PORT} \
+    -v $(realpath $output):/data \
+    -v $(realpath $config):/config/$configName:ro \
+    -e URL \
+    -e DEBUGGING_PORT \
+    -e PROMETHEUS_PUSHGATEWAY \
+    -e SHOW_PAGE_LOG \
+    -e SHOW_STATS \
+    -e STATS_INTERVAL \
+    -e SERVER_PORT \
+    -e SERVER_USE_HTTPS \
+    -e SERVER_DATA \
+    -e VMAF_PATH \
+    -e VMAF_PREVIEW \
+    ghcr.io/vpalmisano/webrtcperf:devel \
+    /config/$configName
