@@ -1,9 +1,9 @@
 
-FROM --platform=$TARGETPLATFORM ubuntu:jammy AS visqol-build
-LABEL org.opencontainers.image.title webrtcperf-visqol
-LABEL org.opencontainers.image.description Visqol build.
-LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
-LABEL org.opencontainers.image.authors Vittorio Palmisano <vpalmisano@gmail.com>
+FROM ubuntu:jammy AS visqol-build
+LABEL org.opencontainers.image.title="webrtcperf-visqol"
+LABEL org.opencontainers.image.description="Visqol build."
+LABEL org.opencontainers.image.source="https://github.com/vpalmisano/webrtcperf"
+LABEL org.opencontainers.image.authors="Vittorio Palmisano <vpalmisano@gmail.com>"
 
 RUN \
     apt-get update \

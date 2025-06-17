@@ -1,8 +1,8 @@
-FROM --platform=$TARGETPLATFORM ubuntu:jammy AS ffmpeg-build
-LABEL org.opencontainers.image.title webrtcperf-ffmpeg
-LABEL org.opencontainers.image.description FFmpeg build with VMAF support.
-LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
-LABEL org.opencontainers.image.authors Vittorio Palmisano <vpalmisano@gmail.com>
+FROM ubuntu:noble AS ffmpeg-build
+LABEL org.opencontainers.image.title="webrtcperf-ffmpeg"
+LABEL org.opencontainers.image.description="FFmpeg build with VMAF support."
+LABEL org.opencontainers.image.source="https://github.com/vpalmisano/webrtcperf"
+LABEL org.opencontainers.image.authors="Vittorio Palmisano <vpalmisano@gmail.com>"
 
 RUN \
     apt-get update && \

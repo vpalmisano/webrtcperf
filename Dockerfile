@@ -1,8 +1,8 @@
-FROM --platform=$TARGETPLATFORM ubuntu:jammy
-LABEL org.opencontainers.image.title webrtcperf
-LABEL org.opencontainers.image.description WebRTC performance and quality evaluation tool.
-LABEL org.opencontainers.image.source https://github.com/vpalmisano/webrtcperf
-LABEL org.opencontainers.image.authors Vittorio Palmisano <vpalmisano@gmail.com>
+FROM ubuntu:noble
+LABEL org.opencontainers.image.title="webrtcperf"
+LABEL org.opencontainers.image.description="WebRTC performance and quality evaluation tool."
+LABEL org.opencontainers.image.source="https://github.com/vpalmisano/webrtcperf"
+LABEL org.opencontainers.image.authors="Vittorio Palmisano <vpalmisano@gmail.com>"
 
 RUN \
     apt-get update && \
@@ -27,7 +27,7 @@ RUN \
         fonts-liberation \
         fonts-lato \
         fonts-noto-mono \
-        libasound2 \
+        libasound2t64 \
         libatk-bridge2.0-0 \
         libatk1.0-0 \
         libc6 \
@@ -66,22 +66,22 @@ RUN \
         libgles1 \
         libgles2 \
         libegl1 \
-        libegl1-mesa \
+        libegl-mesa0 \
         fonts-noto-color-emoji \
         libu2f-udev \
         libfontconfig1 \
         libfribidi0 \
         libharfbuzz0b \
         libspeex1 \
-        libtesseract4 \
+        libtesseract5 \
         tesseract-ocr-eng \
         libvorbis0a \
         libvorbisenc2 \
         libvorbisfile3 \
         libogg0 \
-        libvpx7 \
+        libvpx9 \
         libwebpdemux2 \
-        libx264-163 \
+        libx264-164 \
         libzimg2 \
         libx265-199 \
         libzmq5 \
@@ -95,14 +95,12 @@ RUN \
         > /etc/apt/sources.list.d/nodesource.list; \
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -; \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list; \
-    wget -q -O- https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub | gpg --dearmor -o /usr/share/keyrings/nvidia-drivers.gpg; \
-    echo 'deb [signed-by=/usr/share/keyrings/nvidia-drivers.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /' | sudo tee /etc/apt/sources.list.d/nvidia-drivers.list; \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         nodejs \
         yarn \
-        libnvidia-gl-515 \
-        nvidia-utils-515
+        libnvidia-gl-570 \
+        nvidia-utils-570
 
 # RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
 #   echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
