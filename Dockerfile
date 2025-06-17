@@ -136,6 +136,7 @@ RUN curl -s -Lo /app/video.mp4 "https://github.com/vpalmisano/webrtcperf/release
 #
 WORKDIR /app
 ENV DEBUG_LEVEL=WARN
+ENV DEBUGGING_ADDRESS=0.0.0.0
 ENV VIDEO_PATH=/app/video.mp4
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser-unstable
 ENV NODE_ENV=production

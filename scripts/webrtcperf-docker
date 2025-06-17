@@ -5,7 +5,6 @@ configName=$(basename $config)
 output=${2:-$PWD/logs/$(date +%Y%m%d%H%M%S)_$configName}
 
 export DEBUGGING_PORT=9000
-export DEBUGGING_ADDRESS=0.0.0.0
 export PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091
 export SHOW_PAGE_LOG=false
 export SHOW_STATS=false
@@ -27,6 +26,7 @@ if [ ! -d "$output" ]; then
     mkdir -p "$output"
 fi
 
+docker pull ghcr.io/vpalmisano/webrtcperf:devel
 exec docker run -it --rm --name=webrtcperf \
     -v /dev/shm:/dev/shm \
     --cap-add=NET_ADMIN \
@@ -38,7 +38,6 @@ exec docker run -it --rm --name=webrtcperf \
     -e URL \
     -e DEBUG_LEVEL \
     -e DEBUGGING_PORT \
-    -e DEBUGGING_ADDRESS \
     -e PROMETHEUS_PUSHGATEWAY \
     -e SHOW_PAGE_LOG \
     -e SHOW_STATS \
