@@ -882,7 +882,7 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
       log.debug(`Loading config from local file: ${filePath}`)
       if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
         const module = await import(/* webpackIgnore: true */ path.resolve(filePath))
-        configSchema.load(await module.default(process.argv.slice(2)))
+        configSchema.load(await module.default())
       } else {
         configSchema.loadFile(filePath)
       }

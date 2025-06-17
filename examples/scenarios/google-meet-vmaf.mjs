@@ -2,24 +2,24 @@
 // export URL=https://meet.google.com/<ID>
 // scripts/webrtcperf-docker examples/scenarios/google-meet-vmaf.mjs logs
 
-export default function (args) {
-  console.log('Running Google Meet scenario with VMAF metrics...', args)
+export default function () {
+  console.log('Running Google Meet scenario with VMAF metrics...')
   return {
     scriptPath: 'https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js',
-    scriptParams: {
+    scriptParams: JSON.stringify({
       timestampWatermarkVideo: '0',
       saveSendVideoTrack: '0',
       saveRecvVideoTrack: '1',
-    },
+    }),
     sessions: 2,
     runDuration: 120,
-    throttleConfig: [
+    throttleConfig: JSON.stringify([
       {
         sessions: '0',
         protocol: 'udp',
-        up: [{ rate: 1000, delay: 50, queue: 50 }],
+        //up: [{ rate: 1000, delay: 50, queue: 50 }],
         down: [{ rate: 1000, delay: 50, queue: 50 }],
       },
-    ],
+    ]),
   }
 }
