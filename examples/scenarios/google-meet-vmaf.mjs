@@ -1,6 +1,6 @@
 // Usage:
 // export URL=https://meet.google.com/<ID>
-// scripts/webrtcperf-docker examples/scenarios/google-meet-vmaf.mjs logs
+// scripts/webrtcperf-docker examples/scenarios/google-meet-vmaf.mjs
 
 export default function () {
   console.log('Running Google Meet scenario with VMAF metrics...')
@@ -18,7 +18,7 @@ export default function () {
         sessions: '0',
         protocol: 'udp',
         //up: [{ rate: 1000, delay: 50, queue: 50 }],
-        down: [{ rate: 1000, delay: 50, queue: 50 }],
+        down: [{ rate: 1500, delay: 50, queue: 50 }],
       },
     ]),
   }
