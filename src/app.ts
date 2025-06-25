@@ -4,7 +4,7 @@ import fs from 'fs'
 import json5 from 'json5'
 import wrap from 'word-wrap'
 
-import { Config, getConfigDocs, loadConfig } from './config'
+import { Config, getConfigDocs, loadConfig, loadConfigFromPrompt } from './config'
 import { MediaPath, prepareFakeMedia } from './media'
 import { Server } from './server'
 import { Session } from './session'
@@ -22,7 +22,7 @@ import {
 } from './utils'
 import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore, convertToIvf, prepareVideo } from './vmaf'
-import path from 'path'
+import path, { join } from 'path'
 
 const log = logger('webrtcperf')
 
@@ -189,7 +189,10 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 async function main(): Promise<void> {
   showHelpOrVersion()
 
-  const config = await loadConfig(process.argv[2])
+  const config =
+    process.argv[2] === '--prompt'
+      ? await loadConfigFromPrompt(process.argv.slice(3).join(' '))
+      : await loadConfig(process.argv[2])
 
   if (config.vmafPrepareVideo) {
     await prepareVideo(config, true)

@@ -1,4 +1,4 @@
-import convict, { addFormats } from 'convict'
+import convict, { addFormats, SchemaObj } from 'convict'
 import { ipaddress, url } from 'convict-format-with-validator'
 import { existsSync } from 'fs'
 import os from 'os'
@@ -190,7 +190,51 @@ seconds.`,
     arg: 'run-duration',
   },
   throttleConfig: {
-    doc: `A JSON5 string with a valid throtter configuration (https://github.com/vpalmisano/throttler).`,
+    doc: `A JSON5 string with a valid throttler configuration (https://github.com/vpalmisano/throttler). \
+Example: \
+
+  \`\`\`javascript
+  [{
+    sessions: '0-1',
+    device: 'eth0',
+    protocol: 'udp',
+    skipSourcePorts: "443",
+    skipDestinationPorts: "443",
+    filter: "--sports 443 --dports 443",
+    match: 'nbyte("ababa" at 12 layer 1)',
+    capture: 'capture.pcap',
+    up: {
+      rate: 1000,
+      delay: 50,
+      loss: 5,
+      queue: 10,
+    },
+    down: [
+      { rate: 2000, delay: 50, delayJitter: 10, delayJitterCorrelation: 25, loss: 2, lossBurst: 2, queue: 20 },
+      { rate: 1000, delay: 50, loss: 2, queue: 20, at: 60 },
+    ]
+  }]
+  \`\`\`
+- The sessions field represents the sessions IDs range that will be affected by the rule, e.g.: "0-10", "2,4" or simply "2".
+- The device, protocol, up, down fields are optional. When device is not set, the default route device will be used. If protocol is specified ('udp' or 'tcp'), \
+only the packets with the specified protocol will be affected by the shaping rules.
+- The capture field is optional and specifies the pcap file to save the captured packets.
+- With skipSourcePorts and skipDestinationPorts you can specify a comma-separated list of ports that will not be affected by the shaping rules.
+- The filter field is optional and specifies the additional IPTables filter to apply for filtering the packets.
+- The match field is optional and specifies the additional match rule to apply for filtering the packets (https://man7.org/linux/man-pages/man8/tc-ematch.8.html).
+- The up and down fields are optional and they specify the upstream and downstream shaping rules. The possible options for the up and down rules could be:
+  - rate: the shaping rate in Kbps;
+  - delay: the shaping delay in milliseconds;
+  - delayJitter: the shaping delay jitter in milliseconds;
+  - delayJitterCorrelation: the shaping delay jitter correlation in milliseconds;
+  - loss: the packet loss percentage;
+  - lossBurst: the packet loss burst percentage;
+  - queue: the shaping queue size in packets;
+  - at: the time in seconds when the shaping rule will be applied (default: 0).
+The up and down rules can be specified as a single object or an array of objects.
+When using an array of objects, specify a different "at" value for each of them, in order to apply a sequence of actions; please note that only the specified properties will override previous ones, so you can omit the values that you don't want to change. \
+  \
+    `,
     format: String,
     nullable: true,
     default: '',
@@ -367,7 +411,7 @@ calculated using \`Date.now()\``,
     arg: 'spawn-rate',
   },
   showPageLog: {
-    doc: `If \`true\`, the pages console logs will be shown on console.`,
+    doc: `If \`true\`, the pages console logs will be shown on console. Set to false to disable the page logs.`,
     format: 'Boolean',
     default: true,
     env: 'SHOW_PAGE_LOG',
@@ -900,4 +944,61 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
 
   log.debug('Using config:', config)
   return config
+}
+
+function getFunctionDeclaration() {
+  const properties: Record<string, { type: string; description: string; nullable?: boolean }> = {}
+  const required: string[] = []
+  const schema = configSchema.getSchema()
+
+  Object.entries(schema._cvtProperties).forEach(([name, value]) => {
+    const { format, doc, nullable } = value as SchemaObj
+    properties[name] = {
+      type: format as string,
+      description: doc as string,
+      nullable,
+    }
+  })
+
+  return {
+    name: 'webrtcperf',
+    description: 'Starts a webrtcperf test.',
+    parameters: {
+      type: 'object',
+      properties,
+      required,
+    },
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { GoogleGenAI } = require('@google/genai')
+
+export async function loadConfigFromPrompt(prompt: string) {
+  log.debug(`loadConfigFromPrompt: "${prompt}"`)
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY environment variable is not set. Please set it to use the Google GenAI API.')
+  }
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+    config: {
+      tools: [
+        {
+          functionDeclarations: [getFunctionDeclaration()],
+        },
+      ],
+      thinkingConfig: {
+        thinkingBudget: 0,
+      },
+    },
+  })
+  if (response.functionCalls && response.functionCalls.length > 0) {
+    const functionCall = response.functionCalls[0]
+    log.info('Using function call:', functionCall.name, functionCall.args)
+    return loadConfig(undefined, functionCall.args)
+  } else {
+    throw new Error('No function call found in the response. Please check the prompt and try again.')
+  }
 }

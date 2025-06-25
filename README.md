@@ -732,6 +732,17 @@ Please note that you need to add the following options for each worker:
 
 For the collector configuration, use a longer `--run-duration` option just to avoid missing the last metric updates from the worker hosts.
 
+# Run tests with AI prompt
+The `--prompt` option allows you to run a test with an AI prompt that will be used to generate the test scenario configuration. 
+The prompt should be an accurate description of the test scenario that we want to run, including the number of participants, the service URL, the network throttling configuration, etc. The prompt will be sent to the [Google Gemini AI](https://ai.google.dev/) service and the response will be parsed to generate a valid test configuration.
+
+Example usage:
+
+```bash
+export GEMINI_API_KEY=<key>
+webrtcperf --prompt "run a 2min test with 2 sessions with url 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345&displayName=Participant-$i' sending the stats to pushgateway at http://localhost:9091 and limiting the session 1 upstream at 1Mbps with 1% packet loss for 30s, 2Mbps for 30s and 1Mbps for all the remaining time and disable page logs"
+```
+
 # Authors
 - Vittorio Palmisano [[github](https://github.com/vpalmisano)]
 
