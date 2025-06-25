@@ -742,7 +742,22 @@ Example usage:
 
 ```bash
 export GEMINI_API_KEY=<key>
-webrtcperf --prompt "run a 2min test with 2 sessions on 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345&displayName=Participant-$i' sending the stats to pushgateway at http://localhost:9091 and limiting the 2nd session upstream at 1Mbps with 1% packet loss for 30s, 2Mbps for 30s and 1Mbps for all the remaining time and disable page logs"
+webrtcperf --prompt "run a 2min test with 2 sessions on 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345' limiting the 2nd session upstream at 1Mbps with 1% packet loss for 30s, 2Mbps for 30s and 1Mbps for all the remaining time"
+```
+
+Add the `--dry-run` option to print the generated test configuration without running it:
+
+```bash
+webrtcperf --prompt --dry-run "run a 2min test with 2 sessions on 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345' limiting the 2nd session upstream at 1Mbps with 1% packet loss for 30s, 2Mbps for 30s and 1Mbps for all the remaining time"
+```
+
+```
+{
+  throttleConfig: '[{ sessions: "1", up: [{ rate: 1000, loss: 1, at: 0 }, { rate: 2000, at: 30 }, { rate: 1000, at: 60 }] }]',
+  runDuration: 120,
+  sessions: 2,
+  url: 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345',
+}
 ```
 
 # Authors

@@ -413,7 +413,7 @@ calculated using \`Date.now()\``,
   showPageLog: {
     doc: `If \`true\`, the pages console logs will be shown on console. Set to false to disable the page logs.`,
     format: 'Boolean',
-    default: true,
+    default: false,
     env: 'SHOW_PAGE_LOG',
     arg: 'show-page-log',
   },
@@ -996,8 +996,8 @@ export async function loadConfigFromPrompt(prompt: string) {
   })
   if (response.functionCalls && response.functionCalls.length > 0) {
     const functionCall = response.functionCalls[0]
-    log.info('Using function call:', functionCall.name, functionCall.args)
-    return loadConfig(undefined, functionCall.args)
+    log.debug('Using function call:', functionCall.name, functionCall.args)
+    return functionCall.args
   } else {
     throw new Error('No function call found in the response. Please check the prompt and try again.')
   }

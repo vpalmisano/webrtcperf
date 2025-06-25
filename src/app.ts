@@ -189,10 +189,23 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 async function main(): Promise<void> {
   showHelpOrVersion()
 
-  const config =
-    process.argv[2] === '--prompt'
-      ? await loadConfigFromPrompt(process.argv.slice(3).join(' '))
-      : await loadConfig(process.argv[2])
+  let config: Config
+
+  if (process.argv.slice(2).includes('--prompt')) {
+    const params = await loadConfigFromPrompt(
+      process.argv
+        .slice(2)
+        .filter(s => !['--prompt', '--dry-run'].includes(s))
+        .join(' '),
+    )
+    if (process.argv.slice(2).includes('--dry-run')) {
+      console.log(json5.stringify(params, null, 2))
+      process.exit(0)
+    }
+    config = await loadConfig(undefined, params)
+  } else {
+    config = await loadConfig(process.argv[2])
+  }
 
   if (config.vmafPrepareVideo) {
     await prepareVideo(config, true)
