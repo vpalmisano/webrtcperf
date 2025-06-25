@@ -742,7 +742,7 @@ Example usage:
 
 ```bash
 export GEMINI_API_KEY=<key>
-webrtcperf --prompt "run a 2min test with 2 sessions with url 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345&displayName=Participant-$i' sending the stats to pushgateway at http://localhost:9091 and limiting the session 1 upstream at 1Mbps with 1% packet loss for 30s, 2Mbps for 30s and 1Mbps for all the remaining time and disable page logs"
+webrtcperf --prompt "run a 2min test with 2 sessions on 'https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345&displayName=Participant-$i' sending the stats to pushgateway at http://localhost:9091 and limiting the 2nd session upstream at 1Mbps with 1% packet loss for 30s, 2Mbps for 30s and 1Mbps for all the remaining time and disable page logs"
 ```
 
 # Authors
