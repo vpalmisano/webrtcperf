@@ -22,7 +22,7 @@ import {
 } from './utils'
 import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore, convertToIvf, prepareVideo } from './vmaf'
-import path, { join } from 'path'
+import path from 'path'
 
 const log = logger('webrtcperf')
 

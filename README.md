@@ -732,7 +732,9 @@ Please note that you need to add the following options for each worker:
 
 For the collector configuration, use a longer `--run-duration` option just to avoid missing the last metric updates from the worker hosts.
 
-# Run tests with AI prompt
+# Experimental features
+
+## Run tests with the AI prompt
 The `--prompt` option allows you to run a test with an AI prompt that will be used to generate the test scenario configuration. 
 The prompt should be an accurate description of the test scenario that we want to run, including the number of participants, the service URL, the network throttling configuration, etc. The prompt will be sent to the [Google Gemini AI](https://ai.google.dev/) service and the response will be parsed to generate a valid test configuration.
 
