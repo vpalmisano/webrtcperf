@@ -32,8 +32,17 @@
     "hideGenerator": true,
     "cleanOutputDir": true,
     "plugin": [
-      "typedoc-plugin-ga"
+      "@vpalmisano/typedoc-plugin-ga",
+      "@vpalmisano/typedoc-cookie-consent"
     ],
     "gaID": "G-05SF29M4QB",
+    "gaProperties": {
+      "type": "text/plain",
+      "data-category": "analytics"
+    },
+    "cookieConsent": {
+      "enabled": true,
+      "showPreferencesBtn": true
+    }
   }
 }
