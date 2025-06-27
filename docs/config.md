@@ -141,7 +141,7 @@ A JSON5 string with a valid throttler configuration (https://github.com/vpalmisa
 - With skipSourcePorts and skipDestinationPorts you can specify a comma-separated list of ports that will not be affected by the shaping rules.
 - The filter field is optional and specifies the additional IPTables filter to apply for filtering the packets.
 - The match field is optional and specifies the additional match rule to apply for filtering the packets (https://man7.org/linux/man-pages/man8/tc-ematch.8.html).
-- The up and down fields are optional and specify the upstream and downstream shaping rules. The possible options for the up and down rules could be:
+- The up and down fields are optional and they specify the upstream and downstream shaping rules. The possible options for the up and down rules could be:
   - rate: the shaping rate in Kbps;
   - delay: the shaping delay in milliseconds;
   - delayJitter: the shaping delay jitter in milliseconds;
@@ -303,11 +303,11 @@ The pages spawn rate (pages/s).
 *Default*: `1`
 
 ## showPageLog
-If `true`, the pages console logs will be shown on console.
+If `true`, the pages console logs will be shown on console. Set to false to disable the page logs.
 
 *Type*: `boolean`
 
-*Default*: `true`
+*Default*: `false`
 
 ## pageLogFilter
 If set, only the logs with the matching text will be printed on the console. Regexp string allowed.
