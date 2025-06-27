@@ -1242,10 +1242,10 @@
     json5 "^2.2.3"
     word-wrap "^1.2.5"
 
-"@vpalmisano/typedoc-cookie-consent@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@vpalmisano/typedoc-cookie-consent/-/typedoc-cookie-consent-0.0.3.tgz#4b02a6dad27510965a6c4c400d90c1de0e632b74"
-  integrity sha512-IX6mgeEr4hbhGPwDG4mAAcfm3oyv111/EvFJQEWaxLJoecH62Rpe9KNEqVw/mApqOQvyxXUkQ4NPJJAIckJp5Q==
+"@vpalmisano/typedoc-cookie-consent@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@vpalmisano/typedoc-cookie-consent/-/typedoc-cookie-consent-0.0.4.tgz#f25e1562f4e6a25d7968b7d1b72e9bedf8b09aec"
+  integrity sha512-pYBL+elPDPlOuBWLZDY4DIMRVW/DISpomaWsrRQ0ieH8QeAZa0vAMHmA4Av58guA6dcUwuQC6Pz8QFDRDDmZOg==
 
 "@vpalmisano/typedoc-plugin-ga@^1.0.6":
   version "1.0.6"
