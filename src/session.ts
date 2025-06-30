@@ -1,7 +1,6 @@
 import { getSessionThrottleValues, throttleLauncher } from '@vpalmisano/throttler'
 import assert from 'assert'
 import axios from 'axios'
-import chalk from 'chalk'
 import EventEmitter from 'events'
 import fs from 'fs'
 import JSON5 from 'json5'
@@ -49,6 +48,9 @@ import {
   waitStopProcess,
 } from './utils'
 import { MediaPath } from './media'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { default: chalk } = require('chalk-template')
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const NavigatorHardwareConcurrency = require('puppeteer-extra-plugin-stealth/evasions/navigator.hardwareConcurrency')

@@ -1,5 +1,4 @@
 import axios from 'axios'
-import chalk from 'chalk'
 import * as events from 'events'
 import { Stats as FastStats } from 'fast-stats'
 import * as fs from 'fs'
@@ -19,6 +18,9 @@ import { Scheduler, enabledForSession, hideAuth, logger, toPrecision } from './u
 export { FastStats }
 
 const log = logger('webrtcperf:stats')
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { default: chalk } = require('chalk-template')
 
 function calculateFailAmountPercentile(stat: FastStats, percentile = 95): number {
   return Math.round(stat.percentile(percentile))
@@ -144,7 +146,7 @@ function formatStats(s: FastStats, forWriter = false): StatsData | string[] {
 function sprintfStatsTitle(name: string): string {
   return sprintf(chalk`-- {bold %(name)s} %(fill)s\n`, {
     name,
-    fill: '-'.repeat(100 - name.length - 4),
+    fill: '-'.repeat(110 - name.length - 4),
   })
 }
 
