@@ -2,7 +2,6 @@ import { getSessionThrottleIndex, startThrottle, stopThrottle } from '@vpalmisan
 import { paramCase } from 'change-case'
 import fs from 'fs'
 import json5 from 'json5'
-import wrap from 'word-wrap'
 
 import { Config, getConfigDocs, loadConfig, loadConfigFromPrompt } from './config'
 import { MediaPath, prepareFakeMedia } from './media'
@@ -23,26 +22,37 @@ import {
 import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore, convertToIvf, prepareVideo } from './vmaf'
 import path from 'path'
+import { markedTerminal } from 'marked-terminal'
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { marked } = require('marked')
+marked.use(markedTerminal({ reflowText: true, tab: 2 }))
 
 const log = logger('webrtcperf')
 
 function showHelpOrVersion(): void {
-  if (process.argv.findIndex(a => a.localeCompare('--help') === 0) !== -1) {
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
     const docs = getConfigDocs()
-    let out = `Params:\n  --version\n        It shows the package version.\n`
+    let out = marked.parse(`**Webrtcperf parameters**
+
+\`--version\` It shows the package version.
+`)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.entries(docs).forEach(([name, value]: [string, any]) => {
-      out += `  --${paramCase(name)}
-${wrap(value.doc, { width: 72, indent: '        ' })}
-        Default: ${value.default}\n`
+      out += marked.parse(
+        `
+\`--${paramCase(name)}\`
+${value.doc}
+Default value: \`${value.default}\`
+`,
+      )
     })
     console.log(out)
-    process.exit(0)
   } else if (process.argv.findIndex(a => a.localeCompare('--version') === 0) !== -1) {
     const version = json5.parse(fs.readFileSync(resolvePackagePath('package.json')).toString()).version
     console.log(version)
-    process.exit(0)
   }
+  process.exit(0)
 }
 
 async function postTest(config: Config): Promise<void> {
