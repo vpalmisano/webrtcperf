@@ -49,7 +49,7 @@ Default value: \`${value.default}\`
     })
     console.log(out)
     process.exit(0)
-  } else if (process.argv.findIndex(a => a.localeCompare('--version') === 0) !== -1) {
+  } else if (process.argv.includes('--version') || process.argv.includes('-v')) {
     const version = json5.parse(fs.readFileSync(resolvePackagePath('package.json')).toString()).version
     console.log(version)
     process.exit(0)
