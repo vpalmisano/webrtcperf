@@ -48,11 +48,12 @@ Default value: \`${value.default}\`
       )
     })
     console.log(out)
+    process.exit(0)
   } else if (process.argv.findIndex(a => a.localeCompare('--version') === 0) !== -1) {
     const version = json5.parse(fs.readFileSync(resolvePackagePath('package.json')).toString()).version
     console.log(version)
+    process.exit(0)
   }
-  process.exit(0)
 }
 
 async function postTest(config: Config): Promise<void> {
