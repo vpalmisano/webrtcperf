@@ -190,7 +190,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"137.0.7151.119"`
+*Default*: `"138.0.7204.49"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -335,10 +335,13 @@ The user agent override.
 
 *Type*: `string`
 
-*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"`
+*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.7204.49 Safari/537.36"`
 
 ## scriptPath
-One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `webrtcperf` global object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed). 
+One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `webrtcperf` global object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed).
+Suggested values:
+- With meet.google.com: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js
+
 
 *Type*: `string`
 
