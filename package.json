@@ -53,7 +53,7 @@
   "dependencies": {
     "@google/genai": "^1.8.0",
     "@puppeteer/browsers": "^2.10.5",
-    "@vpalmisano/throttler": "0.0.8",
+    "@vpalmisano/throttler": "0.0.9",
     "@vpalmisano/webrtcperf-js": "^1.1.7",
     "axios": "^1.10.0",
     "chalk-template": "^1.1.0",
