@@ -1274,10 +1274,10 @@
   dependencies:
     "@euberdeveloper/eslint-plugin" "2.7.0"
 
-"@vpalmisano/webrtcperf-js@^1.1.6":
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.1.6.tgz#c6f7019a75cff9e24832957a213c58cb99e6eb63"
-  integrity sha512-aeh4NldY105/Ay9Fkqkwj2HlF0LCpY/K5jwtpmu1RYIGH6mpM9Q+iTSJYhRcVUhW8sTs8UU5NSX9N7XJVcJ91w==
+"@vpalmisano/webrtcperf-js@^1.1.7":
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.1.7.tgz#11a870e30ba7f4573141763fbe2de26ad9913b6d"
+  integrity sha512-9f2lVQ9K0NjMb1tgjJm5BCgb7x1E7fOLNrBW/tC8wOtrisp36CqlBp9V3daKw2Ifo55FUCXXZRr63peFkLG9AA==
   dependencies:
     "@vpalmisano/ggwave" "0.4.3-2"
     sdp-transform "^2.15.0"
