@@ -245,7 +245,9 @@ async function main(): Promise<void> {
   registerExitHandler(() => stop())
 
   // Stop after a configured duration.
-  setTimeout(stop, config.runDuration * 1000)
+  if (config.runDuration || config.vmafPath || config.visqolPath) {
+    setTimeout(stop, config.runDuration * 1000)
+  }
 
   // Command line interface.
   if (process.stdin && process.stdin.setRawMode) {
