@@ -11,10 +11,12 @@ import { WebSocketServer } from 'ws'
 import zlib from 'zlib'
 import auth from 'basic-auth'
 
-import { loadConfig } from './config'
+import { Config, loadConfig } from './config'
 import { Session, SessionParams } from './session'
 import { Stats } from './stats'
 import { logger, runShellCommand, getDockerLogsPath } from './utils'
+import { getSessionThrottleIndex } from '@vpalmisano/throttler'
+import { MediaPath, prepareFakeMedia } from './media'
 
 const log = logger('webrtcperf:server')
 
@@ -272,7 +274,8 @@ export class Server {
   private async putSession(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`PUT /session`, req.body)
     try {
-      const id = this.stats.consumeSessionId()
+      const config = req.body as Config
+      const id = this.stats.consumeSessionId(config.tabsPerSession)
       await this.startLocalSession(id, req.body)
       res.json({
         message: `Session created`,
@@ -293,10 +296,10 @@ export class Server {
   private async putSessions(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
     log.debug(`PUT /sessions`, req.body)
     try {
-      const { sessions } = req.body
+      const { sessions, tabsPerSession } = req.body as Config
       const sessionsIds = []
       for (let i = 0; i < sessions; i++) {
-        const id = this.stats.sessions.size
+        const id = this.stats.consumeSessionId(tabsPerSession)
         await this.startLocalSession(id, req.body)
         sessionsIds.push(id)
       }
@@ -471,12 +474,24 @@ export class Server {
    * @param config The session configuration.
    */
   private async startLocalSession(id: number, config: SessionParams): Promise<Session> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sessionConfig = loadConfig(undefined, config) as any
-    const session = new Session({ ...sessionConfig, id })
+    const sessionConfig = await loadConfig(undefined, config)
+    const throttleIndex = getSessionThrottleIndex(id)
+    const spawnPeriod = 1000 / sessionConfig.spawnRate
+
+    // Prepare fake video and audio.
+    const mediaPaths: MediaPath[] = []
+    if (sessionConfig.videoPath) {
+      for (const videoPath of sessionConfig.videoPath.split(',')) {
+        const ret = await prepareFakeMedia({ ...sessionConfig, videoPath })
+        mediaPaths.push(ret)
+      }
+    }
+    const mediaPath = mediaPaths.length ? mediaPaths[id % mediaPaths.length] : undefined
+
+    const session = new Session({ ...sessionConfig, throttleIndex, spawnPeriod, mediaPath, id })
     session.once('stop', () => {
       console.warn(`Session ${id} stopped, reloading...`)
-      setTimeout(this.startLocalSession.bind(this), sessionConfig.spawnPeriod, id, config)
+      setTimeout(this.startLocalSession.bind(this), spawnPeriod, id, config)
     })
     this.stats.addSession(session)
     try {
