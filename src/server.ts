@@ -510,13 +510,17 @@ export class Server {
     log.debug('start')
     if (this.serverUseHttps) {
       const destDir = path.join(os.homedir(), '.webrtcperf/ssl')
-      await runShellCommand(
-        `mkdir -p ${destDir} && openssl req -newkey rsa:2048 -nodes -keyout ${destDir}/domain.key -x509 -days 365 -out ${destDir}/domain.crt -subj "/C=EU/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"`,
-      )
+      const keyPath = path.join(destDir, 'domain.key')
+      const crtPath = path.join(destDir, 'domain.crt')
+      if (!fs.existsSync(keyPath) || !fs.existsSync(crtPath)) {
+        await runShellCommand(
+          `mkdir -p ${destDir} && openssl req -newkey rsa:2048 -nodes -keyout ${keyPath} -x509 -days 365 -out ${crtPath} -subj "/C=EU/ST=London/L=London/O=Global Security/OU=IT Department/CN=example.com"`,
+        )
+      }
       this.server = _createServer(
         {
-          key: fs.readFileSync(`${destDir}/domain.key`),
-          cert: fs.readFileSync(`${destDir}/domain.crt`),
+          key: fs.readFileSync(keyPath),
+          cert: fs.readFileSync(crtPath),
         },
         this.app,
       )
