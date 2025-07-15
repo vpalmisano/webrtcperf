@@ -1,6 +1,6 @@
 {
     "sessions": 2,
-    "runDuration": 300,
+    "runDuration": 60,
     "url": "https://v3demo.mediasoup.org/?roomId=webrtcperf-test-12345&displayName=Participant-$i",
     "debuggingPort": 9000,
     "prometheusPushgateway": "http://localhost:9091",

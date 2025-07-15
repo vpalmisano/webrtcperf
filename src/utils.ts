@@ -291,7 +291,6 @@ export async function randomActivateAudio(
         pages = pages.concat(sessionPages)
       }
     }
-    // Remove pages with no audio tracks.
     for (const [i, page] of pages.entries()) {
       if (!page) {
         continue
@@ -307,15 +306,8 @@ export async function randomActivateAudio(
       }
     }
     const pagesWithAudio: Page[] = pages.filter(p => !!p)
-    //
     const index = Math.floor(Math.random() * pagesWithAudio.length)
     const enable = Math.round(100 * Math.random()) <= randomAudioProbability
-    log.debug('randomActivateAudio %j', {
-      pages: pagesWithAudio.length,
-      randomAudioProbability,
-      index,
-      enable,
-    })
     for (const [i, page] of pagesWithAudio.entries()) {
       try {
         if (i === index) {
@@ -613,7 +605,8 @@ SIGNALS.forEach(event =>
 export async function checkChromeExecutable(): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { loadConfig } = require('./config')
-  const config = await loadConfig()
+  const configs = await loadConfig()
+  const config = configs[0]
   const cacheDir = path.join(os.homedir(), '.webrtcperf/chrome')
 
   const fixSemVer = (v: string) => v.split('.').slice(0, 3).join('.')

@@ -474,7 +474,8 @@ export class Server {
    * @param config The session configuration.
    */
   private async startLocalSession(id: number, config: SessionParams): Promise<Session> {
-    const sessionConfig = await loadConfig(undefined, config)
+    const configs = await loadConfig(undefined, config)
+    const sessionConfig = configs[0]
     const throttleIndex = getSessionThrottleIndex(id)
     const spawnPeriod = 1000 / sessionConfig.spawnRate
 

@@ -23,6 +23,7 @@ import { calculateVisqolScore } from './visqol'
 import { calculateVmafScore, convertToIvf, prepareVideo } from './vmaf'
 import path from 'path'
 import { markedTerminal } from 'marked-terminal'
+import { EventEmitter } from 'events'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { marked } = require('marked')
@@ -56,141 +57,167 @@ Default value: \`${value.default}\`
   }
 }
 
-async function postTest(config: Config): Promise<void> {
-  // vmaf score.
-  if (config.vmafPath) {
-    console.log('Calculating VMAF score...')
-    try {
-      await calculateVmafScore(config)
-    } catch (err: unknown) {
-      log.error(`vmaf score error: ${(err as Error).stack}`)
+export class Application extends EventEmitter {
+  readonly config: Config
+  readonly stats: Stats
+  readonly server?: Server
+  private mediaPaths: MediaPath[] = []
+
+  constructor(config: Config) {
+    super()
+    if (!config.startTimestamp) {
+      config.startTimestamp = Date.now()
+    }
+    this.config = config
+    this.stats = new Stats(config)
+    if (config.serverPort) {
+      this.server = new Server(config, this.stats)
     }
   }
 
-  // visqol score
-  if (config.visqolPath) {
-    console.log('Calculating Visqol score...')
-    try {
-      await calculateVisqolScore(config)
-    } catch (err: unknown) {
-      log.error(`visqol score error: ${(err as Error).stack}`)
+  async start() {
+    log.debug(`start (runDuration: ${this.config.runDuration})`)
+    await this.stats.start()
+    if (this.server) {
+      await this.server.start()
     }
-  }
-}
+    const config = this.config
 
-export async function setupApplication(config: Config): Promise<{ stats: Stats; stop: () => Promise<void> }> {
-  if (!config.startTimestamp) {
-    config.startTimestamp = Date.now()
-  }
-
-  // Stats.
-  const stats = new Stats(config)
-  await stats.start()
-
-  // Control server.
-  let server: Server | undefined
-  if (config.serverPort) {
-    server = new Server(config, stats)
-    await server.start()
-  }
-
-  // If sessions are set, prepare fake video/audio and start sessions.
-  if (config.sessions > 0) {
-    // Prepare fake video and audio.
-    const mediaPaths: MediaPath[] = []
-    if (config.videoPath) {
-      for (const videoPath of config.videoPath.split(',')) {
-        const ret = await prepareFakeMedia({ ...config, videoPath })
-        mediaPaths.push(ret)
-      }
+    // Handle vmaf commands.
+    if (config.vmafPrepareVideo) {
+      await prepareVideo(config, true)
     }
-
-    // Network throttle.
-    if (config.throttleConfig) {
-      await startThrottle(config.throttleConfig)
-    }
-
-    // Download browser if necessary.
-    if (!config.chromiumUrl && !config.chromiumPath) {
-      await checkChromeExecutable()
-    }
-
-    // Start session function.
-    const startLocalSession = async (id: number, spawnPeriod: number): Promise<void> => {
-      const throttleIndex = getSessionThrottleIndex(id)
-      const mediaPath = mediaPaths.length ? mediaPaths[id % mediaPaths.length] : undefined
-      const session = new Session({
-        ...config,
-        mediaPath,
-        spawnPeriod,
-        id,
-        throttleIndex,
-      })
-      session.once('stop', () => {
-        console.warn(`Session ${id} stopped, reloading...`)
-        setTimeout(startLocalSession, spawnPeriod, id)
-      })
-      stats.addSession(session)
-      await session.start()
-    }
-
-    // Start the local sessions.
-    if (config.randomAudioPeriod) {
-      startRandomActivateAudio(
-        stats.sessions,
-        config.randomAudioPeriod,
-        config.randomAudioProbability,
-        config.randomAudioRange,
+    if (config.vmafProcessVideo) {
+      await convertToIvf(
+        config.vmafProcessVideo,
+        config.vmafVideoCrop,
+        config.vmafKeepSourceFiles,
+        config.vmafSkipDuplicated,
       )
     }
-    const spawnPeriod = 1000 / config.spawnRate
-    log.debug(`Starting ${config.sessions} sessions (spawnPeriod: ${spawnPeriod}ms)`)
-    const startTime = Date.now()
-    for (let i = 0; i < config.sessions; i += 1) {
-      const id = stats.consumeSessionId(config.tabsPerSession)
-      await startLocalSession(id, spawnPeriod)
-      // If not the last session, sleep
-      if (i < config.sessions - 1) {
-        await sleep(spawnPeriod)
-      }
-    }
-    const elapsed = Math.round((Date.now() - startTime) / 1000)
-    const spawnRate = (config.sessions * config.tabsPerSession) / elapsed
-    log.debug(`${config.sessions * config.tabsPerSession} pages started in ${elapsed}s (${spawnRate.toFixed(2)}/s)`)
-  }
 
-  return {
-    stats,
-    stop: async (): Promise<void> => {
-      log.debug('Stopping')
-
-      stopRandomActivateAudio()
-
-      await stats.stop()
-
-      if (config.throttleConfig) {
-        await stopThrottle()
-      }
-
-      stopTimers()
-
-      await postTest(config)
-
-      // Copy docker logs to data directory.
-      if (config.pageLogPath) {
-        try {
-          const logPath = await getDockerLogsPath()
-          const dataDir = path.dirname(config.pageLogPath)
-          await fs.promises.cp(logPath, path.resolve(dataDir, 'docker.log'))
-        } catch (err: unknown) {
-          log.debug(`docker logs not found: ${(err as Error).message}`)
+    // Handle sessions.
+    if (config.sessions > 0) {
+      // Prepare fake video and audio.
+      if (config.videoPath && !this.mediaPaths.length) {
+        for (const videoPath of config.videoPath.split(',')) {
+          const ret = await prepareFakeMedia({ ...config, videoPath })
+          this.mediaPaths.push(ret)
         }
       }
 
-      server?.stop()
+      // Network throttle.
+      if (config.throttleConfig) {
+        await startThrottle(config.throttleConfig)
+      }
 
-      log.debug('Stopped')
-    },
+      // Download browser if necessary.
+      if (!config.chromiumUrl && !config.chromiumPath) {
+        await checkChromeExecutable()
+      }
+
+      // Start the local sessions.
+      if (config.randomAudioPeriod) {
+        startRandomActivateAudio(
+          this.stats.sessions,
+          config.randomAudioPeriod,
+          config.randomAudioProbability,
+          config.randomAudioRange,
+        )
+      }
+      const spawnPeriod = 1000 / config.spawnRate
+      log.debug(`Starting ${config.sessions} sessions (spawnPeriod: ${spawnPeriod}ms)`)
+      const startTime = Date.now()
+      for (let i = 0; i < config.sessions; i += 1) {
+        const id = this.stats.consumeSessionId(config.tabsPerSession)
+        await this.startSession(id, spawnPeriod)
+        // If not the last session, sleep.
+        if (i < config.sessions - 1) {
+          await sleep(spawnPeriod)
+        }
+      }
+      const elapsed = Math.round((Date.now() - startTime) / 1000)
+      const spawnRate = (config.sessions * config.tabsPerSession) / elapsed
+      log.debug(`${config.sessions * config.tabsPerSession} pages started in ${elapsed}s (${spawnRate.toFixed(2)}/s)`)
+    }
+
+    if (config.runDuration || config.vmafPath || config.visqolPath) {
+      setTimeout(() => this.stop(), config.runDuration * 1000)
+    }
+  }
+
+  private async startSession(id: number, spawnPeriod: number) {
+    log.debug(`startSession ${id}`)
+    const throttleIndex = getSessionThrottleIndex(id)
+    const mediaPath = this.mediaPaths.length ? this.mediaPaths[id % this.mediaPaths.length] : undefined
+    const session = new Session({
+      ...this.config,
+      mediaPath,
+      spawnPeriod,
+      id,
+      throttleIndex,
+    })
+    session.once('stop', () => {
+      console.warn(`Session ${id} stopped, reloading...`)
+      setTimeout(() => this.startSession(id, spawnPeriod), spawnPeriod)
+    })
+    this.stats.addSession(session)
+    await session.start()
+  }
+
+  private async postTest() {
+    log.debug('postTest')
+
+    // vmaf score.
+    if (this.config.vmafPath) {
+      console.log('Calculating VMAF score...')
+      try {
+        await calculateVmafScore(this.config)
+      } catch (err: unknown) {
+        log.error(`vmaf score error: ${(err as Error).stack}`)
+      }
+    }
+
+    // visqol score
+    if (this.config.visqolPath) {
+      console.log('Calculating Visqol score...')
+      try {
+        await calculateVisqolScore(this.config)
+      } catch (err: unknown) {
+        log.error(`visqol score error: ${(err as Error).stack}`)
+      }
+    }
+  }
+
+  async stop() {
+    log.debug('stop')
+
+    stopRandomActivateAudio()
+
+    await this.stats.stop()
+
+    if (this.config.throttleConfig) {
+      await stopThrottle()
+    }
+
+    stopTimers()
+
+    await this.postTest()
+
+    // Copy docker logs to data directory.
+    if (this.config.pageLogPath) {
+      try {
+        const logPath = await getDockerLogsPath()
+        const dataDir = path.dirname(this.config.pageLogPath)
+        await fs.promises.cp(logPath, path.resolve(dataDir, 'docker.log'))
+      } catch (err: unknown) {
+        log.debug(`docker logs not found: ${(err as Error).message}`)
+      }
+    }
+
+    this.server?.stop()
+
+    this.emit('stop')
   }
 }
 
@@ -200,7 +227,7 @@ export async function setupApplication(config: Config): Promise<{ stats: Stats; 
 async function main(): Promise<void> {
   showHelpOrVersion()
 
-  let config: Config
+  let configs: Config[]
 
   if (process.argv.slice(2).includes('--prompt')) {
     const params = await loadConfigFromPrompt(
@@ -213,41 +240,32 @@ async function main(): Promise<void> {
       console.log(json5.stringify(params, null, 2))
       process.exit(0)
     }
-    config = await loadConfig(undefined, params)
+    configs = await loadConfig(undefined, params)
   } else {
-    config = await loadConfig(process.argv[2])
+    configs = await loadConfig(process.argv[2])
   }
 
-  if (config.vmafPrepareVideo) {
-    await prepareVideo(config, true)
-    process.exit(0)
+  if (!configs.length) throw new Error('No configuration found')
+
+  let application: Application
+  const runNext = () => {
+    if (!configs.length) {
+      process.exit(0)
+    }
+    const config = configs.splice(0, 1)[0]
+
+    application = new Application(config)
+    application.once('stop', runNext)
+    return application.start()
   }
 
-  if (config.vmafProcessVideo) {
-    await convertToIvf(
-      config.vmafProcessVideo,
-      config.vmafVideoCrop,
-      config.vmafKeepSourceFiles,
-      config.vmafSkipDuplicated,
-    )
-    process.exit(0)
-  }
-
-  const { stop: stopApplication } = await setupApplication(config)
-
-  const stop = async (): Promise<void> => {
+  const stop = async () => {
     console.log('Exiting...')
-
-    await stopApplication()
-
-    process.exit(0)
+    await application.stop()
   }
   registerExitHandler(() => stop())
 
-  // Stop after a configured duration.
-  if (config.runDuration || config.vmafPath || config.visqolPath) {
-    setTimeout(stop, config.runDuration * 1000)
-  }
+  await runNext()
 
   // Command line interface.
   if (process.stdin && process.stdin.setRawMode) {

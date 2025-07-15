@@ -6,6 +6,7 @@ import path, { join } from 'path'
 import json5 from 'json5'
 import yaml from 'yaml'
 import toml from 'toml'
+import fs from 'fs'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const puppeteer = require('puppeteer-core')
@@ -56,8 +57,7 @@ convict.addParser([
   { extension: 'toml', parse: toml.parse },
 ])
 
-// config schema
-const configSchema = convict({
+const configSchema = {
   url: {
     doc: `The page url to load.`,
     format: String,
@@ -859,7 +859,7 @@ E.g. \`{ w: "iw-10", h: "ih-5", x: "10", y: '5' }\``,
     env: 'VISQOL_KEEP_SOURCE_FILES',
     arg: 'visqol-keep-source-files',
   },
-})
+}
 
 type ConfigDocs = Record<string, { doc: string; format: string; default: string }>
 
@@ -897,10 +897,10 @@ function formatDocs(
  * It returns the formatted configuration docs.
  */
 export function getConfigDocs(): ConfigDocs {
-  return formatDocs({}, null, configSchema.getSchema())
+  return formatDocs({}, null, convict(configSchema).getSchema())
 }
 
-const _schemaProperties = configSchema.getProperties()
+const _schemaProperties = convict(configSchema).getProperties()
 
 /** [[include:config.md]] */
 export type Config = typeof _schemaProperties
@@ -909,7 +909,8 @@ export type Config = typeof _schemaProperties
  * Loads the config object.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function loadConfig(filePath?: string, values?: any): Promise<Config> {
+export async function loadConfig(filePath?: string, values?: any): Promise<Config[]> {
+  const configs: Config[] = []
   if (filePath) {
     if (filePath.startsWith('http')) {
       log.debug(`Loading config from url: ${filePath}`)
@@ -917,41 +918,45 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
       if (!res?.data) {
         throw new Error(`Failed to download configuration from: ${filePath}`)
       }
-      const values =
+      values =
         res.contentType === 'application/x-yaml'
           ? yaml.parse(res.data)
           : res.contentType === 'application/toml'
             ? toml.parse(res.data)
             : json5.parse(res.data)
-      configSchema.load(values)
     } else if (existsSync(filePath)) {
       log.debug(`Loading config from local file: ${filePath}`)
       if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
         const module = await import(/* webpackIgnore: true */ path.resolve(filePath))
-        configSchema.load(await module.default())
+        values = await module.default()
       } else {
-        configSchema.loadFile(filePath)
+        const data = String(await fs.promises.readFile(filePath))
+        values =
+          filePath.endsWith('.yml') || filePath.endsWith('.yaml')
+            ? yaml.parse(data)
+            : filePath.endsWith('.toml')
+              ? toml.parse(data)
+              : json5.parse(data)
       }
     }
-  } else if (values) {
-    log.debug('Loading config from values.')
-    configSchema.load(values)
-  } else {
-    log.debug('Loading config from default values.')
-    configSchema.load({})
   }
-
-  configSchema.validate({ allowed: 'strict' })
-  const config = configSchema.getProperties()
-
-  log.debug('Using config:', config)
-  return config
+  if (!Array.isArray(values)) {
+    values = [values || {}]
+  }
+  for (const value of values) {
+    const schema = convict(configSchema)
+    schema.load(value || {})
+    schema.validate({ allowed: 'strict' })
+    configs.push(schema.getProperties())
+  }
+  log.debug('Using config:', configs)
+  return configs
 }
 
 function getFunctionDeclaration() {
   const properties: Record<string, { type: string; description: string; nullable?: boolean }> = {}
   const required: string[] = []
-  const schema = configSchema.getSchema()
+  const schema = convict(configSchema).getSchema()
 
   Object.entries(schema._cvtProperties).forEach(([name, value]) => {
     const { format, doc, nullable } = value as SchemaObj
