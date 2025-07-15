@@ -1,0 +1,11 @@
+[
+    {
+        "sessions": 2,
+        "runDuration": 30,
+        "url": "https://meet.livekit.io/rooms/webrtcperf-test-12345",
+        "scriptPath": "https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/livekit.js",
+        "debuggingPort": 9000,
+        "showStats": false,
+        "statsInterval": 5
+    }
+]
