@@ -189,8 +189,8 @@ export class Application extends EventEmitter {
     }
   }
 
-  async stop() {
-    log.debug('stop')
+  async stop(canceled = false) {
+    log.debug(`stop (canceled: ${canceled})`)
 
     stopRandomActivateAudio()
 
@@ -217,7 +217,7 @@ export class Application extends EventEmitter {
 
     this.server?.stop()
 
-    this.emit('stop')
+    this.emit('stop', canceled)
   }
 }
 
@@ -249,19 +249,23 @@ async function main(): Promise<void> {
 
   let application: Application
   const runNext = () => {
-    if (!configs.length) {
-      process.exit(0)
-    }
     const config = configs.splice(0, 1)[0]
 
     application = new Application(config)
-    application.once('stop', runNext)
+    application.once('stop', canceled => {
+      if (!canceled && configs.length) {
+        log.info(`Application stopped, running next (${configs.length} left)...`)
+        runNext()
+      } else {
+        process.exit(0)
+      }
+    })
     return application.start()
   }
 
   const stop = async () => {
     console.log('Exiting...')
-    await application.stop()
+    await application.stop(true)
   }
   registerExitHandler(() => stop())
 
