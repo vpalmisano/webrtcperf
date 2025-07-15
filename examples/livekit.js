@@ -10,7 +10,7 @@ async function init() {
 }
 
 window.muteParticipant = muted => {
-  return webrtcperf.clickOn(`button[data-lk-source="microphone",aria-pressed="${muted ? 'true' : 'false'}"]`, 100)
+  return webrtcperf.clickOn(`button[data-lk-source="microphone"][aria-pressed="${muted ? 'true' : 'false'}"]`, 100)
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
