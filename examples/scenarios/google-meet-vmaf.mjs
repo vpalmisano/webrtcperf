@@ -21,5 +21,6 @@ export default function () {
         down: [{ rate: 1500, delay: 50, queue: 50 }],
       },
     ]),
+    vmafPath: '/data',
   }
 }

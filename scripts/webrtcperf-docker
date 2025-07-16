@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 config=$1
-configName=$(basename $config)
+configName=$(basename $config .mjs)
 output=${2:-$PWD/logs/$(date +%Y%m%d%H%M%S)_$configName}
 
 export DEBUGGING_PORT=9000
@@ -12,9 +12,6 @@ export STATS_INTERVAL=5
 export SERVER_PORT=5000
 export SERVER_USE_HTTPS=true
 export SERVER_DATA=/data
-export VMAF_PATH=/data
-export VMAF_PREVIEW=true
-#export VMAF_KEEP_SOURCE_FILES=false
 
 echo "Running webrtcperf with config: $config and output: $output"
 
@@ -26,7 +23,7 @@ if [ ! -d "$output" ]; then
     mkdir -p "$output"
 fi
 
-docker pull ghcr.io/vpalmisano/webrtcperf:devel
+#docker pull ghcr.io/vpalmisano/webrtcperf:devel
 exec docker run -it --rm --name=webrtcperf \
     -v /dev/shm:/dev/shm \
     --cap-add=NET_ADMIN \
@@ -36,6 +33,7 @@ exec docker run -it --rm --name=webrtcperf \
     -v $(realpath $output):/data \
     -v $(realpath $config):/config/$configName:ro \
     -e URL \
+    -e SCRIPT_PATH \
     -e DEBUG_LEVEL \
     -e DEBUGGING_PORT \
     -e PROMETHEUS_PUSHGATEWAY \
@@ -45,7 +43,5 @@ exec docker run -it --rm --name=webrtcperf \
     -e SERVER_PORT \
     -e SERVER_USE_HTTPS \
     -e SERVER_DATA \
-    -e VMAF_PATH \
-    -e VMAF_PREVIEW \
     ghcr.io/vpalmisano/webrtcperf:devel \
     /config/$configName
