@@ -11,7 +11,7 @@ networks:
 services:
 
   prometheus:
-    image: prom/prometheus:v3.4.1
+    image: prom/prometheus:v3.5.0
     user: root
     container_name: wst_prometheus
     restart: unless-stopped
@@ -58,7 +58,7 @@ services:
     - 9091:9091
 
   grafana:
-    image: grafana/grafana:12.0.1
+    image: grafana/grafana:12.0.2-security-01-ubuntu
     user: root
     container_name: wst_grafana
     restart: unless-stopped
