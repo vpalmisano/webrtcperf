@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 config=$1
-configName=$(basename $config .mjs)
+configName=$(basename $config)
 output=${2:-$PWD/logs/$(date +%Y%m%d%H%M%S)_$configName}
 
 export DEBUGGING_PORT=9000

@@ -5,5 +5,6 @@
     "debuggingPort": 9000,
     "prometheusPushgateway": "http://localhost:9091",
     "showStats": false,
-    "statsInterval": 5
+    "statsInterval": 5,
+    "detailedStatsPath": "logs/medianode-detailed-stats.csv"
 }

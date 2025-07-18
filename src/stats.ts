@@ -32,23 +32,19 @@ function calculateFailAmountPercentile(stat: FastStats, percentile = 95): number
 class StatsWriter {
   fname: string
   columns: string[]
-  private _header_written = false
+  private headerWritten = false
 
   constructor(fname = 'stats.log', columns: string[]) {
     this.fname = fname
     this.columns = columns
   }
 
-  /**
-   * push
-   * @param dataColumns
-   */
-  async push(dataColumns: string[]): Promise<void> {
-    if (!this._header_written) {
+  async push(dataColumns: string[], append = true): Promise<void> {
+    if (!this.headerWritten || !append) {
       const data = ['datetime', ...this.columns].join(',') + '\n'
       await fs.promises.mkdir(path.dirname(this.fname), { recursive: true })
       await fs.promises.writeFile(this.fname, data)
-      this._header_written = true
+      this.headerWritten = true
     }
     //
     const data = [Date.now(), ...dataColumns].join(',') + '\n'
@@ -330,6 +326,7 @@ export class Stats extends events.EventEmitter {
   nextSessionId: number
   statsWriter: StatsWriter | null
   detailedStatsWriter: StatsWriter | null
+  detailedStatsSummaryWriter: StatsWriter | null
   private scheduler?: Scheduler
 
   private alertRules: Record<string, AlertRule> | null = null
@@ -386,18 +383,18 @@ export class Stats extends events.EventEmitter {
 
   collectedStats: Record<string, CollectedStats>
 
-  collectedStatsConfig = {
+  private collectedStatsConfig = {
     url: '',
     pages: 0,
     startTime: 0,
   }
-  externalCollectedStats = new Map<
+  private externalCollectedStats = new Map<
     string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { addedTime: number; externalStats: any; config: any }
   >()
-  pushStatsInstance: axios.AxiosInstance | null = null
-
+  private pushStatsInstance: axios.AxiosInstance | null = null
+  private detailedStatsSummary: Record<string, Record<string, FastStats>> = {}
   private running = false
 
   /**
@@ -485,6 +482,7 @@ export class Stats extends events.EventEmitter {
 
     this.statsWriter = null
     this.detailedStatsWriter = null
+    this.detailedStatsSummaryWriter = null
     if (alertRules.trim()) {
       this.alertRules = json5.parse(alertRules)
       log.debug(`using alertRules: ${JSON.stringify(this.alertRules, undefined, 2)}`)
@@ -611,6 +609,11 @@ export class Stats extends events.EventEmitter {
     if (this.detailedStatsPath) {
       log.debug(`Logging stats into ${this.statsPath}`)
       this.detailedStatsWriter = new StatsWriter(this.detailedStatsPath, [
+        'participantName',
+        'trackId',
+        ...this.statsNames,
+      ])
+      this.detailedStatsSummaryWriter = new StatsWriter(this.detailedStatsPath.replace(/\.(.+)$/, '-summary.$1'), [
         'participantName',
         'trackId',
         ...this.statsNames,
@@ -821,8 +824,7 @@ export class Stats extends events.EventEmitter {
             collectedStats.all.push(obj)
           } else {
             for (const [key, value] of Object.entries(obj)) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              if (typeof value === 'number' && isFinite(value as any)) {
+              if (typeof value === 'number' && isFinite(value)) {
                 collectedStats.all.push(value)
                 // Push host label.
                 const { trackId, hostName, participantName } = parseRtStatKey(key)
@@ -955,7 +957,7 @@ export class Stats extends events.EventEmitter {
 
   async writeDetailedStats() {
     if (!this.detailedStatsWriter) return
-    const participantTrackStats = new Map<string, Record<string, string>>()
+    const participantTrackStats = new Map<string, Record<string, number>>()
     Object.entries(this.collectedStats).forEach(([name, stats]) => {
       Object.entries(stats.byParticipantAndTrack).forEach(([label, value]) => {
         let stats = participantTrackStats.get(label)
@@ -963,16 +965,44 @@ export class Stats extends events.EventEmitter {
           stats = {}
           participantTrackStats.set(label, stats)
         }
-        stats[name] = toPrecision(value, 6)
+        stats[name] = value
       })
     })
     for (const [label, trackStats] of participantTrackStats.entries()) {
       const [participantName, trackId] = label.split(':', 2)
+      if (!this.detailedStatsSummary[label]) {
+        this.detailedStatsSummary[label] = {}
+      }
+      const summary = this.detailedStatsSummary[label]
       const values = [participantName, trackId]
       for (const name of this.statsNames) {
-        values.push(trackStats[name] ?? '')
+        values.push(trackStats[name] !== undefined ? toPrecision(trackStats[name], 6) : '')
+        // Update the summary stats.
+        if (!summary[name]) {
+          summary[name] = new FastStats({ store_data: false })
+        }
+        const stat = summary[name]
+        if (trackStats[name] !== undefined) {
+          stat.push(trackStats[name])
+        }
       }
       await this.detailedStatsWriter.push(values)
+    }
+  }
+
+  async writeDetailedStatsSummary() {
+    if (!this.detailedStatsSummaryWriter) return
+    let append = false
+    for (const label of Object.keys(this.detailedStatsSummary)) {
+      const summary = this.detailedStatsSummary[label]
+      const [participantName, trackId] = label.split(':', 2)
+      const values = [participantName, trackId]
+      for (const name of this.statsNames) {
+        const stat = summary[name]
+        values.push(stat?.length > 0 ? toPrecision(stat.amean(), 6) : '')
+      }
+      await this.detailedStatsSummaryWriter.push(values, append)
+      append = true
     }
   }
 
@@ -1652,17 +1682,13 @@ export class Stats extends events.EventEmitter {
     }
   }
 
-  /**
-   * Stop the stats collector and the added Sessions.
-   */
-  async stop(): Promise<void> {
-    if (!this.running) {
-      return
-    }
+  async stop() {
+    if (!this.running) return
     this.running = false
     log.debug('stop')
+
     if (this.scheduler) {
-      this.scheduler.stop()
+      await this.scheduler.stop()
       this.scheduler = undefined
     }
 
@@ -1676,7 +1702,12 @@ export class Stats extends events.EventEmitter {
     }
     this.sessions.clear()
 
+    await this.writeDetailedStatsSummary()
+
     this.statsWriter = null
+    this.detailedStatsWriter = null
+    this.detailedStatsSummaryWriter = null
+    this.detailedStatsSummary = {}
 
     // delete metrics
     if (this.gateway) {
