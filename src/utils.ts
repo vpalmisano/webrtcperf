@@ -799,21 +799,26 @@ export class Scheduler {
     log.debug(`[${this.name}-scheduler] constructor interval=${this.interval}ms`)
   }
 
-  start(): void {
+  start() {
     log.debug(`[${this.name}-scheduler] start`)
     this.running = true
     this.scheduleNext()
   }
 
-  stop(): void {
+  async stop() {
     log.debug(`[${this.name}-scheduler] stop`)
     this.running = false
     if (this.statsTimeoutId) {
       clearTimeout(this.statsTimeoutId)
     }
+    try {
+      await this.callback(Date.now())
+    } catch (err) {
+      log.error(`[${this.name}-scheduler] stop callback error: ${(err as Error).stack}`, err)
+    }
   }
 
-  private scheduleNext(): void {
+  private scheduleNext() {
     if (!this.running) {
       return
     }
