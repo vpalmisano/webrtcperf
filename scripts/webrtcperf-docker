@@ -2,7 +2,7 @@
 
 config=$1
 configName=$(basename $config)
-output=${2:-$PWD/logs/$(date +%Y%m%d%H%M%S)_$configName}
+output=${2:-$PWD/logs}
 
 export DEBUGGING_PORT=9000
 export PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091

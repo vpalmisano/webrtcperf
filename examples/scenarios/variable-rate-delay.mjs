@@ -22,7 +22,7 @@ export default function () {
     for (const rate of [500, 1000, 2000]) {
       for (const delay of [50, 100, 200]) {
         for (const loss of [5, 10, 20]) {
-          const id = `${type}_${direction}-r${rate}-d${delay}-l${loss}`
+          const id = `${Date.now()}_${type}_${direction}-r${rate}-d${delay}-l${loss}`
           const d = `/data/${id}`
           const queue = queueSize(rate, delay)
           ret.push({
