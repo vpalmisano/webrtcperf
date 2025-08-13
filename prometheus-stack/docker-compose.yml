@@ -23,9 +23,6 @@ services:
     - '--storage.tsdb.path=/prometheus'
     ports:
     - 9090:9090
-    links:
-    - node-exporter:node-exporter
-    - pushgateway:pushgateway
 
   node-exporter:
     image: prom/node-exporter:v1.9.1
@@ -58,12 +55,12 @@ services:
     - 9091:9091
 
   grafana:
-    image: grafana/grafana:12.0.2-security-01-ubuntu
+    image: grafana/grafana:12.2.0-16895479002
     user: root
     container_name: wst_grafana
     restart: unless-stopped
-    links:
-    - prometheus:prometheus
+    depends_on:
+    - prometheus
     ports:
     - 3001:3000
     volumes:

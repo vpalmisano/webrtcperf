@@ -23,7 +23,7 @@ if [ ! -d "$output" ]; then
     mkdir -p "$output"
 fi
 
-#docker pull ghcr.io/vpalmisano/webrtcperf:devel
+docker pull ghcr.io/vpalmisano/webrtcperf:devel
 exec docker run -it --rm --name=webrtcperf \
     -v /dev/shm:/dev/shm \
     --cap-add=NET_ADMIN \
