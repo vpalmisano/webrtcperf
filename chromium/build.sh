@@ -6,7 +6,8 @@ export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
 export PATH="$PATH:${BUILDDIR}/depot_tools"
 
-export DEFAULT_BRANCH="tags/139.0.7230.1"
+# https://chromium.googlesource.com/chromium/src/+refs
+export DEFAULT_BRANCH="tags/141.0.7364.1"
 
 function setup() {
     which gperf || sudo apt install -y gperf
