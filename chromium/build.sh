@@ -15,7 +15,7 @@ function setup() {
     mkdir -p ${BUILDDIR}
     cd ${BUILDDIR}
     if [ ! -d depot_tools ]; then
-        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
     fi
     mkdir -p cd ${BUILDDIR}/src/chromium
     cd ${BUILDDIR}/src/chromium
@@ -24,7 +24,7 @@ function setup() {
     ./build/install-build-deps.sh
     gclient runhooks
     gn gen out/Default
-    gn args out/Default
+    #gn args out/Default
     cat <<EOF > out/Default/args.gn
 # Set build arguments here. See "gn help buildargs".
 
