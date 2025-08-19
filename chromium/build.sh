@@ -5,12 +5,21 @@ export DIR=$(dirname $(realpath "${BASH_SOURCE:-$0}"))
 export BUILDDIR=${HOME}/chromium
 export CHROMIUM_SRC=${BUILDDIR}/src/chromium/src
 export PATH="$PATH:${BUILDDIR}/depot_tools"
+export PLATFORM=$(uname -s)
+if [ $(uname -m) = "arm64" ]; then
+    export TARGET_ARCH=arm64
+else
+    export TARGET_ARCH=x64
+fi
 
 # https://chromium.googlesource.com/chromium/src/+refs
-export DEFAULT_BRANCH="tags/141.0.7364.1"
+export VERSION="141.0.7364.1"
+export DEFAULT_BRANCH="tags/${VERSION}"
 
 function setup() {
-    which gperf || sudo apt install -y gperf
+    if [ "${PLATFORM}" = "Linux" ]; then
+        which gperf || sudo apt install -y gperf
+    fi
     # https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md
     mkdir -p ${BUILDDIR}
     cd ${BUILDDIR}
@@ -21,14 +30,13 @@ function setup() {
     cd ${BUILDDIR}/src/chromium
     fetch --nohooks --no-history chromium
     cd src
-    ./build/install-build-deps.sh
+    if [ "${PLATFORM}" = "Linux" ]; then
+        ./build/install-build-deps.sh
+    fi
     gclient runhooks
     gn gen out/Default
-    #gn args out/Default
     cat <<EOF > out/Default/args.gn
 # Set build arguments here. See "gn help buildargs".
-
-target_cpu = "x64"
 
 is_debug=false
 is_component_build=false
@@ -36,13 +44,14 @@ symbol_level=0
 enable_nacl=false
 blink_symbol_level=0
 v8_symbol_level=0
-enable_linux_installer=true
 is_official_build=true
 
 media_use_ffmpeg=true
 media_use_libvpx=true
 proprietary_codecs=true
 ffmpeg_branding="Chrome"
+
+cc_wrapper="CCACHE_SLOPPINESS=time_macros ccache"
 
 chrome_pgo_phase=0
 disable_fieldtrial_testing_config=true
@@ -60,14 +69,21 @@ treat_warnings_as_errors=false
 use_official_google_api_keys=false
 use_unofficial_version_number=false
 use_kerberos=false
-enable_vulkan=true
-
-cc_wrapper="CCACHE_SLOPPINESS=time_macros ccache"
-
 rtc_use_h264 = true
 rtc_build_examples = false
 rtc_enable_avx2 = true
 EOF
+
+    if [ "${PLATFORM}" = "Linux" ]; then
+        cat <<EOF >> out/Default/args.gn
+enable_linux_installer=true
+enable_vulkan=true
+EOF
+    else
+        cat <<EOF >> out/Default/args.gn
+enable_mac_installer=true
+EOF
+    fi
 }
 
 function apply_patch() {
@@ -94,7 +110,8 @@ function update() {
     git checkout main
     git pull
     cd ${CHROMIUM_SRC}
-    git fetch --tags
+    git rebase --abort || true
+    git fetch origin ${branch} --no-tags
     git checkout ${branch}
     git pull origin ${branch}
     gclient sync -D --force --reset --no-history --revision=${branch}
@@ -103,8 +120,16 @@ function update() {
 
 function build() {
     cd ${CHROMIUM_SRC}
-    time ionice -c3 nice -n19 autoninja -C out/Default -j8 "chrome/installer/linux:unstable_deb"
-    mv out/Default/*.deb ${DIR}
+    if [ "${PLATFORM}" = "Linux" ]; then
+        time ionice -c3 nice -n19 autoninja -C out/Default "chrome/installer/linux:unstable_deb"
+        mv out/Default/*.deb ${DIR}
+    else
+        time nice -n19 autoninja -C out/Default chrome chrome/installer/mac
+        rm -rf out/Default/Chromium
+        mkdir out/Default/Chromium
+        mv out/Default/Chromium.app out/Default/Chromium
+        out/Default/Chromium\ Packaging/pkg-dmg --source out/Default/Chromium --target ${DIR}/Chromium_${VERSION}_${TARGET_ARCH}.dmg
+    fi
 }
 
 function clean() {
