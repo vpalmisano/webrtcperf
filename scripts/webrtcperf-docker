@@ -36,7 +36,6 @@ exec docker run -it --rm --name=webrtcperf \
     -e SCRIPT_PATH \
     -e DEBUG_LEVEL \
     -e DEBUGGING_PORT \
-    -e DEBUGGING_ADDRESS=0.0.0.0 \
     -e PROMETHEUS_PUSHGATEWAY \
     -e SHOW_PAGE_LOG \
     -e SHOW_STATS \
