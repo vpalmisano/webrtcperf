@@ -676,7 +676,7 @@ export class Session extends EventEmitter {
             deviceScaleFactor: this.deviceScaleFactor,
             isMobile: false,
             hasTouch: false,
-            isLandscape: false,
+            isLandscape: true,
           },
         })
       } catch (err) {
@@ -919,6 +919,13 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
         cmd += `sessionStorage.setItem('${key}', '${JSON.stringify(value)}');\n`
       })
     }
+    cmd += `
+Object.defineProperty(window.screen, 'width', { value: ${this.windowWidth}, writable: false });
+Object.defineProperty(window.screen, 'height', { value: ${this.windowHeight}, writable: false });
+Object.defineProperty(window.screen, 'availWidth', { value: ${this.windowWidth}, writable: false });
+Object.defineProperty(window.screen, 'availHeight', { value: ${this.windowHeight}, writable: false });
+Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-primary', writable: false });
+    `
     log.debug('init command:', cmd)
     await page.evaluateOnNewDocument(cmd)
 
