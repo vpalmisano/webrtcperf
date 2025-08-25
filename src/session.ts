@@ -803,7 +803,7 @@ try {
 } catch (err) {
   console.error('[webrtcperf] Error parsing scriptParams:', err);
   webrtcperf.params = {};
-}
+};
   `
 
     if (this.serverPort) {
@@ -910,13 +910,13 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
     if (this.localStorage) {
       log.debug('Using localStorage:', this.localStorage)
       Object.entries(this.localStorage).map(([key, value]) => {
-        cmd += `localStorage.setItem('${key}', '${JSON.stringify(value)}');\n`
+        cmd += `window.localStorage.setItem('${key}', ${JSON.stringify(value)});\n`
       })
     }
     if (this.sessionStorage) {
       log.debug('Using sessionStorage:', this.sessionStorage)
       Object.entries(this.sessionStorage).map(([key, value]) => {
-        cmd += `sessionStorage.setItem('${key}', '${JSON.stringify(value)}');\n`
+        cmd += `window.sessionStorage.setItem('${key}', ${JSON.stringify(value)});\n`
       })
     }
     cmd += `
