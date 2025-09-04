@@ -2,6 +2,7 @@ import path from 'path'
 import Docker from 'dockerode'
 import { logger, resolvePackagePath } from './utils'
 import { loadConfig } from './config'
+import fs from 'fs'
 
 const log = logger('webrtcperf:docker')
 
@@ -14,6 +15,7 @@ export async function runWithDocker(argv: string[]) {
 
   const startTimestamp = Date.now()
   const dataDir = path.resolve(path.dirname(configPath), 'logs', `${startTimestamp}`)
+  await fs.promises.mkdir(dataDir, { recursive: true })
 
   const binds: string[] = [
     `${path.resolve(configPath)}:/config/${configName}:ro`,
@@ -32,10 +34,12 @@ export async function runWithDocker(argv: string[]) {
   }
 
   const portBindings: Docker.PortMap = {}
+  const exposedPorts: { [portAndProtocol: string]: object } = {}
   if (config.debuggingPort) {
     for (let i = 0; i < config.sessions; i++) {
       const port = `${config.debuggingPort + i}/tcp`
       portBindings[port] = [{ HostPort: `${config.debuggingPort + i}` }]
+      exposedPorts[port] = {}
     }
   }
 
@@ -82,6 +86,7 @@ export async function runWithDocker(argv: string[]) {
     Tty: true,
     OpenStdin: true,
     StdinOnce: true,
+    ExposedPorts: exposedPorts,
   }
 
   try {
