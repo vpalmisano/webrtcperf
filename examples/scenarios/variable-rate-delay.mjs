@@ -1,5 +1,5 @@
 // Usage:
-// scripts/webrtcperf-docker examples/scenarios/variable-rate-delay.mjs
+// webrtcperf --docker examples/scenarios/variable-rate-delay.mjs
 
 function queueSize(rate, delay, mtu = 1400) {
   return Math.max(Math.ceil((((1.5 * rate * 1000) / 8) * (delay / 1000)) / mtu), 25)
@@ -40,6 +40,8 @@ export default function () {
               {
                 sessions: direction === 'down' ? '0' : '1',
                 protocol: 'udp',
+                skipSourcePorts: '53,80,443',
+                skipDestinationPorts: '53,80,443',
                 [direction]: [{ rate, delay, loss, queue }],
               },
             ]),

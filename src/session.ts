@@ -1312,7 +1312,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     if (this.showPageLog || saveFile) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       page.on('pageerror', async (error: any) => {
-        const text = `pageerror: ${error.message?.message || error.message} - ${error.message?.stack || error.stack}`
+        const text = `pageerror: ${error?.message?.message || error?.message || error} - ${error?.message?.stack || error?.stack}`
         await this.onPageMessage(index, 'error', text, saveFile)
       })
 

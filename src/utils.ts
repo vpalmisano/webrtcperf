@@ -651,28 +651,37 @@ export async function runShellCommand(
   cmd: string,
   verbose = false,
   maxBuffer = 1024 * 1024,
+  { provideStdin = false, returnStdout = true, returnStderr = true } = {},
 ): Promise<{ stdout: string; stderr: string }> {
   if (verbose) log.debug(`runShellCommand cmd: ${cmd}`)
   return new Promise((resolve, reject) => {
     const p = spawn(cmd, {
       shell: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [
+        provideStdin ? 'inherit' : 'ignore',
+        returnStdout ? 'pipe' : 'inherit',
+        returnStderr ? 'pipe' : 'inherit',
+      ],
       detached: true,
     })
     let stdout = ''
     let stderr = ''
-    p.stdout.on('data', data => {
-      if (maxBuffer && stdout.length > maxBuffer) {
-        stdout = stdout.slice(data.length)
-      }
-      stdout += data
-    })
-    p.stderr.on('data', data => {
-      if (maxBuffer && stderr.length > maxBuffer) {
-        stderr = stderr.slice(data.length)
-      }
-      stderr += data
-    })
+    if (returnStdout) {
+      p.stdout?.on('data', data => {
+        if (maxBuffer && stdout.length > maxBuffer) {
+          stdout = stdout.slice(data.length)
+        }
+        stdout += data
+      })
+    }
+    if (returnStderr) {
+      p.stderr?.on('data', data => {
+        if (maxBuffer && stderr.length > maxBuffer) {
+          stderr = stderr.slice(data.length)
+        }
+        stderr += data
+      })
+    }
     p.once('error', err => reject(err))
     p.once('close', code => {
       if (code !== 0) {

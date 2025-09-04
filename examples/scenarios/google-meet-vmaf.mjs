@@ -1,6 +1,6 @@
 // Usage:
 // export URL=https://meet.google.com/<ID>
-// scripts/webrtcperf-docker examples/scenarios/google-meet-vmaf.mjs
+// webrtcperf --docker examples/scenarios/google-meet-vmaf.mjs
 
 export default function () {
   console.log('Running Google Meet scenario with VMAF metrics...')

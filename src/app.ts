@@ -24,6 +24,7 @@ import { calculateVmafScore, convertToIvf, prepareVideo } from './vmaf'
 import path from 'path'
 import { markedTerminal } from 'marked-terminal'
 import { EventEmitter } from 'events'
+import { runWithDocker } from './docker'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { marked } = require('marked')
@@ -227,15 +228,24 @@ export class Application extends EventEmitter {
 async function main(): Promise<void> {
   showHelpOrVersion()
 
+  const argv = process.argv.slice(2)
+
+  // Handle docker run.
+  if (argv.includes('--docker')) {
+    try {
+      await runWithDocker(argv)
+    } catch (err: unknown) {
+      log.error(`runWithDocker error: ${(err as Error).stack}`)
+      process.exit(1)
+    }
+    process.exit(0)
+  }
+
   let configs: Config[]
 
-  if (process.argv.slice(2).includes('--prompt')) {
-    const params = await loadConfigFromPrompt(
-      process.argv
-        .slice(2)
-        .filter(s => !['--prompt', '--dry-run'].includes(s))
-        .join(' '),
-    )
+  // Handle prompt.
+  if (argv.includes('--prompt')) {
+    const params = await loadConfigFromPrompt(argv.filter(s => !['--prompt', '--dry-run'].includes(s)).join(' '))
     if (process.argv.slice(2).includes('--dry-run')) {
       console.log(json5.stringify(params, null, 2))
       process.exit(0)
