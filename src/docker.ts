@@ -91,7 +91,7 @@ export async function runWithDocker(argv: string[]) {
 
   try {
     if (!process.env.DEBUG_SRC) {
-      log.info('Pulling latest development image...')
+      log.info('Pulling latest webrtcperf image...')
       await docker.pull('ghcr.io/vpalmisano/webrtcperf:devel')
     }
 
