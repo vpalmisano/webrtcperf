@@ -30,8 +30,8 @@ import { gunzipSync } from 'zlib'
 import { RtcStats, rtcStatKey, updateRtcStats } from './rtcstats'
 import { FastStats } from './stats'
 import {
-  PeerConnectionExternal,
-  PeerConnectionExternalMethod,
+  /* PeerConnectionExternal,
+  PeerConnectionExternalMethod, */
   checkChromeExecutable,
   downloadUrl,
   enabledForSession,
@@ -1511,9 +1511,9 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     this.pages.set(index, page)
 
     if (this.throttleIndex > -1 && (process.platform !== 'linux' || this.useBrowserThrottling)) {
-      await this.applyNetworkThrottling(page)
+      await this.applyNetworkThrottling(pageCDPSession)
       throttleNotifier.on('change', async () => {
-        await this.applyNetworkThrottling(page)
+        await this.applyNetworkThrottling(pageCDPSession)
       })
     }
 
@@ -1528,7 +1528,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     }
   }
 
-  private async applyNetworkThrottling(page: Page) {
+  private async applyNetworkThrottling(pageCDPSession: CDPSession) {
     const throttleUpValues = getSessionThrottleValues(this.throttleIndex, 'up')
     const throttleDownValues = getSessionThrottleValues(this.throttleIndex, 'down')
     const params = {
@@ -1540,7 +1540,6 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
       packetQueueLength: Math.max(throttleUpValues.queue || 0, throttleDownValues.queue || 0),
     }
     log.debug(`Apply internal network throttling: ${JSON.stringify(params)}`)
-    const pageCDPSession = (page as any)._client() as CDPSession
     await pageCDPSession.send('Network.emulateNetworkConditions', {
       ...params,
       uploadThroughput: params.uploadThroughput !== -1 ? params.uploadThroughput / 8 : -1,
