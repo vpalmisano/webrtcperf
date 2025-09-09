@@ -1,4 +1,4 @@
-import { getSessionThrottleValues, throttleLauncher } from '@vpalmisano/throttler'
+import { getSessionThrottleValues, throttleLauncher, throttleNotifier } from '@vpalmisano/throttler'
 import assert from 'assert'
 import axios from 'axios'
 import EventEmitter from 'events'
@@ -163,6 +163,7 @@ export interface SessionParams {
   userAgent: string
   id: number
   throttleIndex: number
+  useBrowserThrottling: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   evaluateAfter?: any[]
   exposedFunctions?: string
@@ -279,6 +280,8 @@ export class Session extends EventEmitter {
   readonly id: number
   /** The throttle configuration index assigned to the session. */
   readonly throttleIndex: number
+  /** If true, the network will be throttled using the browser internal throttling mechanism. */
+  readonly useBrowserThrottling: boolean
   /** The test page url. */
   readonly url: string
   /** The url query. */
@@ -378,6 +381,7 @@ export class Session extends EventEmitter {
     userAgent,
     id,
     throttleIndex,
+    useBrowserThrottling,
     evaluateAfter,
     exposedFunctions,
     scriptParams,
@@ -475,6 +479,7 @@ export class Session extends EventEmitter {
     this.emulateCpuThrottling = emulateCpuThrottling
 
     this.throttleIndex = throttleIndex
+    this.useBrowserThrottling = useBrowserThrottling
     this.evaluateAfter = evaluateAfter || []
     this.exposedFunctions = exposedFunctions || {}
     if (scriptParams) {
@@ -892,6 +897,9 @@ webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost
 
     const page = await this.getNewPage(tabIndex)
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pageCDPSession = (page as any)._client() as CDPSession
+
     await page.setBypassCSP(true)
 
     if (this.userAgent) {
@@ -932,8 +940,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     // Clear cookies.
     if (this.clearCookies) {
       try {
-        const client = await page.target().createCDPSession()
-        await client.send('Network.clearBrowserCookies')
+        await pageCDPSession.send('Network.clearBrowserCookies')
       } catch (err) {
         log.error(`clearCookies error: ${(err as Error).stack}`)
       }
@@ -977,8 +984,6 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     // Enable request interception.
     let setRequestInterceptionState = true
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pageCDPSession = (page as any)._client() as CDPSession
     await pageCDPSession.send('Network.setBypassServiceWorker', {
       bypass: true,
     })
@@ -1181,7 +1186,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     }
 
     // PeerConnectionExternal
-    await page.exposeFunction(
+    /* await page.exposeFunction(
       'createPeerConnectionExternal',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (options: any) => {
@@ -1199,7 +1204,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
           return pc[name](arg)
         }
       },
-    )
+    )*/
 
     // Simulate keypress
     await page.exposeFunction('keypressText', async (selector: string, text: string, delay = 20) => {
@@ -1427,10 +1432,23 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
       resourcesStats.wsRecvBytes += event.response.payloadData.length
     })
 
-    // hardware concurrency
+    // Hardware concurrency.
     if (this.hardwareConcurrency) {
       const plugin = NavigatorHardwareConcurrency({ hardwareConcurrency: this.hardwareConcurrency })
       await plugin.onPageCreated(page)
+    }
+
+    // Network throttling.
+    if (this.throttleIndex > -1 && (process.platform !== 'linux' || this.useBrowserThrottling)) {
+      log.debug(`Using internal network throttling`)
+      await pageCDPSession.send('Network.emulateNetworkConditions', {
+        offline: false,
+        uploadThroughput: 100000000 / 8,
+        downloadThroughput: 100000000 / 8,
+        latency: 0,
+        packetLoss: 0,
+        packetQueueLength: 0,
+      })
     }
 
     // Load page script.
@@ -1492,6 +1510,13 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     // add to pages map
     this.pages.set(index, page)
 
+    if (this.throttleIndex > -1 && (process.platform !== 'linux' || this.useBrowserThrottling)) {
+      await this.applyNetworkThrottling(page)
+      throttleNotifier.on('change', async () => {
+        await this.applyNetworkThrottling(page)
+      })
+    }
+
     log.debug(`Page ${index + 1} "${url}" loaded in ${(Date.now() - pageLoadTime) / 1000}s`)
 
     for (let i = 0; i < this.evaluateAfter.length; i++) {
@@ -1501,6 +1526,26 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
         ...this.evaluateAfter[i].args,
       )
     }
+  }
+
+  private async applyNetworkThrottling(page: Page) {
+    const throttleUpValues = getSessionThrottleValues(this.throttleIndex, 'up')
+    const throttleDownValues = getSessionThrottleValues(this.throttleIndex, 'down')
+    const params = {
+      offline: false,
+      uploadThroughput: throttleUpValues.rate || -1,
+      downloadThroughput: throttleDownValues.rate || -1,
+      latency: Math.max(throttleUpValues.delay || 0, throttleDownValues.delay || 0),
+      packetLoss: Math.max(throttleUpValues.loss || 0, throttleDownValues.loss || 0),
+      packetQueueLength: Math.max(throttleUpValues.queue || 0, throttleDownValues.queue || 0),
+    }
+    log.debug(`Apply internal network throttling: ${JSON.stringify(params)}`)
+    const pageCDPSession = (page as any)._client() as CDPSession
+    await pageCDPSession.send('Network.emulateNetworkConditions', {
+      ...params,
+      uploadThroughput: params.uploadThroughput !== -1 ? params.uploadThroughput / 8 : -1,
+      downloadThroughput: params.downloadThroughput !== -1 ? params.downloadThroughput / 8 : -1,
+    })
   }
 
   private async getNewPage(tabIndex: number): Promise<Page> {

@@ -108,7 +108,7 @@ export class Application extends EventEmitter {
       }
 
       // Network throttle.
-      if (config.throttleConfig && process.platform === 'linux') {
+      if (config.throttleConfig) {
         await startThrottle(config.throttleConfig)
       }
 
@@ -197,7 +197,7 @@ export class Application extends EventEmitter {
 
     await this.stats.stop()
 
-    if (this.config.throttleConfig && process.platform === 'linux') {
+    if (this.config.throttleConfig) {
       await stopThrottle()
     }
 

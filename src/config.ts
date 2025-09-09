@@ -241,6 +241,13 @@ When using an array of objects, specify a different "at" value for each of them,
     env: 'THROTTLE_CONFIG',
     arg: 'throttle-config',
   },
+  useBrowserThrottling: {
+    doc: `If true, the network will be throttled using the browser internal throttling mechanism.`,
+    format: 'Boolean',
+    default: false,
+    env: 'USE_BROWSER_THROTTLING',
+    arg: 'use-browser-throttling',
+  },
   randomAudioPeriod: {
     doc: `If not zero, it specifies the maximum period in seconds after which \
 a new random active session is selected, enabling the getUserMedia audio tracks in \
