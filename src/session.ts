@@ -1367,70 +1367,12 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
       }
     })
 
+    await page.exposeFunction('webrtcperf_reload', () => {
+      return page.reload()
+    })
+
     // HTTP stats.
-    const resourcesStats = {
-      sentBytes: 0,
-      recvBytes: 0,
-      recvLatency: new FastStats({ store_data: false }),
-      wsSentBytes: 0,
-      wsRecvBytes: 0,
-      wsRecvLatency: new FastStats({ store_data: false }),
-    }
-    this.httpResourcesStats.set(index, resourcesStats)
-
-    const pendingRequests = new Map<string, { url: string; timestamp: number }>()
-    pageCDPSession.on('Network.requestWillBeSent', event => {
-      if (event.request.url.startsWith('data:')) return
-      const { requestId, request, timestamp } = event
-      const sentBytes = request.postDataEntries?.reduce((acc, entry) => acc + (entry.bytes?.length || 0), 0)
-      //log.log('Network.requestWillBeSent', event.type, request.url, sentBytes)
-      if (sentBytes) resourcesStats.sentBytes += sentBytes
-      pendingRequests.set(requestId, { url: request.url, timestamp })
-    })
-
-    pageCDPSession.on('Network.responseReceived', event => {
-      const request = pendingRequests.get(event.requestId)
-      if (!request) return
-      const { response } = event
-      if (response.fromDiskCache) {
-        pendingRequests.delete(event.requestId)
-        return
-      }
-      resourcesStats.recvBytes += response.encodedDataLength
-    })
-
-    pageCDPSession.on('Network.dataReceived', event => {
-      const request = pendingRequests.get(event.requestId)
-      if (!request) return
-      resourcesStats.recvBytes += event.encodedDataLength
-    })
-
-    pageCDPSession.on('Network.loadingFinished', event => {
-      const request = pendingRequests.get(event.requestId)
-      if (!request) return
-      pendingRequests.delete(event.requestId)
-      const { timestamp } = event
-      resourcesStats.recvLatency.push(timestamp - request.timestamp)
-    })
-
-    pageCDPSession.on('Network.webSocketCreated', event => {
-      pendingRequests.set(event.requestId, { url: event.url, timestamp: Date.now() })
-    })
-
-    pageCDPSession.on('Network.webSocketHandshakeResponseReceived', event => {
-      const request = pendingRequests.get(event.requestId)
-      if (!request) return
-      pendingRequests.delete(event.requestId)
-      resourcesStats.wsRecvLatency.push((Date.now() - request.timestamp) / 1000)
-    })
-
-    pageCDPSession.on('Network.webSocketFrameSent', event => {
-      resourcesStats.wsSentBytes += event.response.payloadData.length
-    })
-
-    pageCDPSession.on('Network.webSocketFrameReceived', event => {
-      resourcesStats.wsRecvBytes += event.response.payloadData.length
-    })
+    this.setupPageNetworkStats(pageCDPSession, index)
 
     // Hardware concurrency.
     if (this.hardwareConcurrency) {
@@ -1526,6 +1468,72 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
         ...this.evaluateAfter[i].args,
       )
     }
+  }
+
+  private setupPageNetworkStats(pageCDPSession: CDPSession, index: number) {
+    const resourcesStats = {
+      sentBytes: 0,
+      recvBytes: 0,
+      recvLatency: new FastStats({ store_data: false }),
+      wsSentBytes: 0,
+      wsRecvBytes: 0,
+      wsRecvLatency: new FastStats({ store_data: false }),
+    }
+    this.httpResourcesStats.set(index, resourcesStats)
+
+    const pendingRequests = new Map<string, { url: string; timestamp: number }>()
+    pageCDPSession.on('Network.requestWillBeSent', event => {
+      if (event.request.url.startsWith('data:')) return
+      const { requestId, request, timestamp } = event
+      const sentBytes = request.postDataEntries?.reduce((acc, entry) => acc + (entry.bytes?.length || 0), 0)
+      //log.log('Network.requestWillBeSent', event.type, request.url, sentBytes)
+      if (sentBytes) resourcesStats.sentBytes += sentBytes
+      pendingRequests.set(requestId, { url: request.url, timestamp })
+    })
+
+    pageCDPSession.on('Network.responseReceived', event => {
+      const request = pendingRequests.get(event.requestId)
+      if (!request) return
+      const { response } = event
+      if (response.fromDiskCache) {
+        pendingRequests.delete(event.requestId)
+        return
+      }
+      resourcesStats.recvBytes += response.encodedDataLength
+    })
+
+    pageCDPSession.on('Network.dataReceived', event => {
+      const request = pendingRequests.get(event.requestId)
+      if (!request) return
+      resourcesStats.recvBytes += event.encodedDataLength
+    })
+
+    pageCDPSession.on('Network.loadingFinished', event => {
+      const request = pendingRequests.get(event.requestId)
+      if (!request) return
+      pendingRequests.delete(event.requestId)
+      const { timestamp } = event
+      resourcesStats.recvLatency.push(timestamp - request.timestamp)
+    })
+
+    pageCDPSession.on('Network.webSocketCreated', event => {
+      pendingRequests.set(event.requestId, { url: event.url, timestamp: Date.now() })
+    })
+
+    pageCDPSession.on('Network.webSocketHandshakeResponseReceived', event => {
+      const request = pendingRequests.get(event.requestId)
+      if (!request) return
+      pendingRequests.delete(event.requestId)
+      resourcesStats.wsRecvLatency.push((Date.now() - request.timestamp) / 1000)
+    })
+
+    pageCDPSession.on('Network.webSocketFrameSent', event => {
+      resourcesStats.wsSentBytes += event.response.payloadData.length
+    })
+
+    pageCDPSession.on('Network.webSocketFrameReceived', event => {
+      resourcesStats.wsRecvBytes += event.response.payloadData.length
+    })
   }
 
   private async applyNetworkThrottling(pageCDPSession: CDPSession) {

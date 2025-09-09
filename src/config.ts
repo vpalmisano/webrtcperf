@@ -931,7 +931,10 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
           : res.contentType === 'application/toml'
             ? toml.parse(res.data)
             : json5.parse(res.data)
-    } else if (existsSync(filePath)) {
+    } else {
+      if (!existsSync(filePath)) {
+        throw new Error(`Config file not found: ${filePath}`)
+      }
       log.debug(`Loading config from local file: ${filePath}`)
       if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
         const module = await import(/* webpackIgnore: true */ path.resolve(filePath))
