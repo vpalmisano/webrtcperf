@@ -19,3 +19,5 @@ webrtcperf_*.gz
 build
 _docs
 *.traineddata
+*.dmg
+.DS_Store
