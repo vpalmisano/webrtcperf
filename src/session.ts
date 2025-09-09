@@ -1452,11 +1452,19 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     // add to pages map
     this.pages.set(index, page)
 
+    // Handle network internal throttling.
     if (this.throttleIndex > -1 && (process.platform !== 'linux' || this.useBrowserThrottling)) {
-      await this.applyNetworkThrottling(pageCDPSession)
-      throttleNotifier.on('change', async () => {
-        await this.applyNetworkThrottling(pageCDPSession)
-      })
+      const onThrottleChange = async () => {
+        if (page.isClosed()) return
+        try {
+          await this.applyNetworkThrottling(pageCDPSession)
+        } catch (err) {
+          log.error(`applyNetworkThrottling error: ${(err as Error).stack}`)
+        }
+      }
+      await onThrottleChange()
+      throttleNotifier.on('change', onThrottleChange)
+      page.once('close', () => throttleNotifier.off('change', onThrottleChange))
     }
 
     log.debug(`Page ${index + 1} "${url}" loaded in ${(Date.now() - pageLoadTime) / 1000}s`)
