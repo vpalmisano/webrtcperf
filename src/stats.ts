@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { AxiosInstance, AxiosRequestHeaders, AxiosRequestTransformer } from 'axios'
 import * as events from 'events'
 import { Stats as FastStats } from 'fast-stats'
 import * as fs from 'fs'
@@ -393,7 +393,7 @@ export class Stats extends events.EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { addedTime: number; externalStats: any; config: any }
   >()
-  private pushStatsInstance: axios.AxiosInstance | null = null
+  private pushStatsInstance: AxiosInstance | null = null
   private detailedStatsSummary: Record<string, Record<string, FastStats>> = {}
   private running = false
 
@@ -509,9 +509,9 @@ export class Stats extends events.EventEmitter {
         },
         maxBodyLength: 20000000,
         transformRequest: [
-          ...(axios.defaults.transformRequest as axios.AxiosRequestTransformer[]),
+          ...(axios.defaults.transformRequest as AxiosRequestTransformer[]),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (data: any, headers?: axios.AxiosRequestHeaders): any => {
+          (data: any, headers?: AxiosRequestHeaders): any => {
             if (headers && typeof data === 'string' && data.length > 16 * 1024) {
               headers['Content-Encoding'] = 'gzip'
               return zlib.gzipSync(data)

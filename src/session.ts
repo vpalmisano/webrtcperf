@@ -1,6 +1,6 @@
 import { getSessionThrottleValues, throttleLauncher, throttleNotifier } from '@vpalmisano/throttler'
 import assert from 'assert'
-import axios from 'axios'
+import axios, { AxiosRequestConfig } from 'axios'
 import EventEmitter from 'events'
 import fs from 'fs'
 import JSON5 from 'json5'
@@ -1107,7 +1107,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     await page.exposeFunction(
       'jsonFetch',
       async (
-        options: axios.AxiosRequestConfig & {
+        options: AxiosRequestConfig & {
           validStatuses: number[]
           downloadPath: string
         },

@@ -261,10 +261,10 @@ async function main(): Promise<void> {
   const runNext = () => {
     const config = configs.splice(0, 1)[0]
 
+    log.info(`Running next (${configs.length} left)...`)
     application = new Application(config)
     application.once('stop', canceled => {
       if (!canceled && configs.length) {
-        log.info(`Application stopped, running next (${configs.length} left)...`)
         runNext()
       } else {
         process.exit(0)
