@@ -1299,3 +1299,21 @@ export async function getDockerLogsPath(): Promise<string> {
   }
   return logPath
 }
+
+export async function parseStatsFile(filePath: string) {
+  const fileData = await fs.promises.readFile(filePath, 'utf-8')
+  const lines = fileData.split('\n')
+  const headers = lines[0].split(',')
+  const data = lines.slice(1).map(line =>
+    line.split(',').reduce(
+      (acc, value, index) => {
+        if (value !== '') {
+          acc[headers[index]] = isNaN(Number(value)) ? value : Number(value)
+        }
+        return acc
+      },
+      {} as Record<string, string | number>,
+    ),
+  )
+  return data
+}
