@@ -258,13 +258,16 @@ async function main(): Promise<void> {
   if (!configs.length) throw new Error('No configuration found')
 
   let application: Application
+  let i = 0
+  const total = configs.length
   const runNext = () => {
     const config = configs.splice(0, 1)[0]
 
-    log.info(`Running next (${configs.length} left)...`)
+    log.info(`Running ${i + 1}/${total}...`)
     application = new Application(config)
     application.once('stop', canceled => {
       if (!canceled && configs.length) {
+        i++
         runNext()
       } else {
         process.exit(0)

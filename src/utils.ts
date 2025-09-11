@@ -23,58 +23,15 @@ import pidusage from 'pidusage'
 import puppeteer, { ImageFormat, Page } from 'puppeteer-core'
 
 import { Session } from './session'
+import { FastStats } from './stats'
 
 // eslint-disable-next-line
 const ps = require('pidusage/lib/ps')
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-export const { Log } = require('debug-level')
-
-interface Logger {
-  error: (...args: unknown[]) => void
-  warn: (...args: unknown[]) => void
-  info: (...args: unknown[]) => void
-  debug: (...args: unknown[]) => void
-  log: (...args: unknown[]) => void
-}
-
-export function logger(name: string, options = {}): Logger {
+export function logger(name: string, options = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Log } = require('debug-level')
   return new Log(name, { splitLine: false, ...options })
-}
-
-export class LoggerInterface {
-  name?: string
-
-  private logInit(args: unknown[]): void {
-    if (this.name) {
-      args.unshift(`[${this.name}]`)
-    }
-  }
-
-  debug(...args: unknown[]): void {
-    this.logInit(args)
-    log.debug(...args)
-  }
-
-  info(...args: unknown[]): void {
-    this.logInit(args)
-    log.info(...args)
-  }
-
-  warn(...args: unknown[]): void {
-    this.logInit(args)
-    log.warn(...args)
-  }
-
-  error(...args: unknown[]): void {
-    this.logInit(args)
-    log.error(...args)
-  }
-
-  log(...args: unknown[]): void {
-    this.logInit(args)
-    log.log(...args)
-  }
 }
 
 const log = logger('webrtcperf:utils')
@@ -1316,4 +1273,70 @@ export async function parseStatsFile(filePath: string) {
     ),
   )
   return data
+}
+
+export async function aggregateStatsSummary({
+  dirPath = 'logs',
+  senderParticipantName = 'Participant-000001',
+  receiverParticipantName = 'Participant-000000',
+  nameParser = (name: string) => {
+    const [destination, scenario] = name.split('_')
+    return { destination, scenario }
+  },
+}) {
+  const stats = {} as Record<
+    string,
+    {
+      destination: string
+      scenario: string
+      videoRecvBitratePerPixel: FastStats
+      videoRecvFps: FastStats
+      videoSentFps: FastStats
+    }
+  >
+  const results = await fs.promises.readdir(dirPath)
+  for (const test of results) {
+    const filePath = path.join(dirPath, test, 'detailed-stats-summary.csv')
+    if (!fs.existsSync(filePath)) continue
+    const data = await parseStatsFile(filePath)
+
+    const aggregated = {} as Record<string, number>
+    data.forEach(v => {
+      const { participantName, trackId } = v as { participantName: string; trackId: string }
+      const metrics = v as Record<string, number>
+      if (participantName === receiverParticipantName) {
+        if (trackId?.endsWith('-v') && metrics.videoRecvFrames > 0) {
+          const videoRecvBitratePerPixel =
+            metrics.videoRecvBitrates / (metrics.videoRecvWidth * metrics.videoRecvHeight)
+          aggregated.videoRecvBitratePerPixel = Math.max(
+            aggregated.videoRecvBitratePerPixel || 0,
+            videoRecvBitratePerPixel,
+          )
+          aggregated.videoRecvFps = Math.max(aggregated.videoRecvFps || 0, metrics.videoRecvFps)
+        }
+      } else if (participantName === senderParticipantName) {
+        if (trackId?.endsWith('-v') && metrics.videoSentFrames > 0) {
+          aggregated.videoSentFps = Math.max(aggregated.videoSentFps || 0, metrics.videoSentFps)
+        }
+      }
+    })
+    if (Object.keys(aggregated).length === 0) continue
+
+    const { destination, scenario, ...args } = nameParser(test)
+    const key = `${destination}|${scenario}`
+    if (!stats[key]) {
+      stats[key] = {
+        destination,
+        scenario,
+        ...args,
+        videoRecvBitratePerPixel: new FastStats(),
+        videoRecvFps: new FastStats(),
+        videoSentFps: new FastStats(),
+      }
+    }
+    stats[key].videoRecvBitratePerPixel.push(aggregated.videoRecvBitratePerPixel)
+    stats[key].videoRecvFps.push(aggregated.videoRecvFps)
+    stats[key].videoSentFps.push(aggregated.videoSentFps)
+  }
+  return Object.values(stats).sort((a, b) => a.scenario.localeCompare(b.scenario))
 }
