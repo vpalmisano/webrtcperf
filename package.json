@@ -97,7 +97,7 @@
     "@types/dockerode": "^3.3.43",
     "@types/fast-stats": "^0.0.35",
     "@types/marked-terminal": "^6.1.1",
-    "@types/node": "^20.19.13",
+    "@types/node": "^24.3.2",
     "@types/node-os-utils": "^1.3.4",
     "@types/pidusage": "^2.0.5",
     "@types/sdp-transform": "^2.15.0",
