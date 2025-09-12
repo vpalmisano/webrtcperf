@@ -1284,23 +1284,30 @@ export async function aggregateStatsSummary({
     return { destination, scenario }
   },
 }) {
-  const stats = {} as Record<
-    string,
-    {
-      destination: string
-      scenario: string
-      videoRecvBitratePerPixel: FastStats
-      videoRecvFps: FastStats
-      videoSentFps: FastStats
-    }
-  >
+  const stats = [] as {
+    timestamp: number
+    destination: string
+    scenario: string
+    videoRecvBitratePerPixel: FastStats
+    videoRecvFps: FastStats
+    videoSentFps: FastStats
+  }[]
   const results = await fs.promises.readdir(dirPath)
   for (const test of results) {
     const filePath = path.join(dirPath, test, 'detailed-stats-summary.csv')
     if (!fs.existsSync(filePath)) continue
+    const timestamp = fs.statSync(path.join(dirPath, test)).ctime.getTime()
     const data = await parseStatsFile(filePath)
+    const { destination, scenario } = nameParser(test)
 
-    const aggregated = {} as Record<string, number>
+    const aggregated = {
+      timestamp,
+      destination,
+      scenario,
+      videoRecvBitratePerPixel: new FastStats(),
+      videoRecvFps: new FastStats(),
+      videoSentFps: new FastStats(),
+    }
     data.forEach(v => {
       const { participantName, trackId } = v as { participantName: string; trackId: string }
       const metrics = v as Record<string, number>
@@ -1308,35 +1315,16 @@ export async function aggregateStatsSummary({
         if (trackId?.endsWith('-v') && metrics.videoRecvFrames > 0) {
           const videoRecvBitratePerPixel =
             metrics.videoRecvBitrates / (metrics.videoRecvWidth * metrics.videoRecvHeight)
-          aggregated.videoRecvBitratePerPixel = Math.max(
-            aggregated.videoRecvBitratePerPixel || 0,
-            videoRecvBitratePerPixel,
-          )
-          aggregated.videoRecvFps = Math.max(aggregated.videoRecvFps || 0, metrics.videoRecvFps)
+          if (!isNaN(videoRecvBitratePerPixel)) aggregated.videoRecvBitratePerPixel.push(videoRecvBitratePerPixel)
+          if (!isNaN(metrics.videoRecvFps)) aggregated.videoRecvFps.push(metrics.videoRecvFps)
         }
       } else if (participantName === senderParticipantName) {
         if (trackId?.endsWith('-v') && metrics.videoSentFrames > 0) {
-          aggregated.videoSentFps = Math.max(aggregated.videoSentFps || 0, metrics.videoSentFps)
+          if (!isNaN(metrics.videoSentFps)) aggregated.videoSentFps.push(metrics.videoSentFps)
         }
       }
     })
-    if (Object.keys(aggregated).length === 0) continue
-
-    const { destination, scenario, ...args } = nameParser(test)
-    const key = `${destination}|${scenario}`
-    if (!stats[key]) {
-      stats[key] = {
-        destination,
-        scenario,
-        ...args,
-        videoRecvBitratePerPixel: new FastStats(),
-        videoRecvFps: new FastStats(),
-        videoSentFps: new FastStats(),
-      }
-    }
-    stats[key].videoRecvBitratePerPixel.push(aggregated.videoRecvBitratePerPixel)
-    stats[key].videoRecvFps.push(aggregated.videoRecvFps)
-    stats[key].videoSentFps.push(aggregated.videoSentFps)
+    stats.push(aggregated)
   }
-  return Object.values(stats).sort((a, b) => a.scenario.localeCompare(b.scenario))
+  return stats.sort((a, b) => a.timestamp - b.timestamp)
 }
