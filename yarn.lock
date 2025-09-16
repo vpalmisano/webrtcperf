@@ -341,10 +341,10 @@
     "@shikijs/types" "^3.12.2"
     "@shikijs/vscode-textmate" "^10.0.2"
 
-"@google/genai@^1.17.0":
-  version "1.17.0"
-  resolved "https://registry.yarnpkg.com/@google/genai/-/genai-1.17.0.tgz#b09e8677518e68c212f529a7f56d1346a4ccc44a"
-  integrity sha512-r/OZWN9D8WvYrte3bcKPoLODrZ+2TjfxHm5OOyVHUbdFYIp1C4yJaXX4+sCS8I/+CbN9PxLjU5zm1cgmS7qz+A==
+"@google/genai@^1.19.0":
+  version "1.19.0"
+  resolved "https://registry.yarnpkg.com/@google/genai/-/genai-1.19.0.tgz#ad7cef95913c54812b05713d5e788c6bea14e6fe"
+  integrity sha512-mIMV3M/KfzzFA//0fziK472wKBJ1TdJLhozIUJKTPLyTDN1NotU+hyoHW/N0cfrcEWUK20YA0GxCeHC4z0SbMA==
   dependencies:
     google-auth-library "^9.14.2"
     ws "^8.18.0"

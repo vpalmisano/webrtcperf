@@ -51,7 +51,7 @@
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
-    "@google/genai": "^1.17.0",
+    "@google/genai": "^1.19.0",
     "@puppeteer/browsers": "^2.10.8",
     "@vpalmisano/throttler": "0.0.14",
     "@vpalmisano/webrtcperf-js": "^1.1.13",
