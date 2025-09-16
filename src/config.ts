@@ -244,7 +244,7 @@ When using an array of objects, specify a different "at" value for each of them,
   useBrowserThrottling: {
     doc: `If true, the network will be throttled using the browser internal throttling mechanism.`,
     format: 'Boolean',
-    default: false,
+    default: os.platform() !== 'linux',
     env: 'USE_BROWSER_THROTTLING',
     arg: 'use-browser-throttling',
   },
@@ -938,7 +938,7 @@ export async function loadConfig(filePath?: string, values?: any): Promise<Confi
       log.debug(`Loading config from local file: ${filePath}`)
       if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
         const module = await import(/* webpackIgnore: true */ path.resolve(filePath))
-        values = await module.default()
+        values = await module.default(process.argv)
       } else {
         const data = String(await fs.promises.readFile(filePath))
         values =

@@ -1,33 +1,21 @@
-import path from 'path'
 import Docker from 'dockerode'
 import { logger, resolvePackagePath } from './utils'
 import { loadConfig } from './config'
-import fs from 'fs'
+import { runShellCommand } from '@vpalmisano/throttler'
+import os from 'os'
 
 const log = logger('webrtcperf:docker')
 
 export async function runWithDocker(argv: string[]) {
   const docker = new Docker()
-  const configPath = argv.filter(s => s !== '--docker')[0]
+  const configPath = argv[0]
   if (!configPath) throw new Error('No configuration file specified')
-  const configName = path.basename(configPath)
   const config = (await loadConfig(configPath))[0]
 
   const startTimestamp = Date.now()
-  const dataDir = path.resolve(path.dirname(configPath), 'logs', `${startTimestamp}`)
-  await fs.promises.mkdir(dataDir, { recursive: true })
+  const dataDir = process.cwd()
 
-  const binds: string[] = [
-    `${path.resolve(configPath)}:/config/${configName}:ro`,
-    '/dev/shm:/dev/shm',
-    `${dataDir}:/data`,
-    '/tmp/webrtcperf-cache:/root/.webrtcperf',
-  ]
-
-  if (config.scriptPath) {
-    const scriptName = path.basename(config.scriptPath)
-    binds.push(`${path.resolve(config.scriptPath)}:/scripts/${scriptName}:ro`)
-  }
+  const binds: string[] = ['/dev/shm:/dev/shm', `${dataDir}:/data`, '/tmp/webrtcperf-cache:/root/.webrtcperf']
 
   if (process.env.DEBUG_SRC) {
     binds.push(`${resolvePackagePath('app.min.js')}:/app/app.min.js:ro`)
@@ -43,6 +31,10 @@ export async function runWithDocker(argv: string[]) {
     }
   }
 
+  if (config.throttleConfig && os.platform() === 'linux') {
+    await runShellCommand('sudo modprobe ifb numifbs=1')
+  }
+
   const env = [
     `DEBUG_LEVEL=${process.env.DEBUG_LEVEL || 'info'}`,
     'SHOW_PAGE_LOG=false',
@@ -51,19 +43,7 @@ export async function runWithDocker(argv: string[]) {
     'SERVER_USE_HTTPS=true',
     'SERVER_DATA=/data',
     `START_TIMESTAMP=${startTimestamp}`,
-    `STATS_PATH=/data/stats.csv`,
-    `PAGE_LOG_PATH=/data/page.log`,
-    `DETAILED_STATS_PATH=/data/detailed-stats.csv`,
   ]
-
-  if (config.scriptPath) {
-    const scriptName = path.basename(config.scriptPath)
-    env.push(`SCRIPT_PATH=/scripts/${scriptName}`)
-  }
-
-  if (config.debuggingPort) {
-    env.push(`DEBUGGING_PORT=${config.debuggingPort}`)
-  }
 
   if (config.prometheusPushgateway.startsWith('http://localhost')) {
     env.push('PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091')
@@ -72,12 +52,14 @@ export async function runWithDocker(argv: string[]) {
   const containerConfig: Docker.ContainerCreateOptions = {
     Image: 'ghcr.io/vpalmisano/webrtcperf:devel',
     name: 'webrtcperf',
-    Cmd: [`/config/${configName}`],
+    WorkingDir: '/data',
+    Cmd: argv,
     HostConfig: {
       Binds: binds,
       PortBindings: portBindings,
-      CapAdd: ['NET_ADMIN'],
+      CapAdd: config.throttleConfig && os.platform() === 'linux' ? ['NET_ADMIN'] : [],
       NetworkMode: config.prometheusPushgateway.startsWith('http://localhost') ? 'prometheus-stack_default' : 'bridge',
+      ExtraHosts: process.env.EXTRA_HOSTS ? process.env.EXTRA_HOSTS.split(',').map(h => h.trim()) : [],
     },
     Env: env,
     AttachStdin: true,

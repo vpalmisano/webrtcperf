@@ -85,7 +85,8 @@ RUN \
         libzimg2 \
         libx265-199 \
         libzmq5 \
-        xz-utils
+        xz-utils \
+        wireshark
 
 RUN \
     mkdir -p /etc/apt/keyrings; \

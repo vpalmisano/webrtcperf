@@ -1304,10 +1304,10 @@
   resolved "https://registry.npmjs.org/@vpalmisano/ggwave/-/ggwave-0.4.3-2.tgz"
   integrity sha512-VJ9glQjCRDA/Wrx6bmmikpr5JLVb7uWOPVp1ok2IiCy+ET3J8ymIwL5z+KKZVBWvOSePigz+VBXIS6qWeuCjKw==
 
-"@vpalmisano/throttler@0.0.12":
-  version "0.0.12"
-  resolved "https://registry.yarnpkg.com/@vpalmisano/throttler/-/throttler-0.0.12.tgz#ddcedf86bed723ff27458a44229ad4fe81094eed"
-  integrity sha512-d222SXF5vuGzvgMP+lE6zhA15BzhFFGWFnjY4sEsu4UvaS4pcd5b7Ej2WKOfzQyNS7+T99AKjsuTckg9D55ZHg==
+"@vpalmisano/throttler@0.0.14":
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/@vpalmisano/throttler/-/throttler-0.0.14.tgz#1a440e3c909cfef1b31881eb2e78aeaec846bb8d"
+  integrity sha512-SWxGQMCsdv7VyGlvT/cgXOKINpzf4jTgh7S+YZ3KuzYA+6vDEQJP7TPIKMqsHZ/3ET7Rppqrj4stY9n0Quk0SA==
   dependencies:
     change-case "^4.1.2"
     convict "^6.2.4"

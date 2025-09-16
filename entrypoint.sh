@@ -18,4 +18,4 @@ if [ $1 = '--run-as-user' ]; then
 fi
 
 umask 000
-exec node app.min.js $@
+exec node /app/app.min.js $@

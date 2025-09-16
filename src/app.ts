@@ -228,12 +228,13 @@ export class Application extends EventEmitter {
 async function main(): Promise<void> {
   showHelpOrVersion()
 
-  const argv = process.argv.slice(2)
+  process.argv = process.argv.slice(2)
 
   // Handle docker run.
-  if (argv.includes('--docker')) {
+  if (process.argv.includes('--docker')) {
+    process.argv = process.argv.filter(s => s !== '--docker')
     try {
-      await runWithDocker(argv)
+      await runWithDocker(process.argv)
     } catch (err: unknown) {
       log.error(`runWithDocker error: ${(err as Error).stack}`)
       process.exit(1)
@@ -244,15 +245,17 @@ async function main(): Promise<void> {
   let configs: Config[]
 
   // Handle prompt.
-  if (argv.includes('--prompt')) {
-    const params = await loadConfigFromPrompt(argv.filter(s => !['--prompt', '--dry-run'].includes(s)).join(' '))
-    if (process.argv.slice(2).includes('--dry-run')) {
+  if (process.argv.includes('--prompt')) {
+    const dryRun = process.argv.includes('--dry-run')
+    process.argv = process.argv.filter(s => !['--prompt', '--dry-run'].includes(s))
+    const params = await loadConfigFromPrompt(process.argv.join(' '))
+    if (dryRun) {
       console.log(json5.stringify(params, null, 2))
       process.exit(0)
     }
     configs = await loadConfig(undefined, params)
   } else {
-    configs = await loadConfig(process.argv[2])
+    configs = await loadConfig(process.argv[0])
   }
 
   if (!configs.length) throw new Error('No configuration found')
