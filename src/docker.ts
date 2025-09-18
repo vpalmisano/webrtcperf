@@ -3,6 +3,7 @@ import { logger, resolvePackagePath } from './utils'
 import { loadConfig } from './config'
 import { runShellCommand } from '@vpalmisano/throttler'
 import os from 'os'
+import fs from 'fs'
 
 const log = logger('webrtcperf:docker')
 
@@ -10,12 +11,22 @@ export async function runWithDocker(argv: string[]) {
   const docker = new Docker()
   const configPath = argv[0]
   if (!configPath) throw new Error('No configuration file specified')
-  const config = (await loadConfig(configPath))[0]
+  const configs = await loadConfig(configPath)
+  if (!configs.length) throw new Error('Failed to load configuration file')
 
   const startTimestamp = Date.now()
   const dataDir = process.cwd()
+  const tmpDir = os.tmpdir()
 
-  const binds: string[] = ['/dev/shm:/dev/shm', `${dataDir}:/data`, '/tmp/webrtcperf-cache:/root/.webrtcperf']
+  const jsonConfigPath = `${tmpDir}/webrtcperf-config-${startTimestamp}.json`
+  await fs.promises.writeFile(jsonConfigPath, JSON.stringify(configs), 'utf-8')
+
+  const binds: string[] = [
+    '/dev/shm:/dev/shm',
+    `${dataDir}:/data`,
+    `${tmpDir}/webrtcperf-cache:/root/.webrtcperf`,
+    `${jsonConfigPath}:/tmp/config.json:ro`,
+  ]
 
   if (process.env.DEBUG_SRC) {
     binds.push(`${resolvePackagePath('app.min.js')}:/app/app.min.js:ro`)
@@ -23,15 +34,15 @@ export async function runWithDocker(argv: string[]) {
 
   const portBindings: Docker.PortMap = {}
   const exposedPorts: { [portAndProtocol: string]: object } = {}
-  if (config.debuggingPort) {
-    for (let i = 0; i < config.sessions; i++) {
-      const port = `${config.debuggingPort + i}/tcp`
-      portBindings[port] = [{ HostPort: `${config.debuggingPort + i}` }]
+  if (configs[0].debuggingPort) {
+    for (let i = 0; i < configs[0].sessions; i++) {
+      const port = `${configs[0].debuggingPort + i}/tcp`
+      portBindings[port] = [{ HostPort: `${configs[0].debuggingPort + i}` }]
       exposedPorts[port] = {}
     }
   }
 
-  if (config.throttleConfig && os.platform() === 'linux') {
+  if (configs[0].throttleConfig && os.platform() === 'linux') {
     await runShellCommand('sudo modprobe ifb numifbs=1')
   }
 
@@ -45,7 +56,7 @@ export async function runWithDocker(argv: string[]) {
     `START_TIMESTAMP=${startTimestamp}`,
   ]
 
-  if (config.prometheusPushgateway.startsWith('http://localhost')) {
+  if (configs[0].prometheusPushgateway.startsWith('http://localhost')) {
     env.push('PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091')
   }
 
@@ -53,12 +64,14 @@ export async function runWithDocker(argv: string[]) {
     Image: 'ghcr.io/vpalmisano/webrtcperf:devel',
     name: 'webrtcperf',
     WorkingDir: '/data',
-    Cmd: argv,
+    Cmd: ['/tmp/config.json'],
     HostConfig: {
       Binds: binds,
       PortBindings: portBindings,
-      CapAdd: config.throttleConfig && os.platform() === 'linux' ? ['NET_ADMIN'] : [],
-      NetworkMode: config.prometheusPushgateway.startsWith('http://localhost') ? 'prometheus-stack_default' : 'bridge',
+      CapAdd: configs[0].throttleConfig && os.platform() === 'linux' ? ['NET_ADMIN'] : [],
+      NetworkMode: configs[0].prometheusPushgateway.startsWith('http://localhost')
+        ? 'prometheus-stack_default'
+        : 'bridge',
       ExtraHosts: process.env.EXTRA_HOSTS ? process.env.EXTRA_HOSTS.split(',').map(h => h.trim()) : [],
     },
     Env: env,
@@ -110,4 +123,6 @@ export async function runWithDocker(argv: string[]) {
     log.error('Docker operation failed:', error)
     throw error
   }
+
+  await fs.promises.unlink(jsonConfigPath)
 }

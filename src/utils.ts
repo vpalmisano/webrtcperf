@@ -23,7 +23,6 @@ import pidusage from 'pidusage'
 import puppeteer, { ImageFormat, Page } from 'puppeteer-core'
 
 import { Session } from './session'
-import { FastStats } from './stats'
 
 // eslint-disable-next-line
 const ps = require('pidusage/lib/ps')
@@ -1255,76 +1254,4 @@ export async function getDockerLogsPath(): Promise<string> {
     throw new Error(`docker logs path ${logPath} not found`)
   }
   return logPath
-}
-
-export async function parseStatsFile(filePath: string) {
-  const fileData = await fs.promises.readFile(filePath, 'utf-8')
-  const lines = fileData.split('\n')
-  const headers = lines[0].split(',')
-  const data = lines.slice(1).map(line =>
-    line.split(',').reduce(
-      (acc, value, index) => {
-        if (value !== '') {
-          acc[headers[index]] = isNaN(Number(value)) ? value : Number(value)
-        }
-        return acc
-      },
-      {} as Record<string, string | number>,
-    ),
-  )
-  return data
-}
-
-export async function aggregateStatsSummary({
-  dirPath = 'logs',
-  senderParticipantName = 'Participant-000001',
-  receiverParticipantName = 'Participant-000000',
-  nameParser = (name: string) => {
-    const [destination, scenario] = name.split('_')
-    return { destination, scenario }
-  },
-}) {
-  const stats = [] as {
-    timestamp: number
-    destination: string
-    scenario: string
-    videoRecvBitratePerPixel: FastStats
-    videoRecvFps: FastStats
-    videoSentFps: FastStats
-  }[]
-  const results = await fs.promises.readdir(dirPath)
-  for (const test of results) {
-    const filePath = path.join(dirPath, test, 'detailed-stats-summary.csv')
-    if (!fs.existsSync(filePath)) continue
-    const timestamp = fs.statSync(path.join(dirPath, test)).ctime.getTime()
-    const data = await parseStatsFile(filePath)
-    const { destination, scenario } = nameParser(test)
-
-    const aggregated = {
-      timestamp,
-      destination,
-      scenario,
-      videoRecvBitratePerPixel: new FastStats(),
-      videoRecvFps: new FastStats(),
-      videoSentFps: new FastStats(),
-    }
-    data.forEach(v => {
-      const { participantName, trackId } = v as { participantName: string; trackId: string }
-      const metrics = v as Record<string, number>
-      if (participantName === receiverParticipantName) {
-        if (trackId?.endsWith('-v') && metrics.videoRecvFrames > 0) {
-          const videoRecvBitratePerPixel =
-            metrics.videoRecvBitrates / (metrics.videoRecvWidth * metrics.videoRecvHeight)
-          if (!isNaN(videoRecvBitratePerPixel)) aggregated.videoRecvBitratePerPixel.push(videoRecvBitratePerPixel)
-          if (!isNaN(metrics.videoRecvFps)) aggregated.videoRecvFps.push(metrics.videoRecvFps)
-        }
-      } else if (participantName === senderParticipantName) {
-        if (trackId?.endsWith('-v') && metrics.videoSentFrames > 0) {
-          if (!isNaN(metrics.videoSentFps)) aggregated.videoSentFps.push(metrics.videoSentFps)
-        }
-      }
-    })
-    stats.push(aggregated)
-  }
-  return stats.sort((a, b) => a.timestamp - b.timestamp)
 }
