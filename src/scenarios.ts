@@ -3,8 +3,18 @@ import path from 'path'
 import { FastStats } from './stats'
 import { ThrottleConfig, ThrottleRule } from '@vpalmisano/throttler'
 import { Config } from './config'
+import { Auth, google } from 'googleapis'
+import { logger } from './utils'
 
+const log = logger('webrtcperf:scenarios')
+
+/**
+ * It parses a CSV stats file and returns an array of objects representing each row.
+ * @param filePath The path to the CSV stats file.
+ * @returns An array of objects where each object represents a row in the CSV file with keys as column headers.
+ */
 export async function parseStatsFile(filePath: string) {
+  log.debug(`parseStatsFile: ${filePath}`)
   const fileData = await fs.promises.readFile(filePath, 'utf-8')
   const lines = fileData.split('\n')
   const headers = lines[0].split(',')
@@ -22,6 +32,23 @@ export async function parseStatsFile(filePath: string) {
   return data
 }
 
+export type StatsSummary = {
+  timestamp: number
+  id: string
+  scenario: string
+  videoRecvBitratePerPixel: FastStats
+  videoRecvFps: FastStats
+  videoSentFps: FastStats
+}
+
+/**
+ * It aggregates the stats summary from multiple test runs in a directory.
+ * @param options.dirPath Directory path containing test run subdirectories. Default is 'logs'.
+ * @param options.senderParticipantName Participant name of the sender. Default is 'Participant-000001'.
+ * @param options.receiverParticipantName Participant name of the receiver. Default is 'Participant-000000'.
+ * @param options.nameParser Function to parse test directory names. Default splits by '_' and extracts id and scenario.
+ * @returns Array of aggregated stats including timestamp, id, scenario, videoRecvBitratePerPixel, videoRecvFps, and videoSentFps.
+ */
 export async function aggregateStatsSummary({
   dirPath = 'logs',
   senderParticipantName = 'Participant-000001',
@@ -31,14 +58,8 @@ export async function aggregateStatsSummary({
     return { id, scenario }
   },
 }) {
-  const stats = [] as {
-    timestamp: number
-    id: string
-    scenario: string
-    videoRecvBitratePerPixel: FastStats
-    videoRecvFps: FastStats
-    videoSentFps: FastStats
-  }[]
+  log.debug(`aggregateStatsSummary: ${dirPath}`)
+  const stats: StatsSummary[] = []
   const results = await fs.promises.readdir(dirPath)
   for (const test of results) {
     const filePath = path.join(dirPath, test, 'detailed-stats-summary.csv')
@@ -76,11 +97,86 @@ export async function aggregateStatsSummary({
   return stats.sort((a, b) => a.timestamp - b.timestamp)
 }
 
+/**
+ * It uploads the aggregated stats to a Google Sheet.
+ * A valid Google service account credentials file must be specified
+ * in the `GOOGLE_CREDENTIALS_PATH` environment variable.
+ * @param stats The aggregated stats to upload.
+ * @param spreadsheetId The ID of the Google Spreadsheet.
+ * @param table The name of the table (sheet) within the spreadsheet. Default is 'data'.
+ */
+export async function uploadStatsToGoogleSheet(stats: StatsSummary[], spreadsheetId: string, table = 'data') {
+  log.debug(`uploadResultsToGoogleSheet spreadsheetId: ${spreadsheetId} table: ${table}`)
+  if (!process.env.GOOGLE_CREDENTIALS_PATH) throw new Error('GOOGLE_CREDENTIALS_PATH environment variable is not set')
+  if (!fs.existsSync(process.env.GOOGLE_CREDENTIALS_PATH))
+    throw new Error(`Google credentials file not found: ${process.env.GOOGLE_CREDENTIALS_PATH}`)
+  if (!stats.length) return
+  const auth = new Auth.GoogleAuth({
+    keyFile: process.env.GOOGLE_CREDENTIALS_PATH,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  })
+  const sheets = google.sheets({ version: 'v4', auth })
+  // Update headers.
+  const headers = ['datetime', 'id', 'scenario', 'videoRecvBitratePerPixel', 'videoRecvFps']
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${table}!A1:E1`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: { majorDimension: 'ROWS', values: [headers] },
+  })
+  // Append values.
+  const values = [] as string[][]
+  stats.forEach(s => {
+    const { timestamp, id, scenario, videoRecvBitratePerPixel, videoRecvFps } = s
+    if (!videoRecvBitratePerPixel.length) return
+    const datetime = new Date(timestamp).toLocaleString('en-US', {
+      timeZone: 'UTC',
+      hourCycle: 'h23',
+    })
+    values.push([
+      datetime,
+      id,
+      formatThrottleRule(parseThrottleRule(scenario), true),
+      videoRecvBitratePerPixel.percentile(95).toFixed(3),
+      videoRecvFps.percentile(95).toFixed(3),
+    ])
+  })
+  if (values.length) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: `${table}!A:E`,
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: { majorDimension: 'ROWS', values },
+    })
+  }
+}
+
 export type ThrottleDirection = 'up' | 'down' | 'bidi'
 
-export function formatThrottleRule(throttleRule: ThrottleRule, direction: ThrottleDirection) {
-  const { rate, loss, delay } = throttleRule
-  return `${direction}-r${rate}-l${loss}-d${delay}`
+function formatBitrate(bitrate: number | undefined, prefix = ' ') {
+  if (bitrate === undefined) return ''
+  let suffix = 'Kbps'
+  if (bitrate >= 10000) {
+    bitrate /= 1000
+    suffix = 'Mbps'
+  }
+  return `${prefix}${bitrate.toFixed(0)}${suffix}`.padStart(8, ' ')
+}
+
+function formatLoss(loss: number | undefined, prefix = ' ') {
+  return loss !== undefined ? `${prefix}${loss.toFixed(0).padStart(2, ' ')}%` : ''
+}
+
+function formatDelay(delay: number | undefined, prefix = ' ') {
+  return delay !== undefined ? `${prefix}${delay.toFixed(0).padStart(3, ' ')}ms` : ''
+}
+
+export function formatThrottleRule(throttleRule: ThrottleRule & { direction: ThrottleDirection }, human = false) {
+  const { rate, loss, delay, direction } = throttleRule
+  return human
+    ? `${direction.padEnd(4, ' ')}${formatBitrate(rate)}${formatLoss(loss)}${formatDelay(delay)}`
+    : `${direction}-r${rate}-l${loss}-d${delay}`
 }
 
 export function parseThrottleRule(throttleDesc: string) {
@@ -93,7 +189,25 @@ export function parseThrottleRule(throttleDesc: string) {
   return { direction, rate, loss, delay }
 }
 
-export async function simpleTestWithRateLossDelay(
+/**
+ * It generates a test configuration with a scenario including 2 participants.
+ * The first participant sends video and the second receives it.
+ * Both participants send and receive audio.
+ * The network conditions are applied according to the specified direction to the sender (`up`),
+ * the receiver (`down`) or both (`bidi`).
+ * The test is repeated the specified number of times.
+ * The output is an array of partial configuration objects that can be used to run the tests
+ * with the main application, after merging it with a configuration that includes
+ * the destination url (mandatory) and other optional parameters.
+ * @param id The unique identifier for the test scenario.
+ * @param options.rate The target bandwidth in kbps.
+ * @param options.loss The packet loss percentage.
+ * @param options.delay The network delay in milliseconds.
+ * @param options.direction The direction of the network throttling: 'up', 'down', or 'bidi'.
+ * @param repeat The number of times to repeat the test scenario. Default is 1.
+ * @returns An array of partial configuration objects for each test scenario.
+ */
+export async function twoParticipantsWithRateLossDelay(
   id: string,
   { rate, loss, delay, direction }: { rate: number; loss: number; delay: number; direction: ThrottleDirection },
   repeat: 1,
@@ -112,7 +226,7 @@ export async function simpleTestWithRateLossDelay(
       { rate, loss, delay, queue, at: 30 },
     ]
   }
-  const throttleDesc = formatThrottleRule({ rate, loss, delay }, direction)
+  const throttleDesc = formatThrottleRule({ rate, loss, delay, direction })
   const now = Date.now()
   const ret: Partial<Config>[] = []
   for (let i = 0; i < repeat; i++) {
