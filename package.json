@@ -109,7 +109,7 @@
     "@typescript-eslint/parser": "^8.44.0",
     "@vpalmisano/typedoc-cookie-consent": "^0.0.4",
     "@vpalmisano/typedoc-plugin-ga": "^1.0.6",
-    "eslint": "^9.35.0",
+    "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
