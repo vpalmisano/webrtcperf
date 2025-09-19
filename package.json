@@ -130,7 +130,7 @@
   },
   "optionalDependencies": {
     "chart.js": "^4.5.0",
-    "skia-canvas": "^2.0.2",
+    "skia-canvas": "^3.0.7",
     "zeromq": "^6.5.0"
   }
 }
