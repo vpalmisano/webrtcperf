@@ -28,10 +28,8 @@ export async function plot(data: PlotData, options: PlotOptions) {
     PointElement,
     Legend,
     Title,
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-  } = require('chart.js')
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const ErrorBarsPlugin = require('chartjs-chart-error-bars')
+  } = await import('chart.js')
+  const { BarWithErrorBar, BarWithErrorBarsController } = await import('chartjs-chart-error-bars')
   Chart.register(
     CategoryScale,
     LineController,
@@ -42,16 +40,17 @@ export async function plot(data: PlotData, options: PlotOptions) {
     PointElement,
     Legend,
     Title,
-    ErrorBarsPlugin,
+    BarWithErrorBar,
+    BarWithErrorBarsController,
   )
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Canvas } = require('skia-canvas')
+  const { Canvas } = await import('skia-canvas')
 
   log.debug('plot')
 
   const canvas = new Canvas(1280, 720)
-  const chart = new Chart(canvas, {
-    type: options.type || 'line',
+  const chart = new Chart(canvas as unknown as HTMLCanvasElement, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    type: (options.type || 'line') as any,
     data: {
       labels: data.x,
       datasets: [
@@ -59,7 +58,8 @@ export async function plot(data: PlotData, options: PlotOptions) {
           label: data.label,
           data: data.y,
           fill: false,
-          borderColor: 'rgb(0, 0, 0)',
+          backgroundColor: 'rgba(33, 150, 243, 1)',
+          borderColor: 'rgba(33, 150, 243, 1)',
           borderWidth: 1,
           pointRadius: 0,
         },

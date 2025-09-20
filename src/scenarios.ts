@@ -155,28 +155,32 @@ export async function uploadStatsToGoogleSheet(stats: StatsSummary[], spreadshee
 
 export type ThrottleDirection = 'up' | 'down' | 'bidi'
 
-export function formatBitrate(bitrate: number | undefined, prefix = ' ') {
+export function formatBitrate(bitrate: number | undefined, prefix = ' ', pad = true) {
   if (bitrate === undefined) return ''
   let suffix = 'Kbps'
   if (bitrate >= 1000) {
     bitrate /= 1000
     suffix = 'Mbps'
   }
-  return `${prefix}${sprintf('%5.4g', bitrate)}${suffix}`
+  return `${prefix}${sprintf(`%${pad ? '5' : ''}.4g`, bitrate)}${suffix}`
 }
 
-export function formatLoss(loss: number | undefined, prefix = ' ') {
-  return loss !== undefined ? `${prefix}${loss.toFixed(0).padStart(2, ' ')}%` : ''
+export function formatLoss(loss: number | undefined, prefix = ' ', pad = true) {
+  return loss !== undefined ? `${prefix}${loss.toFixed(0).padStart(pad ? 2 : 0, ' ')}%` : ''
 }
 
-export function formatDelay(delay: number | undefined, prefix = ' ') {
-  return delay !== undefined ? `${prefix}${delay.toFixed(0).padStart(3, ' ')}ms` : ''
+export function formatDelay(delay: number | undefined, prefix = ' ', pad = true) {
+  return delay !== undefined ? `${prefix}${delay.toFixed(0).padStart(pad ? 3 : 0, ' ')}ms` : ''
 }
 
-export function formatThrottleRule(throttleRule: ThrottleRule & { direction: ThrottleDirection }, human = false) {
+export function formatThrottleRule(
+  throttleRule: ThrottleRule & { direction: ThrottleDirection },
+  human = false,
+  pad = true,
+) {
   const { rate, loss, delay, direction } = throttleRule
   return human
-    ? `${direction.padEnd(4, ' ')}${formatBitrate(rate)}${formatLoss(loss)}${formatDelay(delay)}`
+    ? `${direction.padEnd(pad ? 4 : 0, ' ')}${formatBitrate(rate, ' ', pad)}${formatLoss(loss, ' ', pad)}${formatDelay(delay, ' ', pad)}`
     : `${direction}-r${rate}-l${loss}-d${delay}`
 }
 
