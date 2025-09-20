@@ -1,6 +1,6 @@
 {
   "name": "@vpalmisano/webrtcperf",
-  "version": "4.4.11",
+  "version": "4.4.12",
   "repository": {
     "type": "git",
     "url": "https://github.com/vpalmisano/webrtcperf.git"
@@ -130,7 +130,8 @@
   },
   "optionalDependencies": {
     "chart.js": "^4.5.0",
-    "skia-canvas": "^2.0.2",
+    "chartjs-chart-error-bars": "^4.4.4",
+    "skia-canvas": "^3.0.7",
     "zeromq": "^6.5.0"
   }
 }

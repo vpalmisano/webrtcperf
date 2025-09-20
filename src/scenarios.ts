@@ -5,6 +5,7 @@ import { ThrottleConfig, ThrottleRule } from '@vpalmisano/throttler'
 import { Config } from './config'
 import { Auth, google } from 'googleapis'
 import { logger } from './utils'
+import { sprintf } from 'sprintf-js'
 
 const log = logger('webrtcperf:scenarios')
 
@@ -154,21 +155,21 @@ export async function uploadStatsToGoogleSheet(stats: StatsSummary[], spreadshee
 
 export type ThrottleDirection = 'up' | 'down' | 'bidi'
 
-function formatBitrate(bitrate: number | undefined, prefix = ' ') {
+export function formatBitrate(bitrate: number | undefined, prefix = ' ') {
   if (bitrate === undefined) return ''
   let suffix = 'Kbps'
-  if (bitrate >= 10000) {
+  if (bitrate >= 1000) {
     bitrate /= 1000
     suffix = 'Mbps'
   }
-  return `${prefix}${bitrate.toFixed(0)}${suffix}`.padStart(8, ' ')
+  return `${prefix}${sprintf('%5.4g', bitrate)}${suffix}`
 }
 
-function formatLoss(loss: number | undefined, prefix = ' ') {
+export function formatLoss(loss: number | undefined, prefix = ' ') {
   return loss !== undefined ? `${prefix}${loss.toFixed(0).padStart(2, ' ')}%` : ''
 }
 
-function formatDelay(delay: number | undefined, prefix = ' ') {
+export function formatDelay(delay: number | undefined, prefix = ' ') {
   return delay !== undefined ? `${prefix}${delay.toFixed(0).padStart(3, ' ')}ms` : ''
 }
 
