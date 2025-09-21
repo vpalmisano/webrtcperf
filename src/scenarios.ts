@@ -6,6 +6,7 @@ import { Config } from './config'
 import { Auth, google } from 'googleapis'
 import { logger } from './utils'
 import { sprintf } from 'sprintf-js'
+import { PlotData, plotHtml } from './plot'
 
 const log = logger('webrtcperf:scenarios')
 
@@ -192,6 +193,46 @@ export function parseThrottleRule(throttleDesc: string) {
   const loss = parseInt(match[3])
   const delay = parseInt(match[4])
   return { direction, rate, loss, delay }
+}
+
+export async function plotStatsSummary(stats: StatsSummary[]) {
+  const data = {} as Record<string, Record<string, FastStats>>
+  stats.forEach(s => {
+    const { id, scenario, videoRecvBitratePerPixel } = s
+    if (!videoRecvBitratePerPixel.length) return null
+    if (!data[id]) {
+      data[id] = {}
+    }
+    if (!data[id][scenario]) {
+      data[id][scenario] = new FastStats()
+    }
+    data[id][scenario].push(videoRecvBitratePerPixel.percentile(95))
+  })
+  const series: PlotData[] = []
+  Object.entries(data)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .forEach(([id, data]) => {
+      const plotData: PlotData = { label: id, data: [] }
+      Object.entries(data)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([scenario, stats]) => {
+          plotData.data.push({
+            x: formatThrottleRule(parseThrottleRule(scenario), true, false),
+            y: stats.percentile(50),
+            yMin: stats.percentile(5),
+            yMax: stats.percentile(95),
+          })
+        })
+      series.push(plotData)
+    })
+  await plotHtml(
+    {
+      type: 'barWithErrorBars',
+      xLabel: 'Scenario',
+      yLabel: 'Video Receive Bitrate per Pixel',
+    },
+    series,
+  )
 }
 
 /**

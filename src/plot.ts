@@ -17,7 +17,7 @@ export type PlotOptions = {
 
 export type PlotData = {
   label: string
-  data: { x: number | string; y: number }[]
+  data: { x: number | string; y: number; yMin?: number; yMax?: number }[]
 }
 
 const SERIES_COLORS = [
@@ -46,6 +46,7 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
       })),
     },
     options: {
+      responsive: true,
       plugins: {
         title: options.title
           ? {
@@ -53,9 +54,23 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
               text: options.title,
             }
           : undefined,
+        /* zoom: {
+          pan: {
+            enabled: true,
+            mode: 'x',
+            modifierKey: 'ctrl',
+          },
+          zoom: {
+            drag: {
+              enabled: true,
+            },
+            mode: 'x',
+          },
+        }, */
       },
       scales: {
         x: {
+          type: 'category',
           title: options.xLabel
             ? {
                 display: true,
@@ -64,6 +79,7 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
             : undefined,
         },
         y: {
+          type: 'linear',
           title: options.yLabel
             ? {
                 display: true,
