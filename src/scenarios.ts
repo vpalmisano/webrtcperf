@@ -196,6 +196,7 @@ export function parseThrottleRule(throttleDesc: string) {
 }
 
 export async function plotStatsSummary(stats: StatsSummary[]) {
+  const labels = new Set<string>()
   const data = {} as Record<string, Record<string, FastStats>>
   stats.forEach(s => {
     const { id, scenario, videoRecvBitratePerPixel } = s
@@ -203,10 +204,12 @@ export async function plotStatsSummary(stats: StatsSummary[]) {
     if (!data[id]) {
       data[id] = {}
     }
-    if (!data[id][scenario]) {
-      data[id][scenario] = new FastStats()
+    const scenarioFormatted = formatThrottleRule(parseThrottleRule(scenario), true, true)
+    if (!data[id][scenarioFormatted]) {
+      data[id][scenarioFormatted] = new FastStats()
     }
-    data[id][scenario].push(videoRecvBitratePerPixel.percentile(95))
+    labels.add(scenarioFormatted)
+    data[id][scenarioFormatted].push(videoRecvBitratePerPixel.percentile(95))
   })
   const series: PlotData[] = []
   Object.entries(data)
@@ -217,7 +220,7 @@ export async function plotStatsSummary(stats: StatsSummary[]) {
         .sort((a, b) => a[0].localeCompare(b[0]))
         .forEach(([scenario, stats]) => {
           plotData.data.push({
-            x: formatThrottleRule(parseThrottleRule(scenario), true, false),
+            x: scenario,
             y: stats.percentile(50),
             yMin: stats.percentile(5),
             yMax: stats.percentile(95),
@@ -230,6 +233,7 @@ export async function plotStatsSummary(stats: StatsSummary[]) {
       type: 'barWithErrorBars',
       xLabel: 'Scenario',
       yLabel: 'Video Receive Bitrate per Pixel',
+      labels: Array.from(labels).sort((a, b) => a.localeCompare(b)),
     },
     series,
   )

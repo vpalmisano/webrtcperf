@@ -1,6 +1,7 @@
 import fs from 'fs'
 
 import { logger } from './utils'
+import json5 from 'json5'
 
 const log = logger('webrtcperf:plot')
 
@@ -34,19 +35,7 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: (options.type || 'line') as any,
-    data: {
-      labels: options.labels,
-      datasets: series.map((s, i) => ({
-        fill: false,
-        backgroundColor: SERIES_COLORS[i % SERIES_COLORS.length],
-        borderColor: SERIES_COLORS[i % SERIES_COLORS.length],
-        borderWidth: 1,
-        pointRadius: 0,
-        ...s,
-      })),
-    },
     options: {
-      responsive: true,
       plugins: {
         title: options.title
           ? {
@@ -54,7 +43,7 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
               text: options.title,
             }
           : undefined,
-        /* zoom: {
+        zoom: {
           pan: {
             enabled: true,
             mode: 'x',
@@ -66,7 +55,7 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
             },
             mode: 'x',
           },
-        }, */
+        },
       },
       scales: {
         x: {
@@ -90,6 +79,17 @@ export function plotConfig(options: PlotOptions, series: PlotData[]) {
           max: options.yMax,
         },
       },
+    },
+    data: {
+      labels: options.labels,
+      datasets: series.map((s, i) => ({
+        fill: false,
+        backgroundColor: SERIES_COLORS[i % SERIES_COLORS.length],
+        borderColor: SERIES_COLORS[i % SERIES_COLORS.length],
+        borderWidth: 1,
+        pointRadius: 0,
+        ...s,
+      })),
     },
   }
 }
@@ -153,7 +153,9 @@ export async function plotHtml(options: PlotOptions, series: PlotData[]) {
   </div>
   <script>
     const ctx = document.getElementById('chart');
-    const chart = new Chart(ctx, ${JSON.stringify(config)});
+    const chart = new Chart(ctx, ${json5.stringify(config)});
+    chart.options.onClick = e => e.chart.resetZoom();
+    addEventListener('resize', () => chart.resize());
   </script>
 </body>
 </html>`
