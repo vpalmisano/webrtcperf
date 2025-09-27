@@ -19,6 +19,13 @@ async function setup() {
     }
     joinButton.click()
   }
+
+  if (!webrtcperf.enabledForSession(webrtcperf.params.enableMic)) {
+    await window.muteParticipant(true)
+  }
+  if (!webrtcperf.enabledForSession(webrtcperf.params.enableCam)) {
+    await window.disableCam(true)
+  }
 }
 
 window.muteParticipant = muted => {
