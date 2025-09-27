@@ -54,6 +54,7 @@ export async function runWithDocker(argv: string[]) {
     'SERVER_USE_HTTPS=true',
     'SERVER_DATA=/data',
     `START_TIMESTAMP=${startTimestamp}`,
+    'VIDEO_CACHE_PATH=/root/.webrtcperf/cache',
   ]
 
   if (configs[0].prometheusPushgateway.startsWith('http://localhost')) {
