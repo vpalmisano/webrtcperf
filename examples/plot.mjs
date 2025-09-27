@@ -1,22 +1,29 @@
 #!/usr/bin/env node
 
 import { parseArgs } from 'node:util'
-import { aggregateStatsSummary, plotStatsSummary } from '../build/src/index.js'
+import { aggregateStatsSummary, plotStatsSummary, plotDetailedStatsDashboardSinglePage } from '../build/src/index.js'
 
 async function main() {
   const { values } = parseArgs({
     options: {
-      dir: { type: 'string', default: 'logs' },
+      summary: { type: 'string', default: 'logs' },
+      plot: { type: 'string', default: '' },
     },
   })
 
-  const stats = await aggregateStatsSummary({
-    dirPath: values.dir,
-    senderParticipantName: 'Participant-000001',
-    receiverParticipantName: 'Participant-000000',
-  })
+  if (values.summary) {
+    const stats = await aggregateStatsSummary({
+      dirPath: values.summary,
+      senderParticipantName: 'Participant-000001',
+      receiverParticipantName: 'Participant-000000',
+    })
 
-  await plotStatsSummary(stats)
+    await plotStatsSummary(stats)
+  }
+
+  if (values.plot) {
+    await plotDetailedStatsDashboardSinglePage(values.plot)
+  }
 }
 
 main().catch(console.error)

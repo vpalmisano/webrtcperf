@@ -10,6 +10,8 @@ import { PlotData, plotHtml } from './plot'
 
 const log = logger('webrtcperf:scenarios')
 
+export type StatsRow = Record<string, string | number>
+
 /**
  * It parses a CSV stats file and returns an array of objects representing each row.
  * @param filePath The path to the CSV stats file.
@@ -21,15 +23,12 @@ export async function parseStatsFile(filePath: string) {
   const lines = fileData.split('\n')
   const headers = lines[0].split(',')
   const data = lines.slice(1).map(line =>
-    line.split(',').reduce(
-      (acc, value, index) => {
-        if (value !== '') {
-          acc[headers[index]] = isNaN(Number(value)) ? value : Number(value)
-        }
-        return acc
-      },
-      {} as Record<string, string | number>,
-    ),
+    line.split(',').reduce((acc, value, index) => {
+      if (value !== '') {
+        acc[headers[index]] = isNaN(Number(value)) ? value : Number(value)
+      }
+      return acc
+    }, {} as StatsRow),
   )
   return data
 }
