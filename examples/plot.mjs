@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { parseArgs } from 'node:util'
-import { aggregateStatsSummary, plotStatsSummary, plotDetailedStatsDashboardSinglePage } from '../build/src/index.js'
+import { aggregateStatsSummary, plotStatsSummary, plotDetailedStatsDashboard } from '../build/src/index.js'
 
 async function main() {
   const { values } = parseArgs({
@@ -22,7 +22,7 @@ async function main() {
   }
 
   if (values.plot) {
-    await plotDetailedStatsDashboardSinglePage(values.plot)
+    await plotDetailedStatsDashboard(values.plot)
   }
 }
 

@@ -175,7 +175,7 @@ function groupByParticipant(rows: StatsRow[]) {
   return m
 }
 
-export async function plotDetailedStatsDashboardSinglePage(statsFile: string, outFile = 'plot.html') {
+export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'plot.html') {
   const rows = await parseStatsFile(statsFile)
   if (rows.length === 0) {
     log.warn('No stats found')
