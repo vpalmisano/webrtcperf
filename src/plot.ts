@@ -211,74 +211,61 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
   build('peerConnectionConnectionTime', 'Peer connection connection time', 's')
   build('peerConnectionDisconnectionTime', 'Peer connection disconnection time', 's')
 
+  const kbps = (v: number) => v / 1000
+  const percent = (v: number) => v * 100
   const ms = (v: number) => v * 1000
 
-  // Send
-  {
-    build('audioSentBitrates', 'Sent audio bitrate', 'Kbps', v => v / 1000)
-    build('audioSentPacketsLossRate', 'Send audio loss', '%', v => v * 100)
-    build('audioSentRoundTripTime', 'Send audio RTT', 'ms', ms)
-    build('audioSentJitter', 'Send audio jitter', 'ms', ms)
-  }
+  build('audioSentBitrates', 'Sent audio bitrate', 'Kbps', kbps)
+  build('audioSentPacketsLossRate', 'Send audio loss', '%', percent)
+  build('audioSentRoundTripTime', 'Send audio RTT', 'ms', ms)
+  build('audioSentJitter', 'Send audio jitter', 'ms', ms)
 
-  {
-    build('videoSentBitrates', 'Sent video bitrate', 'Kbps', v => v / 1000)
-    build('videoSentPacketsLossRate', 'Send video loss', '%', v => v * 100)
-    build('videoSentRoundTripTime', 'Send video RTT', 'ms', ms)
-    build('videoSentJitter', 'Send video jitter', 'ms', ms)
+  build('videoSentBitrates', 'Sent video bitrate', 'Kbps', kbps)
+  build('videoSentPacketsLossRate', 'Send video loss', '%', percent)
+  build('videoSentRoundTripTime', 'Send video RTT', 'ms', ms)
+  build('videoSentJitter', 'Send video jitter', 'ms', ms)
 
-    build('videoSentWidth', 'Send video width', 'px')
-    build('videoSentHeight', 'Send video height', 'px')
-    build('videoSentFps', 'Send video framerate', 'fps')
-    build('videoQualityLimitationCpu', 'Send video CPU limitation', '%')
-  }
+  build('videoSentWidth', 'Send video width', 'px')
+  build('videoSentHeight', 'Send video height', 'px')
+  build('videoSentFps', 'Send video framerate', 'fps')
+  build('videoQualityLimitationCpu', 'Send video CPU limitation', '%')
 
-  {
-    build('screenSentBitrates', 'Sent screen bitrate', 'Kbps', v => v / 1000)
-    build('screenSentPacketsLossRate', 'Send screen loss', '%', v => v * 100)
-    build('screenSentRoundTripTime', 'Send screen RTT', 'ms', ms)
-    build('screenSentJitter', 'Send screen jitter', 'ms', ms)
+  build('screenSentBitrates', 'Sent screen bitrate', 'Kbps', kbps)
+  build('screenSentPacketsLossRate', 'Send screen loss', '%', percent)
+  build('screenSentRoundTripTime', 'Send screen RTT', 'ms', ms)
+  build('screenSentJitter', 'Send screen jitter', 'ms', ms)
 
-    build('screenSentWidth', 'Send screen width', 'px')
-    build('screenSentHeight', 'Send screen height', 'px')
-    build('screenSentFps', 'Send screen framerate', 'fps')
-    build('screenQualityLimitationCpu', 'Send screen CPU limitation', '%')
-  }
+  build('screenSentWidth', 'Send screen width', 'px')
+  build('screenSentHeight', 'Send screen height', 'px')
+  build('screenSentFps', 'Send screen framerate', 'fps')
+  build('screenQualityLimitationCpu', 'Send screen CPU limitation', '%')
 
-  // Recv
-  {
-    build('audioRecvBitrates', 'Recv audio bitrate', 'Kbps', v => v / 1000)
-    build('audioRecvPacketsLossRate', 'Recv audio loss', '%', v => v * 100)
-    build('audioRecvJitter', 'Recv audio jitter', 'ms', ms)
-    build('audioRecvAvgJitterBufferDelay', 'Recv audio jitter buffer', 'ms', ms)
-  }
+  build('audioRecvBitrates', 'Recv audio bitrate', 'Kbps', kbps)
+  build('audioRecvPacketsLossRate', 'Recv audio loss', '%', percent)
+  build('audioRecvJitter', 'Recv audio jitter', 'ms', ms)
+  build('audioRecvAvgJitterBufferDelay', 'Recv audio jitter buffer', 'ms', ms)
 
-  {
-    build('videoRecvBitrates', 'Recv video bitrate', 'Kbps', v => v / 1000)
-    build('videoRecvPacketsLossRate', 'Recv video loss', '%', v => v * 100)
-    build('videoRecvJitter', 'Recv video jitter', 'ms', ms)
-    build('videoRecvAvgJitterBufferDelay', 'Recv video jitter buffer', 'ms', ms)
+  build('videoRecvBitrates', 'Recv video bitrate', 'Kbps', kbps)
+  build('videoRecvPacketsLossRate', 'Recv video loss', '%', percent)
+  build('videoRecvJitter', 'Recv video jitter', 'ms', ms)
+  build('videoRecvAvgJitterBufferDelay', 'Recv video jitter buffer', 'ms', ms)
 
-    build('videoRecvWidth', 'Recv video width', 'px')
-    build('videoRecvHeight', 'Recv video height', 'px')
-    build('videoRecvFps', 'Recv video framerate', 'fps')
-    build('videoTotalFreezesDuration', 'Recv video freezes', 'count')
-  }
+  build('videoRecvWidth', 'Recv video width', 'px')
+  build('videoRecvHeight', 'Recv video height', 'px')
+  build('videoRecvFps', 'Recv video framerate', 'fps')
+  build('videoTotalFreezesDuration', 'Recv video freezes', 'count')
 
-  {
-    build('screenRecvBitrates', 'Recv screen bitrate', 'Kbps', v => v / 1000)
-    build('screenRecvPacketsLossRate', 'Recv screen loss', '%', v => v * 100)
-    build('screenRecvJitter', 'Recv screen jitter', 'ms', ms)
-    build('screenRecvAvgJitterBufferDelay', 'Recv screen jitter buffer', 'ms', ms)
+  build('screenRecvBitrates', 'Recv screen bitrate', 'Kbps', kbps)
+  build('screenRecvPacketsLossRate', 'Recv screen loss', '%', percent)
+  build('screenRecvJitter', 'Recv screen jitter', 'ms', ms)
+  build('screenRecvAvgJitterBufferDelay', 'Recv screen jitter buffer', 'ms', ms)
 
-    build('screenRecvWidth', 'Recv screen width', 'px')
-    build('screenRecvHeight', 'Recv screen height', 'px')
-    build('screenRecvFps', 'Recv screen framerate', 'fps')
-    build('screenTotalFreezesDuration', 'Recv screen freezes', 'count')
-  }
+  build('screenRecvWidth', 'Recv screen width', 'px')
+  build('screenRecvHeight', 'Recv screen height', 'px')
+  build('screenRecvFps', 'Recv screen framerate', 'fps')
+  build('screenTotalFreezesDuration', 'Recv screen freezes', 'count')
 
-  // Other
-  build('transportSentAvailableOutgoingBitrate', 'Send available bitrate', 'Kbps', v => v / 1000)
+  build('transportSentAvailableOutgoingBitrate', 'Send available bitrate', 'Kbps', kbps)
 
   const [_, id, scenario] = path.basename(path.dirname(statsFile)).split('_')
   const description = formatThrottleRule(parseThrottleRule(scenario), true, false)
