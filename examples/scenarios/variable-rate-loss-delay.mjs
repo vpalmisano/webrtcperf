@@ -14,6 +14,20 @@ const SCRIPTS = {
   google: 'google-meet.js',
 }
 
+if (process.env.URLS) {
+  process.env.URLS.split(',').forEach(entry => {
+    const [id, url] = entry.strip().split('=')
+    URLS[id] = url
+  })
+}
+
+if (process.env.SCRIPTS) {
+  process.env.SCRIPTS.split(',').forEach(entry => {
+    const [id, script] = entry.strip().split('=')
+    SCRIPTS[id] = script
+  })
+}
+
 export default async function (args) {
   const { values } = parseArgs({
     args,
