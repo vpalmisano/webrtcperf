@@ -175,7 +175,19 @@ function groupByParticipant(rows: StatsRow[]) {
   return m
 }
 
+/**
+ * It plots a detailed stats dashboard from a CSV file.
+ * @param statsFile The path to the CSV file containing the detailed stats.
+ * @param outFile The path to the output HTML file.
+ * @returns A promise that resolves when the plot is complete.
+ * @example
+ * ```bash
+ * webrtcperf --plot logs/detailed-stats.csv plot.html
+ * ```
+ */
 export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'plot.html') {
+  log.info(`Plotting detailed stats from ${statsFile} to ${outFile}`)
+
   const rows = await parseStatsFile(statsFile)
   if (rows.length === 0) {
     log.warn('No stats found')

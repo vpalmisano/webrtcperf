@@ -157,6 +157,13 @@ When using an array of objects, specify a different "at" value for each of them,
 
 *Default*: `""`
 
+## useBrowserThrottling
+If true, the network will be throttled using the browser internal throttling mechanism.
+
+*Type*: `boolean`
+
+*Default*: `false`
+
 ## randomAudioPeriod
 If not zero, it specifies the maximum period in seconds after which a new random active session is selected, enabling the getUserMedia audio tracks in that session and disabling all of the others.
 
@@ -190,7 +197,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"138.0.7204.49"`
+*Default*: `"140.0.7339.207"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -335,7 +342,7 @@ The user agent override.
 
 *Type*: `string`
 
-*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.7204.49 Safari/537.36"`
+*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.207 Safari/537.36"`
 
 ## scriptPath
 One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `webrtcperf` global object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed).
@@ -490,7 +497,7 @@ The log file path; if set, the stats will be written in a .csv file inside that 
 *Default*: `""`
 
 ## detailedStatsPath
-The log file path; if set, the detailed stats will be written in a .csv file inside that file.
+The log file path; if set, the detailed stats will be written in a .csv file inside that file. Use `webrtcperf --plot <detailed-stats-file> <output-file>.html` to generate a HTML plot.
 
 *Type*: `string`
 
