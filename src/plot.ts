@@ -185,87 +185,142 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
   const byParticipant = groupByParticipant(rows)
   const participants = Array.from(byParticipant.keys()).sort()
 
-  type ChartSpec = { id: string; title: string; yLabel: string; datasets: PlotData[] }
+  type ChartSpec = { id: string; title?: string; yLabel?: string; datasets?: PlotData[]; width?: number }
   const charts: ChartSpec[] = []
 
-  const build = (id: string, title: string, yLabel: string, processValue?: (value: number) => number) => {
+  const build = (
+    id: string,
+    title?: string,
+    yLabel?: string,
+    processValue?: (value: number) => number,
+    width?: number,
+  ) => {
     const series: PlotData[] = []
-    for (const [participant, rows] of byParticipant.entries()) {
-      const dataPerTrack = new Map<string, { x: number; y: number }[]>()
-      for (const r of rows) {
-        const trackId = (r.trackId as string) || ''
-        if (!dataPerTrack.has(trackId)) dataPerTrack.set(trackId, [])
-        const data = dataPerTrack.get(trackId)!
-        const v = r[id] as number
-        if (v !== undefined) data.push({ x: r.datetime as number, y: processValue ? processValue(v) : v })
+    if (!id.startsWith('_')) {
+      for (const [participant, rows] of byParticipant.entries()) {
+        const dataPerTrack = new Map<string, { x: number; y: number }[]>()
+        for (const r of rows) {
+          const trackId = (r.trackId as string) || ''
+          if (!dataPerTrack.has(trackId)) dataPerTrack.set(trackId, [])
+          const data = dataPerTrack.get(trackId)!
+          const v = r[id] as number
+          if (v !== undefined) data.push({ x: r.datetime as number, y: processValue ? processValue(v) : v })
+        }
+        dataPerTrack.forEach((data, trackId) => {
+          if (data.length) series.push({ label: `${participant}${trackId ? ` (${trackId})` : ''}`, data: data })
+        })
       }
-      dataPerTrack.forEach((data, trackId) => {
-        if (data.length) series.push({ label: `${participant}${trackId ? ` (${trackId})` : ''}`, data: data })
-      })
     }
-    charts.push({ id, title, yLabel, datasets: series })
+    charts.push({ id, title, yLabel, datasets: series, width })
   }
-
-  build('pageCpu', 'Page CPU', '%')
-  build('pageMemory', 'Page memory', 'MB')
-  build('peerConnectionConnectionTime', 'Peer connection connection time', 's')
-  build('peerConnectionDisconnectionTime', 'Peer connection disconnection time', 's')
 
   const kbps = (v: number) => v / 1000
   const percent = (v: number) => v * 100
   const ms = (v: number) => v * 1000
 
-  build('audioSentBitrates', 'Sent audio bitrate', 'Kbps', kbps)
-  build('audioSentPacketsLossRate', 'Send audio loss', '%', percent)
-  build('audioSentRoundTripTime', 'Send audio RTT', 'ms', ms)
-  build('audioSentJitter', 'Send audio jitter', 'ms', ms)
-
-  build('videoSentBitrates', 'Sent video bitrate', 'Kbps', kbps)
-  build('videoSentPacketsLossRate', 'Send video loss', '%', percent)
-  build('videoSentRoundTripTime', 'Send video RTT', 'ms', ms)
-  build('videoSentJitter', 'Send video jitter', 'ms', ms)
-
-  build('videoSentWidth', 'Send video width', 'px')
-  build('videoSentHeight', 'Send video height', 'px')
-  build('videoSentFps', 'Send video framerate', 'fps')
-  build('videoQualityLimitationCpu', 'Send video CPU limitation', '%')
-
-  build('screenSentBitrates', 'Sent screen bitrate', 'Kbps', kbps)
-  build('screenSentPacketsLossRate', 'Send screen loss', '%', percent)
-  build('screenSentRoundTripTime', 'Send screen RTT', 'ms', ms)
-  build('screenSentJitter', 'Send screen jitter', 'ms', ms)
-
-  build('screenSentWidth', 'Send screen width', 'px')
-  build('screenSentHeight', 'Send screen height', 'px')
-  build('screenSentFps', 'Send screen framerate', 'fps')
-  build('screenQualityLimitationCpu', 'Send screen CPU limitation', '%')
-
-  build('audioRecvBitrates', 'Recv audio bitrate', 'Kbps', kbps)
-  build('audioRecvPacketsLossRate', 'Recv audio loss', '%', percent)
-  build('audioRecvJitter', 'Recv audio jitter', 'ms', ms)
-  build('audioRecvAvgJitterBufferDelay', 'Recv audio jitter buffer', 'ms', ms)
-
-  build('videoRecvBitrates', 'Recv video bitrate', 'Kbps', kbps)
-  build('videoRecvPacketsLossRate', 'Recv video loss', '%', percent)
-  build('videoRecvJitter', 'Recv video jitter', 'ms', ms)
-  build('videoRecvAvgJitterBufferDelay', 'Recv video jitter buffer', 'ms', ms)
-
-  build('videoRecvWidth', 'Recv video width', 'px')
-  build('videoRecvHeight', 'Recv video height', 'px')
-  build('videoRecvFps', 'Recv video framerate', 'fps')
-  build('videoTotalFreezesDuration', 'Recv video freezes', 'count')
-
-  build('screenRecvBitrates', 'Recv screen bitrate', 'Kbps', kbps)
-  build('screenRecvPacketsLossRate', 'Recv screen loss', '%', percent)
-  build('screenRecvJitter', 'Recv screen jitter', 'ms', ms)
-  build('screenRecvAvgJitterBufferDelay', 'Recv screen jitter buffer', 'ms', ms)
-
-  build('screenRecvWidth', 'Recv screen width', 'px')
-  build('screenRecvHeight', 'Recv screen height', 'px')
-  build('screenRecvFps', 'Recv screen framerate', 'fps')
-  build('screenTotalFreezesDuration', 'Recv screen freezes', 'count')
-
-  build('transportSentAvailableOutgoingBitrate', 'Send available bitrate', 'Kbps', kbps)
+  ;[
+    { id: '_throttle', title: 'Throttle settings' },
+    { id: 'throttleUpRate', title: 'Throttle up rate', yLabel: 'Kbps', processValue: kbps, width: 2 },
+    { id: 'throttleUpDelay', title: 'Throttle up delay', yLabel: 'ms', processValue: ms, width: 2 },
+    { id: 'throttleUpLoss', title: 'Throttle up loss', yLabel: '%', processValue: percent, width: 2 },
+    { id: 'throttleDownRate', title: 'Throttle down rate', yLabel: 'Kbps', processValue: kbps, width: 2 },
+    { id: 'throttleDownDelay', title: 'Throttle down delay', yLabel: 'ms', processValue: ms, width: 2 },
+    { id: 'throttleDownLoss', title: 'Throttle down loss', yLabel: '%', processValue: percent, width: 2 },
+    // Performance / Connectivity
+    { id: '_performance', title: 'Performance / Connectivity' },
+    { id: 'pageCpu', title: 'Page CPU', yLabel: '%' },
+    { id: 'pageMemory', title: 'Page memory', yLabel: 'MB' },
+    { id: 'peerConnectionConnectionTime', title: 'Peer connection connection time', yLabel: 's' },
+    { id: 'peerConnectionDisconnectionTime', title: 'Peer connection disconnection time', yLabel: 's' },
+    // Sent audio
+    { id: '_sentAudio', title: 'Sent audio' },
+    { id: 'audioSentBitrates', title: 'Sent audio bitrate', yLabel: 'Kbps', processValue: kbps },
+    { id: 'audioSentPacketsLossRate', title: 'Send audio loss', yLabel: '%', processValue: percent },
+    { id: 'audioSentRoundTripTime', title: 'Send audio RTT', yLabel: 'ms', processValue: ms },
+    { id: 'audioSentJitter', title: 'Send audio jitter', yLabel: 'ms', processValue: ms },
+    // Sent video
+    { id: '_sentVideo', title: 'Sent video' },
+    { id: 'videoSentBitrates', title: 'Sent video bitrate', yLabel: 'Kbps', processValue: kbps },
+    { id: 'videoSentPacketsLossRate', title: 'Send video loss', yLabel: '%', processValue: percent },
+    { id: 'videoSentRoundTripTime', title: 'Send video RTT', yLabel: 'ms', processValue: ms },
+    { id: 'videoSentJitter', title: 'Send video jitter', yLabel: 'ms', processValue: ms },
+    { id: 'videoSentWidth', title: 'Send video width', yLabel: 'px' },
+    { id: 'videoSentHeight', title: 'Send video height', yLabel: 'px' },
+    { id: 'videoSentFps', title: 'Send video framerate', yLabel: 'fps' },
+    { id: 'videoQualityLimitationCpu', title: 'Send video CPU limitation', yLabel: '%' },
+    { id: 'videoQualityLimitationBandwidth', title: 'Send video bandwidth limitation', yLabel: '%' },
+    { id: 'videoFirCountReceived', title: 'Send video FIR count', yLabel: 'count' },
+    { id: 'videoPliCountReceived', title: 'Send video PLI count', yLabel: 'count' },
+    {
+      id: 'transportSentAvailableOutgoingBitrate',
+      title: 'Send available bitrate',
+      yLabel: 'Kbps',
+      processValue: kbps,
+    },
+    // Sent screen
+    { id: '_sentScreen', title: 'Sent screen' },
+    { id: 'screenSentBitrates', title: 'Sent screen bitrate', yLabel: 'Kbps', processValue: kbps },
+    { id: 'screenSentPacketsLossRate', title: 'Send screen loss', yLabel: '%', processValue: percent },
+    { id: 'screenSentRoundTripTime', title: 'Send screen RTT', yLabel: 'ms', processValue: ms },
+    { id: 'screenSentJitter', title: 'Send screen jitter', yLabel: 'ms', processValue: ms },
+    { id: 'screenSentWidth', title: 'Send screen width', yLabel: 'px' },
+    { id: 'screenSentHeight', title: 'Send screen height', yLabel: 'px' },
+    { id: 'screenSentFps', title: 'Send screen framerate', yLabel: 'fps' },
+    { id: 'screenQualityLimitationCpu', title: 'Send screen CPU limitation', yLabel: '%' },
+    { id: 'screenQualityLimitationBandwidth', title: 'Send screen bandwidth limitation', yLabel: '%' },
+    { id: 'screenFirCountReceived', title: 'Send screen FIR count', yLabel: 'count' },
+    { id: 'screenPliCountReceived', title: 'Send screen PLI count', yLabel: 'count' },
+    { id: '' },
+    // Recv audio
+    { id: '_recvAudio', title: 'Recv audio' },
+    { id: 'audioRecvBitrates', title: 'Recv audio bitrate', yLabel: 'Kbps', processValue: kbps },
+    { id: 'audioRecvPacketsLossRate', title: 'Recv audio loss', yLabel: '%', processValue: percent },
+    { id: 'audioRecvJitter', title: 'Recv audio jitter', yLabel: 'ms', processValue: ms },
+    { id: 'audioRecvAvgJitterBufferDelay', title: 'Recv audio jitter buffer', yLabel: 'ms', processValue: ms },
+    { id: 'audioRecvLevel', title: 'Recv audio level', yLabel: 'db' },
+    { id: 'audioRecvConcealmentEvents', title: 'Recv audio concealment events', yLabel: 'count' },
+    {
+      id: 'audioRecvInsertedSamplesForDeceleration',
+      title: 'Recv audio inserted samples',
+      yLabel: 'count',
+    },
+    {
+      id: 'audioRecvRemovedSamplesForAcceleration',
+      title: 'Recv audio removed samples',
+      yLabel: 'count',
+    },
+    { id: 'audioRecvEndToEndDelay', title: 'Recv audio end to end delay', yLabel: 'ms', processValue: ms },
+    // Recv video
+    { id: '_recvVideo', title: 'Recv video' },
+    { id: 'videoRecvBitrates', title: 'Recv video bitrate', yLabel: 'Kbps', processValue: kbps },
+    { id: 'videoRecvPacketsLossRate', title: 'Recv video loss', yLabel: '%', processValue: percent },
+    { id: 'videoRecvJitter', title: 'Recv video jitter', yLabel: 'ms', processValue: ms },
+    { id: 'videoRecvAvgJitterBufferDelay', title: 'Recv video jitter buffer', yLabel: 'ms', processValue: ms },
+    { id: 'videoRecvWidth', title: 'Recv video width', yLabel: 'px' },
+    { id: 'videoRecvHeight', title: 'Recv video height', yLabel: 'px' },
+    { id: 'videoRecvFps', title: 'Recv video framerate', yLabel: 'fps' },
+    { id: 'videoTotalFreezesDuration', title: 'Recv video freezes', yLabel: 'count' },
+    { id: 'videoFirCountSent', title: 'Recv video FIR sent', yLabel: 'count' },
+    { id: 'videoPliCountSent', title: 'Recv video PLI sent', yLabel: 'count' },
+    { id: 'videoRecvEndToEndDelay', title: 'Recv video end to end delay', yLabel: 'ms', processValue: ms },
+    { id: '' },
+    // Recv screen
+    { id: '_recvScreen', title: 'Recv screen' },
+    { id: 'screenRecvBitrates', title: 'Recv screen bitrate', yLabel: 'Kbps', processValue: kbps },
+    { id: 'screenRecvPacketsLossRate', title: 'Recv screen loss', yLabel: '%', processValue: percent },
+    { id: 'screenRecvJitter', title: 'Recv screen jitter', yLabel: 'ms', processValue: ms },
+    { id: 'screenRecvAvgJitterBufferDelay', title: 'Recv screen jitter buffer', yLabel: 'ms', processValue: ms },
+    { id: 'screenRecvWidth', title: 'Recv screen width', yLabel: 'px' },
+    { id: 'screenRecvHeight', title: 'Recv screen height', yLabel: 'px' },
+    { id: 'screenRecvFps', title: 'Recv screen framerate', yLabel: 'fps' },
+    { id: 'screenTotalFreezesDuration', title: 'Recv screen freezes', yLabel: 'count' },
+    { id: 'screenFirCountSent', title: 'Recv screen FIR sent', yLabel: 'count' },
+    { id: 'screenPliCountSent', title: 'Recv screen PLI sent', yLabel: 'count' },
+    { id: 'screenRecvEndToEndDelay', title: 'Recv screen end to end delay', yLabel: 'ms', processValue: ms },
+    { id: '' },
+  ].forEach(graph => {
+    build(graph.id, graph.title, graph.yLabel, graph.processValue, graph.width)
+  })
 
   const [_, id, scenario] = path.basename(path.dirname(statsFile)).split('_')
   const description = formatThrottleRule(parseThrottleRule(scenario), true, false)
@@ -298,20 +353,23 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
         </v-app-bar>
         <v-container fluid>
           <v-row class="align-top mb-3" dense>
-            <v-select :items="participants" v-model="selected" label="Participant" variant="outlined" density="compact"></v-select>
+            <v-select color="primary" :items="participants" v-model="selected" label="Participant" variant="outlined" density="compact"></v-select>
           </v-row>
           <v-row dense>
-            <v-col v-for="c in charts" :key="c.id" cols="12" :md="isExpanded(c.id) ? 12 : 3">
-              <v-card color="primary" variant="outlined">
-                <v-card-title class="text-subtitle-1 d-flex align-center flex-nowrap">
-                  <span class="text-truncate">{{ c.title }}</span>
-                  <v-spacer></v-spacer>
-                  <v-icon size="x-small" title="Toggle expanded" @click="toggleExpanded(c)">{{ isExpanded(c.id) ? 'mdi-arrow-collapse-horizontal' : 'mdi-arrow-expand-horizontal' }}</v-icon>
-                </v-card-title>
-                <v-card-text>
-                  <canvas :id="c.id"></canvas>
-                </v-card-text>
-              </v-card>
+            <v-col v-for="c in charts" :key="c.id" cols="12" :md="isExpanded(c.id) ? 12 : c.width || 3">
+              <template v-if="c.id">
+                <v-card color="primary" :variant="c.id.startsWith('_') ? 'tonal' : 'text'">
+                  <v-card-title class="text-subtitle-1 d-flex align-center flex-nowrap" @click="toggleExpanded(c)" style="cursor: pointer;">
+                    <span class="text-truncate">{{ c.title }}</span>
+                  </v-card-title>
+                  <v-card-text v-if="!c.id.startsWith('_')" style="min-height: 250px;">
+                    <canvas :id="c.id"></canvas>
+                  </v-card-text>
+                </v-card>
+              </template>
+              <template v-else>
+                <div class="empty-slot"></div>
+              </template>
             </v-col>
           </v-row>
         </v-container>
@@ -377,7 +435,26 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
           const chart = new Chart(ctx, {
             type: 'line',
             options: {
+              maintainAspectRatio: false,
+              layout: {
+                padding: 0,
+                animation: false,
+              },
               plugins: {
+                legend: { 
+                  display: true,
+                  position: 'bottom',
+                  align: 'start',
+                  maxHeight: 50,
+                  labels: {
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    font: {
+                      size: 8,
+                      lineHeight: 1,
+                    },
+                  },
+                },
                 zoom: {
                     pan: {
                       enabled: true,
@@ -391,8 +468,6 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
                       onZoom: onPanZoom,
                     },
                 },
-                legend: { display: true },
-                tooltip: { callbacks: { title: (items) => items && items.length ? fmtTime(items[0].parsed.x) : '' } },
               },
               scales: {
                 x: { type: 'linear', title: { display: false, text: 'Time' }, ticks: { display: true, callback: (value) => fmtTime(value) } },
@@ -442,7 +517,7 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
         }
 
         function isExpanded(id) {
-          return expanded.value.has(id);
+          return id.startsWith('_') || expanded.value.has(id);
         }
 
         onMounted(() => {
