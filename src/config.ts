@@ -638,7 +638,8 @@ a .csv file inside that file.`,
   },
   detailedStatsPath: {
     doc: `The log file path; if set, the detailed stats will be written in \
-a .csv file inside that file.`,
+a .csv file inside that file. \
+Use \`webrtcperf --plot <detailed-stats-file> <output-file>.html\` to generate a HTML plot.`,
     format: String,
     default: '',
     env: 'DETAILED_STATS_PATH',

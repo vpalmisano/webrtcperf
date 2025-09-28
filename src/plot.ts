@@ -221,11 +221,11 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
   ;[
     { id: '_throttle', title: 'Throttle settings' },
     { id: 'throttleUpRate', title: 'Throttle up rate', yLabel: 'Kbps', processValue: kbps, width: 2 },
-    { id: 'throttleUpDelay', title: 'Throttle up delay', yLabel: 'ms', processValue: ms, width: 2 },
-    { id: 'throttleUpLoss', title: 'Throttle up loss', yLabel: '%', processValue: percent, width: 2 },
+    { id: 'throttleUpDelay', title: 'Throttle up delay', yLabel: 'ms', width: 2 },
+    { id: 'throttleUpLoss', title: 'Throttle up loss', yLabel: '%', width: 2 },
     { id: 'throttleDownRate', title: 'Throttle down rate', yLabel: 'Kbps', processValue: kbps, width: 2 },
-    { id: 'throttleDownDelay', title: 'Throttle down delay', yLabel: 'ms', processValue: ms, width: 2 },
-    { id: 'throttleDownLoss', title: 'Throttle down loss', yLabel: '%', processValue: percent, width: 2 },
+    { id: 'throttleDownDelay', title: 'Throttle down delay', yLabel: 'ms', width: 2 },
+    { id: 'throttleDownLoss', title: 'Throttle down loss', yLabel: '%', width: 2 },
     // Performance / Connectivity
     { id: '_performance', title: 'Performance / Connectivity' },
     { id: 'pageCpu', title: 'Page CPU', yLabel: '%' },
@@ -247,16 +247,16 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
     { id: 'videoSentWidth', title: 'Send video width', yLabel: 'px' },
     { id: 'videoSentHeight', title: 'Send video height', yLabel: 'px' },
     { id: 'videoSentFps', title: 'Send video framerate', yLabel: 'fps' },
-    { id: 'videoQualityLimitationCpu', title: 'Send video CPU limitation', yLabel: '%' },
-    { id: 'videoQualityLimitationBandwidth', title: 'Send video bandwidth limitation', yLabel: '%' },
-    { id: 'videoFirCountReceived', title: 'Send video FIR count', yLabel: 'count' },
-    { id: 'videoPliCountReceived', title: 'Send video PLI count', yLabel: 'count' },
     {
       id: 'transportSentAvailableOutgoingBitrate',
       title: 'Send available bitrate',
       yLabel: 'Kbps',
       processValue: kbps,
     },
+    { id: 'videoQualityLimitationCpu', title: 'Send video CPU limitation', yLabel: '%' },
+    { id: 'videoQualityLimitationBandwidth', title: 'Send video bandwidth limitation', yLabel: '%' },
+    { id: 'videoFirCountReceived', title: 'Send video FIR count', yLabel: 'count' },
+    { id: 'videoPliCountReceived', title: 'Send video PLI count', yLabel: 'count' },
     // Sent screen
     { id: '_sentScreen', title: 'Sent screen' },
     { id: 'screenSentBitrates', title: 'Sent screen bitrate', yLabel: 'Kbps', processValue: kbps },
@@ -266,11 +266,11 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
     { id: 'screenSentWidth', title: 'Send screen width', yLabel: 'px' },
     { id: 'screenSentHeight', title: 'Send screen height', yLabel: 'px' },
     { id: 'screenSentFps', title: 'Send screen framerate', yLabel: 'fps' },
+    { id: '' },
     { id: 'screenQualityLimitationCpu', title: 'Send screen CPU limitation', yLabel: '%' },
     { id: 'screenQualityLimitationBandwidth', title: 'Send screen bandwidth limitation', yLabel: '%' },
     { id: 'screenFirCountReceived', title: 'Send screen FIR count', yLabel: 'count' },
     { id: 'screenPliCountReceived', title: 'Send screen PLI count', yLabel: 'count' },
-    { id: '' },
     // Recv audio
     { id: '_recvAudio', title: 'Recv audio' },
     { id: 'audioRecvBitrates', title: 'Recv audio bitrate', yLabel: 'Kbps', processValue: kbps },
@@ -349,12 +349,10 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
         <v-app-bar color="primary" density="compact">
           <v-app-bar-title><b>${id}</b> (${description})</v-app-bar-title>
           <template v-slot:append>
+            <v-select color="primary" :items="participants" v-model="selected" density="compact" variant="solo" hide-details="auto"></v-select>
           </template>
         </v-app-bar>
         <v-container fluid>
-          <v-row class="align-top mb-3" dense>
-            <v-select color="primary" :items="participants" v-model="selected" label="Participant" variant="outlined" density="compact"></v-select>
-          </v-row>
           <v-row dense>
             <v-col v-for="c in charts" :key="c.id" cols="12" :md="isExpanded(c.id) ? 12 : c.width || 3">
               <template v-if="c.id">
@@ -373,6 +371,9 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
             </v-col>
           </v-row>
         </v-container>
+        <v-footer color="primary" density="compact">
+          <v-btn class="text-none" variant="text" density="compact" size="small" href="https://github.com/vpalmisano/webrtcperf" target="_blank">Generated with webrtcperf</v-btn>
+        </v-footer>
       </v-main>
     </v-app>
   </div>
@@ -436,11 +437,28 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
             type: 'line',
             options: {
               maintainAspectRatio: false,
+              animation: false,
               layout: {
                 padding: 0,
-                animation: false,
+              },
+              interaction: {
+                intersect: false,
+                mode: 'x',
               },
               plugins: {
+                tooltip: {
+                  callbacks: {
+                    title: (context) => {
+                      if (context[0].parsed.x !== null) {
+                        return fmtTime(context[0].parsed.x);
+                      }
+                      return '';
+                    },
+                    label: (context) => {
+                      return context.parsed.y;
+                    }
+                  },
+                },
                 legend: { 
                   display: true,
                   position: 'bottom',
@@ -470,8 +488,16 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
                 },
               },
               scales: {
-                x: { type: 'linear', title: { display: false, text: 'Time' }, ticks: { display: true, callback: (value) => fmtTime(value) } },
-                y: { type: 'linear', title: { display: true, text: chartSpec.yLabel } },
+                x: { 
+                  type: 'linear',
+                  title: { display: false, text: 'Time' },
+                  ticks: { display: true, callback: (value) => fmtTime(value) },
+                },
+                y: {
+                  type: 'linear',
+                  title: { display: true, text: chartSpec.yLabel },
+                  min: 0,
+                },
               },
             },
             data: { datasets: buildDatasets(chartSpec.datasets, selected.value) },

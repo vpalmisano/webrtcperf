@@ -25,6 +25,7 @@ import path from 'path'
 import { markedTerminal } from 'marked-terminal'
 import { EventEmitter } from 'events'
 import { runWithDocker } from './docker'
+import { plotDetailedStatsDashboard } from './plot'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { marked } = require('marked')
@@ -237,6 +238,17 @@ async function main(): Promise<void> {
       await runWithDocker(process.argv)
     } catch (err: unknown) {
       log.error(`runWithDocker error: ${(err as Error).stack}`)
+      process.exit(1)
+    }
+    process.exit(0)
+  }
+
+  if (process.argv.includes('--plot')) {
+    process.argv = process.argv.filter(s => s !== '--plot')
+    try {
+      await plotDetailedStatsDashboard(process.argv[0], process.argv[1])
+    } catch (err: unknown) {
+      log.error(`plotDetailedStatsDashboard error: ${(err as Error).stack}`)
       process.exit(1)
     }
     process.exit(0)
