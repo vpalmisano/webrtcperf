@@ -292,7 +292,7 @@ async function main(): Promise<void> {
   }
 
   const stop = async () => {
-    console.log('Exiting...')
+    log.info('Exiting...')
     await application.stop(true)
   }
   registerExitHandler(() => stop())
@@ -301,12 +301,15 @@ async function main(): Promise<void> {
 
   // Command line interface.
   if (process.stdin && process.stdin.setRawMode) {
-    console.log('Press [q] to quit or [x] to exit immediately')
+    console.log('Press [e] to exit after the current test, [q] to exit immediately or [x] to force exit.')
     process.stdin.setRawMode(true)
     process.stdin.resume()
     process.stdin.on('data', async data => {
       log.debug('[stdin]', data[0])
-      if (data[0] === 'q'.charCodeAt(0)) {
+      if (data[0] === 'e'.charCodeAt(0)) {
+        log.info(`Exiting after the current test (${i + 1}/${total})...`)
+        configs.splice(0)
+      } else if (data[0] === 'q'.charCodeAt(0)) {
         try {
           await stop()
         } catch (err: unknown) {
@@ -314,6 +317,7 @@ async function main(): Promise<void> {
           process.exit(1)
         }
       } else if (data[0] === 'x'.charCodeAt(0)) {
+        log.info('Force exiting...')
         process.exit(1)
       }
     })

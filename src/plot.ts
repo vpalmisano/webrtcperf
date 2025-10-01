@@ -334,8 +334,16 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
     build(graph.id, graph.title, graph.yLabel, graph.processValue, graph.width)
   })
 
-  const [_, id, scenario] = path.basename(path.dirname(statsFile)).split('_')
-  const description = formatThrottleRule(parseThrottleRule(scenario), true, false)
+  const dirName = path.basename(path.dirname(statsFile))
+  let title = dirName
+  let description = ''
+  try {
+    const [_, id, scenario] = dirName.split('_')
+    title = id
+    description = formatThrottleRule(parseThrottleRule(scenario), true, false)
+  } catch (error) {
+    log.debug(`Invalid directory name: ${dirName}`, error)
+  }
 
   const data = `\
 <!DOCTYPE html>
@@ -343,7 +351,7 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${id} (${description})</title>
+  <title>${title} (${description})</title>
   <link rel="icon" href="https://raw.githubusercontent.com/vpalmisano/webrtcperf/devel/media/logo.svg">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-error-bars"></script>
@@ -359,7 +367,7 @@ export async function plotDetailedStatsDashboard(statsFile: string, outFile = 'p
     <v-app>
       <v-main>
         <v-app-bar color="primary" density="compact">
-          <v-app-bar-title><b>${id}</b> (${description})</v-app-bar-title>
+          <v-app-bar-title><b>${title}</b>${description ? ` (${description})` : ''}</v-app-bar-title>
           <template v-slot:append>
             <v-select color="primary" :items="participants" v-model="selected" density="compact" variant="solo" hide-details="auto"></v-select>
           </template>

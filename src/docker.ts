@@ -4,6 +4,7 @@ import { loadConfig } from './config'
 import { runShellCommand } from '@vpalmisano/throttler'
 import os from 'os'
 import fs from 'fs'
+import { Writable } from 'stream'
 
 const log = logger('webrtcperf:docker')
 
@@ -110,7 +111,21 @@ export async function runWithDocker(argv: string[]) {
     })
 
     process.stdin.pipe(stream)
-    stream.pipe(process.stdout)
+    stream.pipe(
+      new Writable({
+        write: (chunk, _encoding, callback) => {
+          const s = chunk.toString('utf-8').trim()
+          try {
+            const data = JSON.parse(s)
+            log.info(data.msg.trim())
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (_err) {
+            log.info(s)
+          }
+          callback()
+        },
+      }),
+    )
 
     await new Promise(resolve => {
       container.wait((err: Error, data: { StatusCode: number }) => {

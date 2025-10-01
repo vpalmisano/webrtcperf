@@ -33,9 +33,9 @@ export default async function (args) {
     args,
     options: {
       destinations: { type: 'string', default: 'google,livekit' },
-      rates: { type: 'string', default: '200,400,1000,2000' },
-      losses: { type: 'string', default: '0,5,10,15' },
-      delays: { type: 'string', default: '50,100,200' },
+      rates: { type: 'string', default: '200,400,1000' },
+      losses: { type: 'string', default: '0,5,10' },
+      delays: { type: 'string', default: '50,100' },
       directions: { type: 'string', default: 'up,down' },
       iterations: { type: 'string', default: '1' },
     },
