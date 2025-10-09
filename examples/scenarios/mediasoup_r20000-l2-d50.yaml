@@ -1,0 +1,19 @@
+sessions: 1
+runDuration: 600
+url: 'https://localhost:5555/?roomId=dev&produce=false'
+debuggingPort: 9200
+prometheusPushgateway: 'http://localhost:9091'
+showPageLog: false
+showStats: false
+statsInterval: 5
+pageLogPath: 'logs/page.log'
+enableBrowserLogging: '0'
+enableRtpDump: '0'
+throttleConfig: |
+    [{
+        sessions: "0",
+        protocol: "udp",
+        down: [
+            { rate: 20000, delay: 50, loss: 2 },
+        ]
+    }]

@@ -43,6 +43,7 @@ import {
   portForwarder,
   resolveIP,
   resolvePackagePath,
+  runShellCommand,
   sha256,
   sleep,
   waitStopProcess,
@@ -147,6 +148,7 @@ export interface SessionParams {
   useFakeMedia: boolean
   enableGpu: string
   enableBrowserLogging: string
+  enableRtpDump: string
   startTimestamp: number
   sessions: number
   tabsPerSession: number
@@ -218,6 +220,7 @@ export class Session extends EventEmitter {
   private readonly useFakeMedia: boolean
   private readonly enableGpu: string
   private readonly enableBrowserLogging: boolean
+  private readonly enableRtpDump: boolean
   private readonly startTimestamp: number
   private readonly sessions: number
   private readonly tabsPerSession: number
@@ -365,6 +368,7 @@ export class Session extends EventEmitter {
     useFakeMedia,
     enableGpu,
     enableBrowserLogging,
+    enableRtpDump,
     startTimestamp,
     sessions,
     tabsPerSession,
@@ -433,6 +437,7 @@ export class Session extends EventEmitter {
     this.useFakeMedia = useFakeMedia
     this.enableGpu = enableGpu
     this.enableBrowserLogging = enabledForSession(this.id, enableBrowserLogging)
+    this.enableRtpDump = enabledForSession(this.id, enableRtpDump)
     this.startTimestamp = startTimestamp || Date.now()
     this.sessions = sessions || 1
     this.tabsPerSession = tabsPerSession || 1
@@ -595,12 +600,15 @@ export class Session extends EventEmitter {
 
     let fieldTrials = this.chromiumFieldTrials || ''
 
-    if (this.enableBrowserLogging && this.pageLogPath) {
+    if (this.pageLogPath && this.enableBrowserLogging) {
       const pageLogDir = path.dirname(this.pageLogPath)
       const eventLogPath = path.resolve(pageLogDir, `webrtc-event-logging-${this.id}`)
       fs.mkdirSync(eventLogPath, { recursive: true })
       args.push('--enable-logging', '--vmodule=*/webrtc/*=5', '--v=0', `--webrtc-event-logging=${eventLogPath}`)
       fieldTrials = 'WebRTC-RtcEventLogNewFormat/Disabled/' + fieldTrials
+      if (this.enableRtpDump) {
+        fieldTrials = 'WebRTC-Debugging-RtpDump/Enabled/' + fieldTrials
+      }
       env.CHROME_LOG_FILE = path.resolve(pageLogDir, `chrome-${this.id}.log`)
     }
 
@@ -1465,6 +1473,26 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
       await onThrottleChange()
       throttleNotifier.on('change', onThrottleChange)
       page.once('close', () => throttleNotifier.off('change', onThrottleChange))
+    }
+
+    if (this.pageLogPath && this.enableRtpDump) {
+      page.once('close', async () => {
+        const dirPath = path.dirname(this.pageLogPath)
+        const logFilePath = path.join(dirPath, `chrome-${this.id}.log`)
+        if (fs.existsSync(logFilePath)) {
+          const pcapFilePath = path.join(dirPath, `chrome-${this.id}.pcap`)
+          try {
+            await runShellCommand(`\
+grep RTP_DUMP ${logFilePath} | text2pcap -D -u 1000,2000 -t %H:%M:%S.%f - ${pcapFilePath};
+grep -v RTP_DUMP ${logFilePath} > ${logFilePath}.tmp;
+mv ${logFilePath}.tmp ${logFilePath};
+`)
+            log.info(`rtp dump saved to: ${pcapFilePath}`)
+          } catch (err) {
+            log.error(`error converting rtp dump to pcap: ${(err as Error).stack}`)
+          }
+        }
+      })
     }
 
     log.debug(`Page ${index + 1} "${url}" loaded in ${(Date.now() - pageLoadTime) / 1000}s`)
