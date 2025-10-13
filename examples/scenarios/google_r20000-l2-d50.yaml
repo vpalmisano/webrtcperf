@@ -1,0 +1,24 @@
+sessions: 3
+runDuration: 600
+scriptPath: 'https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js'
+scriptParams: |
+  {
+    enableMic: '0-1',
+    enableCam: '1',
+  }
+debuggingPort: 9200
+prometheusPushgateway: 'http://localhost:9091'
+showPageLog: false
+showStats: false
+statsInterval: 5
+pageLogPath: 'logs/google/page.log'
+enableBrowserLogging: '0'
+enableRtpDump: '0'
+throttleConfig: |
+    [{
+        sessions: "0",
+        protocol: "udp",
+        down: [
+            { rate: 20000, delay: 50, loss: 2 },
+        ]
+    }]

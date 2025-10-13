@@ -38,7 +38,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 2,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -1001,6 +1001,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1016,7 +1017,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "orange",
@@ -1054,7 +1056,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1110,6 +1112,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1125,7 +1128,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1155,7 +1159,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1192,7 +1196,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1262,7 +1267,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1314,6 +1319,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1329,7 +1335,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1432,7 +1439,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1486,6 +1493,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1501,7 +1509,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1535,7 +1544,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1611,6 +1620,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1626,7 +1636,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1660,7 +1671,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1771,6 +1782,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1786,7 +1798,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1820,7 +1833,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1878,6 +1891,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1894,7 +1908,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -1924,7 +1939,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -1982,6 +1997,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1997,7 +2013,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2027,7 +2044,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -2114,6 +2131,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2128,7 +2146,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               }
             ]
           },
@@ -2177,7 +2196,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -2289,6 +2308,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2303,7 +2323,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2337,7 +2358,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -2392,6 +2413,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2407,7 +2429,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2441,7 +2464,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -2509,6 +2532,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2524,7 +2548,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2558,7 +2583,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -2626,6 +2651,7 @@
               "type": "linear"
             },
             "showPoints": "never",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2641,7 +2667,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -2675,7 +2702,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.2.0",
       "targets": [
         {
           "datasource": {
@@ -2780,7 +2807,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 192
+            "y": 339
           },
           "id": 52,
           "options": {
@@ -2884,7 +2911,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 192
+            "y": 339
           },
           "id": 33,
           "options": {
@@ -2987,7 +3014,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 192
+            "y": 339
           },
           "id": 49,
           "options": {
@@ -3087,7 +3114,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 192
+            "y": 339
           },
           "id": 12,
           "options": {
@@ -3296,7 +3323,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 192
+            "y": 339
           },
           "id": 80,
           "options": {
@@ -3396,7 +3423,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 192
+            "y": 339
           },
           "id": 289,
           "options": {
@@ -3537,7 +3564,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 375
+            "y": 522
           },
           "id": 53,
           "options": {
@@ -3655,7 +3682,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 375
+            "y": 522
           },
           "id": 85,
           "options": {
@@ -3896,7 +3923,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 375
+            "y": 522
           },
           "id": 40,
           "options": {
@@ -4116,7 +4143,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 375
+            "y": 522
           },
           "id": 65,
           "options": {
@@ -4216,7 +4243,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 375
+            "y": 522
           },
           "id": 81,
           "options": {
@@ -4330,7 +4357,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 375
+            "y": 522
           },
           "id": 298,
           "options": {
@@ -4430,7 +4457,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 382
+            "y": 529
           },
           "id": 42,
           "options": {
@@ -4530,7 +4557,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 382
+            "y": 529
           },
           "id": 43,
           "options": {
@@ -4649,7 +4676,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 382
+            "y": 529
           },
           "id": 44,
           "options": {
@@ -4767,7 +4794,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 382
+            "y": 529
           },
           "id": 54,
           "options": {
@@ -4867,7 +4894,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 382
+            "y": 529
           },
           "id": 55,
           "options": {
@@ -4970,7 +4997,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 382
+            "y": 529
           },
           "id": 62,
           "options": {
@@ -5110,7 +5137,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 194
+            "y": 341
           },
           "id": 83,
           "options": {
@@ -5227,7 +5254,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 194
+            "y": 341
           },
           "id": 48,
           "options": {
@@ -5330,7 +5357,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 194
+            "y": 341
           },
           "id": 86,
           "options": {
@@ -5434,7 +5461,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 194
+            "y": 341
           },
           "id": 87,
           "options": {
@@ -5534,7 +5561,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 194
+            "y": 341
           },
           "id": 88,
           "options": {
@@ -5634,7 +5661,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 194
+            "y": 341
           },
           "id": 288,
           "options": {
@@ -5734,7 +5761,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 362
+            "y": 509
           },
           "id": 89,
           "options": {
@@ -5836,7 +5863,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 362
+            "y": 509
           },
           "id": 90,
           "options": {
@@ -5936,7 +5963,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 362
+            "y": 509
           },
           "id": 299,
           "options": {
@@ -6054,7 +6081,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 362
+            "y": 509
           },
           "id": 92,
           "options": {
@@ -6154,7 +6181,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 362
+            "y": 509
           },
           "id": 93,
           "options": {
@@ -6257,7 +6284,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 362
+            "y": 509
           },
           "id": 95,
           "options": {
@@ -6385,7 +6412,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 195
+            "y": 342
           },
           "id": 46,
           "options": {
@@ -6488,7 +6515,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 195
+            "y": 342
           },
           "id": 18,
           "options": {
@@ -6587,7 +6614,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 195
+            "y": 342
           },
           "id": 50,
           "options": {
@@ -6687,7 +6714,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 195
+            "y": 342
           },
           "id": 64,
           "options": {
@@ -6791,7 +6818,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 195
+            "y": 342
           },
           "id": 13,
           "options": {
@@ -6895,7 +6922,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 195
+            "y": 342
           },
           "id": 14,
           "options": {
@@ -7011,7 +7038,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 349
+            "y": 496
           },
           "id": 256,
           "options": {
@@ -7127,7 +7154,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 349
+            "y": 496
           },
           "id": 282,
           "options": {
@@ -7283,7 +7310,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 349
+            "y": 496
           },
           "id": 283,
           "options": {
@@ -7423,7 +7450,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 349
+            "y": 496
           },
           "id": 307,
           "options": {
@@ -7466,7 +7493,7 @@
       "type": "row"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -7474,1333 +7501,1356 @@
         "y": 20
       },
       "id": 281,
-      "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
+      "panels": [],
+      "title": "Received video tracks",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
           },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 0,
-            "y": 196
-          },
-          "id": 47,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
             },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
             }
           },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "sum by(participantName) (count by(participantName, trackId) (wst_videoRecvBitrates{exported_job=~\"$jobName\", participantName=~\"$participantName\"}))",
-              "interval": "15s",
-              "legendFormat": "{{participantName}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Total recv video tracks",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "bps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 4,
-            "y": 196
-          },
-          "id": 11,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "sum by(participantName) (wst_videoRecvBitrates{exported_job=~\"$jobName\",participantName=~\"$participantName\"})",
-              "interval": "15s",
-              "legendFormat": "{{participantName}}",
-              "range": true,
-              "refId": "wst_videoRecvBitrates"
-            }
-          ],
-          "title": "Total recv video bitrate",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "bps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 8,
-            "y": 196
-          },
-          "id": 51,
-          "interval": "15s",
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "wst_videoRecvBitrates{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
-              "hide": false,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvBitrates"
-            }
-          ],
-          "title": "Recv video bitrates",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "percent"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 12,
-            "y": 196
-          },
-          "id": 56,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "wst_videoRecvPacketsLost{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
-              "hide": false,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvPacketsLost"
-            }
-          ],
-          "title": "Recv video packets lost",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 16,
-            "y": 196
-          },
-          "id": 20,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "wst_videoRecvJitter{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
-              "hide": false,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvJitter"
-            }
-          ],
-          "title": "Recv video jitter",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 20,
-            "y": 196
-          },
-          "id": 21,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "wst_videoRecvAvgJitterBufferDelay{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
-              "hide": false,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvAvgJitterBufferDelay"
-            }
-          ],
-          "title": "Recv video jitter buffer delay",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 0,
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 0,
-            "y": 336
-          },
-          "id": 24,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "wst_videoRecvWidth{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
-              "hide": false,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvWidth"
-            }
-          ],
-          "title": "Recv video width",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "decimals": 0,
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 4,
-            "y": 336
-          },
-          "id": 57,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "wst_videoRecvHeight{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
-              "hide": false,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvWidth"
-            }
-          ],
-          "title": "Recv video height",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": [
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
               {
-                "matcher": {
-                  "id": "byFrameRefID",
-                  "options": "wst_videoRecvFrameRate"
-                },
-                "properties": [
-                  {
-                    "id": "custom.lineStyle",
-                    "value": {
-                      "dash": [
-                        10,
-                        10
-                      ],
-                      "fill": "dash"
-                    }
-                  }
-                ]
+                "color": "green",
+                "value": 0
               }
             ]
           },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 8,
-            "y": 336
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 21
+      },
+      "id": 47,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
           },
-          "id": 58,
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum by(participantName) (count by(participantName, trackId) (wst_videoRecvBitrates{exported_job=~\"$jobName\", participantName=~\"$participantName\"}))",
           "interval": "15s",
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "wst_videoRecvFps{exported_job=~\"$jobName\", participantName=~\"$participantName\"}",
-              "fullMetaSearch": false,
-              "hide": false,
-              "includeNullMetadata": true,
-              "interval": "",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvFps",
-              "useBackend": false
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "wst_videoRecvFrameRate{exported_job=~\"$jobName\", participantName=~\"$participantName\"}",
-              "fullMetaSearch": false,
-              "hide": true,
-              "includeNullMetadata": true,
-              "interval": "",
-              "legendFormat": "{{participantName}} - {{trackId}} (frame rate)",
-              "range": true,
-              "refId": "wst_videoRecvFrameRate",
-              "useBackend": false
-            }
-          ],
-          "title": "Recv video framerate",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 12,
-            "y": 336
-          },
-          "id": 309,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "rate(wst_videoTotalFreezesDuration{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
-              "fullMetaSearch": false,
-              "hide": false,
-              "includeNullMetadata": true,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}} (RTC freezes)",
-              "range": true,
-              "refId": "wst_screenTotalFreezesDuration",
-              "useBackend": false
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "clamp((wst_videoRecvFrameRate{exported_job=~\"$jobName\", participantName=~\"$participantName\"} - wst_videoRecvFps{exported_job=~\"$jobName\", participantName=~\"$participantName\"}) / wst_videoRecvFrameRate{exported_job=~\"$jobName\", participantName=~\"$participantName\"}, 0, 1)",
-              "fullMetaSearch": false,
-              "hide": false,
-              "includeNullMetadata": true,
-              "interval": "15s",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_screenRecvFps",
-              "useBackend": false
-            }
-          ],
-          "title": "Recv video freezes",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 16,
-            "y": 336
-          },
-          "id": 63,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "code",
-              "exemplar": true,
-              "expr": "rate(wst_videoFirCountSent{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
-              "fullMetaSearch": false,
-              "hide": false,
-              "includeNullMetadata": true,
-              "interval": "15s",
-              "legendFormat": "FIR/s {{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoFirCountSent",
-              "useBackend": false
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "builder",
-              "exemplar": true,
-              "expr": "rate(wst_videoPliCountSent{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
-              "fullMetaSearch": false,
-              "hide": false,
-              "includeNullMetadata": true,
-              "interval": "15s",
-              "legendFormat": "PLI/s {{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoPliCountSent",
-              "useBackend": false
-            }
-          ],
-          "title": "Recv video sent FIR / PLI rates",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 4,
-            "x": 20,
-            "y": 336
-          },
-          "id": 310,
-          "interval": "15s",
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean"
-              ],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "hideZeros": false,
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "pluginVersion": "12.0.1",
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "2_miEJT7k"
-              },
-              "disableTextWrap": false,
-              "editorMode": "code",
-              "exemplar": false,
-              "expr": "wst_videoRecvFrames{exported_job=~\"$jobName\", participantName=~\"$participantName\"}",
-              "fullMetaSearch": false,
-              "hide": false,
-              "includeNullMetadata": true,
-              "interval": "",
-              "legendFormat": "{{participantName}} - {{trackId}}",
-              "range": true,
-              "refId": "wst_videoRecvFps",
-              "useBackend": false
-            }
-          ],
-          "title": "Recv video frames",
-          "type": "timeseries"
+          "legendFormat": "{{participantName}}",
+          "range": true,
+          "refId": "A"
         }
       ],
-      "title": "Received video tracks",
-      "type": "row"
+      "title": "Total recv video tracks",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 4,
+        "y": 21
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum by(participantName) (wst_videoRecvBitrates{exported_job=~\"$jobName\",participantName=~\"$participantName\"})",
+          "interval": "15s",
+          "legendFormat": "{{participantName}}",
+          "range": true,
+          "refId": "wst_videoRecvBitrates"
+        }
+      ],
+      "title": "Total recv video bitrate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 21
+      },
+      "id": 51,
+      "interval": "15s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "wst_videoRecvBitrates{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvBitrates"
+        }
+      ],
+      "title": "Recv video bitrates",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 21
+      },
+      "id": 56,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "wst_videoRecvPacketsLost{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvPacketsLost"
+        }
+      ],
+      "title": "Recv video packets lost",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 16,
+        "y": 21
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "wst_videoRecvJitter{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvJitter"
+        }
+      ],
+      "title": "Recv video jitter",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 21
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "wst_videoRecvAvgJitterBufferDelay{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvAvgJitterBufferDelay"
+        }
+      ],
+      "title": "Recv video jitter buffer delay",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 0,
+        "y": 28
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "wst_videoRecvWidth{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvWidth"
+        }
+      ],
+      "title": "Recv video width",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 4,
+        "y": 28
+      },
+      "id": 57,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "wst_videoRecvHeight{exported_job=~\"$jobName\",participantName=~\"$participantName\"}",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvWidth"
+        }
+      ],
+      "title": "Recv video height",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "wst_videoRecvFrameRate"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [
+                    10,
+                    10
+                  ],
+                  "fill": "dash"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 8,
+        "y": 28
+      },
+      "id": 58,
+      "interval": "15s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "wst_videoRecvFps{exported_job=~\"$jobName\", participantName=~\"$participantName\"}",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "interval": "",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvFps",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "wst_videoRecvFrameRate{exported_job=~\"$jobName\", participantName=~\"$participantName\"}",
+          "fullMetaSearch": false,
+          "hide": true,
+          "includeNullMetadata": true,
+          "interval": "",
+          "legendFormat": "{{participantName}} - {{trackId}} (frame rate)",
+          "range": true,
+          "refId": "wst_videoRecvFrameRate",
+          "useBackend": false
+        }
+      ],
+      "title": "Recv video framerate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 12,
+        "y": 28
+      },
+      "id": 309,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "rate(wst_videoTotalFreezesDuration{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}} (RTC freezes)",
+          "range": true,
+          "refId": "wst_screenTotalFreezesDuration",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "clamp((wst_videoRecvFrameRate{exported_job=~\"$jobName\", participantName=~\"$participantName\"} - wst_videoRecvFps{exported_job=~\"$jobName\", participantName=~\"$participantName\"}) / wst_videoRecvFrameRate{exported_job=~\"$jobName\", participantName=~\"$participantName\"}, 0, 1)",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "interval": "15s",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_screenRecvFps",
+          "useBackend": false
+        }
+      ],
+      "title": "Recv video freezes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 16,
+        "y": 28
+      },
+      "id": 63,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "rate(wst_videoFirCountSent{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "interval": "15s",
+          "legendFormat": "FIR/s {{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoFirCountSent",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "exemplar": true,
+          "expr": "rate(wst_videoPliCountSent{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "interval": "15s",
+          "legendFormat": "PLI/s {{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoPliCountSent",
+          "useBackend": false
+        }
+      ],
+      "title": "Recv video sent FIR / PLI rates",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 28
+      },
+      "id": 310,
+      "interval": "15s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "exemplar": false,
+          "expr": "rate(wst_videoRecvFrames{exported_job=~\"$jobName\", participantName=~\"$participantName\"}[$__rate_interval])",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "interval": "",
+          "legendFormat": "{{participantName}} - {{trackId}}",
+          "range": true,
+          "refId": "wst_videoRecvFps",
+          "useBackend": false
+        }
+      ],
+      "title": "Recv video frame/s",
+      "type": "timeseries"
     },
     {
       "collapsed": true,
@@ -8808,7 +8858,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 35
       },
       "id": 164,
       "panels": [
@@ -8874,7 +8924,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 197
+            "y": 344
           },
           "id": 137,
           "options": {
@@ -8977,7 +9027,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 197
+            "y": 344
           },
           "id": 140,
           "options": {
@@ -9076,7 +9126,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 197
+            "y": 344
           },
           "id": 141,
           "options": {
@@ -9180,7 +9230,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 197
+            "y": 344
           },
           "id": 144,
           "options": {
@@ -9284,7 +9334,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 197
+            "y": 344
           },
           "id": 142,
           "options": {
@@ -9388,7 +9438,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 197
+            "y": 344
           },
           "id": 143,
           "options": {
@@ -9492,7 +9542,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 323
+            "y": 470
           },
           "id": 139,
           "options": {
@@ -9596,7 +9646,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 323
+            "y": 470
           },
           "id": 150,
           "options": {
@@ -9699,7 +9749,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 323
+            "y": 470
           },
           "id": 152,
           "options": {
@@ -9832,7 +9882,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 323
+            "y": 470
           },
           "id": 290,
           "options": {
@@ -9957,7 +10007,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 323
+            "y": 470
           },
           "id": 153,
           "options": {
@@ -10074,7 +10124,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 323
+            "y": 470
           },
           "id": 308,
           "options": {
@@ -10122,7 +10172,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 36
       },
       "id": 263,
       "panels": [
@@ -10204,7 +10254,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 198
+            "y": 345
           },
           "id": 270,
           "options": {
@@ -10312,7 +10362,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 198
+            "y": 345
           },
           "id": 174,
           "options": {
@@ -10432,7 +10482,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 198
+            "y": 345
           },
           "id": 277,
           "options": {
@@ -10552,7 +10602,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 198
+            "y": 345
           },
           "id": 182,
           "options": {
@@ -10768,7 +10818,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 198
+            "y": 345
           },
           "id": 169,
           "options": {
@@ -10888,7 +10938,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 198
+            "y": 345
           },
           "id": 266,
           "options": {
@@ -11008,7 +11058,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 303
+            "y": 450
           },
           "id": 269,
           "options": {
@@ -11116,7 +11166,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 303
+            "y": 450
           },
           "id": 168,
           "options": {
@@ -11236,7 +11286,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 303
+            "y": 450
           },
           "id": 278,
           "options": {
@@ -11356,7 +11406,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 303
+            "y": 450
           },
           "id": 264,
           "options": {
@@ -11476,7 +11526,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 303
+            "y": 450
           },
           "id": 175,
           "options": {
@@ -11596,7 +11646,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 303
+            "y": 450
           },
           "id": 267,
           "options": {
@@ -11716,7 +11766,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 310
+            "y": 457
           },
           "id": 271,
           "options": {
@@ -11824,7 +11874,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 310
+            "y": 457
           },
           "id": 180,
           "options": {
@@ -11944,7 +11994,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 310
+            "y": 457
           },
           "id": 279,
           "options": {
@@ -12064,7 +12114,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 310
+            "y": 457
           },
           "id": 265,
           "options": {
@@ -12184,7 +12234,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 310
+            "y": 457
           },
           "id": 273,
           "options": {
@@ -12304,7 +12354,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 310
+            "y": 457
           },
           "id": 268,
           "options": {
@@ -12356,7 +12406,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 37
       },
       "id": 219,
       "panels": [
@@ -12422,7 +12472,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 199
+            "y": 346
           },
           "id": 197,
           "options": {
@@ -12522,7 +12572,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 199
+            "y": 346
           },
           "id": 220,
           "options": {
@@ -12622,7 +12672,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 199
+            "y": 346
           },
           "id": 224,
           "options": {
@@ -12722,7 +12772,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 199
+            "y": 346
           },
           "id": 225,
           "options": {
@@ -12825,7 +12875,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 199
+            "y": 346
           },
           "id": 211,
           "options": {
@@ -12925,7 +12975,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 199
+            "y": 346
           },
           "id": 276,
           "options": {
@@ -13027,7 +13077,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 255
+            "y": 402
           },
           "id": 196,
           "options": {
@@ -13127,7 +13177,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 255
+            "y": 402
           },
           "id": 208,
           "options": {
@@ -13175,7 +13225,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 38
       },
       "id": 297,
       "panels": [
@@ -13253,7 +13303,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 200
+            "y": 347
           },
           "id": 294,
           "options": {
@@ -13387,7 +13437,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 200
+            "y": 347
           },
           "id": 291,
           "options": {
@@ -13517,7 +13567,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 200
+            "y": 347
           },
           "id": 292,
           "options": {
@@ -13647,7 +13697,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 200
+            "y": 347
           },
           "id": 293,
           "options": {
@@ -13777,7 +13827,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 200
+            "y": 347
           },
           "id": 295,
           "options": {
@@ -13907,7 +13957,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 200
+            "y": 347
           },
           "id": 296,
           "options": {
@@ -14037,7 +14087,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 221
+            "y": 368
           },
           "id": 300,
           "options": {
@@ -14171,7 +14221,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 221
+            "y": 368
           },
           "id": 301,
           "options": {
@@ -14305,7 +14355,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 221
+            "y": 368
           },
           "id": 285,
           "options": {
@@ -14439,7 +14489,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 221
+            "y": 368
           },
           "id": 287,
           "options": {
@@ -14598,7 +14648,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 221
+            "y": 368
           },
           "id": 222,
           "options": {
@@ -14728,7 +14778,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 228
+            "y": 375
           },
           "id": 302,
           "options": {
@@ -14862,7 +14912,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 228
+            "y": 375
           },
           "id": 303,
           "options": {
@@ -14996,7 +15046,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 228
+            "y": 375
           },
           "id": 304,
           "options": {
@@ -15130,7 +15180,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 228
+            "y": 375
           },
           "id": 305,
           "options": {
@@ -15289,7 +15339,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 228
+            "y": 375
           },
           "id": 306,
           "options": {
@@ -15355,7 +15405,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 39
       },
       "id": 173,
       "panels": [
@@ -15433,7 +15483,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 201
+            "y": 348
           },
           "id": 206,
           "options": {
@@ -15559,7 +15609,7 @@
             "h": 7,
             "w": 4,
             "x": 4,
-            "y": 201
+            "y": 348
           },
           "id": 184,
           "options": {
@@ -15689,7 +15739,7 @@
             "h": 7,
             "w": 4,
             "x": 8,
-            "y": 201
+            "y": 348
           },
           "id": 185,
           "options": {
@@ -15807,7 +15857,7 @@
             "h": 7,
             "w": 4,
             "x": 12,
-            "y": 201
+            "y": 348
           },
           "id": 257,
           "options": {
@@ -15907,7 +15957,7 @@
             "h": 7,
             "w": 4,
             "x": 16,
-            "y": 201
+            "y": 348
           },
           "id": 77,
           "options": {
@@ -16007,7 +16057,7 @@
             "h": 7,
             "w": 4,
             "x": 20,
-            "y": 201
+            "y": 348
           },
           "id": 94,
           "options": {
@@ -16107,7 +16157,7 @@
             "h": 7,
             "w": 4,
             "x": 0,
-            "y": 208
+            "y": 355
           },
           "id": 59,
           "options": {
@@ -16180,7 +16230,7 @@
   ],
   "preload": false,
   "refresh": "auto",
-  "schemaVersion": 41,
+  "schemaVersion": 42,
   "tags": [],
   "templating": {
     "list": [
@@ -16270,5 +16320,5 @@
   "timezone": "",
   "title": "WebrtcPerf (detailed)",
   "uid": "webrtcperf-detailed",
-  "version": 13
+  "version": 1
 }
