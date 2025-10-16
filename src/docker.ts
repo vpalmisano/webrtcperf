@@ -58,6 +58,10 @@ export async function runWithDocker(argv: string[]) {
     'VIDEO_CACHE_PATH=/root/.webrtcperf/cache',
   ]
 
+  if (process.env.URL) {
+    env.push(`URL=${process.env.URL}`)
+  }
+
   if (configs[0].prometheusPushgateway.startsWith('http://localhost')) {
     env.push('PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091')
   }

@@ -260,7 +260,8 @@ export enum RtcStatsMetricNames {
   videoFirCountSent = 'videoFirCountSent',
   videoPliCountSent = 'videoPliCountSent',
   videoDecodeLatency = 'videoDecodeLatency',
-  //'videoFramesDecoded',
+  videoFramesDecoded = 'videoFramesDecoded',
+  videoFramesDropped = 'videoFramesDropped',
   videoRecvFrames = 'videoRecvFrames',
   videoRecvFps = 'videoRecvFps',
   videoRecvAvgJitterBufferDelay = 'videoRecvAvgJitterBufferDelay',
@@ -285,7 +286,8 @@ export enum RtcStatsMetricNames {
   screenFirCountSent = 'screenFirCountSent',
   screenPliCountSent = 'screenPliCountSent',
   screenDecodeLatency = 'screenDecodeLatency',
-  //'screenFramesDecoded',
+  screenFramesDecoded = 'screenFramesDecoded',
+  screenFramesDropped = 'screenFramesDropped',
   screenRecvFrames = 'screenRecvFrames',
   screenRecvFps = 'screenRecvFps',
   screenRecvAvgJitterBufferDelay = 'screenRecvAvgJitterBufferDelay',
@@ -437,7 +439,8 @@ export function updateRtcStats(
         })
       }
       if (inboundRtp.kind === 'video' && inboundRtp.keyFramesDecoded > 0) {
-        //setStats(stats, prefix + 'FramesDecoded', key, inboundRtp.framesDecoded
+        setStats(stats, (prefix + 'FramesDecoded') as RtcStatsMetricNames, key, inboundRtp.framesDecoded)
+        setStats(stats, (prefix + 'FramesDropped') as RtcStatsMetricNames, key, inboundRtp.framesDropped)
         setStats(stats, (prefix + 'RecvFrames') as RtcStatsMetricNames, key, inboundRtp.framesReceived)
         setStats(stats, (prefix + 'RecvFps') as RtcStatsMetricNames, key, inboundRtp.framesPerSecond)
         setStats(stats, (prefix + 'RecvHeight') as RtcStatsMetricNames, key, inboundRtp.frameHeight)

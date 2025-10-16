@@ -6,14 +6,16 @@ prometheusPushgateway: 'http://localhost:9091'
 showPageLog: false
 showStats: false
 statsInterval: 5
-pageLogPath: 'logs/page.log'
+pageLogPath: 'logs/mediasoup/page.log'
 enableBrowserLogging: '0'
 enableRtpDump: '0'
+useBrowserThrottling: true
 throttleConfig: |
     [{
         sessions: "0",
         protocol: "udp",
         down: [
-            { rate: 20000, delay: 50, loss: 2 },
+            { rate: 20000, delay: 50, loss: 0 },
+            { rate: 1000, delay: 50, loss: 2, at: 30 },
         ]
     }]
