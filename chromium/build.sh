@@ -13,7 +13,7 @@ else
 fi
 
 # https://chromium.googlesource.com/chromium/src/+refs
-export VERSION="141.0.7364.1"
+export VERSION="143.0.7474.2"
 export DEFAULT_BRANCH="tags/${VERSION}"
 
 function setup() {
@@ -91,7 +91,7 @@ function apply_patch() {
     local filepath=${DIR}/max-video-decoders_$(echo ${branch} | sed s/'tags\/'//).patch
     if [ ! -f ${filepath} ]; then
         echo "INFO: patch file not found: ${filepath}, using default patch"
-        filepath=${DIR}/max-video-decoders_main.patch
+        filepath=${DIR}/max-video-decoders_latest.patch
     fi
     cd ${CHROMIUM_SRC}/third_party/webrtc
     git apply < ${filepath}
@@ -111,9 +111,9 @@ function update() {
     git pull
     cd ${CHROMIUM_SRC}
     git rebase --abort || true
-    git fetch origin ${branch} --no-tags
-    git checkout ${branch}
-    git pull origin ${branch}
+    #git fetch origin ${branch} --no-tags
+    #git checkout ${branch}
+    #git pull origin ${branch}
     gclient sync -D --force --reset --no-history --revision=${branch}
     apply_patch ${branch}
 }
@@ -123,6 +123,7 @@ function build() {
     if [ "${PLATFORM}" = "Linux" ]; then
         time ionice -c3 nice -n19 autoninja -C out/Default "chrome/installer/linux:unstable_deb"
         mv out/Default/*.deb ${DIR}
+        autoninja -C out/Default video_replay
     else
         time nice -n19 autoninja -C out/Default chrome chrome/installer/mac
         rm -rf out/Default/Chromium
