@@ -106,7 +106,7 @@
     "@types/tar-fs": "^2.0.4",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
+    "@typescript-eslint/parser": "^8.46.2",
     "@vpalmisano/typedoc-cookie-consent": "^0.0.4",
     "@vpalmisano/typedoc-plugin-ga": "^1.0.6",
     "eslint": "^9.37.0",
