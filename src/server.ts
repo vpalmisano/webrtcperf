@@ -241,7 +241,7 @@ export class Server {
         throw new Error(`Session not found: "${sessionId}"`)
       }
       const filePath = await session.pageScreenshot(pageId, format)
-      res.sendFile(path.resolve(filePath))
+      res.sendFile(path.resolve(filePath), { dotfiles: 'allow' })
     } catch (err) {
       next(err)
     }
@@ -365,7 +365,7 @@ export class Server {
     if (req.query.range && !req.headers.range) {
       req.headers.range = `bytes=${req.query.range}`
     }
-    res.sendFile(path.resolve(this.pageLogPath))
+    res.sendFile(path.resolve(this.pageLogPath), { dotfiles: 'allow' })
   }
 
   /**
@@ -386,7 +386,7 @@ export class Server {
       if (req.query.range && !req.headers.range) {
         req.headers.range = `bytes=${req.query.range}`
       }
-      res.sendFile(path.resolve(logPath))
+      res.sendFile(path.resolve(logPath), { dotfiles: 'allow' })
     } catch (err) {
       next(err)
     }
@@ -441,7 +441,7 @@ export class Server {
     if (req.query.range && !req.headers.range) {
       req.headers.range = `bytes=${req.query.range}`
     }
-    res.sendFile(fpath)
+    res.sendFile(fpath, { dotfiles: 'allow' })
   }
 
   private getDataArchive(req: express.Request, res: express.Response, next: express.NextFunction): void {
@@ -465,7 +465,7 @@ export class Server {
     if (req.query.range && !req.headers.range) {
       req.headers.range = `bytes=${req.query.range}`
     }
-    res.sendFile(fpath)
+    res.sendFile(fpath, { dotfiles: 'allow' })
   }
 
   /**

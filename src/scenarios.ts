@@ -259,7 +259,7 @@ export async function plotStatsSummary(stats: StatsSummary[]) {
 export async function twoParticipantsWithRateLossDelay(
   id: string,
   { rate, loss, delay, direction }: { rate: number; loss: number; delay: number; direction: ThrottleDirection },
-  repeat: 1,
+  repeat = 1,
 ) {
   const throttle: ThrottleConfig = {}
   const queue = 25
