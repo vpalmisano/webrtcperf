@@ -13,7 +13,7 @@ else
 fi
 
 # https://chromium.googlesource.com/chromium/src/+refs
-export VERSION="143.0.7474.2"
+export VERSION="146.0.7643.1"
 export DEFAULT_BRANCH="tags/${VERSION}"
 
 function setup() {
