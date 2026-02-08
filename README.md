@@ -4,7 +4,7 @@
 
 [![Build Docker image](https://github.com/vpalmisano/webrtcperf/actions/workflows/build.yaml/badge.svg)](https://github.com/vpalmisano/webrtcperf/actions/workflows/build.yaml)
 
-[![Add to Cursor](https://img.shields.io/badge/Cursor-MCP-0098FF?style=flat&logo=cursor&logoColor=white)](https://cursor.com/install-mcp?name=webrtcperf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkB2cGFsbWlzYW5vL3dlYnJ0Y3BlcmZAbGF0ZXN0IiwiLS1tY3AiXX0=)
+[![Add to Cursor](https://img.shields.io/badge/Cursor-MCP-0098FF?style=flat&logo=cursor&logoColor=white)](cursor://anysphere.cursor-deeplink/mcp/install?name=webrtcperf&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIkB2cGFsbWlzYW5vL3dlYnJ0Y3BlcmZAbGF0ZXN0IiwiLS1tY3AiXX0=)
 [![Add to VS Code](https://img.shields.io/badge/VS_Code-MCP-0098FF?style=flat&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=webrtcperf&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40vpalmisano%2Fwebrtcperf%40latest%22%2C%22--mcp%22%5D%7D)
 
 WebRtcPerf is an open-source tool designed for testing WebRTC services with multiple concurrent client connections, measuring the most important RTC statistics and collecting them in an easy way. This documentation will dive into its multiple features and configuration options, showing you how to leverage this tool to gain valuable insights into your real-time communication solutions.
