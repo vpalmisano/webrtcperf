@@ -473,8 +473,9 @@ the following global variables will be attached to the \`webrtcperf\` global obj
 \`WEBRTC_PERF_SESSION\` the session number (0-indexed); \
 \`WEBRTC_PERF_TAB\` the tab number inside the same session (0-indexed); \
 \`WEBRTC_PERF_INDEX\` the page absolute index (0-indexed).
-Suggested values:
-- With meet.google.com: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js
+Suggested values for automated testing:
+- meet.google.com: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js
+- meet.livekit.io: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/livekit.js
 `,
     format: String,
     default: '',

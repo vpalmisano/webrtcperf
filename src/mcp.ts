@@ -64,6 +64,25 @@ async function startSessionHandler(args: {
     }
   }
   const mediaPath = mediaPaths.length ? mediaPaths[id % mediaPaths.length] : undefined
+
+  if (sessionConfig.url.startsWith('https://meet.google.com')) {
+    if (!sessionConfig.scriptPath) {
+      sessionConfig.scriptPath =
+        'https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js'
+    }
+    if (!sessionConfig.scriptParams) {
+      sessionConfig.scriptParams = '{"enableMic": true, "enableCam": true}'
+    }
+    if (!sessionConfig.debuggingPort) {
+      sessionConfig.debuggingPort = 9000
+    }
+  } else if (sessionConfig.url.startsWith('https://meet.livekit.io')) {
+    if (!sessionConfig.scriptPath) {
+      sessionConfig.scriptPath =
+        'https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/livekit.js'
+    }
+  }
+
   const session = new Session({
     ...sessionConfig,
     throttleIndex,
