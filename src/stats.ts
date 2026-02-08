@@ -1682,6 +1682,15 @@ export class Stats extends events.EventEmitter {
     }
   }
 
+  /**
+   * Reset the stats.
+   */
+  resetStats(): void {
+    log.debug('resetStats')
+    this.collectedStats = this.initCollectedStats()
+    this.externalCollectedStats.clear()
+  }
+
   async stop() {
     if (!this.running) return
     this.running = false
@@ -1716,7 +1725,6 @@ export class Stats extends events.EventEmitter {
       this.metrics = {}
     }
 
-    this.collectedStats = this.initCollectedStats()
-    this.externalCollectedStats.clear()
+    this.resetStats()
   }
 }

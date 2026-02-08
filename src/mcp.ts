@@ -29,6 +29,9 @@ async function getStats(): Promise<Stats> {
       defaultConfig.startTimestamp = Date.now()
     }
     stats = new Stats(defaultConfig)
+    stats.on('stats', () => {
+      mcpServer.server.sendResourceUpdated({ uri: 'webrtcperf://stats' })
+    })
     statsReady = stats.start()
   }
   await statsReady
@@ -142,13 +145,31 @@ async function getSessionsHandler(): Promise<{ content: Array<{ type: 'text'; te
   }
 }
 
-async function getStatsHandler(): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  const stats = await getStats()
-  log.debug('getStatsHandler')
+async function resetStatsHandler(): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const s = await getStats()
+  log.debug('resetStatsHandler')
+  s.resetStats()
+  await mcpServer.server.sendResourceUpdated({ uri: 'webrtcperf://stats' })
   return {
     content: [
       {
         type: 'text' as const,
+        text: JSON.stringify({ message: 'Stats reset' }),
+      },
+    ],
+  }
+}
+
+async function getStatsReadHandler(uri: URL): Promise<{
+  contents: Array<{ uri: string; mimeType: string; text: string }>
+}> {
+  const stats = await getStats()
+  log.debug('getStatsReadHandler', uri.href)
+  return {
+    contents: [
+      {
+        uri: uri.href,
+        mimeType: 'application/json',
         text: JSON.stringify(stats.collectedStats),
       },
     ],
@@ -182,20 +203,23 @@ mcpServer.registerTool(
   'get_sessions',
   {
     description: 'List current webrtcperf sessions (id and stats for each running session).',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getSessionsHandler as any,
+  },
+  getSessionsHandler,
 )
 
 mcpServer.registerTool(
-  'get_stats',
+  'reset_stats',
   {
-    description: 'Get the current webrtcperf stats.',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getStatsHandler as any,
+    description: 'Reset the collected webrtcperf stats.',
+  },
+  resetStatsHandler,
+)
+
+mcpServer.registerResource(
+  'stats',
+  'webrtcperf://stats',
+  { description: 'Get the current webrtcperf stats.' },
+  getStatsReadHandler,
 )
 
 export async function mcpRunner(): Promise<void> {
