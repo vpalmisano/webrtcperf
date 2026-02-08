@@ -1,6 +1,6 @@
 {
   "name": "@vpalmisano/webrtcperf",
-  "version": "4.6.2",
+  "version": "4.7.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vpalmisano/webrtcperf.git"
@@ -52,6 +52,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@google/genai": "^1.22.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@puppeteer/browsers": "^2.10.10",
     "@vpalmisano/throttler": "0.0.14",
     "@vpalmisano/webrtcperf-js": "^1.1.16",
@@ -87,7 +88,8 @@
     "tar-fs": "^3.1.1",
     "toml": "^3.0.0",
     "ws": "^8.18.3",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "zod": "3"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",

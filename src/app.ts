@@ -26,6 +26,7 @@ import { markedTerminal } from 'marked-terminal'
 import { EventEmitter } from 'events'
 import { runWithDocker } from './docker'
 import { plotDetailedStatsDashboard } from './plot'
+import { mcpRunner } from './mcp'
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { marked } = require('marked')
@@ -243,6 +244,7 @@ async function main(): Promise<void> {
     process.exit(0)
   }
 
+  // Handle plot command.
   if (process.argv.includes('--plot')) {
     process.argv = process.argv.filter(s => s !== '--plot')
     try {
@@ -252,6 +254,13 @@ async function main(): Promise<void> {
       process.exit(1)
     }
     process.exit(0)
+  }
+
+  // Handle MCP command.
+  if (process.argv.includes('--mcp')) {
+    process.argv = process.argv.filter(s => s !== '--mcp')
+    await mcpRunner()
+    return
   }
 
   let configs: Config[]

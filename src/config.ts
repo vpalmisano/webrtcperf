@@ -1,4 +1,5 @@
 import convict, { addFormats, SchemaObj } from 'convict'
+import { z } from 'zod'
 import { ipaddress, url } from 'convict-format-with-validator'
 import { existsSync } from 'fs'
 import os from 'os'
@@ -914,6 +915,40 @@ function formatDocs(
  */
 export function getConfigDocs(): ConfigDocs {
   return formatDocs({}, null, convict(configSchema).getSchema())
+}
+
+/**
+ * Returns a Zod schema for the config object, with all parameters optional and described.
+ * Uses the config default values when a field is omitted. Useful for MCP tools and other
+ * consumers that need validated partial config.
+ */
+export function getConfigZodSchema(): z.ZodObject<Record<string, z.ZodTypeAny>> {
+  const schema = convict(configSchema).getSchema()
+  const shape: Record<string, z.ZodTypeAny> = {}
+  for (const [key, value] of Object.entries(schema._cvtProperties)) {
+    const prop = value as SchemaObj & { doc?: string; format?: unknown; default?: unknown }
+    const doc = prop.doc ?? key
+    const def = prop.default
+    const format = prop.format
+    let zodType: z.ZodTypeAny
+    if (format === String || format === 'string') {
+      zodType = z.string()
+    } else if (format === 'nat' || format === Number) {
+      zodType = z.number()
+    } else if (format === 'float') {
+      zodType = z.number()
+    } else if (format === 'Boolean' || format === 'boolean') {
+      zodType = z.boolean()
+    } else if (format === 'index') {
+      zodType = z.union([z.string(), z.number(), z.boolean()])
+    } else if (Array.isArray(format)) {
+      zodType = z.enum(format as [string, ...string[]])
+    } else {
+      zodType = z.union([z.string(), z.number(), z.boolean()])
+    }
+    shape[key] = def !== undefined ? zodType.default(def).describe(doc) : zodType.optional().describe(doc)
+  }
+  return z.object(shape)
 }
 
 const _schemaProperties = convict(configSchema).getProperties()
