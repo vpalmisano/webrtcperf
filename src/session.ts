@@ -86,6 +86,7 @@ declare global {
       screenStartFrameDelay: number
     }
     collectCpuPressure: () => number
+    collectQuestionAnswerDelay: () => number
     collectVideoStats: () => {
       width: number
       height: number
@@ -817,16 +818,19 @@ try {
   console.error('[webrtcperf] Error parsing scriptParams:', err);
   webrtcperf.params = {};
 };
+
+const webrtcperf_getServerUrl = (path, protocol = 'http', query = '') => {
+  return protocol + "${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/" + path + "?auth=${this.serverSecret}" + (query ? "&" + query : '')
+}
   `
 
     if (this.serverPort) {
       cmd += `\
-webrtcperf.config.SAVE_MEDIA_URL = "ws${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/?auth=${this.serverSecret}&action=write-stream";
+webrtcperf.config.SAVE_MEDIA_URL = webrtcperf_getServerUrl("", "ws", "action=write-stream");
     `
       if (this.mediaPath?.mp4 && !this.useFakeMedia) {
         cmd += `\
-webrtcperf.config.VIDEO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.mp4)}?auth=${this.serverSecret}";
-webrtcperf.config.AUDIO_URL = "http${this.serverUseHttps ? 's' : ''}://localhost:${this.serverPort}/cache/${path.basename(this.mediaPath.m4a)}?auth=${this.serverSecret}";
+webrtcperf.config.MEDIA_URL = webrtcperf_getServerUrl("cache/${path.basename(this.mediaPath.mp4)}");
     `
       }
     }
@@ -1710,6 +1714,7 @@ mv ${logFilePath}.tmp ${logFilePath};
     const pageCpu: Record<string, number> = {}
     const pageMemory: Record<string, number> = {}
     const cpuPressureStats: Record<string, number> = {}
+    const questionAnswerDelayStats: Record<string, number> = {}
 
     const videoWidth: Record<string, number> = {}
     const videoHeight: Record<string, number> = {}
@@ -1738,6 +1743,7 @@ mv ${logFilePath}.tmp ${logFilePath};
             audioEndToEndDelay,
             videoEndToEndDelay,
             cpuPressure,
+            questionAnswerDelay,
             videoStats,
             customMetrics,
           } = await page.evaluate(async () => ({
@@ -1745,6 +1751,7 @@ mv ${logFilePath}.tmp ${logFilePath};
             audioEndToEndDelay: webrtcperf.collectAudioEndToEndStats(),
             videoEndToEndDelay: webrtcperf.collectVideoEndToEndStats(),
             cpuPressure: webrtcperf.collectCpuPressure(),
+            questionAnswerDelay: webrtcperf.collectQuestionAnswerDelay(),
             videoStats: webrtcperf.collectVideoStats(),
             customMetrics: 'collectCustomMetrics' in window ? collectCustomMetrics() : null,
           }))
@@ -1811,6 +1818,7 @@ mv ${logFilePath}.tmp ${logFilePath};
           }
 
           if (cpuPressure !== undefined) cpuPressureStats[pageKey] = cpuPressure
+          if (questionAnswerDelay !== undefined) questionAnswerDelayStats[pageKey] = questionAnswerDelay
           if (videoStats) {
             videoWidth[pageKey] = videoStats.width
             videoHeight[pageKey] = videoStats.height
@@ -1912,6 +1920,7 @@ mv ${logFilePath}.tmp ${logFilePath};
       wsRecvBytes: wsRecvBytesStats,
       wsRecvLatency: wsRecvLatencyStats,
       cpuPressure: cpuPressureStats,
+      questionAnswerDelay: questionAnswerDelayStats,
       videoWidth,
       videoHeight,
       videoBufferedTime,

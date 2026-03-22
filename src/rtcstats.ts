@@ -81,6 +81,7 @@ export enum PageStatsNames {
   screenStartFrameDelay = 'screenStartFrameDelay',
 
   cpuPressure = 'cpuPressure',
+  questionAnswerDelay = 'questionAnswerDelay',
 
   videoWidth = 'videoWidth',
   videoHeight = 'videoHeight',
