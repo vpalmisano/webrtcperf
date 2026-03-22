@@ -85,9 +85,7 @@ export async function prepareFakeMedia({
     (destMp4Path && !existsSync(destMp4Path)) ||
     !videoCacheRaw
   ) {
-    log.info(
-      `Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}${destMp4Path ? `, ${destMp4Path}` : ''}`,
-    )
+    log.info(`Converting ${videoPath} to ${destVideoPath}, ${destAudioPath}${destMp4Path ? `, ${destMp4Path}` : ''}`)
     const destVideoPathTmp = `${videoCachePath}/${name}_${videoWidth}x${videoHeight}_${videoFramerate}fps.tmp.${videoFormat}`
     const destAudioPathTmp = `${videoCachePath}/${name}.tmp.wav`
     const destMp4PathTmp = useFakeMedia
