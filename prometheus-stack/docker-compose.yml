@@ -9,7 +9,7 @@ networks:
 services:
 
   prometheus:
-    image: prom/prometheus:v3.6.0
+    image: prom/prometheus:v3.10.0
     user: root
     container_name: wst_prometheus
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
     - 9090:9090
 
   node-exporter:
-    image: prom/node-exporter:v1.9.1
+    image: prom/node-exporter:v1.10.2
     container_name: wst_node_exporter
     restart: unless-stopped
     network_mode: host
@@ -34,7 +34,7 @@ services:
     - '/:/host:ro,rslave'
 
   process-exporter:
-    image: ncabatoff/process-exporter
+    image: ncabatoff/process-exporter:v0.8.7
     container_name: wst_process_exporter
     restart: unless-stopped
     ports:
@@ -46,14 +46,14 @@ services:
     command: '--procfs /host/proc -config.path /config/config.yml'
 
   pushgateway:
-    image: prom/pushgateway:v1.11.1
+    image: prom/pushgateway:v1.11.2
     container_name: wst_pushgateway
     restart: unless-stopped
     ports:
     - 9091:9091
 
   grafana:
-    image: grafana/grafana:12.2.0
+    image: grafana/grafana:12.3.5
     user: root
     container_name: wst_grafana
     restart: unless-stopped

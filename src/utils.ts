@@ -398,7 +398,7 @@ export async function downloadUrl(
   } else {
     /* log.debug(`downloadUrl ${response.data.length} bytes, headers=${
       JSON.stringify(response.headers)}`); */
-    const contentType = response.headers['content-type']
+    const contentType = (response.headers['content-type'] as string) || ''
     let start = 0
     let end = 0
     let total = 0
