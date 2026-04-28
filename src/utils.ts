@@ -41,17 +41,8 @@ const log = logger('webrtcperf:utils')
  * @returns The absolute path.
  */
 export function resolvePackagePath(relativePath: string): string {
-  if ('__nexe' in process) {
-    log.debug('resolvePackagePath (nexe)', relativePath)
-    return relativePath
-  }
-  if (process.env.WEBPACK) {
-    const p = path.normalize(path.join(path.dirname(__filename), relativePath))
-    log.debug('resolvePackagePath (webpack)', p)
-    return p
-  }
-  for (const d of ['.', '..', '../..']) {
-    const p = path.normalize(path.join(__dirname, d, relativePath))
+  for (const d of [path.dirname(__filename), __dirname, __dirname + '/..', __dirname + '/../..']) {
+    const p = path.normalize(path.join(d, relativePath))
     if (fs.existsSync(p)) {
       log.debug(`resolvePackagePath (dirname: ${__dirname})`, p)
       return p
