@@ -695,7 +695,7 @@ export class Session extends EventEmitter {
         })
       } catch (err) {
         log.error(`${this.id} browser connect error: ${(err as Error).stack}`)
-        return this.stop()
+        return this.stop(err as Error)
       }
     } else {
       // run a browser instance locally
@@ -753,7 +753,7 @@ export class Session extends EventEmitter {
         log.debug(`[session ${this.id}] Using chrome version: ${version}`)
       } catch (err) {
         log.error(`[session ${this.id}] Browser launch error: ${(err as Error).stack}`)
-        return this.stop()
+        return this.stop(err as Error)
       }
     }
 
@@ -765,7 +765,7 @@ export class Session extends EventEmitter {
 
     this.browser.once('disconnected', () => {
       log.debug('browser disconnected')
-      return this.stop()
+      return this.stop(new Error('Browser disconnected'))
     })
 
     // get GPU infos from chrome://gpu page
@@ -924,6 +924,8 @@ webrtcperf.config.MEDIA_URL = webrtcperf_getServerUrl("cache/${path.basename(thi
           await page.exposeFunction(name, (...args: unknown[]) => this.exposedFunctions[name](...args)),
       ),
     )
+
+    await page.exposeFunction('webrtcperf_stopSession', () => this.stop())
 
     // Export config to page.
     let cmd = this.setupPageCmd(index, tabIndex, url)
@@ -1951,12 +1953,12 @@ mv ${logFilePath}.tmp ${logFilePath};
   /**
    * stop
    */
-  async stop(): Promise<void> {
+  async stop(error?: Error): Promise<void> {
     if (!this.running) {
       return
     }
     this.running = false
-    log.debug(`${this.id} stop`)
+    log.debug(`${this.id} stop${error ? ` (error: ${error.message})` : ''}`)
 
     if (this.stopPortForwarder) {
       this.stopPortForwarder()
@@ -2012,7 +2014,7 @@ mv ${logFilePath}.tmp ${logFilePath};
       this.browser = undefined
     }
 
-    this.emit('stop', this.id)
+    this.emit('stop', this.id, error)
   }
 
   /**

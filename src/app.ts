@@ -160,9 +160,11 @@ export class Application extends EventEmitter {
       id,
       throttleIndex,
     })
-    session.once('stop', () => {
-      console.warn(`Session ${id} stopped, reloading...`)
-      setTimeout(() => this.startSession(id, spawnPeriod), spawnPeriod)
+    session.once('stop', (_, error) => {
+      if (error) {
+        console.warn(`Session ${id} stopped with error: ${error.message}, reloading...`)
+        setTimeout(() => this.startSession(id, spawnPeriod), spawnPeriod)
+      }
     })
     this.stats.addSession(session)
     await session.start()
