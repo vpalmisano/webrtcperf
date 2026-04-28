@@ -41,7 +41,13 @@ const log = logger('webrtcperf:utils')
  * @returns The absolute path.
  */
 export function resolvePackagePath(relativePath: string): string {
-  for (const d of [path.dirname(__filename), __dirname, __dirname + '/..', __dirname + '/../..']) {
+  for (const d of [
+    path.dirname(__filename),
+    __dirname,
+    __dirname + '/..',
+    __dirname + '/../..',
+    __dirname + '/../../..',
+  ]) {
     const p = path.normalize(path.join(d, relativePath))
     if (fs.existsSync(p)) {
       log.debug(`resolvePackagePath (dirname: ${__dirname})`, p)

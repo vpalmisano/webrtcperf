@@ -164,6 +164,11 @@ export class Application extends EventEmitter {
       if (error) {
         console.warn(`Session ${id} stopped with error: ${error.message}, reloading...`)
         setTimeout(() => this.startSession(id, spawnPeriod), spawnPeriod)
+      } else {
+        this.stats.removeSession(id)
+        if (!this.stats.sessions.size) {
+          this.stop()
+        }
       }
     })
     this.stats.addSession(session)
