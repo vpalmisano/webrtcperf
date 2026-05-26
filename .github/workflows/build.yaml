@@ -44,7 +44,7 @@ jobs:
         fetch-depth: 1
     - uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
         cache: 'yarn'
     - name: Cache modules
       uses: actions/cache@v4
