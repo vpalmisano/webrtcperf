@@ -727,7 +727,8 @@ export class Session extends EventEmitter {
       ]
 
       log.debug(`[session ${this.id}] Using args:\n  ${args.join('\n  ')}`)
-      log.debug(`[session ${this.id}] Default args:\n  ${puppeteer.defaultArgs().join('\n  ')}`)
+      const defaultArgs = await puppeteer.defaultArgs()
+      log.debug(`[session ${this.id}] Default args:\n  ${defaultArgs.join('\n  ')}`)
 
       try {
         this.browser = await puppeteer.launch({
@@ -1670,10 +1671,10 @@ mv ${logFilePath}.tmp ${logFilePath};
         collectedStats.usedCpu = systemStats.usedCpu
         collectedStats.usedMemory = systemStats.usedMemory
         collectedStats.usedGpu = systemStats.usedGpu
-        if (collectedStats.usedCpu > 80) {
+        if (collectedStats.usedCpu > 90) {
           log.warn(`High system CPU usage: ${collectedStats.usedCpu.toFixed(2)}%`)
         }
-        if (collectedStats.usedMemory > 80) {
+        if (collectedStats.usedMemory > 90) {
           log.warn(`High system memory usage: ${collectedStats.usedMemory.toFixed(2)}%`)
         }
       }

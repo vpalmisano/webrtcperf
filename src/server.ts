@@ -85,7 +85,7 @@ export class Server {
     )
 
     this.app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-      if (req.query.auth === this.serverSecret) {
+      if (!this.serverSecret || req.query.auth === this.serverSecret) {
         return next()
       }
       const credentials = auth(req)
@@ -121,7 +121,7 @@ export class Server {
         log.error(`mkdir ${this.serverData} error: ${err.message}`)
       })
       this.app.get('/data', this.getDataArchive.bind(this))
-      this.app.get('/data/:path', this.getData.bind(this))
+      this.app.get('/data/*filepath', this.getData.bind(this))
     }
     if (this.videoCachePath) {
       log.debug(`using videoCachePath: ${this.videoCachePath}`)
@@ -432,7 +432,9 @@ export class Server {
    * content in tar.gz format.
    */
   private getData(req: express.Request, res: express.Response, next: express.NextFunction): void {
-    const paramPath = path.normalize(req.params.path).replace(/^(\.\.(\/|\\|$))+/, '')
+    const requestPath = req.params.filepath as string | string[]
+    const filepath = Array.isArray(requestPath) ? requestPath.join('/') : requestPath
+    const paramPath = path.normalize(filepath).replace(/^(\.\.(\/|\\|$))+/, '')
     log.debug(`GET /data/${paramPath}`, req.query)
     const fpath = path.resolve(this.serverData, paramPath)
     if (!fs.existsSync(fpath)) {
@@ -440,6 +442,9 @@ export class Server {
     }
     if (req.query.range && !req.headers.range) {
       req.headers.range = `bytes=${req.query.range}`
+    }
+    if (['.js', '.mjs', '.cjs'].includes(path.extname(fpath).toLowerCase())) {
+      res.type('application/javascript')
     }
     res.sendFile(fpath, { dotfiles: 'allow' })
   }
