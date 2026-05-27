@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@v6
       with:
         node-version: 24
         cache: 'yarn'
@@ -33,14 +33,14 @@ jobs:
         version=$(sed -nE 's/^\s*"version": "(.*?)",$/\1/p' package.json)
         echo ::set-output name=version::${version}
     - name: Cache modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: node_modules
         key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
     - name: Cache nexe build
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: /home/runner/.nexe
         key: ${{ runner.os }}-nexe
@@ -50,7 +50,7 @@ jobs:
       run: |
         yarn build:all
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       if: startsWith(github.ref, 'refs/tags/')
       with:
         generate_release_notes: true
@@ -59,17 +59,17 @@ jobs:
           webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
           webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
     - name: Archive build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
         path: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
     - name: Archive build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
         path: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
     - name: Archive build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
         path: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
