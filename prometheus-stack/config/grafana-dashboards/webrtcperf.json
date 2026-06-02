@@ -38,7 +38,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 9,
+  "id": 6,
   "links": [],
   "panels": [
     {
@@ -15463,6 +15463,89 @@
         "type": "prometheus",
         "uid": "2_miEJT7k"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 4,
+        "x": 20,
+        "y": 49
+      },
+      "id": 148,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "exemplar": false,
+          "expr": "wst_alert_screenRecvPacketsLost_p95_report{exported_job=\"$jobName\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{rule}}",
+          "refId": "wst_alert_videoRecvBitrates_length"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -17021,89 +17104,6 @@
           },
           "exemplar": false,
           "expr": "wst_alert_screenRecvJitter_p95_report{exported_job=\"$jobName\"}",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "{{rule}}",
-          "refId": "wst_alert_videoRecvBitrates_length"
-        }
-      ],
-      "title": "",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "2_miEJT7k"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "transparent",
-                "value": 0
-              },
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": 5
-              },
-              {
-                "color": "orange",
-                "value": 25
-              },
-              {
-                "color": "red",
-                "value": 50
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 1,
-        "w": 4,
-        "x": 20,
-        "y": 63
-      },
-      "id": 148,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "name",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.5",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "2_miEJT7k"
-          },
-          "exemplar": false,
-          "expr": "wst_alert_screenRecvPacketsLost_p95_report{exported_job=\"$jobName\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "{{rule}}",
@@ -23692,6 +23692,112 @@
       ],
       "title": "",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "2_miEJT7k"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": 60000,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 87
+      },
+      "id": 251,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.5",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "2_miEJT7k"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "avg(wst_questionAnswerDelay{exported_job=~\"$jobName\"}) by (exported_job)",
+          "hide": false,
+          "interval": "15s",
+          "legendFormat": "{{exported_job}}",
+          "range": true,
+          "refId": "wst_questionAnswerDelay"
+        }
+      ],
+      "title": "Q/A delay",
+      "type": "timeseries"
     }
   ],
   "preload": false,
@@ -23757,5 +23863,5 @@
   "timezone": "",
   "title": "WebrtcPerf",
   "uid": "webrtcperf",
-  "version": 1
+  "version": 3
 }

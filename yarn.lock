@@ -136,6 +136,11 @@
   dependencies:
     "@babel/types" "^7.27.0"
 
+"@babel/runtime@^7.29.2":
+  version "7.29.7"
+  resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.7.tgz#12022450c45a4da6d8d8287b18a4ff2ddb23f768"
+  integrity sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==
+
 "@babel/template@^7.26.9", "@babel/template@^7.27.0":
   version "7.27.0"
   resolved "https://registry.npmjs.org/@babel/template/-/template-7.27.0.tgz"
@@ -1321,13 +1326,14 @@
   dependencies:
     "@euberdeveloper/eslint-plugin" "2.7.0"
 
-"@vpalmisano/webrtcperf-js@^1.3.1":
-  version "1.3.1"
-  resolved "https://registry.npmjs.org/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.3.1.tgz#062c799b7ed27621a3a40f4eaf88288a6611427f"
-  integrity sha512-tAkSPeIWHUru2JBVsQw6viLlaa4MNGsKG9O/qwHXwN39gArYg5aKKCjUKDuZNj7yiCrdMBzsXw9asdYQNRXrSA==
+"@vpalmisano/webrtcperf-js@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/@vpalmisano/webrtcperf-js/-/webrtcperf-js-1.4.0.tgz#279052851d7616d838d199975753748eeaf64bed"
+  integrity sha512-TDMk8pU94oLJFX6lAtGHABGieX/1Lx2aL03IEAXvb3oHfiLQL+3rp2wpOJX9KO7sRz4NEizspR6fZi+M5ZGInw==
   dependencies:
     "@vpalmisano/ggwave" "0.4.3-2"
     sdp-transform "^2.15.0"
+    worker-timers "^8.0.31"
 
 "@webassemblyjs/ast@1.14.1", "@webassemblyjs/ast@^1.14.1":
   version "1.14.1"
@@ -1979,6 +1985,16 @@ braces@^3.0.3:
   integrity sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==
   dependencies:
     fill-range "^7.1.1"
+
+broker-factory@^3.1.14:
+  version "3.1.14"
+  resolved "https://registry.npmjs.org/broker-factory/-/broker-factory-3.1.14.tgz#aa7c55156813132cb51290a8165508a5370d9057"
+  integrity sha512-L45k5HMbPIrMid0nTOZ/UPXG/c0aRuQKVrSDFIb1zOkvfiyHgYmIjc3cSiN1KwQIvRDOtKE0tfb3I9EZ3CmpQQ==
+  dependencies:
+    "@babel/runtime" "^7.29.2"
+    fast-unique-numbers "^9.0.27"
+    tslib "^2.8.1"
+    worker-factory "^7.0.49"
 
 browserslist@^4.24.0:
   version "4.24.4"
@@ -3860,6 +3876,14 @@ fast-stats@^0.0.7:
   version "0.0.7"
   resolved "https://registry.npmjs.org/fast-stats/-/fast-stats-0.0.7.tgz"
   integrity sha512-AEMvohEfd/pkvRSlJOUh6JlWjlBaIHNuL9hFz0bT/glLHbooj2+fV71TrVB3VebfYg1GLI3PnIcWH+T6gNH8HA==
+
+fast-unique-numbers@^9.0.27:
+  version "9.0.27"
+  resolved "https://registry.npmjs.org/fast-unique-numbers/-/fast-unique-numbers-9.0.27.tgz#df4f60fe6856fb1eafb9f2fa908942bf0ac7b1df"
+  integrity sha512-nDA9ADeINN8SA2u2wCtU+siWFTTDqQR37XvgPIDDmboWQeExz7X0mImxuaN+kJddliIqy2FpVRmnvRZ+j8i1/A==
+  dependencies:
+    "@babel/runtime" "^7.29.2"
+    tslib "^2.8.1"
 
 fast-uri@^3.0.1:
   version "3.0.6"
@@ -8444,7 +8468,7 @@ tsconfig-paths@^3.15.0:
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
-tslib@^2.0.3, tslib@^2.4.0:
+tslib@^2.0.3, tslib@^2.4.0, tslib@^2.8.1:
   version "2.8.1"
   resolved "https://registry.npmjs.org/tslib/-/tslib-2.8.1.tgz"
   integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
@@ -9003,12 +9027,51 @@ word-wrap@^1.2.5:
   resolved "https://registry.npmjs.org/word-wrap/-/word-wrap-1.2.5.tgz"
   integrity sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==
 
+worker-factory@^7.0.49:
+  version "7.0.49"
+  resolved "https://registry.npmjs.org/worker-factory/-/worker-factory-7.0.49.tgz#8a378db7c6019bce0e585db6b4a393165841a6d9"
+  integrity sha512-lW7tpgy6aUv2dFsQhv1yv+XFzdkCf/leoKRTGMPVK5/die6RrUjqgJHJf556qO+ZfytNG6wPXc17E8zzsOLUDw==
+  dependencies:
+    "@babel/runtime" "^7.29.2"
+    fast-unique-numbers "^9.0.27"
+    tslib "^2.8.1"
+
 worker-farm@^1.6.0:
   version "1.7.0"
   resolved "https://registry.npmjs.org/worker-farm/-/worker-farm-1.7.0.tgz"
   integrity sha512-rvw3QTZc8lAxyVrqcSGVm5yP/IJ2UcB3U0graE3LCFoZ0Yn2x4EoVSqJKdB/T5M+FLcRPjz4TDacRf3OCfNUzw==
   dependencies:
     errno "~0.1.7"
+
+worker-timers-broker@^8.0.16:
+  version "8.0.16"
+  resolved "https://registry.npmjs.org/worker-timers-broker/-/worker-timers-broker-8.0.16.tgz#ae1d348646b4385f012b27b06a4c72819416695c"
+  integrity sha512-JyP3AvUGyPGbBGW7XiUewm2+0pN/aYo1QpVf5kdXAfkDZcN3p7NbWrG6XnyDEpDIvfHk/+LCnOW/NsuiU9riYA==
+  dependencies:
+    "@babel/runtime" "^7.29.2"
+    broker-factory "^3.1.14"
+    fast-unique-numbers "^9.0.27"
+    tslib "^2.8.1"
+    worker-timers-worker "^9.0.14"
+
+worker-timers-worker@^9.0.14:
+  version "9.0.14"
+  resolved "https://registry.npmjs.org/worker-timers-worker/-/worker-timers-worker-9.0.14.tgz#c8c8d210598af86aae8dfb7f9573f49e3bcfd5c3"
+  integrity sha512-/qF06C60sXmSLfUl7WglvrDIbspmPOM8UrG63Dnn4bi2x4/DfqHS/+dxF5B+MdHnYO5tVuZYLHdAodrKdabTIg==
+  dependencies:
+    "@babel/runtime" "^7.29.2"
+    tslib "^2.8.1"
+    worker-factory "^7.0.49"
+
+worker-timers@^8.0.31:
+  version "8.0.31"
+  resolved "https://registry.npmjs.org/worker-timers/-/worker-timers-8.0.31.tgz#2bc1f53594ab3fc48f2dbc9ce219e7e518c5af08"
+  integrity sha512-ngkq5S6JuZyztom8tDgBzorLo9byhBMko/sXfgiUD945AuzKGg1GCgDMCC3NaYkicLpGKXutONM36wEX8UbBCA==
+  dependencies:
+    "@babel/runtime" "^7.29.2"
+    tslib "^2.8.1"
+    worker-timers-broker "^8.0.16"
+    worker-timers-worker "^9.0.14"
 
 wrap-ansi@^7.0.0:
   version "7.0.0"
