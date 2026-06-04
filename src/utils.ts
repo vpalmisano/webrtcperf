@@ -42,6 +42,7 @@ const log = logger('webrtcperf:utils')
  */
 export function resolvePackagePath(relativePath: string): string {
   for (const d of [
+    process.cwd(),
     path.dirname(__filename),
     __dirname,
     __dirname + '/..',
