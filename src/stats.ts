@@ -456,7 +456,7 @@ export class Stats extends events.EventEmitter {
     this.showPageLog = !!showPageLog
     this.statsInterval = statsInterval || 10
     this.rtcStatsTimeout = Math.max(rtcStatsTimeout, this.statsInterval)
-    if (customMetrics.trim()) {
+    if (customMetrics) {
       this.customMetrics = json5.parse(customMetrics)
       log.debug(`using customMetrics: ${JSON.stringify(this.customMetrics, undefined, 2)}`)
     }
