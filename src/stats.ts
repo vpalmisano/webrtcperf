@@ -613,7 +613,7 @@ export class Stats extends events.EventEmitter {
         'trackId',
         ...this.statsNames,
       ])
-      this.detailedStatsSummaryWriter = new StatsWriter(this.detailedStatsPath.replace(/\.(.+)$/, '-summary.$1'), [
+      this.detailedStatsSummaryWriter = new StatsWriter(this.detailedStatsPath.replace(/\.([^.]+)$/, '-summary.$1'), [
         'participantName',
         'trackId',
         ...this.statsNames,
