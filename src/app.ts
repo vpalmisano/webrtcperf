@@ -14,6 +14,7 @@ import {
   logger,
   registerExitHandler,
   resolvePackagePath,
+  runExitHandlersNow,
   sleep,
   startRandomActivateAudio,
   stopRandomActivateAudio,
@@ -301,7 +302,12 @@ async function main(): Promise<void> {
         i++
         runNext()
       } else {
-        process.exit(0)
+        runExitHandlersNow()
+          .then(() => process.exit(0))
+          .catch(err => {
+            log.error(`runExitHandlersNow error: ${(err as Error).stack}`)
+            process.exit(1)
+          })
       }
     })
     return application.start()
