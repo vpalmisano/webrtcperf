@@ -13,6 +13,7 @@ import {
   getDockerLogsPath,
   logger,
   registerExitHandler,
+  handleExitSignals,
   resolvePackagePath,
   runExitHandlersNow,
   sleep,
@@ -237,6 +238,7 @@ export class Application extends EventEmitter {
  */
 async function main(): Promise<void> {
   showHelpOrVersion()
+  handleExitSignals()
 
   process.argv = process.argv.slice(2)
 

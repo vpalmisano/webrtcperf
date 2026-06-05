@@ -1,6 +1,6 @@
 {
   "name": "@vpalmisano/webrtcperf",
-  "version": "4.8.8",
+  "version": "4.8.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/vpalmisano/webrtcperf.git"
@@ -54,7 +54,7 @@
     "@google/genai": "^1.52.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@puppeteer/browsers": "^3.0.4",
-    "@vpalmisano/throttler": "0.0.14",
+    "@vpalmisano/throttler": "0.0.15",
     "@vpalmisano/webrtcperf-js": "^1.4.3",
     "axios": "^1.15.2",
     "chalk-template": "^1.1.2",

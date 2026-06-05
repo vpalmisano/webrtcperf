@@ -515,7 +515,10 @@ let runExitHandlersPromise: Promise<void> | null = null
  */
 export async function runExitHandlersNow(signal?: string): Promise<void> {
   if (!runExitHandlersPromise) {
+    log.debug(`runExitHandlersNow signal: ${signal}`)
     runExitHandlersPromise = runExitHandlers(signal)
+  } else {
+    log.debug(`runExitHandlersNow signal: ${signal} already running`)
   }
   await runExitHandlersPromise
   stopTimers()
@@ -538,18 +541,21 @@ const SIGNALS = [
   'SIGUSR2',
   'SIGTERM',
 ]
-process.setMaxListeners(process.getMaxListeners() + SIGNALS.length)
-SIGNALS.forEach(event =>
-  process.once(event, async signal => {
-    if (signal instanceof Error) {
-      log.error(`Exit on error: ${signal.stack || signal.message}`)
-    } else {
-      log.debug(`Exit on signal: ${signal}`)
-    }
-    await runExitHandlersNow(signal)
-    process.exit(0)
-  }),
-)
+
+export function handleExitSignals(): void {
+  process.setMaxListeners(process.getMaxListeners() + SIGNALS.length)
+  SIGNALS.forEach(event =>
+    process.on(event, async signal => {
+      if (signal instanceof Error) {
+        log.error(`Exit on error: ${signal.stack || signal.message}`)
+      } else {
+        log.debug(`Exit on signal: ${signal}`)
+      }
+      await runExitHandlersNow(signal)
+      process.exit(0)
+    }),
+  )
+}
 
 /**
  * Downloads the configured chrome executable if it doesn't exists into the
