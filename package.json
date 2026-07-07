@@ -1,6 +1,6 @@
 {
   "name": "@vpalmisano/webrtcperf",
-  "version": "4.8.9",
+  "version": "4.9.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vpalmisano/webrtcperf.git"
@@ -53,9 +53,9 @@
   "dependencies": {
     "@google/genai": "^1.52.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@puppeteer/browsers": "^3.0.4",
-    "@vpalmisano/throttler": "0.0.15",
-    "@vpalmisano/webrtcperf-js": "^1.4.3",
+    "@puppeteer/browsers": "^3.0.6",
+    "@vpalmisano/throttler": "0.1.0",
+    "@vpalmisano/webrtcperf-js": "^1.5.0",
     "axios": "^1.15.2",
     "chalk-template": "^1.1.2",
     "change-case": "^4.1.2",
@@ -79,8 +79,8 @@
     "pidtree": "^0.6.0",
     "pidusage": "^4.0.1",
     "prom-client": "^15.1.3",
-    "puppeteer": "^25.1.0",
-    "puppeteer-core": "^25.1.0",
+    "puppeteer": "^25.3.0",
+    "puppeteer-core": "^25.3.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
     "puppeteer-intercept-and-modify-requests": "^1.3.1",

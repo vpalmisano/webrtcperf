@@ -13,7 +13,7 @@ else
 fi
 
 # https://chromium.googlesource.com/chromium/src/+refs
-export VERSION="146.0.7643.1"
+export VERSION="151.0.7894.3"
 export DEFAULT_BRANCH="tags/${VERSION}"
 
 function setup() {
@@ -114,7 +114,7 @@ function update() {
     #git fetch origin ${branch} --no-tags
     #git checkout ${branch}
     #git pull origin ${branch}
-    gclient sync -D --force --reset --no-history --revision=${branch}
+    gclient sync -D --reset --no-history --revision=${branch}
     apply_patch ${branch}
 }
 

@@ -18,7 +18,7 @@ export async function calculateVisqolScore(config: VisqolConfig): Promise<void> 
 
   const files = await getFiles(visqolPath, '')
   for (const file of files) {
-    if (!file.endsWith('.wav') && !file.endsWith('.f32le.raw')) continue
+    if (!file.endsWith('.wav') && !file.endsWith('.f32le.raw') && !file.endsWith('.wav')) continue
     const isSender = path.basename(file).includes('_send_')
     const isReceiver = path.basename(file).includes('_recv_')
     if (!isReceiver && !isSender) {

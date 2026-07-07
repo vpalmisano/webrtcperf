@@ -630,17 +630,19 @@ export class Server {
 
     this.server.on('upgrade', (request, socket, head) => {
       log.debug(`ws upgrade ${request.url}`)
-      try {
-        const query = new URLSearchParams(request.url?.split('?')[1] || '')
-        const auth = query.get('auth')
-        if (!auth || !timingSafeEqual(Buffer.from(auth), Buffer.from(this.serverSecret))) {
-          throw new Error('invalid auth')
+      if (this.serverSecret) {
+        try {
+          const query = new URLSearchParams(request.url?.split('?')[1] || '')
+          const auth = query.get('auth')
+          if (!auth || !timingSafeEqual(Buffer.from(auth), Buffer.from(this.serverSecret))) {
+            throw new Error('invalid auth')
+          }
+        } catch (err) {
+          log.error(`ws upgrade error: ${(err as Error).message}`)
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
+          socket.destroy()
+          return
         }
-      } catch (err) {
-        log.error(`ws upgrade error: ${(err as Error).message}`)
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n')
-        socket.destroy()
-        return
       }
 
       wss.handleUpgrade(request, socket, head, ws => {
