@@ -1,6 +1,5 @@
 import { getSessionThrottleValues, throttleLauncher, throttleNotifier } from '@vpalmisano/throttler'
 import assert from 'assert'
-import axios, { AxiosRequestConfig } from 'axios'
 import EventEmitter from 'events'
 import fs from 'fs'
 import JSON5 from 'json5'
@@ -39,6 +38,8 @@ import {
   getSystemStats,
   hideAuth,
   increaseKey,
+  jsonFetchRequest,
+  type JsonFetchOptions,
   logger,
   portForwarder,
   resolveIP,
@@ -1122,10 +1123,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
     await page.exposeFunction(
       'jsonFetch',
       async (
-        options: AxiosRequestConfig & {
-          validStatuses: number[]
-          downloadPath: string
-        },
+        options: JsonFetchOptions,
         cacheKey = '',
         cacheTimeout = 0,
       ) => {
@@ -1136,10 +1134,7 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
           }
         }
         try {
-          if (options.validStatuses) {
-            options.validateStatus = status => options.validStatuses.includes(status)
-          }
-          const { status, data, headers } = await axios(options)
+          const { status, data, headers } = await jsonFetchRequest(options)
           if (options.responseType === 'stream') {
             if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
               log.debug(`jsonFetch saving file to: ${options.downloadPath}`, headers['content-disposition'])

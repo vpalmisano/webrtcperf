@@ -6,7 +6,6 @@ import {
   install,
 } from '@puppeteer/browsers'
 import { spawn } from 'child_process'
-import axios from 'axios'
 import { createHash } from 'crypto'
 import * as dns from 'dns'
 import FormData from 'form-data'
@@ -21,6 +20,8 @@ import path, { dirname } from 'path'
 import pidtree from 'pidtree'
 import pidusage from 'pidusage'
 import puppeteer, { ImageFormat, Page } from 'puppeteer-core'
+import { Readable } from 'stream'
+import * as streamWeb from 'stream/web'
 
 import { Session } from './session'
 
@@ -326,6 +327,104 @@ export interface DownloadData {
   contentType: string
 }
 
+export interface JsonFetchOptions {
+  url: string
+  method?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: any
+  headers?: Record<string, string>
+  params?: Record<string, string | number | boolean | null | undefined>
+  auth?: { username: string; password: string }
+  responseType?: 'json' | 'stream' | 'text' | 'arraybuffer' | 'blob'
+  validStatuses?: number[]
+  downloadPath?: string
+}
+
+export async function jsonFetchRequest(options: JsonFetchOptions): Promise<{
+  status: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any
+  headers: Record<string, string>
+}> {
+  let url = options.url
+  if (options.params) {
+    const parsedUrl = new URL(url)
+    for (const [key, value] of Object.entries(options.params)) {
+      if (value !== undefined && value !== null) {
+        parsedUrl.searchParams.set(key, String(value))
+      }
+    }
+    url = parsedUrl.toString()
+  }
+
+  const headers = new Headers()
+  if (options.headers) {
+    for (const [key, value] of Object.entries(options.headers)) {
+      headers.set(key, value)
+    }
+  }
+  if (options.auth) {
+    headers.set(
+      'Authorization',
+      `Basic ${Buffer.from(`${options.auth.username}:${options.auth.password}`).toString('base64')}`,
+    )
+  }
+
+  let body: BodyInit | undefined
+  const method = options.method?.toUpperCase() ?? 'GET'
+  if (options.data !== undefined && method !== 'GET' && method !== 'HEAD') {
+    if (
+      typeof options.data === 'string' ||
+      options.data instanceof ArrayBuffer ||
+      ArrayBuffer.isView(options.data)
+    ) {
+      body = options.data as BodyInit
+    } else {
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+      }
+      body = JSON.stringify(options.data)
+    }
+  }
+
+  const res = await fetch(url, { method, headers, body })
+  const status = res.status
+  const isValidStatus = options.validStatuses
+    ? options.validStatuses.includes(status)
+    : status >= 200 && status < 300
+
+  if (!isValidStatus) {
+    throw new Error(`Request failed with status code ${status}`)
+  }
+
+  const responseHeaders: Record<string, string> = {}
+  res.headers.forEach((value, key) => {
+    responseHeaders[key.toLowerCase()] = value
+  })
+
+  if (options.responseType === 'stream') {
+    if (!res.body) {
+      throw new Error('Empty response body')
+    }
+    const data = Readable.fromWeb(res.body as streamWeb.ReadableStream)
+    return { status, data, headers: responseHeaders }
+  }
+
+  let data: unknown
+  if (options.responseType === 'arraybuffer') {
+    data = await res.arrayBuffer()
+  } else if (options.responseType === 'text') {
+    data = await res.text()
+  } else if (options.responseType === 'blob') {
+    data = Buffer.from(await res.arrayBuffer())
+  } else {
+    const text = await res.text()
+    data = text ? JSON.parse(text) : null
+  }
+
+  return { status, data, headers: responseHeaders }
+}
+
 /**
  * Downloads the specified `url` to a local file or returning the file content
  * as {@link DownloadData} object.
@@ -352,39 +451,70 @@ export async function downloadUrl(
     })
     writer = createWriteStream(outputLocationPath)
   }
-  const response = await axios({
-    method: 'get',
-    url,
-    auth: authParts
-      ? {
-          username: authParts[0],
-          password: authParts[1],
-        }
-      : undefined,
-    headers: range
-      ? {
-          Range: `bytes=${range}`,
-        }
-      : undefined,
-    timeout,
-    onDownloadProgress: event => {
-      log.debug(`downloadUrl fileUrl=${url} progress=${event.progress || event.bytes}`)
-    },
-    httpsAgent: new Agent({
-      rejectUnauthorized: false,
-    }),
-    responseType: writer ? 'stream' : 'text',
+
+  const headers: Record<string, string> = {}
+  if (range) {
+    headers['Range'] = `bytes=${range}`
+  }
+  if (authParts) {
+    headers['Authorization'] = `Basic ${Buffer.from(`${authParts[0]}:${authParts[1]}`).toString('base64')}`
+  }
+
+  const httpsAgent = new Agent({ rejectUnauthorized: false })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers,
+      signal: controller.signal,
+      agent: url.startsWith('https:') ? httpsAgent : undefined,
+    } as RequestInit & { agent?: Agent })
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') {
+      throw new Error(`timeout of ${timeout}ms exceeded`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status code ${response.status}`)
+  }
+
+  const responseHeaders: Record<string, string> = {}
+  response.headers.forEach((value, key) => {
+    responseHeaders[key.toLowerCase()] = value
   })
+
   if (writer) {
+    if (!response.body) {
+      throw new Error('Empty response body')
+    }
+    const stream = Readable.fromWeb(response.body as streamWeb.ReadableStream)
+    let bytes = 0
+    stream.on('data', (chunk: Buffer) => {
+      bytes += chunk.length
+      log.debug(`downloadUrl fileUrl=${url} progress=${bytes}`)
+    })
+
     return new Promise((resolve, reject) => {
       if (!writer) {
         return
       }
-      response.data.pipe(writer)
+      stream.pipe(writer)
       let error: Error | null = null
       writer.once('error', err => {
         error = err
-        if (writer) writer.close()
+        writer.close()
+        reject(err)
+      })
+      stream.once('error', err => {
+        error = err
+        writer.close()
         reject(err)
       })
       writer.once('close', () => {
@@ -394,15 +524,14 @@ export async function downloadUrl(
       })
     })
   } else {
-    /* log.debug(`downloadUrl ${response.data.length} bytes, headers=${
-      JSON.stringify(response.headers)}`); */
-    const contentType = (response.headers['content-type'] as string) || ''
+    const data = await response.text()
+    const contentType = responseHeaders['content-type'] || ''
     let start = 0
     let end = 0
     let total = 0
-    if (response.headers['content-range']) {
-      const contentRange = response.headers['content-range'].split('/')
-      log.debug(`downloadUrl ${response.data.length} bytes, contentType=${contentType}, contentRange=${contentRange}`)
+    if (responseHeaders['content-range']) {
+      const contentRange = responseHeaders['content-range'].split('/')
+      log.debug(`downloadUrl ${data.length} bytes, contentType=${contentType}, contentRange=${contentRange}`)
       const rangeParts = contentRange[0].split('-')
       total = parseInt(contentRange[1])
       if (rangeParts.length === 2) {
@@ -416,7 +545,7 @@ export async function downloadUrl(
       }
     }
     return {
-      data: response.data,
+      data,
       start,
       end,
       total,
@@ -436,24 +565,40 @@ export async function uploadUrl(filePath: string, url: string, auth?: string): P
   const authParts = auth?.split(':')
   const formData = new FormData()
   formData.append('file', fs.createReadStream(filePath))
-  const response = await axios({
-    method: 'post',
-    url,
-    auth: authParts
-      ? {
-          username: authParts[0],
-          password: authParts[1],
-        }
-      : undefined,
-    headers: formData.getHeaders(),
-    timeout: 3600 * 1000,
-    httpsAgent: new Agent({
-      rejectUnauthorized: false,
-    }),
-    responseType: 'text',
-    data: formData,
-  })
-  return response.data as string
+  const headers = formData.getHeaders() as Record<string, string>
+  if (authParts) {
+    headers['Authorization'] = `Basic ${Buffer.from(`${authParts[0]}:${authParts[1]}`).toString('base64')}`
+  }
+
+  const httpsAgent = new Agent({ rejectUnauthorized: false })
+  const timeout = 3600 * 1000
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
+
+  let response: Response
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: formData as unknown as BodyInit,
+      duplex: 'half',
+      signal: controller.signal,
+      agent: url.startsWith('https:') ? httpsAgent : undefined,
+    } as RequestInit & { agent?: Agent; duplex?: 'half' })
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') {
+      throw new Error(`timeout of ${timeout}ms exceeded`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
+  }
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status code ${response.status}`)
+  }
+
+  return response.text()
 }
 
 const HideAuthRegExp = new RegExp('(http[s]{0,1}://)(.+?:.+?@)', 'g')

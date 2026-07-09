@@ -1,4 +1,3 @@
-import axios, { AxiosInstance, AxiosRequestHeaders, AxiosRequestTransformer } from 'axios'
 import * as events from 'events'
 import { Stats as FastStats } from 'fast-stats'
 import * as fs from 'fs'
@@ -393,7 +392,7 @@ export class Stats extends events.EventEmitter {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { addedTime: number; externalStats: any; config: any }
   >()
-  private pushStatsInstance: AxiosInstance | null = null
+  private pushStatsAgent: http.Agent | https.Agent | undefined
   private detailedStatsSummary: Record<string, Record<string, FastStats>> = {}
   private running = false
 
@@ -494,34 +493,49 @@ export class Stats extends events.EventEmitter {
     this.serverSecret = serverSecret
 
     if (this.pushStatsUrl) {
-      const httpAgent = new http.Agent({ keepAlive: false })
-      const httpsAgent = new https.Agent({
-        keepAlive: false,
-        rejectUnauthorized: false,
-      })
-      this.pushStatsInstance = axios.create({
-        httpAgent,
-        httpsAgent,
-        baseURL: this.pushStatsUrl,
-        auth: {
-          username: 'admin',
-          password: this.serverSecret,
-        },
-        maxBodyLength: 20000000,
-        transformRequest: [
-          ...(axios.defaults.transformRequest as AxiosRequestTransformer[]),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (data: any, headers?: AxiosRequestHeaders): any => {
-            if (headers && typeof data === 'string' && data.length > 16 * 1024) {
-              headers['Content-Encoding'] = 'gzip'
-              return zlib.gzipSync(data)
-            } else {
-              return data
-            }
-          },
-        ],
-      })
+      this.pushStatsAgent = this.pushStatsUrl.startsWith('https:')
+        ? new https.Agent({
+            keepAlive: false,
+            rejectUnauthorized: false,
+          })
+        : new http.Agent({ keepAlive: false })
     }
+  }
+
+  private async pushCollectedStats(payload: {
+    id: string
+    stats: Record<string, CollectedStatsRaw>
+    config: {
+      url: string
+      pages: number
+      startTime: number
+    }
+  }): Promise<void> {
+    const url = new URL('/collected-stats', this.pushStatsUrl).toString()
+    const auth = Buffer.from(`admin:${this.serverSecret}`).toString('base64')
+    let body: string | Uint8Array = JSON.stringify(payload)
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      Authorization: `Basic ${auth}`,
+    }
+    if (body.length > 16 * 1024) {
+      body = zlib.gzipSync(body)
+      headers['Content-Encoding'] = 'gzip'
+    }
+
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers,
+      body,
+      agent: this.pushStatsAgent,
+    } as RequestInit & { agent?: http.Agent | https.Agent })
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`pushStats failed: ${res.status} ${res.statusText}${text ? ` - ${text}` : ''}`)
+    }
+
+    const data = (await res.json()) as { message?: string }
+    log.debug(`pushStats message=${data.message}`)
   }
 
   private initCollectedStats(): Record<string, CollectedStats> {
@@ -900,7 +914,7 @@ export class Stats extends events.EventEmitter {
     }
     this.emit('stats', this.collectedStats)
     // Push to an external instance.
-    if (this.pushStatsInstance) {
+    if (this.pushStatsUrl) {
       const pushStats: Record<string, CollectedStatsRaw> = {}
       for (const [name, stats] of Object.entries(this.collectedStats)) {
         pushStats[name] = {
@@ -923,12 +937,11 @@ export class Stats extends events.EventEmitter {
         })
       }
       try {
-        const res = await this.pushStatsInstance.put('/collected-stats', {
+        await this.pushCollectedStats({
           id: this.pushStatsId,
           stats: pushStats,
           config: this.collectedStatsConfig,
         })
-        log.debug(`pushStats message=${res.data.message}`)
       } catch (err) {
         log.error(`pushStats error: ${(err as Error).stack}`)
       }
