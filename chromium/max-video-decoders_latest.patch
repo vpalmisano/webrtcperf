@@ -1,8 +1,38 @@
+diff --git a/video/null_video_decoder.cc b/video/null_video_decoder.cc
+index 3ce58120..7afad927 100644
+--- a/video/null_video_decoder.cc
++++ b/video/null_video_decoder.cc
+@@ -26,7 +26,7 @@ bool NullVideoDecoder::Configure(const Settings& settings) {
+ 
+ int32_t NullVideoDecoder::Decode(const EncodedImage& input_image,
+                                  int64_t render_time_ms) {
+-  RTC_LOG(LS_ERROR) << "The NullVideoDecoder doesn't support decoding.";
++  RTC_LOG(LS_WARNING) << "The NullVideoDecoder doesn't support decoding.";
+   return WEBRTC_VIDEO_CODEC_OK;
+ }
+ 
 diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
-index ea4b474a..cb11023b 100644
+index 7c1b81b7..11779b23 100644
 --- a/video/video_receive_stream2.cc
 +++ b/video/video_receive_stream2.cc
-@@ -105,6 +105,31 @@ namespace {
+@@ -14,6 +14,8 @@
+ #include <atomic>
+ #include <cmath>
+ #include <cstdint>
++#include <cstdio>
++#include <cstring>
+ #include <initializer_list>
+ #include <map>
+ #include <memory>
+@@ -80,6 +82,7 @@
+ #include "rtc_base/experiments/corruption_detection_frame_selector_settings.h"
+ #include "rtc_base/experiments/field_trial_parser.h"
+ #include "rtc_base/logging.h"
++#include "rtc_base/system/file_wrapper.h"
+ #include "rtc_base/race_checker.h"
+ #include "rtc_base/strings/string_builder.h"
+ #include "rtc_base/synchronization/mutex.h"
+@@ -107,6 +110,32 @@ namespace {
  constexpr TimeDelta kMinBaseMinimumDelay = TimeDelta::Zero();
  constexpr TimeDelta kMaxBaseMinimumDelay = TimeDelta::Seconds(10);
  
@@ -31,19 +61,11 @@ index ea4b474a..cb11023b 100644
 +  file_wrapper.Close();
 +}
 +
++
  // Concrete instance of RecordableEncodedFrame wrapping needed content
  // from EncodedFrame.
  class WebRtcRecordableEncodedFrame : public RecordableEncodedFrame {
-@@ -182,7 +207,7 @@ class NullVideoDecoder : public VideoDecoder {
- 
-   int32_t Decode(const EncodedImage& input_image,
-                  int64_t render_time_ms) override {
--    RTC_LOG(LS_ERROR) << "The NullVideoDecoder doesn't support decoding.";
-+    RTC_LOG(LS_WARNING) << "The NullVideoDecoder doesn't support decoding.";
-     return WEBRTC_VIDEO_CODEC_OK;
-   }
- 
-@@ -394,6 +419,20 @@ void VideoReceiveStream2::Start() {
+@@ -383,6 +412,21 @@ void VideoReceiveStream2::Start() {
      renderer = this;
    }
  
@@ -61,10 +83,11 @@ index ea4b474a..cb11023b 100644
 +  if (enable_video_decoders_)
 +    updateTotalVideoDecoders(1);
 +
++
    for (const Decoder& decoder : config_.decoders) {
      VideoDecoder::Settings settings;
      settings.set_codec_type(
-@@ -472,6 +511,9 @@ void VideoReceiveStream2::Stop() {
+@@ -461,6 +505,9 @@ void VideoReceiveStream2::Stop() {
      stats_proxy_.DecoderThreadStopped();
  
      UpdateHistograms();
@@ -74,7 +97,7 @@ index ea4b474a..cb11023b 100644
    }
  
    // TODO(bugs.webrtc.org/11993): Make these calls on the network thread.
-@@ -563,8 +605,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+@@ -552,8 +599,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
      const Decoder& decoder) {
    TRACE_EVENT0("webrtc",
                 "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
@@ -83,17 +106,17 @@ index ea4b474a..cb11023b 100644
 +  std::unique_ptr<VideoDecoder> video_decoder = enable_video_decoders_ ?
 +    config_.decoder_factory->Create(env_, decoder.video_format) :
 +    nullptr;
-   // If we still have no valid decoder, we have to create a "Null" decoder
-   // that ignores all calls. The reason we can get into this state is that the
-   // old decoder factory interface doesn't have a way to query supported
+   // The factory can end up in this state either if the format is not supported
+   // or because a creation step failed, e.g. HW is unavailable.
+   if (!video_decoder) {
 diff --git a/video/video_receive_stream2.h b/video/video_receive_stream2.h
-index a07bd08f..0aa6a3f6 100644
+index 0b3dd9b6..4ee080d2 100644
 --- a/video/video_receive_stream2.h
 +++ b/video/video_receive_stream2.h
-@@ -298,6 +298,7 @@ class VideoReceiveStream2
-   RtpStreamsSynchronizer rtp_stream_sync_;
+@@ -305,6 +305,7 @@ class VideoReceiveStream2
+   TimeDelta max_wait_for_frame_ RTC_GUARDED_BY(packet_sequence_checker_);
  
-   std::unique_ptr<VideoStreamBufferController> buffer_;
+   const std::unique_ptr<VideoStreamBufferController> buffer_;
 +  bool enable_video_decoders_;
  
    // `receiver_controller_` is valid from when RegisterWithTransport is invoked
