@@ -32,11 +32,20 @@ function setup() {
     cd src
     if [ "${PLATFORM}" = "Linux" ]; then
         ./build/install-build-deps.sh
+        ./build/linux/sysroot_scripts/install-sysroot.py --arch=arm
     fi
     gclient runhooks
     gn gen out/Default
+    configure
+}
+
+function configure() {
+    ARCH=${1:-${TARGET_ARCH}}
     cat <<EOF > out/Default/args.gn
 # Set build arguments here. See "gn help buildargs".
+
+target_cpu="$ARCH"
+arm_thumb=1
 
 is_debug=false
 is_component_build=false
@@ -105,17 +114,17 @@ function remove_patch() {
 
 function update() {
     local branch=${1:-${DEFAULT_BRANCH}}
+    local arch=${2:-${TARGET_ARCH}}
+    echo "update chromium build to ${branch} for ${arch}"
     remove_patch
     cd ${BUILDDIR}/depot_tools
     git checkout main
     git pull
     cd ${CHROMIUM_SRC}
     git rebase --abort || true
-    #git fetch origin ${branch} --no-tags
-    #git checkout ${branch}
-    #git pull origin ${branch}
     gclient sync -D --reset --no-history --revision=${branch}
     apply_patch ${branch}
+    configure ${arch}
 }
 
 function build() {
