@@ -108,10 +108,10 @@ RUN \
 #   apt-get update && apt-get install -y google-chrome-stable && apt-get clean
 
 # chromium-browser-unstable
-ENV CHROMIUM_VERSION=146.0.7643.1
+ENV CHROMIUM_VERSION=151.0.7894.3
 ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCH=arm64; CHROMIUM_VERSION=128.0.6542.1; else ARCH=amd64; fi; \
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then ARCH=arm64; else ARCH=amd64; fi; \
     curl -s -Lo /chromium-browser-unstable.deb "https://github.com/vpalmisano/webrtcperf/releases/download/chromium-${CHROMIUM_VERSION}/chromium-browser-unstable_${CHROMIUM_VERSION}-1_${ARCH}.deb" \
     && dpkg -i /chromium-browser-unstable.deb \
     && rm chromium-browser-unstable.deb
