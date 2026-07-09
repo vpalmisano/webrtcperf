@@ -1120,51 +1120,44 @@ Object.defineProperty(window.screen.orientation, 'type', { value: 'landscape-pri
 
     await page.exposeFunction('setRequestInterception', setRequestInterceptionFunction)
 
-    await page.exposeFunction(
-      'jsonFetch',
-      async (
-        options: JsonFetchOptions,
-        cacheKey = '',
-        cacheTimeout = 0,
-      ) => {
-        if (cacheKey) {
-          const ret = Session.jsonFetchCache.get(cacheKey)
-          if (ret) {
-            return ret
-          }
+    await page.exposeFunction('jsonFetch', async (options: JsonFetchOptions, cacheKey = '', cacheTimeout = 0) => {
+      if (cacheKey) {
+        const ret = Session.jsonFetchCache.get(cacheKey)
+        if (ret) {
+          return ret
         }
-        try {
-          const { status, data, headers } = await jsonFetchRequest(options)
-          if (options.responseType === 'stream') {
-            if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
-              log.debug(`jsonFetch saving file to: ${options.downloadPath}`, headers['content-disposition'])
-              await fs.promises.mkdir(path.dirname(options.downloadPath), {
-                recursive: true,
-              })
-              const writer = fs.createWriteStream(options.downloadPath)
-              await new Promise<void>((resolve, reject) => {
-                writer.on('error', err => reject(err))
-                writer.on('close', () => resolve())
-                data.pipe(writer)
-              })
-            }
-            if (cacheKey) {
-              Session.jsonFetchCache.set(cacheKey, { status }, cacheTimeout)
-            }
-            return { status, headers }
-          } else {
-            if (cacheKey) {
-              Session.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
-            }
-            return { status, headers, data }
+      }
+      try {
+        const { status, data, headers } = await jsonFetchRequest(options)
+        if (options.responseType === 'stream') {
+          if (options.downloadPath && !fs.existsSync(options.downloadPath)) {
+            log.debug(`jsonFetch saving file to: ${options.downloadPath}`, headers['content-disposition'])
+            await fs.promises.mkdir(path.dirname(options.downloadPath), {
+              recursive: true,
+            })
+            const writer = fs.createWriteStream(options.downloadPath)
+            await new Promise<void>((resolve, reject) => {
+              writer.on('error', err => reject(err))
+              writer.on('close', () => resolve())
+              data.pipe(writer)
+            })
           }
-        } catch (err) {
-          const error = (err as Error).message
-          log.warn(`jsonFetch error: ${error}`)
-          return { status: 500, error }
+          if (cacheKey) {
+            Session.jsonFetchCache.set(cacheKey, { status }, cacheTimeout)
+          }
+          return { status, headers }
+        } else {
+          if (cacheKey) {
+            Session.jsonFetchCache.set(cacheKey, { status, data }, cacheTimeout)
+          }
+          return { status, headers, data }
         }
-      },
-    )
+      } catch (err) {
+        const error = (err as Error).message
+        log.warn(`jsonFetch error: ${error}`)
+        return { status: 500, error }
+      }
+    })
 
     await page.exposeFunction('readLocalFile', (filePath: string, encoding?: BufferEncoding) => {
       filePath = path.resolve(process.cwd(), filePath)

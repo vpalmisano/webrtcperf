@@ -373,11 +373,7 @@ export async function jsonFetchRequest(options: JsonFetchOptions): Promise<{
   let body: BodyInit | undefined
   const method = options.method?.toUpperCase() ?? 'GET'
   if (options.data !== undefined && method !== 'GET' && method !== 'HEAD') {
-    if (
-      typeof options.data === 'string' ||
-      options.data instanceof ArrayBuffer ||
-      ArrayBuffer.isView(options.data)
-    ) {
+    if (typeof options.data === 'string' || options.data instanceof ArrayBuffer || ArrayBuffer.isView(options.data)) {
       body = options.data as BodyInit
     } else {
       if (!headers.has('Content-Type')) {
@@ -389,9 +385,7 @@ export async function jsonFetchRequest(options: JsonFetchOptions): Promise<{
 
   const res = await fetch(url, { method, headers, body })
   const status = res.status
-  const isValidStatus = options.validStatuses
-    ? options.validStatuses.includes(status)
-    : status >= 200 && status < 300
+  const isValidStatus = options.validStatuses ? options.validStatuses.includes(status) : status >= 200 && status < 300
 
   if (!isValidStatus) {
     throw new Error(`Request failed with status code ${status}`)
