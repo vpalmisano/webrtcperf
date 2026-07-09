@@ -1,0 +1,123 @@
+diff --git a/video/null_video_decoder.cc b/video/null_video_decoder.cc
+index 3ce58120..7afad927 100644
+--- a/video/null_video_decoder.cc
++++ b/video/null_video_decoder.cc
+@@ -26,7 +26,7 @@ bool NullVideoDecoder::Configure(const Settings& settings) {
+ 
+ int32_t NullVideoDecoder::Decode(const EncodedImage& input_image,
+                                  int64_t render_time_ms) {
+-  RTC_LOG(LS_ERROR) << "The NullVideoDecoder doesn't support decoding.";
++  RTC_LOG(LS_WARNING) << "The NullVideoDecoder doesn't support decoding.";
+   return WEBRTC_VIDEO_CODEC_OK;
+ }
+ 
+diff --git a/video/video_receive_stream2.cc b/video/video_receive_stream2.cc
+index 7c1b81b7..11779b23 100644
+--- a/video/video_receive_stream2.cc
++++ b/video/video_receive_stream2.cc
+@@ -14,6 +14,8 @@
+ #include <atomic>
+ #include <cmath>
+ #include <cstdint>
++#include <cstdio>
++#include <cstring>
+ #include <initializer_list>
+ #include <map>
+ #include <memory>
+@@ -80,6 +82,7 @@
+ #include "rtc_base/experiments/corruption_detection_frame_selector_settings.h"
+ #include "rtc_base/experiments/field_trial_parser.h"
+ #include "rtc_base/logging.h"
++#include "rtc_base/system/file_wrapper.h"
+ #include "rtc_base/race_checker.h"
+ #include "rtc_base/strings/string_builder.h"
+ #include "rtc_base/synchronization/mutex.h"
+@@ -107,6 +110,32 @@ namespace {
+ constexpr TimeDelta kMinBaseMinimumDelay = TimeDelta::Zero();
+ constexpr TimeDelta kMaxBaseMinimumDelay = TimeDelta::Seconds(10);
+ 
++uint getTotalVideoDecoders() {
++  FileWrapper file_wrapper = FileWrapper::OpenReadOnly("/dev/shm/chromium-video-decoders");
++  if (file_wrapper.is_open()) {
++    char buf[256];
++    file_wrapper.Read(buf, sizeof(buf));
++    file_wrapper.Close();
++    return (uint)atoi(buf);
++  }
++  return 0;
++}
++
++void updateTotalVideoDecoders(int value) {
++  char buf[256];
++  uint total_video_decoders = getTotalVideoDecoders();
++  snprintf(buf, sizeof(buf), "%u", std::max<uint>(0, total_video_decoders + value));
++
++  FileWrapper file_wrapper = FileWrapper::OpenWriteOnly("/dev/shm/chromium-video-decoders");
++  if (!file_wrapper.is_open()) {
++    RTC_LOG(LS_ERROR) << "total video decoders file cannot be opened: /dev/shm/chromium-video-decoders";
++    return;
++  }
++  file_wrapper.Write(buf, strlen(buf));
++  file_wrapper.Close();
++}
++
++
+ // Concrete instance of RecordableEncodedFrame wrapping needed content
+ // from EncodedFrame.
+ class WebRtcRecordableEncodedFrame : public RecordableEncodedFrame {
+@@ -383,6 +412,21 @@ void VideoReceiveStream2::Start() {
+     renderer = this;
+   }
+ 
++  // Check if we should create video decoders.
++  enable_video_decoders_ = true;
++  std::string max_video_decoders = env_.field_trials().Lookup("WebRTC-MaxVideoDecoders");
++  if (!max_video_decoders.empty()) {
++    uint video_decoders = getTotalVideoDecoders();
++    uint max_decoders = (uint)atoi(max_video_decoders.c_str());
++    RTC_LOG(LS_ERROR) << "WebRTC-MaxVideoDecoders: " << video_decoders << "/" << max_decoders;
++    if (video_decoders >= max_decoders) {
++      enable_video_decoders_ = false;
++    }
++  }
++  if (enable_video_decoders_)
++    updateTotalVideoDecoders(1);
++
++
+   for (const Decoder& decoder : config_.decoders) {
+     VideoDecoder::Settings settings;
+     settings.set_codec_type(
+@@ -461,6 +505,9 @@ void VideoReceiveStream2::Stop() {
+     stats_proxy_.DecoderThreadStopped();
+ 
+     UpdateHistograms();
++
++    if (enable_video_decoders_)
++      updateTotalVideoDecoders(-1);
+   }
+ 
+   // TODO(bugs.webrtc.org/11993): Make these calls on the network thread.
+@@ -552,8 +599,9 @@ void VideoReceiveStream2::CreateAndRegisterExternalDecoder(
+     const Decoder& decoder) {
+   TRACE_EVENT0("webrtc",
+                "VideoReceiveStream2::CreateAndRegisterExternalDecoder");
+-  std::unique_ptr<VideoDecoder> video_decoder =
+-      config_.decoder_factory->Create(env_, decoder.video_format);
++  std::unique_ptr<VideoDecoder> video_decoder = enable_video_decoders_ ?
++    config_.decoder_factory->Create(env_, decoder.video_format) :
++    nullptr;
+   // The factory can end up in this state either if the format is not supported
+   // or because a creation step failed, e.g. HW is unavailable.
+   if (!video_decoder) {
+diff --git a/video/video_receive_stream2.h b/video/video_receive_stream2.h
+index 0b3dd9b6..4ee080d2 100644
+--- a/video/video_receive_stream2.h
++++ b/video/video_receive_stream2.h
+@@ -305,6 +305,7 @@ class VideoReceiveStream2
+   TimeDelta max_wait_for_frame_ RTC_GUARDED_BY(packet_sequence_checker_);
+ 
+   const std::unique_ptr<VideoStreamBufferController> buffer_;
++  bool enable_video_decoders_;
+ 
+   // `receiver_controller_` is valid from when RegisterWithTransport is invoked
+   //  until UnregisterFromTransport.
