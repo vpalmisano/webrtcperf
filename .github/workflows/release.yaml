@@ -7,17 +7,16 @@ on:
     - 'v*'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
 jobs:
-  build:
-    name: Build release
+  publish:
+    name: Publish to npm
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v6
@@ -27,49 +26,19 @@ jobs:
       with:
         node-version: 24
         cache: 'yarn'
-    - name: Get package version
-      id: get_package_version
-      run: |
-        version=$(sed -nE 's/^\s*"version": "(.*?)",$/\1/p' package.json)
-        echo ::set-output name=version::${version}
+        registry-url: 'https://registry.npmjs.org'
     - name: Cache modules
       uses: actions/cache@v5
       with:
         path: node_modules
-        key: ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-${{ github.sha }}
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('./yarn.lock') }}-${{ github.sha }}
         restore-keys: |
-          ${{ runner.os }}-node-modules-${{ hashFiles('./package.json') }}-
-    - name: Cache nexe build
-      uses: actions/cache@v5
-      with:
-        path: /home/runner/.nexe
-        key: ${{ runner.os }}-nexe
-        restore-keys: |
-          ${{ runner.os }}-nexe
-    - name: Build
+          ${{ runner.os }}-node-modules-${{ hashFiles('./yarn.lock') }}-
+    - name: Install and build
       run: |
-        yarn build:all
-    - name: Release
-      uses: softprops/action-gh-release@v3
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-        generate_release_notes: true
-        files: |
-          webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
-          webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
-          webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
-    - name: Archive build
-      uses: actions/upload-artifact@v7
-      with:
-        name: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
-        path: webrtcperf_${{ steps.get_package_version.outputs.version }}_linux.gz
-    - name: Archive build
-      uses: actions/upload-artifact@v7
-      with:
-        name: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
-        path: webrtcperf_${{ steps.get_package_version.outputs.version }}_macos.gz
-    - name: Archive build
-      uses: actions/upload-artifact@v7
-      with:
-        name: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
-        path: webrtcperf_${{ steps.get_package_version.outputs.version }}_windows.zip
+        yarn install --frozen-lockfile --network-timeout 60000 --network-concurrency 1
+        yarn build
+    - name: Publish to npm
+      run: npm publish --access public --provenance
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,6 +1,6 @@
 {
   "name": "@vpalmisano/webrtcperf",
-  "version": "4.9.1",
+  "version": "4.9.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/vpalmisano/webrtcperf.git"
@@ -43,11 +43,7 @@
     "clean": "rm -rf app.min.js build _docs",
     "lint": "eslint src examples",
     "lint:fix": "yarn lint --fix",
-    "docs": "yarn build && node build/src/generate-config-docs.js && typedoc",
-    "build:linux": "nexe --make=\"-j$(nproc 2> /dev/null || echo 1)\" --verbose --build -i app.min.js -o webrtcperf -r package.json && gzip -9 -c webrtcperf > webrtcperf_${npm_package_version}_linux.gz",
-    "build:macos": "nexe --target mac-x64-14.15.3 -i app.min.js -o webrtcperf -r package.json && gzip -9 -c webrtcperf > webrtcperf_${npm_package_version}_macos.gz && rm webrtcperf",
-    "build:windows": "nexe --target windows-x64-14.15.3 -i app.min.js -o webrtcperf -r package.json && zip webrtcperf_${npm_package_version}_windows.zip webrtcperf.exe && rm webrtcperf.exe",
-    "build:all": "yarn && yarn build && yarn build:linux && yarn build:macos && yarn build:windows"
+    "docs": "yarn build && node build/src/generate-config-docs.js && typedoc"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
@@ -109,7 +105,7 @@
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
     "@vpalmisano/typedoc-cookie-consent": "^0.0.4",
-    "@vpalmisano/typedoc-plugin-ga": "^1.0.6",
+    "typedoc-plugin-ga": "^1.1.1",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
@@ -117,7 +113,6 @@
     "eslint-plugin-prettier": "^5.5.6",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.4.1",
-    "nexe": "^4.0.0-rc.7",
     "prettier": "^3.8.3",
     "terser-webpack-plugin": "^5.6.1",
     "ts-loader": "^9.6.0",
@@ -127,7 +122,6 @@
     "webpack": "^5.102.0",
     "webpack-cli": "^6.0.1",
     "webpack-node-externals": "^3.0.0",
-    "yarn-audit-fix": "^10.1.1",
     "yarn-upgrade-minor": "^1.0.13"
   },
   "optionalDependencies": {
