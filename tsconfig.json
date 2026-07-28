@@ -32,7 +32,7 @@
     "hideGenerator": true,
     "cleanOutputDir": true,
     "plugin": [
-      "@vpalmisano/typedoc-plugin-ga",
+      "typedoc-plugin-ga",
       "@vpalmisano/typedoc-cookie-consent"
     ],
     "gaID": "G-05SF29M4QB",

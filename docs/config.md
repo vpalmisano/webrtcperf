@@ -83,7 +83,7 @@ The path where the video and audio raw files are stored.
 
 *Type*: `string`
 
-*Default*: `"/home/vittoriopalmisano/.webrtcperf/cache"`
+*Default*: `"$HOME/.webrtcperf/cache"`
 
 ## videoFormat
 The fake video file format presented to the browser.
@@ -162,7 +162,7 @@ If true, the network will be throttled using the browser internal throttling mec
 
 *Type*: `boolean`
 
-*Default*: `false`
+*Default*: `true`
 
 ## randomAudioPeriod
 If not zero, it specifies the maximum period in seconds after which a new random active session is selected, enabling the getUserMedia audio tracks in that session and disabling all of the others.
@@ -197,7 +197,7 @@ The Chromium version. It will be downloaded if the chromium path is not provided
 
 *Type*: `string`
 
-*Default*: `"140.0.7339.207"`
+*Default*: `"150.0.7871.24"`
 
 ## chromiumUrl
 The remote Chromium URL (`http://HOST:PORT`).
@@ -331,7 +331,14 @@ If set, the page console logs will be saved on the selected file path.
 *Default*: `""`
 
 ## enableBrowserLogging
-It enables the Chromium browser logging for the specified session indexes. It requires the page log path option to be set. 
+It enables the Chromium browser logging for the specified session indexes. It requires the pageLogPath option to be set.
+
+*Type*: `index`
+
+*Default*: `""`
+
+## enableRtpDump
+It enables the RTP dump for the specified session indexes. It requires the enableBrowserLogging option to be set. The text2pcap utility is required to convert the RTP dump to pcap format.
 
 *Type*: `index`
 
@@ -342,12 +349,13 @@ The user agent override.
 
 *Type*: `string`
 
-*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.7339.207 Safari/537.36"`
+*Default*: `"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.7871.24 Safari/537.36"`
 
 ## scriptPath
 One or more JavaScript file paths (comma-separated). If set, the files contents will be executed inside each opened tab page; the following global variables will be attached to the `webrtcperf` global object: `WEBRTC_PERF_SESSION` the session number (0-indexed); `WEBRTC_PERF_TAB` the tab number inside the same session (0-indexed); `WEBRTC_PERF_INDEX` the page absolute index (0-indexed).
-Suggested values:
-- With meet.google.com: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js
+Suggested values for automated testing:
+- meet.google.com: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/google-meet.js
+- meet.livekit.io: https://raw.githubusercontent.com/vpalmisano/webrtcperf/refs/heads/devel/examples/livekit.js
 
 
 *Type*: `string`
